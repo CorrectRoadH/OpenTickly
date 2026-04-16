@@ -83,7 +83,7 @@ func TestGetInstanceVersion_LiveManifestWins(t *testing.T) {
 		sendManifest: telemetrydomain.Manifest{
 			LatestVersion: "0.2.0",
 			LatestTag:     "0.2.0",
-			ChangelogURL:  "https://example.test/CHANGELOG.md",
+			ReleaseURL:    "https://example.test/CHANGELOG.md",
 			ReleasedAt:    &released,
 			Announcements: []telemetrydomain.Announcement{
 				{

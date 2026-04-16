@@ -1,39 +1,35 @@
-import { getActiveAnnouncements, getChangelogPublicUrl, getLatestChangelog } from "./content.ts";
-import type { CheckResponsePayload } from "./types.ts";
+import type { GithubRelease } from "./github.ts";
+import type { Announcement, UpdateResponse } from "./types.ts";
 
 /**
- * Builds the manifest returned by /v1/check and /v1/manifest.
+ * Builds the `UpdateResponse` the Worker returns. Only the latest non-draft
+ * release drives the response — the full history is intentionally omitted so
+ * the payload stays small. Clients curious about older releases follow
+ * `releaseUrl` to github.com.
  *
- * `latestTag` is what clients should compare their own version string against;
- * `latestVersion` is the same value without a leading "v" for convenience.
- * Clients that have `version == latestVersion` get `updateAvailable = false`.
+ * `updateAvailable` is only true when the caller passed `?version=...` AND it
+ * doesn't match. Callers without a version always see `false` so clients can't
+ * mistake "no context" for "up to date".
  */
 export function buildManifest(args: {
-  latestTag: string;
+  releases: GithubRelease[];
+  announcements: Announcement[];
   clientVersion?: string;
-  now?: Date;
-}): CheckResponsePayload {
-  const latest = getLatestChangelog();
-  const latestTag = normalizeTag(args.latestTag, latest?.tag);
+}): UpdateResponse {
+  const latest = args.releases.find((r) => !r.draft);
+  const latestTag = latest?.tag_name ?? "";
   const latestVersion = stripV(latestTag);
-  const clientVersion = args.clientVersion ? stripV(args.clientVersion) : undefined;
+  const client = args.clientVersion ? stripV(args.clientVersion) : undefined;
 
   return {
     latestVersion,
     latestTag,
-    updateAvailable: clientVersion !== undefined && clientVersion !== latestVersion,
-    releasedAt: latest?.date ?? null,
-    changelogUrl: getChangelogPublicUrl(),
-    announcements: getActiveAnnouncements(args.now),
+    updateAvailable: client !== undefined && latestVersion !== "" && client !== latestVersion,
+    releasedAt: latest?.published_at || null,
+    releaseUrl: latest?.html_url ?? null,
+    releaseNotes: latest?.body ?? "",
+    announcements: args.announcements,
   };
-}
-
-function normalizeTag(envTag: string, changelogTag: string | undefined): string {
-  // "latest" is a sentinel meaning "use whatever the newest changelog entry says".
-  if (envTag === "latest" || envTag === "") {
-    return changelogTag ?? "dev";
-  }
-  return envTag;
 }
 
 function stripV(tag: string): string {

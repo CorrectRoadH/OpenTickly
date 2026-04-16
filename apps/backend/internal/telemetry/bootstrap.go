@@ -14,12 +14,12 @@ import (
 )
 
 // Options describes the runtime shape of the telemetry subsystem, derived
-// from env vars at bootstrap time.
+// from env vars at bootstrap time. The upstream endpoint is hardcoded in
+// infra/http — a forker who wants a private update server edits that const.
 type Options struct {
-	Enabled  bool
-	Endpoint string // empty → infra/http default
-	Version  string
-	Logger   *slog.Logger
+	Enabled bool
+	Version string
+	Logger  *slog.Logger
 }
 
 // Pinger is re-exported for consumers that just want a constructor return.
@@ -36,7 +36,7 @@ func NewPinger(pool *pgxpool.Pool, opts Options) (*Pinger, error) {
 		return nil, fmt.Errorf("telemetry: pg pool is required")
 	}
 
-	client, err := telemetryhttp.NewClient(telemetryhttp.Config{Endpoint: opts.Endpoint})
+	client, err := telemetryhttp.NewClient(telemetryhttp.Config{})
 	if err != nil {
 		return nil, err
 	}

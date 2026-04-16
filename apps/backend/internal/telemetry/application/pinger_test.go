@@ -33,7 +33,7 @@ type fakeClient struct {
 	err      error
 }
 
-func (f *fakeClient) PostCheckin(_ context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
+func (f *fakeClient) FetchManifest(_ context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls++
@@ -66,7 +66,7 @@ func newID(t *testing.T) domain.InstanceID {
 	return domain.InstanceID(u)
 }
 
-func newTestPinger(t *testing.T, store application.InstanceIDStore, client application.CheckinClient) *application.Pinger {
+func newTestPinger(t *testing.T, store application.InstanceIDStore, client application.ManifestClient) *application.Pinger {
 	t.Helper()
 	p, err := application.NewPinger(application.Config{
 		Store:     store,
@@ -193,14 +193,14 @@ type flakyClient struct {
 	total    int
 }
 
-func (f *flakyClient) PostCheckin(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
+func (f *flakyClient) FetchManifest(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
 	f.mu.Lock()
 	f.total++
 	f.mu.Unlock()
 	if atomic.AddInt32(f.errsLeft, -1) >= 0 {
 		return domain.Manifest{}, errors.New("transient")
 	}
-	return f.inner.PostCheckin(ctx, payload)
+	return f.inner.FetchManifest(ctx, payload)
 }
 
 func (f *flakyClient) totalCalls() int {

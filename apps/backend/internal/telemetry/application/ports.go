@@ -12,11 +12,12 @@ type InstanceIDStore interface {
 	GetInstanceID(ctx context.Context) (domain.InstanceID, error)
 }
 
-// CheckinClient posts to the upstream /v1/check endpoint and decodes the
-// manifest reply. Implementations must be network-bounded and must not
-// block longer than their configured timeout.
-type CheckinClient interface {
-	PostCheckin(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error)
+// ManifestClient fetches the update manifest from the upstream worker.
+// Implementations must be network-bounded and must not block longer than
+// their configured timeout. The payload is sent as URL query params by the
+// HTTP implementation — callers treat the transport as opaque.
+type ManifestClient interface {
+	FetchManifest(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error)
 }
 
 // BuildInfo exposes the compiled-in version and runtime tuple so the pinger

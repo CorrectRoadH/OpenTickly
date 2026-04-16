@@ -1,0 +1,64 @@
+name: Deploy update-worker
+
+# Auto-deploys https://update.opentoggl.com/ on changes to the worker or its
+# content (announcements). The worker sources changelog live from GitHub
+# Releases, so simply creating a GitHub Release does NOT trigger a deploy —
+# the worker just picks it up on its next cache miss (~5min).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/update-worker/**"
+      - ".github/workflows/update-worker-deploy.yml"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: update-worker-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --filter @opentoggl/update-worker...
+
+      - name: Type-check + test
+        working-directory: apps/update-worker
+        run: |
+          pnpm run check
+          pnpm run test
+
+      - name: Deploy to Cloudflare Workers
+        working-directory: apps/update-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm run deploy
+
+      - name: Smoke test
+        run: |
+          for i in 1 2 3 4 5; do
+            body=$(curl -sS --max-time 10 "https://update.opentoggl.com/?version=0.0.0-ci")
+            if printf '%s' "$body" | grep -q '"latestTag"'; then
+              echo "✓ smoke test passed"
+              printf '%s' "$body" | head -c 400
+              exit 0
+            fi
+            echo "attempt $i: unexpected body, retrying"
+            sleep 5
+          done
+          echo "✗ smoke test failed"
+          exit 1

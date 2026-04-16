@@ -6,7 +6,8 @@
   "scripts": {
     "build:content": "node scripts/build-content.mjs",
     "dev": "vp run build:content && wrangler dev",
-    "deploy": "vp run build:content && wrangler deploy",
+    "deploy": "vp run build:content && wrangler deploy --env production",
+    "deploy:staging": "vp run build:content && wrangler deploy --env staging",
     "check": "vp run build:content && tsc --noEmit",
     "test": "vp run build:content && vp test run"
   },

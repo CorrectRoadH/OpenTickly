@@ -8,25 +8,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"opentoggl/backend/apps/backend/internal/telemetry/domain"
 )
 
-// DefaultEndpoint is the production check endpoint. Override via
-// OPENTOGGL_TELEMETRY_ENDPOINT for staging or offline deployments.
-const DefaultEndpoint = "https://check.opentoggl.com/v1/check"
+// DefaultEndpoint is the production update-manifest endpoint. Forkers who
+// want a private update server change this const and rebuild — there is no
+// env-var knob.
+const DefaultEndpoint = "https://update.opentoggl.com/"
 
-// DefaultTimeout is short — a slow check-in must never delay a request in
-// the admin UI or hold the pinger goroutine.
+// DefaultTimeout is short — a slow manifest fetch must never delay a request
+// in the admin UI or hold the pinger goroutine.
 const DefaultTimeout = 5 * time.Second
 
 // userAgent is sent on every request so the worker can segment requests
 // coming from backend pingers vs. ad-hoc callers.
 const userAgent = "opentoggl-backend/telemetry"
 
-// Client posts CheckinPayload to the upstream update worker and decodes the
-// manifest reply.
+// maxResponseBytes caps how much we'll read from upstream. Plenty of room for
+// release notes markdown + active announcements.
+const maxResponseBytes = 256 * 1024
+
+// Client fetches the update manifest from the upstream worker. The telemetry
+// side-effect (DAU indexing) happens server-side — the client just sends
+// build-info query params on the GET and decodes the manifest reply.
 type Client struct {
 	endpoint string
 	http     *http.Client
@@ -43,6 +50,9 @@ func NewClient(cfg Config) (*Client, error) {
 	if endpoint == "" {
 		endpoint = DefaultEndpoint
 	}
+	if _, err := url.Parse(endpoint); err != nil {
+		return nil, fmt.Errorf("telemetry: invalid endpoint %q: %w", endpoint, err)
+	}
 	timeout := cfg.Timeout
 	if timeout <= 0 {
 		timeout = DefaultTimeout
@@ -54,23 +64,45 @@ func NewClient(cfg Config) (*Client, error) {
 	return &Client{endpoint: endpoint, http: httpClient}, nil
 }
 
-func (c *Client) PostCheckin(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
-	body, err := json.Marshal(payload)
+// FetchManifest sends a GET to the update worker with the build-info query
+// params and decodes the manifest reply. The upstream is idempotent — retries
+// are safe.
+func (c *Client) FetchManifest(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
+	u, err := url.Parse(c.endpoint)
 	if err != nil {
-		return domain.Manifest{}, fmt.Errorf("telemetry: marshal payload: %w", err)
+		return domain.Manifest{}, fmt.Errorf("telemetry: parse endpoint: %w", err)
 	}
+	q := u.Query()
+	if payload.Version != "" {
+		q.Set("version", payload.Version)
+	}
+	if id := payload.InstanceID.String(); id != "" && id != zeroUUID {
+		q.Set("instanceId", id)
+	}
+	if payload.GoVersion != "" {
+		q.Set("goVersion", payload.GoVersion)
+	}
+	if payload.OS != "" {
+		q.Set("os", payload.OS)
+	}
+	if payload.Arch != "" {
+		q.Set("arch", payload.Arch)
+	}
+	if payload.Locale != "" {
+		q.Set("locale", payload.Locale)
+	}
+	u.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("telemetry: build request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return domain.Manifest{}, fmt.Errorf("telemetry: post checkin: %w", err)
+		return domain.Manifest{}, fmt.Errorf("telemetry: fetch manifest: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -80,7 +112,7 @@ func (c *Client) PostCheckin(ctx context.Context, payload domain.CheckinPayload)
 	}
 
 	var manifest domain.Manifest
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 64*1024)).Decode(&manifest); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseBytes)).Decode(&manifest); err != nil {
 		return domain.Manifest{}, fmt.Errorf("telemetry: decode manifest: %w", err)
 	}
 	if manifest.LatestTag == "" {
@@ -88,3 +120,5 @@ func (c *Client) PostCheckin(ctx context.Context, payload domain.CheckinPayload)
 	}
 	return manifest, nil
 }
+
+const zeroUUID = "00000000-0000-0000-0000-000000000000"

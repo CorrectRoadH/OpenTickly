@@ -20,15 +20,15 @@ func ParseInstanceID(s string) (InstanceID, error) {
 	return InstanceID(u), nil
 }
 
-// CheckinPayload is sent to the upstream /v1/check endpoint.
+// CheckinPayload is serialized into the query string on `GET update.opentoggl.com/?version=…`.
 // Keep this structurally aligned with apps/update-worker/src/validation.ts.
 type CheckinPayload struct {
-	InstanceID InstanceID `json:"instanceId"`
-	Version    string     `json:"version"`
-	GoVersion  string     `json:"goVersion,omitempty"`
-	OS         string     `json:"os,omitempty"`
-	Arch       string     `json:"arch,omitempty"`
-	Locale     string     `json:"locale,omitempty"`
+	InstanceID InstanceID
+	Version    string
+	GoVersion  string
+	OS         string
+	Arch       string
+	Locale     string
 }
 
 // Announcement mirrors the update-worker Announcement shape.
@@ -42,12 +42,14 @@ type Announcement struct {
 	BodyMarkdown string     `json:"bodyMarkdown"`
 }
 
-// Manifest is the response body from the upstream /v1/check and /v1/manifest.
+// Manifest is the response body from the upstream update worker.
+// See apps/update-worker/src/types.ts → UpdateResponse for the source of truth.
 type Manifest struct {
 	LatestVersion   string         `json:"latestVersion"`
 	LatestTag       string         `json:"latestTag"`
 	UpdateAvailable bool           `json:"updateAvailable"`
 	ReleasedAt      *time.Time     `json:"releasedAt,omitempty"`
-	ChangelogURL    string         `json:"changelogUrl"`
+	ReleaseURL      string         `json:"releaseUrl,omitempty"`
+	ReleaseNotes    string         `json:"releaseNotes,omitempty"`
 	Announcements   []Announcement `json:"announcements"`
 }

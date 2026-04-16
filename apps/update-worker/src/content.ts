@@ -1,12 +1,11 @@
-import type { Announcement, ChangelogEntry } from "./types.ts";
-import { generatedAnnouncements, generatedChangelog } from "./content.generated.ts";
+import type { Announcement } from "./types.ts";
+import { generatedAnnouncements } from "./content.generated.ts";
 
-const CHANGELOG_PUBLIC_URL = "https://github.com/CorrectRoadH/opentoggl/blob/main/CHANGELOG.md";
-
-export function getChangelog(): ChangelogEntry[] {
-  return generatedChangelog;
-}
-
+/**
+ * Returns announcements whose `expiresAt` is still in the future (or missing).
+ * Changelog used to be baked in too — that's now sourced live from GitHub
+ * releases (see src/github.ts).
+ */
 export function getActiveAnnouncements(now: Date = new Date()): Announcement[] {
   const nowTs = now.getTime();
   return generatedAnnouncements.filter((a) => {
@@ -14,13 +13,4 @@ export function getActiveAnnouncements(now: Date = new Date()): Announcement[] {
     const exp = Date.parse(a.expiresAt);
     return Number.isNaN(exp) ? true : exp >= nowTs;
   });
-}
-
-export function getLatestChangelog(): ChangelogEntry | null {
-  const entries = getChangelog();
-  return entries[0] ?? null;
-}
-
-export function getChangelogPublicUrl(): string {
-  return CHANGELOG_PUBLIC_URL;
 }

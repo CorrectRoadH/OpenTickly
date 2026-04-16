@@ -27,18 +27,20 @@ var ErrDisabled = errors.New("telemetry: disabled")
 // Config groups the Pinger's collaborators and tunables.
 type Config struct {
 	Store     InstanceIDStore
-	Client    CheckinClient
+	Client    ManifestClient
 	BuildInfo BuildInfo
 	Interval  time.Duration
 	MaxJitter time.Duration
 	Logger    *slog.Logger
 }
 
-// Pinger periodically posts a CheckinPayload to the upstream update service.
-// Safe to call SendOnce from handler code for on-demand checks.
+// Pinger periodically fetches the update manifest from the upstream worker.
+// Each fetch doubles as a DAU signal — the worker records one Analytics Engine
+// data point per request with a valid instanceId + version. Safe to call
+// SendOnce from handler code for on-demand checks.
 type Pinger struct {
 	store     InstanceIDStore
-	client    CheckinClient
+	client    ManifestClient
 	buildInfo BuildInfo
 	interval  time.Duration
 	maxJitter time.Duration
@@ -117,7 +119,7 @@ func (p *Pinger) SendOnce(ctx context.Context) (domain.Manifest, error) {
 		Arch:       p.buildInfo.Arch(),
 	}
 
-	manifest, err := p.client.PostCheckin(ctx, payload)
+	manifest, err := p.client.FetchManifest(ctx, payload)
 	if err != nil {
 		return domain.Manifest{}, err
 	}

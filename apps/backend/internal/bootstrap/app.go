@@ -84,9 +84,8 @@ func NewApp(cfg Config) (*App, error) {
 // in either case, Start() simply skips kicking off the goroutine.
 func newTelemetryPinger(cfg Config, p *platform.Handles) *telemetry.Pinger {
 	pinger, err := telemetry.NewPinger(p.Database.Pool(), telemetry.Options{
-		Enabled:  cfg.Telemetry.Enabled,
-		Endpoint: cfg.Telemetry.Endpoint,
-		Version:  buildinfo.Version,
+		Enabled: cfg.Telemetry.Enabled,
+		Version: buildinfo.Version,
 	})
 	if err != nil {
 		if errors.Is(err, telemetryapplication.ErrDisabled) {

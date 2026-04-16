@@ -1,31 +1,35 @@
-import type { CheckRequestInput } from "./validation.ts";
+import type { QueryParams } from "./validation.ts";
 import type { WorkerEnv } from "./types.ts";
 
 /**
- * Writes one data point per /v1/check request.
+ * Writes one data point per request that included a valid `instanceId` AND
+ * `version` query param. Writes are silently dropped when:
+ *   - the UPDATE_REQUESTS binding isn't bound
+ *   - the caller didn't pass both required indexes
+ *   - the Analytics Engine write throws
  *
- * Analytics Engine schema (query with SQL via CF REST API):
- *   index1 = instance_id          — for COUNT(DISTINCT) DAU
- *   blob1  = version              — "0.3.1", "dev", ...
- *   blob2  = go_version           — "go1.23.4" or ""
- *   blob3  = os                   — "linux", "darwin", "windows", ...
- *   blob4  = arch                 — "amd64", "arm64", ...
- *   blob5  = locale               — optional UI locale hint
- *   blob6  = country              — CF-derived ISO-2 country, or "ZZ" if unknown
- *
- * doubles is unused — every event is a single check-in, aggregated via COUNT().
+ * Analytics Engine schema (query via CF REST API):
+ *   index1 = instance_id
+ *   blob1  = version
+ *   blob2  = go_version
+ *   blob3  = os
+ *   blob4  = arch
+ *   blob5  = locale
+ *   blob6  = country (CF-derived ISO-2)
  */
-export function recordCheckin(env: WorkerEnv, payload: CheckRequestInput, request: Request): void {
-  const country = request.cf?.country ?? "ZZ";
+export function recordUpdateRequest(env: WorkerEnv, query: QueryParams, request: Request): void {
+  if (!env.UPDATE_REQUESTS) return;
+  if (!query.instanceId || !query.version) return;
+  const country = request.cf?.country;
   try {
-    env.ANALYTICS.writeDataPoint({
-      indexes: [payload.instanceId],
+    env.UPDATE_REQUESTS.writeDataPoint({
+      indexes: [query.instanceId],
       blobs: [
-        payload.version,
-        payload.goVersion ?? "",
-        payload.os ?? "",
-        payload.arch ?? "",
-        payload.locale ?? "",
+        query.version,
+        query.goVersion ?? "",
+        query.os ?? "",
+        query.arch ?? "",
+        query.locale ?? "",
         typeof country === "string" ? country : "ZZ",
       ],
       doubles: [],

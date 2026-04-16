@@ -83,8 +83,10 @@ func applyManifest(dst *adminapi.InstanceVersion, m telemetrydomain.Manifest, cu
 		dst.LatestVersion = &latest
 		dst.UpdateAvailable = latest != current
 	}
-	if m.ChangelogURL != "" {
-		dst.ChangelogUrl = m.ChangelogURL
+	// Use the latest release page as the "what's new" link. Falls back to the
+	// repo-level CHANGELOG when the upstream manifest didn't carry a release URL.
+	if m.ReleaseURL != "" {
+		dst.ChangelogUrl = m.ReleaseURL
 	}
 	if m.ReleasedAt != nil && !m.ReleasedAt.IsZero() {
 		rt := *m.ReleasedAt

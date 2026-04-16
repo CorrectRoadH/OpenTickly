@@ -38,8 +38,8 @@ type GovernanceConfig struct {
 }
 
 // TelemetryConfig controls the anonymous version-check pinger.
-// Enabled by default; set OPENTOGGL_TELEMETRY=off to opt out.
+// Enabled by default; set OPENTOGGL_TELEMETRY=off to opt out. The endpoint
+// (https://update.opentoggl.com/) is hardcoded — forkers change it in code.
 type TelemetryConfig struct {
-	Enabled  bool
-	Endpoint string // empty → upstream default
+	Enabled bool
 }

@@ -1,76 +1,116 @@
 # @opentoggl/update-worker
 
-Cloudflare Worker that backs `check.opentoggl.com`. Does two jobs:
+Cloudflare Worker behind [`https://update.opentoggl.com/`](https://update.opentoggl.com/). One GET endpoint. Proxies GitHub Releases + serves baked announcements.
 
-1. **Ingest** — accepts daily version check-ins from self-hosted backends, writes to Analytics Engine for DAU + version-distribution reporting.
-2. **Serve** — returns the current manifest (latest release + active announcements) so backends can surface "update available" / broadcast notices to admins.
+## The endpoint
 
-Content (changelog entries, announcements) lives as markdown-with-frontmatter under `content/`. A prebuild script (`scripts/build-content.mjs`) bakes it into `src/content.generated.ts` — deploying the worker is the same action as publishing new notes.
-
-## Endpoints
-
-| Method | Path                  | Purpose                                       |
-| ------ | --------------------- | --------------------------------------------- |
-| POST   | `/v1/check`           | Ingest check-in, return manifest              |
-| GET    | `/v1/manifest`        | Return manifest (no side effects, cached 5m)  |
-| GET    | `/v1/changelog`       | Full changelog as JSON                        |
-| GET    | `/v1/announcements`   | Active announcements (expired filtered out)   |
-| GET    | `/healthz`            | Liveness probe                                |
-
-### POST /v1/check payload
-
-```json
-{
-  "instanceId": "8b9a2f0e-1c4d-4b5a-9f8e-9d2a7c3b1a2e",
-  "version": "0.3.1",
-  "goVersion": "go1.23.4",
-  "os": "linux",
-  "arch": "amd64",
-  "locale": "en-US"
-}
+```
+GET https://update.opentoggl.com/
+  ?version=0.3.1             # client's current version (optional)
+  &instanceId=<uuid>         # stable per-instance id (optional; enables DAU)
+  &os=linux                  # optional
+  &arch=amd64                # optional
+  &goVersion=go1.23.4        # optional
+  &locale=en-US              # optional
 ```
 
-Only `instanceId` and `version` are required. See `src/validation.ts` for the exact schema.
+Every param is optional. A bare `curl https://update.opentoggl.com/` returns the manifest without any client context.
 
 ### Response
 
 ```json
 {
   "latestVersion": "0.3.1",
-  "latestTag": "0.3.1",
-  "updateAvailable": false,
-  "releasedAt": "2026-04-16",
-  "changelogUrl": "https://github.com/CorrectRoadH/opentoggl/blob/main/CHANGELOG.md",
+  "latestTag": "v0.3.1",
+  "updateAvailable": true,
+  "releasedAt": "2026-04-16T12:00:00Z",
+  "releaseUrl": "https://github.com/CorrectRoadH/opentoggl/releases/tag/v0.3.1",
+  "releaseNotes": "…markdown body of the latest release…",
   "announcements": [
-    {
-      "id": "welcome-2026-04",
-      "title": "Welcome to OpenToggl",
-      "severity": "info",
-      "publishedAt": "2026-04-16",
-      "expiresAt": "2026-07-16",
-      "link": "https://github.com/CorrectRoadH/opentoggl",
-      "bodyMarkdown": "..."
-    }
+    { "id": "welcome-2026-04", "title": "…", "severity": "info", "publishedAt": "…", "expiresAt": "…", "link": "…", "bodyMarkdown": "…" }
   ]
 }
 ```
 
+`updateAvailable` is only `true` when the caller passed `?version=...` and it doesn't match `latestVersion` — callers without a version always see `false`.
+
+Cache: the Worker edge-caches the composed response for 60s; the inner GitHub fetch is cached for 5min across all colos. One origin hit to GitHub every ~5min per colo.
+
 ## Publishing a new release
 
-1. Add `content/changelog/<version>.md` with `tag`, `date`, `title` frontmatter.
-2. (Optional) Add `content/announcements/<slug>.md` with `id`, `title`, `severity`, `publishedAt`, optional `expiresAt` / `link`.
-3. `vp run update-worker#deploy`
+Just **publish a GitHub Release** on [CorrectRoadH/opentoggl](https://github.com/CorrectRoadH/opentoggl/releases). That's it — the worker picks it up on the next cache miss. No redeploy needed.
 
-The newest changelog entry (by `date`) becomes `latestVersion` automatically when `LATEST_TAG=latest` (the default). Pin to a specific tag by overriding `LATEST_TAG` in `wrangler.toml`.
+## Publishing an announcement
 
-## Analytics
+Announcements aren't in GitHub Releases — they're baked into the Worker at deploy time from `content/announcements/*.md`.
 
-See `src/analytics.ts` for the Analytics Engine schema. Query via the Cloudflare Analytics API:
+1. Add `content/announcements/<slug>.md` with frontmatter:
+   ```markdown
+   ---
+   id: "freeze-2026-05"
+   title: "Scheduled maintenance May 3rd"
+   severity: "warning"              # info | warning | critical
+   publishedAt: "2026-05-01"
+   expiresAt: "2026-05-04"          # optional
+   link: "https://status.opentoggl.com/..."  # optional
+   ---
+
+   …markdown body…
+   ```
+2. Commit + push to `main`. GitHub Actions (`.github/workflows/update-worker-deploy.yml`) redeploys.
+3. Expired announcements are filtered out at request time.
+
+## Env / bindings
+
+- `GITHUB_REPO` — `owner/repo` the Worker proxies releases from. Default `CorrectRoadH/opentoggl`.
+- `GITHUB_TOKEN` (optional secret) — only needed if the 60/hr unauthenticated rate limit becomes an issue. `wrangler secret put GITHUB_TOKEN --env production`.
+- `UPDATE_REQUESTS` — Analytics Engine dataset binding for DAU. `recordUpdateRequest` is a no-op if the binding is ever removed.
+
+## Analytics (when enabled)
+
+One data point per request with a valid `instanceId` + `version`. Schema (see `src/analytics.ts`):
+
+```
+index1 = instance_id
+blob1  = version
+blob2  = go_version
+blob3  = os
+blob4  = arch
+blob5  = locale
+blob6  = country (CF-derived)
+```
+
+Example query via the Cloudflare Analytics API:
 
 ```sql
 SELECT blob1 AS version, COUNT(DISTINCT index1) AS instances
-FROM opentoggl_checkins
+FROM opentoggl_update_requests
 WHERE timestamp > NOW() - INTERVAL '1' DAY
 GROUP BY version
 ORDER BY instances DESC
+```
+
+## Deploying
+
+Auto: push to `main` with changes under `apps/update-worker/**` → GHA workflow redeploys.
+
+Manual: `vp run update-worker#deploy` (requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`).
+
+## Layout
+
+```
+apps/update-worker/
+  src/
+    index.ts             single GET handler
+    github.ts            releases fetch + CF edge cache
+    manifest.ts          combines releases + announcements
+    content.ts           reads baked announcements
+    content.generated.ts AUTO-GENERATED (do not edit)
+    analytics.ts         best-effort AE write
+    validation.ts        zod schema for query params
+    types.ts             response shape
+  content/announcements/ *.md — published at deploy
+  scripts/build-content.mjs   bakes announcements → content.generated.ts
+  test/                  vitest
+  wrangler.toml
 ```

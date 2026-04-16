@@ -1,76 +1,58 @@
-import { recordCheckin } from "./analytics.ts";
-import { getActiveAnnouncements, getChangelog } from "./content.ts";
+import { recordUpdateRequest } from "./analytics.ts";
+import { getActiveAnnouncements } from "./content.ts";
+import { fetchReleases, type GithubRelease } from "./github.ts";
 import { buildManifest } from "./manifest.ts";
 import type { WorkerEnv } from "./types.ts";
-import { checkRequestSchema } from "./validation.ts";
-
-const MAX_BODY_BYTES = 2048;
+import { parseQueryParams } from "./validation.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Max-Age": "86400",
 };
 
 export default {
-  async fetch(request: Request, env: WorkerEnv): Promise<Response> {
-    const url = new URL(request.url);
-
+  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
-
-    // Routing is deliberately dumb — a switch keeps the surface area visible
-    // and lets us add endpoints without a router dep.
-    switch (`${request.method} ${url.pathname}`) {
-      case "POST /v1/check":
-        return handleCheck(request, env);
-      case "GET /v1/manifest":
-        return handleManifest(env);
-      case "GET /v1/changelog":
-        return json({ entries: getChangelog() });
-      case "GET /v1/announcements":
-        return json({ announcements: getActiveAnnouncements() });
-      case "GET /healthz":
-        return new Response("ok", { status: 200, headers: CORS_HEADERS });
-      default:
-        return json({ error: "not_found" }, 404);
+    if (request.method !== "GET") {
+      return json({ error: "method_not_allowed" }, 405);
     }
+
+    const url = new URL(request.url);
+    if (url.pathname !== "/") {
+      return json({ error: "not_found" }, 404);
+    }
+
+    const query = parseQueryParams(url.searchParams);
+
+    // If GitHub is unreachable we degrade to empty releases but keep serving
+    // announcements. Clients interpret `latestVersion === ""` as "unknown".
+    let releases: GithubRelease[] = [];
+    try {
+      releases = await fetchReleases(env.GITHUB_REPO, env.GITHUB_TOKEN);
+    } catch (err) {
+      console.error("[update-worker] github fetch failed", err);
+    }
+
+    const manifest = buildManifest({
+      releases,
+      announcements: getActiveAnnouncements(),
+      clientVersion: query.version,
+    });
+
+    // Best-effort DAU write — never blocks the response.
+    ctx.waitUntil(Promise.resolve().then(() => recordUpdateRequest(env, query, request)));
+
+    return json(manifest, 200, {
+      // Edge-cache the composed manifest for a minute so a stampede doesn't
+      // translate 1:1 into GH fetches. GH itself is cached for 5min in github.ts.
+      "Cache-Control": "public, max-age=60",
+    });
   },
 };
-
-async function handleCheck(request: Request, env: WorkerEnv): Promise<Response> {
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (contentLength > MAX_BODY_BYTES) {
-    return json({ error: "payload_too_large" }, 413);
-  }
-
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    return json({ error: "invalid_json" }, 400);
-  }
-
-  const parsed = checkRequestSchema.safeParse(raw);
-  if (!parsed.success) {
-    return json({ error: "invalid_payload", issues: parsed.error.issues }, 400);
-  }
-
-  recordCheckin(env, parsed.data, request);
-
-  const manifest = buildManifest({
-    latestTag: env.LATEST_TAG,
-    clientVersion: parsed.data.version,
-  });
-  return json(manifest);
-}
-
-function handleManifest(env: WorkerEnv): Response {
-  const manifest = buildManifest({ latestTag: env.LATEST_TAG });
-  return json(manifest, 200, { "Cache-Control": "public, max-age=300" });
-}
 
 function json(body: unknown, status = 200, extra: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
