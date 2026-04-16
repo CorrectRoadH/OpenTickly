@@ -30,6 +30,8 @@ Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synolo
 
 [Read the self-hosting docs](https://opentoggl.com/docs/self-hosting)
 
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
+
 ## Mobile PWA Support
 
 The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Android) you can add it to your home screen and use it like a native app.

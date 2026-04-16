@@ -30,6 +30,8 @@ OpenToggl 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cl
 
 [阅读自部署文档](https://opentoggl.com/zh/docs/self-hosting)
 
+[![在 Zeabur 部署](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
+
 ## 手机端 PWA 支持
 
 Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 Android）可以添加到主屏幕。

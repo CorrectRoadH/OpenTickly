@@ -1,0 +1,362 @@
+# yaml-language-server: $schema=https://schema.zeabur.app/template.json
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: OpenToggl
+spec:
+  description: |
+    A free, private-first, AI-friendly self-hosted alternative to Toggl Track. Compatible with Toggl Track v9 and Reports v3 APIs so you can move data in and out without any loss.
+  icon: https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/apps/website/public/favicon.svg
+  coverImage: https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/apps/landing/public/hero/opentoggl-calendar-view.webp
+  tags:
+    - Productivity
+    - Tool
+  variables:
+    - key: PUBLIC_DOMAIN
+      type: DOMAIN
+      name: Public Domain
+      description: The public domain used to access OpenToggl from your browser and the toggl-cli.
+  readme: |
+    # OpenToggl on Zeabur
+
+    [OpenToggl](https://github.com/CorrectRoadH/opentoggl) is a free, private-first, AI-friendly alternative to Toggl Track. Bring your own data, keep your existing Toggl workflow, and pay only for what you host.
+
+    This template provisions everything you need in one click:
+
+    - **opentoggl** — single-image runtime that serves both the web UI and the API on port 8080
+    - **postgres** — PostgreSQL 17 for primary storage, with a persistent volume
+    - **redis** — Redis 8 for cache and the background job queue
+
+    ## After deployment
+
+    1. Wait until all three services report healthy in the dashboard.
+    2. Open the public domain you bound during deployment.
+    3. Sign up the first account — it becomes the workspace owner.
+    4. (Optional) Point [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) at your instance for AI-driven time tracking.
+
+    ## Custom domain
+
+    Bind your own domain in the **Networking** tab of the `opentoggl` service after deployment. The web UI is also an installable Progressive Web App on iOS and Android.
+
+    ## Updates
+
+    To upgrade, change the image tag of the `opentoggl` service to a newer release from
+    [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) and redeploy.
+
+    ## License & attribution
+
+    OpenToggl is licensed under [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
+    Source: <https://github.com/CorrectRoadH/opentoggl> · Website: <https://opentoggl.com>.
+    OpenToggl's design and API surface are inspired by [Toggl](https://toggl.com).
+  services:
+    - name: postgresql
+      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
+      template: PREBUILT_V2
+      spec:
+        source:
+          image: postgres:17-alpine
+        ports:
+          - id: database
+            port: 5432
+            type: TCP
+        portForwarding:
+          enabled: false
+        healthCheck:
+          type: TCP
+          port: database
+        volumes:
+          - id: data
+            dir: /var/lib/postgresql/data
+        env:
+          POSTGRES_DB:
+            default: opentoggl
+            expose: true
+            readonly: true
+          POSTGRES_USER:
+            default: postgres
+            expose: true
+            readonly: true
+          POSTGRES_PASSWORD:
+            default: ${PASSWORD}
+            expose: true
+          POSTGRES_HOST:
+            default: ${CONTAINER_HOSTNAME}
+            expose: true
+            readonly: true
+          POSTGRES_PORT:
+            default: "5432"
+            expose: true
+            readonly: true
+          POSTGRES_CONNECTION_STRING:
+            default: postgres://postgres:${PASSWORD}@${CONTAINER_HOSTNAME}:5432/opentoggl?sslmode=disable
+            expose: true
+            readonly: true
+
+    - name: redis
+      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/redis.svg
+      template: PREBUILT_V2
+      spec:
+        source:
+          image: redis:8-alpine
+          command:
+            - redis-server
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+            - --requirepass
+            - ${PASSWORD}
+        ports:
+          - id: redis
+            port: 6379
+            type: TCP
+        portForwarding:
+          enabled: false
+        healthCheck:
+          type: TCP
+          port: redis
+        env:
+          REDIS_PASSWORD:
+            default: ${PASSWORD}
+            expose: true
+          REDIS_HOST:
+            default: ${CONTAINER_HOSTNAME}
+            expose: true
+            readonly: true
+          REDIS_PORT:
+            default: "6379"
+            expose: true
+            readonly: true
+          REDIS_CONNECTION_STRING:
+            default: redis://:${PASSWORD}@${CONTAINER_HOSTNAME}:6379/0
+            expose: true
+            readonly: true
+
+    - name: opentoggl
+      icon: https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/apps/website/public/favicon.svg
+      template: PREBUILT_V2
+      dependencies:
+        - postgresql
+        - redis
+      domainKey: PUBLIC_DOMAIN
+      spec:
+        source:
+          image: ghcr.io/correctroadh/opentoggl:0.2.6
+        ports:
+          - id: web
+            port: 8080
+            type: HTTP
+        healthCheck:
+          type: TCP
+          port: web
+        env:
+          OPENTOGGL_SERVICE_NAME:
+            default: opentoggl
+          PORT:
+            default: "8080"
+          DATABASE_URL:
+            default: ${POSTGRES_CONNECTION_STRING}
+            readonly: true
+          REDIS_URL:
+            default: ${REDIS_CONNECTION_STRING}
+            readonly: true
+          OPENTOGGL_FILESTORE_NAMESPACE:
+            default: opentoggl
+          OPENTOGGL_JOBS_QUEUE_NAME:
+            default: default
+
+localization:
+  zh-TW:
+    description: |
+      免費、隱私優先、對 AI 友善的自託管 Toggl Track 替代方案。完整相容 Toggl Track v9 與 Reports v3 API,可無損將資料在兩者之間遷移。
+    variables:
+      - key: PUBLIC_DOMAIN
+        name: 公開網域
+        description: 用來透過瀏覽器及 toggl-cli 存取 OpenToggl 的公開網域。
+    readme: |
+      # OpenToggl on Zeabur
+
+      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) 是一款免費、隱私優先、對 AI 友善的 Toggl Track 替代方案。資料完全屬於你,既能保留現有的 Toggl 工作流程,又只需支付實際自託管的成本。
+
+      此模板將一鍵部署所需的全部服務:
+
+      - **opentoggl** — 單一映像,在 8080 連接埠同時提供 Web UI 與 API
+      - **postgres** — PostgreSQL 17 主資料庫,附持久化儲存區
+      - **redis** — Redis 8,用於快取與背景任務佇列
+
+      ## 部署完成之後
+
+      1. 等待三個服務在儀表板上都顯示健康狀態。
+      2. 開啟你部署時綁定的公開網域。
+      3. 註冊第一個帳號 — 該帳號會成為 workspace 擁有者。
+      4. (可選)將 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 指向此實例,啟用 AI 驅動的時間追蹤。
+
+      ## 自訂網域
+
+      在 `opentoggl` 服務的 **Networking** 分頁中,可綁定你自己的網域。Web UI 也是可安裝的 PWA,iOS 與 Android 皆可加入主畫面。
+
+      ## 升級
+
+      若要升級,將 `opentoggl` 服務的 image tag 換成 [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) 上的新版本後重新部署即可。
+
+      ## 授權與致謝
+
+      OpenToggl 採用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 授權。
+      原始碼:<https://github.com/CorrectRoadH/opentoggl> · 官方網站:<https://opentoggl.com>。
+      OpenToggl 的設計與 API 介面皆受 [Toggl](https://toggl.com) 啟發。
+
+  zh-CN:
+    description: |
+      免费、隐私优先、对 AI 友好的自托管 Toggl Track 替代方案。完整兼容 Toggl Track v9 与 Reports v3 API,可无损将数据在两者之间迁移。
+    variables:
+      - key: PUBLIC_DOMAIN
+        name: 公开域名
+        description: 用于通过浏览器以及 toggl-cli 访问 OpenToggl 的公开域名。
+    readme: |
+      # OpenToggl on Zeabur
+
+      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) 是一款免费、隐私优先、对 AI 友好的 Toggl Track 替代方案。数据完全归你所有,既能保留现有的 Toggl 工作流,又只需支付实际自托管的成本。
+
+      此模板将一键部署所需的全部服务:
+
+      - **opentoggl** — 单一镜像,在 8080 端口同时提供 Web UI 与 API
+      - **postgres** — PostgreSQL 17 主数据库,附持久化存储卷
+      - **redis** — Redis 8,用于缓存与后台任务队列
+
+      ## 部署完成之后
+
+      1. 等待三个服务在仪表板上都显示为健康状态。
+      2. 打开你部署时绑定的公开域名。
+      3. 注册第一个账号 — 该账号会成为 workspace 拥有者。
+      4. (可选)将 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 指向此实例,启用 AI 驱动的时间追踪。
+
+      ## 自定义域名
+
+      在 `opentoggl` 服务的 **Networking** 选项卡中,可绑定你自己的域名。Web UI 同时也是可安装的 PWA,iOS 与 Android 均可添加到主屏幕。
+
+      ## 升级
+
+      升级时,将 `opentoggl` 服务的 image tag 换成 [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) 上的新版本,然后重新部署即可。
+
+      ## 许可与致谢
+
+      OpenToggl 采用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 许可协议。
+      源代码:<https://github.com/CorrectRoadH/opentoggl> · 官方网站:<https://opentoggl.com>。
+      OpenToggl 的设计与 API 接口皆受 [Toggl](https://toggl.com) 启发。
+
+  ja-JP:
+    description: |
+      無料・プライバシー優先・AI フレンドリーなセルフホスト型 Toggl Track 代替サービス。Toggl Track v9 と Reports v3 API に互換性があり、データを損失なく相互に移行できます。
+    variables:
+      - key: PUBLIC_DOMAIN
+        name: 公開ドメイン
+        description: ブラウザおよび toggl-cli から OpenToggl にアクセスするための公開ドメイン。
+    readme: |
+      # OpenToggl on Zeabur
+
+      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) は、無料でプライバシー優先、AI に優しい Toggl Track の代替サービスです。データはすべてあなたのもの、Toggl の既存ワークフローを保ちながら、実際にホストする分だけの費用で済みます。
+
+      このテンプレートは必要な構成を一括でデプロイします:
+
+      - **opentoggl** — Web UI と API の両方をポート 8080 で配信する単一イメージ
+      - **postgres** — メインストレージとなる PostgreSQL 17(永続ボリューム付き)
+      - **redis** — キャッシュとバックグラウンドジョブキュー用の Redis 8
+
+      ## デプロイ後
+
+      1. ダッシュボードで 3 つのサービスがすべて healthy になるまで待ちます。
+      2. デプロイ時にバインドした公開ドメインを開きます。
+      3. 最初のアカウントを登録します — そのアカウントが workspace のオーナーになります。
+      4. (任意)[`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) をこのインスタンスに向けて、AI 駆動の時間トラッキングを有効にできます。
+
+      ## カスタムドメイン
+
+      `opentoggl` サービスの **Networking** タブから、自分のドメインをバインドできます。Web UI は iOS / Android のホーム画面に追加できる PWA でもあります。
+
+      ## アップデート
+
+      アップデートする場合は、`opentoggl` サービスの image タグを [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) の新しいリリースに変更して再デプロイしてください。
+
+      ## ライセンスとクレジット
+
+      OpenToggl は [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) ライセンスです。
+      ソース:<https://github.com/CorrectRoadH/opentoggl> · 公式サイト:<https://opentoggl.com>。
+      OpenToggl のデザインと API は [Toggl](https://toggl.com) にインスパイアされています。
+
+  es-ES:
+    description: |
+      Una alternativa autoalojada a Toggl Track, gratuita, centrada en la privacidad y compatible con IA. Compatible con las API de Toggl Track v9 y Reports v3, para que puedas mover tus datos entre ambas sin pérdidas.
+    variables:
+      - key: PUBLIC_DOMAIN
+        name: Dominio Público
+        description: El dominio público usado para acceder a OpenToggl desde tu navegador y desde toggl-cli.
+    readme: |
+      # OpenToggl en Zeabur
+
+      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) es una alternativa a Toggl Track, gratuita, centrada en la privacidad y compatible con IA. Conserva tus datos, mantén tu flujo de trabajo de Toggl y paga solo por lo que alojes.
+
+      Esta plantilla provisiona todo lo necesario en un clic:
+
+      - **opentoggl** — imagen única que sirve la UI web y la API en el puerto 8080
+      - **postgres** — PostgreSQL 17 como almacenamiento principal, con volumen persistente
+      - **redis** — Redis 8 para caché y la cola de trabajos en segundo plano
+
+      ## Después del despliegue
+
+      1. Espera a que los tres servicios aparezcan como healthy en el panel.
+      2. Abre el dominio público que vinculaste durante el despliegue.
+      3. Registra la primera cuenta — esta será la propietaria del workspace.
+      4. (Opcional) Apunta [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) a tu instancia para registrar tiempo asistido por IA.
+
+      ## Dominio personalizado
+
+      Vincula tu propio dominio en la pestaña **Networking** del servicio `opentoggl`. La UI web también es una PWA instalable en iOS y Android.
+
+      ## Actualizaciones
+
+      Para actualizar, cambia el tag de imagen del servicio `opentoggl` a una versión más reciente de [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) y vuelve a desplegar.
+
+      ## Licencia y atribución
+
+      OpenToggl está licenciado bajo [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
+      Código: <https://github.com/CorrectRoadH/opentoggl> · Sitio: <https://opentoggl.com>.
+      El diseño y la superficie de API de OpenToggl están inspirados en [Toggl](https://toggl.com).
+
+  id-ID:
+    description: |
+      Alternatif Toggl Track yang gratis, mengutamakan privasi, dan ramah AI, dengan kemampuan self-hosted. Kompatibel dengan API Toggl Track v9 dan Reports v3, sehingga Anda dapat memindahkan data tanpa kehilangan apa pun.
+    variables:
+      - key: PUBLIC_DOMAIN
+        name: Domain Publik
+        description: Domain publik untuk mengakses OpenToggl dari browser dan toggl-cli.
+    readme: |
+      # OpenToggl di Zeabur
+
+      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) adalah alternatif Toggl Track yang gratis, mengutamakan privasi, dan ramah AI. Data sepenuhnya milik Anda, alur kerja Toggl tetap, dan Anda hanya membayar untuk apa yang di-host.
+
+      Template ini menyediakan semua yang dibutuhkan dalam satu klik:
+
+      - **opentoggl** — image tunggal yang menyajikan UI web dan API di port 8080
+      - **postgres** — PostgreSQL 17 sebagai penyimpanan utama, dengan volume persisten
+      - **redis** — Redis 8 untuk cache dan antrian background job
+
+      ## Setelah deploy
+
+      1. Tunggu hingga ketiga service menampilkan status healthy di dashboard.
+      2. Buka domain publik yang Anda bind saat deploy.
+      3. Daftarkan akun pertama — akun ini menjadi pemilik workspace.
+      4. (Opsional) Arahkan [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) ke instance Anda untuk pelacakan waktu yang dibantu AI.
+
+      ## Domain kustom
+
+      Bind domain Anda sendiri di tab **Networking** pada service `opentoggl`. UI web juga merupakan PWA yang dapat dipasang di iOS dan Android.
+
+      ## Pembaruan
+
+      Untuk memperbarui, ubah tag image service `opentoggl` ke rilis terbaru dari [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) lalu deploy ulang.
+
+      ## Lisensi & atribusi
+
+      OpenToggl dilisensikan di bawah [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
+      Kode sumber: <https://github.com/CorrectRoadH/opentoggl> · Situs: <https://opentoggl.com>.
+      Desain dan permukaan API OpenToggl terinspirasi dari [Toggl](https://toggl.com).
