@@ -12,6 +12,29 @@ env:
 jobs:
   cli-integration:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: opentoggl
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d opentoggl"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,12 +47,6 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: Start postgres and redis
-        run: |
-          docker logout || true
-          docker compose -f docker-compose.yml up -d postgres redis
-          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
-
       - name: Install dependencies
         run: pnpm install
 
@@ -37,10 +54,6 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: go build -o /tmp/opentoggl ./apps/backend
-
-      - name: Create database
-        run: |
-          docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "CREATE DATABASE opentoggl"
 
       - name: Start backend
         env:
