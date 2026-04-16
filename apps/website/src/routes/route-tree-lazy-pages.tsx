@@ -108,23 +108,16 @@ export const SubscriptionPage = lazyNamed(
   "SubscriptionPage",
 );
 
-export const MobileShell = lazyNamed(
-  () => import("../pages/mobile/MobileShell.tsx"),
-  "MobileShell",
-);
-export const MobileTimerPage = lazyNamed(
-  () => import("../pages/mobile/MobileTimerPage.tsx"),
-  "MobileTimerPage",
-);
-export const MobileCalendarPage = lazyNamed(
-  () => import("../pages/mobile/MobileCalendarPage.tsx"),
-  "MobileCalendarPage",
-);
-export const MobileReportPage = lazyNamed(
-  () => import("../pages/mobile/MobileReportPage.tsx"),
-  "MobileReportPage",
-);
-export const MobileMePage = lazyNamed(
-  () => import("../pages/mobile/MobileMePage.tsx"),
-  "MobileMePage",
-);
+// Mobile components share one dynamic import so Vite emits a single chunk for
+// the whole `/m/*` experience. See `apps/website/src/pages/mobile/index.ts`
+// for the rationale. Once `MobileShell` has loaded, tab switches (Timer ->
+// Calendar -> Report -> Me) do not fetch any new JS — the four tab pages are
+// already evaluated in the same chunk, so the only remaining suspend is a
+// microtask for `React.lazy`'s own state machine (imperceptible).
+const loadMobileBundle = () => import("../pages/mobile/index.ts");
+
+export const MobileShell = lazyNamed(loadMobileBundle, "MobileShell");
+export const MobileTimerPage = lazyNamed(loadMobileBundle, "MobileTimerPage");
+export const MobileCalendarPage = lazyNamed(loadMobileBundle, "MobileCalendarPage");
+export const MobileReportPage = lazyNamed(loadMobileBundle, "MobileReportPage");
+export const MobileMePage = lazyNamed(loadMobileBundle, "MobileMePage");
