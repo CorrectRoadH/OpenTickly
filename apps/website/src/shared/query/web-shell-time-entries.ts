@@ -106,28 +106,35 @@ export function useStartTimeEntryMutation(workspaceId: number) {
       };
       // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(currentTimeEntryQueryKey, optimistic);
-      // Drop the new running entry into every time-entries list cache so
-      // the calendar timeline, the timer list, and the recent-entries row
-      // show the new block at tap time. Also flip the previous running
-      // entry (if any) to stopped in those same lists — Toggl's server
-      // auto-stops the prior timer on start, so rendering two running
-      // blocks while the server round-trips is a visual glitch.
+      // Auto-stop the previous running entry in all list caches so the UI
+      // doesn't show two running blocks while the server round-trips.
+      // Toggl's server auto-stops the prior timer on start; this keeps the
+      // lists in sync optimistically.
+      //
+      // NOTE: we intentionally do NOT prepend the new optimistic entry to
+      // list caches here. The page may subscribe to multiple ["time-entries"]
+      // query instances (e.g. mobile has both a date-ranged query and a
+      // recent-entries query). Broadcasting a prepend via setQueriesData
+      // duplicates the entry across every cache instance, causing the same
+      // description to render in 3+ DOM nodes (strict-mode violation in
+      // tests, visual duplication for users). The composer bar already
+      // shows the running entry from currentTimeEntryQueryKey; list caches
+      // receive the confirmed entry in onSuccess (~200ms later).
       const previousRunningId = previous?.id;
-      const stopNowIso = request.start; // same instant the new timer begins
-      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
-        { queryKey: ["time-entries"] },
-        (old) => {
-          const patched =
+      if (previousRunningId != null) {
+        const stopNowIso = request.start;
+        queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+          { queryKey: ["time-entries"] },
+          (old) =>
             old?.map((entry) => {
-              if (previousRunningId == null || entry.id !== previousRunningId) return entry;
+              if (entry.id !== previousRunningId) return entry;
               const startMs = entry.start ? new Date(entry.start).getTime() : Date.now();
               const stopMs = new Date(stopNowIso).getTime();
               const durationSec = Math.max(0, Math.round((stopMs - startMs) / 1000));
               return { ...entry, stop: stopNowIso, duration: durationSec };
-            }) ?? [];
-          return [optimistic, ...patched];
-        },
-      );
+            }),
+        );
+      }
       void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
       void queryClient.cancelQueries({ queryKey: ["time-entries"] });
       return { previous, previousLists };
@@ -145,20 +152,15 @@ export function useStartTimeEntryMutation(workspaceId: number) {
     },
     onSuccess: async (data) => {
       queryClient.setQueryData(currentTimeEntryQueryKey, data);
-      // Swap the negative-id optimistic row for the server row in every
-      // list cache. This keeps the UI stable across the followup
-      // invalidate refetch — before this, the lists re-fetched, briefly
-      // dropping the just-started entry before the new one reappeared.
+      // Insert the confirmed entry into list caches so the UI is stable
+      // across the followup invalidation refetch — without this, the
+      // lists would briefly drop the just-started entry before the
+      // refetch brings it back.
       queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
         { queryKey: ["time-entries"] },
         (old) => {
           if (!old) return old;
-          const withoutOptimistic = old.filter(
-            (e) => !(typeof e.id === "number" && e.id < 0 && e.start === data.start),
-          );
-          return withoutOptimistic.some((e) => e.id === data.id)
-            ? withoutOptimistic
-            : [data, ...withoutOptimistic];
+          return old.some((e) => e.id === data.id) ? old : [data, ...old];
         },
       );
       await queryClient.invalidateQueries({ queryKey: ["time-entries"] });

@@ -139,7 +139,10 @@ export function MobileShell(): ReactElement {
       </div>
 
       {/* Timer composer bar */}
-      <div className="border-t border-[var(--track-border)] bg-[var(--track-panel)] px-4 py-2">
+      <div
+        className="border-t border-[var(--track-border)] bg-[var(--track-panel)] px-4 py-2"
+        data-testid="mobile-composer-bar"
+      >
         {runningEntry ? (
           <div className="flex items-center gap-3">
             <button

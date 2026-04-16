@@ -3,59 +3,32 @@ title: AI 集成
 description: 让 Claude、Cursor 等 AI Agent 通过 toggl-cli 和可安装的技能包，自动记录时间、启停计时器、管理项目与标签。为 AI 工作流设计的开源时间追踪。
 ---
 
-OpenToggl 的 AI 集成围绕 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 构建。这个 CLI 工具专门为 AI Agent 和自动化场景维护，提供两种接入方式：
+使用 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 接入 Claude Code、OpenClaw、Hermes Agent、 Codex、Cursor 等 AI Agent，让它们直接通过命令行操作你的 OpenToggl 实例，自动记录时间、启停计时器、管理项目与标签。
 
 - `toggl` CLI — 命令行直接操作
 - `SKILL.md` 技能包 — 装进 Agent 环境一键使用
 
 ## 安装
 
-Agent 环境装技能包：
-
 ```bash
+npm install -g @correctroadh/toggl-cli
+
 npx skills add CorrectRoadH/toggl-cli
 ```
 
-手动装 CLI：
+## 配置
+
+该 CLI 是同时兼容 Toggl 和 OpenToggl 的，默认指向官方 Toggl API。要改成自己的实例，认证时加上 `--api-type opentoggl` 和 `--api-url`：
+
+不过由于 Toggl 有 30 次/小时的 API 限制，强烈建议配合 OpenToggl 使用，解锁 AI Agent 的全部潜力：
 
 ```bash
-npm install -g @correctroadh/toggl-cli
-toggl --help
+toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-## CLI 能做什么
-
-装好之后，Agent 可以用命令行完成常见操作，不需要自己拼 HTTP 请求：
-
-- 时间条目：`start`、`stop`、`continue`、`running`、`show`、`edit`、`delete`
-- 工作区：`list`、`create`、`rename`、`delete`
-- 用户信息：`me`、`preferences`
-- 组织查看：`organization list`、`organization show`
-
-## 连接 OpenToggl 实例
-
-CLI 支持官方 Toggl Track 和 OpenToggl 自托管两种后端。首次认证时选择即可：
-
-- 选 Toggl Track → 连接官方服务
-- 选 OpenToggl → 输入你的实例地址，比如 `https://your-instance.com/api/v9`
-
-## 为什么用 CLI 而不是直接调 API
-
-- 命令和常见任务一一对应，Agent 不用理解底层接口
-- 内置认证，不用手动管 token
-- 读操作有本地缓存，写操作自动刷新缓存
-- 技能包可以直接装进 Agent 环境复用
-
-## 推荐配置流程
-
-1. 部署 OpenToggl（或使用托管版）
-2. 安装 toggl-cli 或技能包
-3. 认证到你的实例
-4. Agent 通过 CLI 命令完成日常操作
-5. 需要更细粒度的控制时，查阅 OpenAPI 文档
+`YOUR_API_TOKEN` 可以在 OpenToggl Web UI 的个人头像 → Profile → API Token 里找到。
 
 ## 参考
 
 - [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 仓库
 - `skills/toggl-cli/SKILL.md` 技能包定义
-- OpenToggl OpenAPI 合约和产品文档

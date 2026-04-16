@@ -3,44 +3,14 @@ title: OpenToggl 是什么
 description: OpenToggl 开源文档：快速上手、Docker 自托管部署、Toggl API 兼容性说明，以及 AI Agent 集成指南。覆盖从安装到接入 Claude、Cursor 的完整参考。
 ---
 
-OpenToggl 是一个开源时间追踪工具，目标很简单：兼容 Toggl，让你把数据握在自己手里。
+OpenToggl 是一个免费、隐私优先、AI友好 的 Toggl 替代方案。
 
-具体来说：
+Toggl 是一个很棒的产品，但是太贵并且数据真正不属于你。而且 30 次/小时的 API 调用限制又令人头疼，AI Agent 能在一分钟内就把一个小时的用量给消耗掉。
 
-- 兼容 `Track API v9`、`Reports API v3`、`Webhooks API v1`
-- 提供完整的 Web 界面
-- 支持托管和自托管两种方式
-- 支持从 Toggl 导入数据
+OpenToggl 的目标是与 Toggl 保持一致，你可以 0 损失的迁入与迁出用户数据在两者之间。保持一切工作流与使用习惯。什么都没有变，只是更好用、更便宜、更隐私了。
 
 <Cards>
   <Card title="AI 集成" href="/zh/docs/ai-integration" />
   <Card title="自托管" href="/zh/docs/self-hosting" />
   <Card title="GitHub 仓库" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>
-
-## 为什么做这个项目
-
-Toggl 好用，但数据不在自己手里。OpenToggl 想解决这个问题——用同样的 API，同样的体验，但你可以自己部署、自己掌控。
-
-项目以 OpenAPI 合约和产品文档作为实现标准，确保：
-
-- 自托管和托管版功能完全一致
-- 文档、合约、代码三者保持同步
-- 不做半成品发布
-
-## 仓库结构
-
-- `docs/` — 产品定义
-- `openapi/` — OpenAPI 合约
-- `apps/` — 前后端源码
-- `docs/self-hosting/` — 自托管指南
-
-## 当前范围
-
-- 通过 Track API 进行时间追踪和工作区管理
-- 通过 Reports API 查询报表
-- 通过 Webhooks API 管理 Webhook
-- 配套 Web 界面
-- Toggl 数据导入
-
-关于 AI：OpenToggl 不做独立的 AI 产品，但它的 API 稳定、文档齐全、支持自部署，天然适合 agent 和自动化场景。

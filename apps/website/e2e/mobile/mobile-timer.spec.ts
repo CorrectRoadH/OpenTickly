@@ -53,7 +53,8 @@ test.describe("Start and Stop Timer", () => {
     await composerInput.press("Enter");
 
     // Timer is now running - the composer bar shows the running entry
-    await expect(page.getByText(description)).toBeVisible();
+    const composerBar = page.getByTestId("mobile-composer-bar");
+    await expect(composerBar.getByText(description)).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toBeVisible();
 
     // User taps the stop button to stop the timer
@@ -76,7 +77,8 @@ test.describe("Start and Stop Timer", () => {
     await composerInput.press("Enter");
 
     // Wait for the timer to be recognized as running
-    await expect(page.getByText(description)).toBeVisible();
+    const composerBar = page.getByTestId("mobile-composer-bar");
+    await expect(composerBar.getByText(description)).toBeVisible();
 
     // Verify via API that a timer is running with correct description
     const { body: currentEntry } = await pollCurrentRunningEntry(page, { timeoutMs: 5000 });
