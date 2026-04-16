@@ -8,6 +8,7 @@ export default [
   route("api/search", "routes/search.ts"),
   route("robots.txt", "routes/robots.ts"),
   route("sitemap.xml", "routes/sitemap.ts"),
+  route("ai.txt", "routes/ai.ts"),
 
   // LLM integration:
   route("llms.txt", "llms/index.ts", { id: "llms-index-default" }),
@@ -28,6 +29,12 @@ export default [
   route("ko/llms.txt", "llms/index.ts", { id: "llms-index-ko" }),
   route("ko/llms-full.txt", "llms/full.ts", { id: "llms-full-ko" }),
   route("ko/llms.mdx/docs/*", "llms/mdx.ts", { id: "llms-mdx-ko" }),
+  route("pl/llms.txt", "llms/index.ts", { id: "llms-index-pl" }),
+  route("pl/llms-full.txt", "llms/full.ts", { id: "llms-full-pl" }),
+  route("pl/llms.mdx/docs/*", "llms/mdx.ts", { id: "llms-mdx-pl" }),
+  route("pt/llms.txt", "llms/index.ts", { id: "llms-index-pt" }),
+  route("pt/llms-full.txt", "llms/full.ts", { id: "llms-full-pt" }),
+  route("pt/llms.mdx/docs/*", "llms/mdx.ts", { id: "llms-mdx-pt" }),
 
   route("*", "routes/not-found.tsx"),
 ] satisfies RouteConfig;

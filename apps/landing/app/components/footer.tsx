@@ -1,4 +1,6 @@
 import { i18n } from "@/lib/i18n";
+import { repoUrl } from "@/lib/seo";
+import { appendUtm } from "@/lib/utm";
 
 const languageNames: Record<string, string> = {
   en: "English",
@@ -11,6 +13,12 @@ const languageNames: Record<string, string> = {
 
 export default function Footer({ locale }: { locale: string }) {
   const currentPrefix = locale === i18n.defaultLanguage ? "" : `/${locale}`;
+  const githubHref = appendUtm(repoUrl, {
+    source: "opentoggl_landing",
+    medium: "footer",
+    campaign: "github",
+    content: locale,
+  });
 
   return (
     <footer className="mt-auto border-t border-[var(--track-border)] bg-[var(--track-surface-muted)]">
@@ -32,7 +40,7 @@ export default function Footer({ locale }: { locale: string }) {
               Self-Hosting Guide
             </a>
             <a
-              href="https://github.com/CorrectRoadH/opentoggl"
+              href={githubHref}
               className="text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
               rel="noreferrer"
               target="_blank"

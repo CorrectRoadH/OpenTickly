@@ -3,7 +3,7 @@ import {
   buildPageTitle,
   defaultDescription,
   defaultOgImagePath,
-  defaultKeywords,
+  resolveOgImageAlt,
   resolveSiteUrl,
   siteName,
 } from "@/lib/seo";
@@ -13,7 +13,6 @@ type SeoProps = {
   description?: string;
   imagePath?: string;
   imageAlt?: string;
-  keywords?: string;
   locale?: string;
   pathname: string;
   robots?: string;
@@ -83,13 +82,10 @@ function buildHreflangEntries(pathname: string, currentLocale: string, siteUrl: 
   return entries;
 }
 
-const defaultImageAlt = "OpenToggl open source time tracking platform";
-
 export default function Seo({
   description = defaultDescription,
   imagePath = defaultOgImagePath,
-  imageAlt = defaultImageAlt,
-  keywords = defaultKeywords,
+  imageAlt,
   locale = "en",
   pathname,
   robots = "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1",
@@ -102,12 +98,12 @@ export default function Seo({
   const imageUrl = buildCanonicalUrl(imagePath, siteUrl);
   const pageTitle = buildPageTitle(title);
   const hreflangEntries = buildHreflangEntries(pathname, locale, siteUrl);
+  const resolvedImageAlt = imageAlt ?? resolveOgImageAlt(locale);
 
   return (
     <>
       <title>{pageTitle}</title>
       <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
       <meta name="author" content={siteName} />
       <meta name="robots" content={robots} />
       <link rel="canonical" href={canonicalUrl} />
@@ -121,7 +117,7 @@ export default function Seo({
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:image" content={imageUrl} />
-      <meta property="og:image:alt" content={imageAlt} />
+      <meta property="og:image:alt" content={resolvedImageAlt} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={description} />

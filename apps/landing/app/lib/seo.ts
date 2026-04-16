@@ -1,18 +1,46 @@
+import type { Locale } from "./i18n";
+
 export const siteName = "OpenToggl";
 export const siteUrl = "https://opentoggl.com";
 export const defaultTitle = "Open-Source Time Tracking and Toggl Alternative";
 export const defaultDescription =
   "OpenToggl is a free, open-source time tracking and time management app for individuals and teams, and a practical alternative to Toggl.";
 export const defaultOgImagePath = "/og-image.png";
-export const defaultKeywords = [
-  "OpenToggl",
-  "open source time tracking",
-  "time management app",
-  "self-hosted time tracking",
-  "Toggl alternative",
-  "project and task tracking",
-  "time tracking software",
-].join(", ");
+
+export const repoUrl = "https://github.com/CorrectRoadH/opentoggl";
+export const demoUrl = "https://track.opentoggl.com";
+
+export const localizedDescriptions: Record<Locale, string> = {
+  en: "OpenToggl is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
+  zh: "OpenToggl 是开源的 Toggl 替代方案：100% 兼容 Toggl API，一键 Docker 自托管，数据完全在你手里。无座位限制，个人与团队免费使用。",
+  es: "OpenToggl es la alternativa open source a Toggl: 100% compatible con la API de Toggl, autoalojamiento con Docker en un comando, tus datos siguen siendo tuyos. Sin límite de asientos, gratis para individuos y equipos.",
+  ja: "OpenToggl はオープンソースの Toggl 代替ツール。Toggl API に 100% 互換、Docker ワンコマンドでセルフホスト、データはあなたの手の中に。シート数無制限、個人・チームとも無料で利用可能。",
+  fr: "OpenToggl est l'alternative open source à Toggl : 100 % compatible avec l'API Toggl, auto-hébergement Docker en une commande, vos données restent les vôtres. Sans limite d'utilisateurs, gratuit pour les particuliers et les équipes.",
+  ko: "OpenToggl은 오픈소스 Toggl 대안입니다. Toggl API 100% 호환, Docker 한 줄 명령으로 셀프호스팅, 데이터는 전적으로 본인 관리. 좌석 수 제한 없이 개인과 팀 모두 무료로 사용 가능.",
+  pl: "OpenToggl to otwartoźródłowa alternatywa dla Toggl: w 100% zgodna z API Toggl, samodzielny hosting Dockera jedną komendą, Twoje dane pozostają Twoje. Bez limitu miejsc — darmowa dla osób i zespołów.",
+  pt: "OpenToggl é a alternativa open source ao Toggl: 100% compatível com a API do Toggl, auto-hospedagem Docker em um comando, seus dados continuam seus. Sem limite de assentos — grátis para indivíduos e equipes.",
+};
+
+const defaultOgImageAlt = "OpenToggl open source time tracking platform";
+
+export const localizedOgImageAlt: Record<Locale, string> = {
+  en: defaultOgImageAlt,
+  zh: "OpenToggl 开源时间追踪平台",
+  es: "OpenToggl plataforma de seguimiento de tiempo de código abierto",
+  ja: "OpenToggl オープンソース時間管理プラットフォーム",
+  fr: "OpenToggl plateforme open source de suivi du temps",
+  ko: "OpenToggl 오픈소스 시간 추적 플랫폼",
+  pl: "OpenToggl — open-source'owa platforma śledzenia czasu",
+  pt: "OpenToggl — plataforma open source de rastreamento de tempo",
+};
+
+export function resolveOgImageAlt(locale: string): string {
+  return localizedOgImageAlt[locale as Locale] ?? defaultOgImageAlt;
+}
+
+export function resolveLocalizedDescription(locale: string): string {
+  return localizedDescriptions[locale as Locale] ?? defaultDescription;
+}
 
 export type SitemapEntry = {
   pathname: string;
@@ -44,7 +72,39 @@ export function buildRobotsTxt(rawSiteUrl?: string): string {
     "User-agent: *",
     "Allow: /",
     "Disallow: /api/search",
-    "Disallow: /llms.mdx/",
+    "",
+    "# AI crawlers — explicitly allowed.",
+    "# /llms.txt, /llms-full.txt and /llms.mdx/* are intended for LLM consumption.",
+    "User-agent: GPTBot",
+    "Allow: /",
+    "",
+    "User-agent: ChatGPT-User",
+    "Allow: /",
+    "",
+    "User-agent: OAI-SearchBot",
+    "Allow: /",
+    "",
+    "User-agent: ClaudeBot",
+    "Allow: /",
+    "",
+    "User-agent: Claude-SearchBot",
+    "Allow: /",
+    "",
+    "User-agent: Claude-User",
+    "Allow: /",
+    "",
+    "User-agent: PerplexityBot",
+    "Allow: /",
+    "",
+    "User-agent: Perplexity-User",
+    "Allow: /",
+    "",
+    "User-agent: Google-Extended",
+    "Allow: /",
+    "",
+    "User-agent: CCBot",
+    "Allow: /",
+    "",
     `Sitemap: ${sitemapUrl}`,
   ].join("\n");
 }
@@ -85,15 +145,62 @@ export function buildOrganizationSchema(siteUrl: string) {
     "@type": "SoftwareApplication",
     name: siteName,
     applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
+    applicationSubCategory: "TimeTrackingApplication",
+    operatingSystem: "Web, Linux, macOS, Windows (via Docker)",
     description: defaultDescription,
     url: siteUrl,
-    sameAs: ["https://github.com/CorrectRoadH/opentoggl"],
+    screenshot: `${siteUrl}${defaultOgImagePath}`,
+    license: "https://opensource.org/licenses/MIT",
+    isAccessibleForFree: true,
+    softwareVersion: "rolling",
+    featureList: [
+      "Toggl Track API v9 compatibility",
+      "Toggl Reports API v3 compatibility",
+      "Toggl Webhooks API v1 compatibility",
+      "One-command Docker self-hosting (docker compose up -d)",
+      "Unlimited users with no seat limits",
+      "Hosted demo at track.opentoggl.com",
+      "AI-agent-friendly API with no third-party rate limits",
+      "Import from Toggl export files to preserve history",
+      "Runs on CasaOS, Synology, fnOS, and any Docker host",
+    ],
+    sameAs: [repoUrl, demoUrl],
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
     },
+  };
+}
+
+export function buildWebSiteSchema(siteUrl: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteName,
+    url: siteUrl,
+    description: defaultDescription,
+    inLanguage: ["en", "zh", "es", "ja", "fr", "ko", "pl", "pt"],
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      url: siteUrl,
+    },
+  };
+}
+
+export type BreadcrumbItem = { name: string; url: string };
+
+export function buildBreadcrumbSchema(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
   };
 }
 

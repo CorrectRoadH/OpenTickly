@@ -24,20 +24,11 @@ import { baseOptions } from "@/lib/layout.shared";
 import {
   buildFaqSchema,
   buildOrganizationSchema,
-  defaultDescription,
+  buildWebSiteSchema,
+  resolveLocalizedDescription,
   resolveSiteUrl,
 } from "@/lib/seo";
-
-const localizedDescriptions: Record<string, string> = {
-  en: "OpenToggl is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
-  zh: "OpenToggl 是开源的 Toggl 替代方案：100% 兼容 Toggl API，一键 Docker 自托管，数据完全在你手里。无座位限制，个人与团队免费使用。",
-  es: "OpenToggl es la alternativa open source a Toggl: 100% compatible con la API de Toggl, autoalojamiento con Docker en un comando, tus datos siguen siendo tuyos. Sin límite de asientos, gratis para individuos y equipos.",
-  ja: "OpenToggl はオープンソースの Toggl 代替ツール。Toggl API に 100% 互換、Docker ワンコマンドでセルフホスト、データはあなたの手の中に。シート数無制限、個人・チームとも無料で利用可能。",
-  fr: "OpenToggl est l'alternative open source à Toggl : 100 % compatible avec l'API Toggl, auto-hébergement Docker en une commande, vos données restent les vôtres. Sans limite d'utilisateurs, gratuit pour les particuliers et les équipes.",
-  ko: "OpenToggl은 오픈소스 Toggl 대안입니다. Toggl API 100% 호환, Docker 한 줄 명령으로 셀프호스팅, 데이터는 전적으로 본인 관리. 좌석 수 제한 없이 개인과 팀 모두 무료로 사용 가능.",
-  pl: "OpenToggl to otwartoźródłowa alternatywa dla Toggl: w 100% zgodna z API Toggl, samodzielny hosting Dockera jedną komendą, Twoje dane pozostają Twoje. Bez limitu miejsc — darmowa dla osób i zespołów.",
-  pt: "OpenToggl é a alternativa open source ao Toggl: 100% compatível com a API do Toggl, auto-hospedagem Docker em um comando, seus dados continuam seus. Sem limite de assentos — grátis para indivíduos e equipes.",
-};
+import { appendUtm } from "@/lib/utm";
 
 const featureIcons = [RefreshCw, Server, Unlock];
 const proofIcons = [Play, Github, FileText];
@@ -52,26 +43,37 @@ export default function Home() {
   const strings = homeContent[locale];
   const siteUrl = resolveSiteUrl();
 
+  const demoHref = appendUtm("https://track.opentoggl.com", {
+    source: "opentoggl_landing",
+    medium: "hero_cta",
+    campaign: "try_demo",
+    content: locale,
+  });
+
+  const proofItems = strings.proof.items.map((item) => {
+    if (!item.href.startsWith("http")) return item;
+    return {
+      ...item,
+      href: appendUtm(item.href, {
+        source: "opentoggl_landing",
+        medium: "proof_card",
+        campaign: "home",
+        content: locale,
+      }),
+    };
+  });
+
   return (
     <HomeLayout {...baseOptions(locale)}>
       <Seo
         locale={locale}
         pathname={`${prefix}/`}
-        description={localizedDescriptions[locale] ?? defaultDescription}
-        imageAlt={
-          locale === "zh"
-            ? "OpenToggl 开源时间追踪平台"
-            : locale === "ja"
-              ? "OpenToggl オープンソース時間管理プラットフォーム"
-              : locale === "ko"
-                ? "OpenToggl 오픈소스 시간 추적 플랫폼"
-                : locale === "es"
-                  ? "OpenToggl plataforma de seguimiento de tiempo de código abierto"
-                  : locale === "fr"
-                    ? "OpenToggl plateforme open source de suivi du temps"
-                    : undefined
-        }
-        schema={[buildOrganizationSchema(siteUrl), buildFaqSchema([...strings.faq])]}
+        description={resolveLocalizedDescription(locale)}
+        schema={[
+          buildWebSiteSchema(siteUrl),
+          buildOrganizationSchema(siteUrl),
+          buildFaqSchema([...strings.faq]),
+        ]}
       />
 
       <main id="main-content" className="landing-home">
@@ -90,7 +92,7 @@ export default function Home() {
               {strings.hero.subtitle}
             </p>
             <div className="mt-8 flex justify-center gap-3">
-              <AppLinkButton href="https://track.opentoggl.com" target="_blank">
+              <AppLinkButton href={demoHref} target="_blank">
                 {strings.hero.ctas.tryDemo}
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </AppLinkButton>
@@ -135,7 +137,7 @@ export default function Home() {
 
         {/* Proof */}
         <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
-          <ProofGridCard icons={proofIcons} items={strings.proof.items} />
+          <ProofGridCard icons={proofIcons} items={proofItems} />
         </section>
 
         {/* FAQ */}

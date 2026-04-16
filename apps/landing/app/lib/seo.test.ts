@@ -26,10 +26,17 @@ describe("seo helpers", () => {
   });
 
   it("builds robots text that points at the sitemap", () => {
-    expect(buildRobotsTxt("https://opentoggl.example")).toContain(
-      "Sitemap: https://opentoggl.example/sitemap.xml",
-    );
-    expect(buildRobotsTxt("https://opentoggl.example")).toContain("Disallow: /llms.mdx/");
+    const body = buildRobotsTxt("https://opentoggl.example");
+    expect(body).toContain("Sitemap: https://opentoggl.example/sitemap.xml");
+    // The /llms.mdx/ path is intentionally crawlable for LLMs now.
+    expect(body).not.toContain("Disallow: /llms.mdx/");
+  });
+
+  it("explicitly allows major AI crawlers", () => {
+    const body = buildRobotsTxt();
+    for (const bot of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "CCBot"]) {
+      expect(body).toContain(`User-agent: ${bot}`);
+    }
   });
 
   it("builds sitemap xml with absolute urls", () => {

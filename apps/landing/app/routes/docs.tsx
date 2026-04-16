@@ -15,7 +15,13 @@ import { baseOptions, gitConfig } from "@/lib/layout.shared";
 import { useFumadocsLoader } from "fumadocs-core/source/client";
 import { useMDXComponents } from "@/components/mdx";
 import Seo from "@/components/seo";
-import { buildDocSchema, resolveSiteUrl } from "@/lib/seo";
+import {
+  buildBreadcrumbSchema,
+  buildCanonicalUrl,
+  buildDocSchema,
+  resolveSiteUrl,
+  siteName,
+} from "@/lib/seo";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const locale = resolveLocale(params.lang);
@@ -49,6 +55,12 @@ const clientLoader = browserCollections.docs.createClientLoader({
   ) {
     const siteUrl = resolveSiteUrl();
     const description = frontmatter.description ?? "OpenToggl documentation";
+    const localePrefix = locale === "en" ? "" : `/${locale}`;
+    const breadcrumbItems = [
+      { name: siteName, url: buildCanonicalUrl(`${localePrefix}/`, siteUrl) },
+      { name: "Docs", url: buildCanonicalUrl(`${localePrefix}/docs`, siteUrl) },
+      { name: frontmatter.title, url: buildCanonicalUrl(pathname, siteUrl) },
+    ];
 
     return (
       <DocsPage toc={toc}>
@@ -58,12 +70,15 @@ const clientLoader = browserCollections.docs.createClientLoader({
           title={frontmatter.title}
           description={description}
           type="article"
-          schema={buildDocSchema({
-            title: frontmatter.title,
-            description,
-            pathname,
-            siteUrl,
-          })}
+          schema={[
+            buildDocSchema({
+              title: frontmatter.title,
+              description,
+              pathname,
+              siteUrl,
+            }),
+            buildBreadcrumbSchema(breadcrumbItems),
+          ]}
         />
         <DocsTitle>{frontmatter.title}</DocsTitle>
         <DocsDescription>{description}</DocsDescription>
