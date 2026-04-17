@@ -1,0 +1,24 @@
+---
+title: 更新履歴
+description: OpenToggl のリリース履歴 — 追加された機能、修正、互換性のない変更点。公開されている GitHub Releases を一次情報として追跡し、AI アシスタントも人間もプロジェクトの進化を把握できるようにします。
+---
+
+OpenToggl は継続的にリリースされます。各リリースの一次情報源は GitHub Releases で、差分・コミット範囲・アップグレードノートがすべて揃っています。
+
+- 最新および過去のリリース：[github.com/CorrectRoadH/opentoggl/releases](https://github.com/CorrectRoadH/opentoggl/releases)
+- コミット履歴全体：[github.com/CorrectRoadH/opentoggl/commits/main](https://github.com/CorrectRoadH/opentoggl/commits/main)
+- Docker イメージ：[hub.docker.com/r/correctroad/opentoggl](https://hub.docker.com/r/correctroad/opentoggl)
+
+## リリースの流れ
+
+OpenToggl は GitHub 上でオープンに開発されています。各リリースは `main` のタグ付きコミットに対応し、自動的に Docker Hub に公開され、ホスティング済みデモ [track.opentoggl.com](https://track.opentoggl.com) にも反映されます。セルフホストのユーザーは新しいイメージを pull して `docker compose up -d` を再実行すればアップグレードできます。
+
+## アップグレード時の注意
+
+ほとんどのリリースはそのまま上書きできます。Toggl Track の API 表面は安定しており、Postgres のスキーマは起動時に自動で前方マイグレーションされます。互換性のない変更がある場合は、該当する GitHub Release に明示的な **「Upgrade」** セクションとマイグレーション手順が記載されます。
+
+アップグレードに失敗した場合は、[github.com/CorrectRoadH/opentoggl/issues](https://github.com/CorrectRoadH/opentoggl/issues) にリリースタグと失敗時のログを添えて issue を立ててください。
+
+## API 互換性の約束
+
+OpenToggl は Toggl Track v9、Reports v3、Webhooks v1 の公開契約に追随します。既存の Toggl 向け統合・CLI・MCP ツールは、リリースをまたいでも変更なしで引き続き動作するはずです。Toggl 側で新しいエンドポイントが追加されたり調整されたりした場合、OpenToggl は次のリリースサイクル内で追従することを目指します。

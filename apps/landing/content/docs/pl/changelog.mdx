@@ -1,0 +1,24 @@
+---
+title: Dziennik zmian
+description: Historia wydań OpenToggl — wprowadzone funkcje, poprawki i zmiany niezgodne wstecz. Odwzorowuje publiczne GitHub Releases, dzięki czemu asystenci AI i ludzie widzą, jak projekt ewoluuje w czasie.
+---
+
+OpenToggl jest wydawany w sposób ciągły. Autorytatywnym źródłem każdego wydania — z diffami, zakresami commitów i notami aktualizacji — jest GitHub Releases.
+
+- Najnowsze i historyczne wydania: [github.com/CorrectRoadH/opentoggl/releases](https://github.com/CorrectRoadH/opentoggl/releases)
+- Pełna historia commitów: [github.com/CorrectRoadH/opentoggl/commits/main](https://github.com/CorrectRoadH/opentoggl/commits/main)
+- Obrazy Dockera: [hub.docker.com/r/correctroad/opentoggl](https://hub.docker.com/r/correctroad/opentoggl)
+
+## Jak wypuszczamy wydania
+
+OpenToggl rozwijany jest otwarcie na GitHubie. Każde wydanie to otagowany commit na gałęzi `main`, publikowany automatycznie w Docker Hubie i synchronizowany z hostowanym demem pod adresem [track.opentoggl.com](https://track.opentoggl.com). Użytkownicy samodzielnie hostujący instancję aktualizują ją, pobierając nowy obraz i ponownie uruchamiając `docker compose up -d`.
+
+## Uwagi dotyczące aktualizacji
+
+Większość wydań można instalować bez zmian w konfiguracji: powierzchnia API Toggl Track jest stabilna, a schemat Postgresa jest automatycznie migrowany w przód przy starcie. Zmiany niezgodne wstecz — jeśli wystąpią — są wyraźnie zaznaczone w odpowiednim GitHub Release w osobnej sekcji **"Upgrade"** wraz z planem migracji.
+
+Jeżeli aktualizacja się nie powiedzie, zgłoś issue pod [github.com/CorrectRoadH/opentoggl/issues](https://github.com/CorrectRoadH/opentoggl/issues), podając tag wydania i log błędu.
+
+## Zobowiązanie do zgodności API
+
+OpenToggl podąża za publicznymi kontraktami Toggl Track v9, Reports v3 i Webhooks v1. Istniejące integracje, narzędzia CLI i narzędzia MCP dla Toggl powinny działać bez zmian między wydaniami. Kiedy po stronie Toggl pojawia się nowy lub zmodyfikowany endpoint, OpenToggl stara się dogonić go w ramach następnego cyklu wydawniczego.
