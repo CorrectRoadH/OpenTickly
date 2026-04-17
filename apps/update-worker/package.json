@@ -12,7 +12,7 @@
     "test": "vp run build:content && vp test run"
   },
   "dependencies": {
-    "zod": "^3.24.1"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251115.0",
