@@ -58,28 +58,10 @@ jobs:
         run: |
           git checkout -f v0.0.17
           git clean -fdx
-
-      - name: Debug lockfile state (v0.0.17)
-        run: |
-          echo "--- pnpm version ---"
-          pnpm --version
-          echo "--- pnpm-lock.yaml stats ---"
-          wc -l pnpm-lock.yaml
-          md5sum pnpm-lock.yaml
-          echo "--- first 100 lines ---"
-          head -100 pnpm-lock.yaml
-          echo "--- lines 90-110 ---"
-          sed -n '90,110p' pnpm-lock.yaml
-          echo "--- grep lockfileVersion ---"
-          grep -nE '^lockfileVersion' pnpm-lock.yaml
-          echo "--- git status ---"
-          git status --short
-          echo "--- git diff HEAD -- pnpm-lock.yaml | head -120 ---"
-          git --no-pager diff HEAD -- pnpm-lock.yaml | head -120
-          echo "--- .git/hooks ---"
-          ls -la .git/hooks/ 2>&1 | head -20 || true
-          echo "--- apps/landing/pnpm-lock.yaml stats ---"
-          wc -l apps/landing/pnpm-lock.yaml 2>&1 || true
+          # pnpm/action-setup@v6 prepends a bootstrap YAML doc to
+          # pnpm-lock.yaml that breaks --frozen-lockfile. Restore the
+          # pristine tag version immediately before install.
+          git checkout HEAD -- pnpm-lock.yaml
 
       - name: Install dependencies (v0.0.17)
         run: pnpm install --frozen-lockfile
@@ -155,6 +137,8 @@ jobs:
         run: |
           git checkout -f main
           git clean -fdx
+          # Defensive: undo any bootstrap-doc prepend from pnpm/action-setup@v6
+          git checkout HEAD -- pnpm-lock.yaml
           pnpm store prune || true
 
       - name: Install dependencies (main)
