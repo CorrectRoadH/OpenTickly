@@ -32,7 +32,7 @@ catalog:
   typescript: ^6
   vite: npm:@voidzero-dev/vite-plus-core@0.1.12
   vite-plugin-pwa: ^1.2.0
-  vite-plus: 0.1.18
+  vite-plus: 0.1.12
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.12
   workbox-background-sync: ^7.4.0
   workbox-core: ^7.4.0

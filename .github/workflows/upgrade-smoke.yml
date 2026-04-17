@@ -62,9 +62,16 @@ jobs:
           # pnpm-lock.yaml that breaks --frozen-lockfile. Restore the
           # pristine tag version immediately before install.
           git checkout HEAD -- pnpm-lock.yaml
+          echo "--- post-restore md5 ---"
+          md5sum pnpm-lock.yaml
+          wc -l pnpm-lock.yaml
 
       - name: Install dependencies (v0.0.17)
-        run: pnpm install --frozen-lockfile
+        run: |
+          echo "--- pre-install md5 ---"
+          md5sum pnpm-lock.yaml
+          wc -l pnpm-lock.yaml
+          pnpm install --frozen-lockfile
 
       - name: Build backend (v0.0.17)
         env:
