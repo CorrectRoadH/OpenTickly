@@ -66,16 +66,20 @@ jobs:
           echo "--- pnpm-lock.yaml stats ---"
           wc -l pnpm-lock.yaml
           md5sum pnpm-lock.yaml
-          echo "--- first 3 lines ---"
-          head -3 pnpm-lock.yaml
-          echo "--- last 3 lines ---"
-          tail -3 pnpm-lock.yaml
-          echo "--- grep for YAML doc separators ---"
-          grep -nE '^---|^\.\.\.' pnpm-lock.yaml || echo "(none found)"
+          echo "--- first 100 lines ---"
+          head -100 pnpm-lock.yaml
+          echo "--- lines 90-110 ---"
+          sed -n '90,110p' pnpm-lock.yaml
           echo "--- grep lockfileVersion ---"
           grep -nE '^lockfileVersion' pnpm-lock.yaml
           echo "--- git status ---"
           git status --short
+          echo "--- git diff HEAD -- pnpm-lock.yaml | head -120 ---"
+          git --no-pager diff HEAD -- pnpm-lock.yaml | head -120
+          echo "--- .git/hooks ---"
+          ls -la .git/hooks/ 2>&1 | head -20 || true
+          echo "--- apps/landing/pnpm-lock.yaml stats ---"
+          wc -l apps/landing/pnpm-lock.yaml 2>&1 || true
 
       - name: Install dependencies (v0.0.17)
         run: pnpm install --frozen-lockfile
