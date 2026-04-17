@@ -5,34 +5,34 @@ packages:
 
 catalog:
   "@hey-api/client-fetch": ^0.13.1
-  "@hey-api/openapi-ts": 0.94.4
+  "@hey-api/openapi-ts": 0.96.0
   "@orama/tokenizers": ^3.1.18
-  "@types/node": ^24
+  "@types/node": ^25
   "@types/react-big-calendar": ^1.16.3
   "@uidotdev/usehooks": ^2.4.1
   babel-plugin-react-compiler: ^1.0.0
   date-fns: ^4.1.0
   execa: ^9.6.1
-  i18next: ^26.0.3
+  i18next: ^26.0.5
   i18next-resources-to-backend: ^1.2.1
-  immer: ^10.1.1
+  immer: ^11.1.4
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.7
-  lucide-react: ^0.577.0
+  lucide-react: ^1.8.0
   motion: ^12.38.0
   polished: ^4.3.1
   react: ^18.3.1
   react-big-calendar: ^1.19.4
   react-compiler-runtime: ^1.0.0
-  react-grab: ^0.1.28
-  react-hook-form: ^7.71.2
-  react-i18next: ^17.0.2
+  react-grab: ^0.1.32
+  react-hook-form: ^7.72.1
+  react-i18next: ^17.0.3
   sharp: ^0.34.5
   sonner: ^2.0.7
-  typescript: ^5
+  typescript: ^6
   vite: npm:@voidzero-dev/vite-plus-core@0.1.12
   vite-plugin-pwa: ^1.2.0
-  vite-plus: 0.1.12
+  vite-plus: 0.1.18
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.12
   workbox-background-sync: ^7.4.0
   workbox-core: ^7.4.0

@@ -14,14 +14,14 @@
   },
   "dependencies": {
     "@uidotdev/usehooks": "catalog:",
-    "baseui": "^15.0.0",
+    "baseui": "^16.1.1",
     "react-compiler-runtime": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
     "styletron-react": "^6.1.1"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   },

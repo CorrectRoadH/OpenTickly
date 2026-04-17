@@ -15,15 +15,15 @@
   "dependencies": {
     "@opentoggl/web-ui": "workspace:*",
     "@orama/orama": "^3.1.18",
-    "@react-router/node": "^7.13.1",
-    "fumadocs-core": "16.7.5",
-    "fumadocs-mdx": "14.2.11",
-    "fumadocs-ui": "16.7.5",
-    "isbot": "^5.1.36",
+    "@react-router/node": "^7.14.1",
+    "fumadocs-core": "16.7.16",
+    "fumadocs-mdx": "14.3.0",
+    "fumadocs-ui": "16.7.16",
+    "isbot": "^5.1.39",
     "lucide-react": "catalog:",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-router": "^7.13.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router": "^7.14.1",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
