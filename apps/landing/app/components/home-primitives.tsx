@@ -1,5 +1,6 @@
 import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
-import { ArrowUpRight, type LucideIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 
 type ProofCardItem = {
   body: string;
@@ -9,8 +10,10 @@ type ProofCardItem = {
   value: string;
 };
 
+type ProofIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
+
 type ProofGridCardProps = {
-  icons: readonly LucideIcon[];
+  icons: readonly ProofIcon[];
   items: readonly ProofCardItem[];
 };
 

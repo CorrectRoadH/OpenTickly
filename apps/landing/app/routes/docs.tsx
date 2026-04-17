@@ -25,7 +25,7 @@ import {
 
 export async function loader({ params }: Route.LoaderArgs) {
   const locale = resolveLocale(params.lang);
-  const slugs = params["*"].split("/").filter((v) => v.length > 0);
+  const slugs = params["*"].split("/").filter((v: string) => v.length > 0);
   const page = source.getPage(slugs, locale);
   if (!page) throw new Response("Not found", { status: 404 });
 
