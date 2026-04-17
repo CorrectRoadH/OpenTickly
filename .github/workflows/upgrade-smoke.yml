@@ -59,6 +59,24 @@ jobs:
           git checkout -f v0.0.17
           git clean -fdx
 
+      - name: Debug lockfile state (v0.0.17)
+        run: |
+          echo "--- pnpm version ---"
+          pnpm --version
+          echo "--- pnpm-lock.yaml stats ---"
+          wc -l pnpm-lock.yaml
+          md5sum pnpm-lock.yaml
+          echo "--- first 3 lines ---"
+          head -3 pnpm-lock.yaml
+          echo "--- last 3 lines ---"
+          tail -3 pnpm-lock.yaml
+          echo "--- grep for YAML doc separators ---"
+          grep -nE '^---|^\.\.\.' pnpm-lock.yaml || echo "(none found)"
+          echo "--- grep lockfileVersion ---"
+          grep -nE '^lockfileVersion' pnpm-lock.yaml
+          echo "--- git status ---"
+          git status --short
+
       - name: Install dependencies (v0.0.17)
         run: pnpm install --frozen-lockfile
 
