@@ -71,7 +71,19 @@ jobs:
           echo "--- pre-install md5 ---"
           md5sum pnpm-lock.yaml
           wc -l pnpm-lock.yaml
-          pnpm install --frozen-lockfile
+          echo "--- pnpm config ---"
+          pnpm config list 2>&1 | head -30 || true
+          echo "--- pnpm root ---"
+          pnpm root -g 2>&1 || true
+          pwd
+          echo "--- which pnpm ---"
+          which pnpm
+          ls -la /home/runner/setup-pnpm/ 2>&1 | head -20 || true
+          echo "--- setup-pnpm pnpm-lock.yaml? ---"
+          find /home/runner/setup-pnpm -maxdepth 3 -name "pnpm-lock.yaml" 2>&1 || true
+          pnpm install --frozen-lockfile 2>&1 | tee /tmp/pnpm-install.log
+          echo "--- result ---"
+          cat /tmp/pnpm-install.log | head -30
 
       - name: Build backend (v0.0.17)
         env:
