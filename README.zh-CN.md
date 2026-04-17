@@ -55,3 +55,13 @@ Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 
 OpenToggl 的设计灵感来源于 [Toggl](https://toggl.com)，我们致力于与其产品面保持兼容，让您可以保留原有的工作流程。
 
 同时感谢 [Linux Do](https://linux.do) 在项目早期开发阶段提供的支持与反馈。
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=CorrectRoadH%2FOpenToggl&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=CorrectRoadH/OpenToggl&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=CorrectRoadH/OpenToggl&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=CorrectRoadH/OpenToggl&type=date&legend=top-left" />
+ </picture>
+</a>

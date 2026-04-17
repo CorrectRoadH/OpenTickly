@@ -55,3 +55,13 @@ The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Andro
 OpenToggl's design is inspired by [Toggl](https://toggl.com), and we aim to stay compatible with their product surface so you can keep your existing workflow.
 
 We also thank [Linux Do](https://linux.do) for their support and feedback during the project's early development.
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=CorrectRoadH%2FOpenToggl&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=CorrectRoadH/OpenToggl&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=CorrectRoadH/OpenToggl&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=CorrectRoadH/OpenToggl&type=date&legend=top-left" />
+ </picture>
+</a>
