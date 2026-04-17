@@ -41,12 +41,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - uses: pnpm/action-setup@v6
-
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: "pnpm"
+
+      - name: Install pnpm (via npm, avoids @pnpm/exe bootstrap quirks from action-setup@v6)
+        run: npm install -g pnpm@10.32.1
 
       - uses: actions/setup-go@v6
         with:
@@ -58,32 +58,9 @@ jobs:
         run: |
           git checkout -f v0.0.17
           git clean -fdx
-          # pnpm/action-setup@v6 prepends a bootstrap YAML doc to
-          # pnpm-lock.yaml that breaks --frozen-lockfile. Restore the
-          # pristine tag version immediately before install.
-          git checkout HEAD -- pnpm-lock.yaml
-          echo "--- post-restore md5 ---"
-          md5sum pnpm-lock.yaml
-          wc -l pnpm-lock.yaml
 
       - name: Install dependencies (v0.0.17)
-        run: |
-          echo "--- pre-install md5 ---"
-          md5sum pnpm-lock.yaml
-          wc -l pnpm-lock.yaml
-          echo "--- pnpm config ---"
-          pnpm config list 2>&1 | head -30 || true
-          echo "--- pnpm root ---"
-          pnpm root -g 2>&1 || true
-          pwd
-          echo "--- which pnpm ---"
-          which pnpm
-          ls -la /home/runner/setup-pnpm/ 2>&1 | head -20 || true
-          echo "--- setup-pnpm pnpm-lock.yaml? ---"
-          find /home/runner/setup-pnpm -maxdepth 3 -name "pnpm-lock.yaml" 2>&1 || true
-          pnpm install --frozen-lockfile 2>&1 | tee /tmp/pnpm-install.log
-          echo "--- result ---"
-          cat /tmp/pnpm-install.log | head -30
+        run: pnpm install --frozen-lockfile
 
       - name: Build backend (v0.0.17)
         env:
@@ -156,8 +133,6 @@ jobs:
         run: |
           git checkout -f main
           git clean -fdx
-          # Defensive: undo any bootstrap-doc prepend from pnpm/action-setup@v6
-          git checkout HEAD -- pnpm-lock.yaml
           pnpm store prune || true
 
       - name: Install dependencies (main)
