@@ -1,20 +1,12 @@
 import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import {
-  ArrowUpRight,
-  ChevronDown,
-  FileText,
-  Github,
-  Play,
-  RefreshCw,
-  Server,
-  Unlock,
-} from "lucide-react";
+import { ArrowUpRight, ChevronDown, FileText, Play, RefreshCw, Server, Unlock } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 
 import Footer from "@/components/footer";
 import HomeHeroScreenshots from "@/components/home-hero-screenshots";
+import { GithubIcon } from "@/components/github-icon";
 import { ProofGridCard } from "@/components/home-primitives";
 import { RotatingWords } from "@/components/rotating-words";
 import Seo from "@/components/seo";
@@ -31,7 +23,7 @@ import {
 import { appendUtm } from "@/lib/utm";
 
 const featureIcons = [RefreshCw, Server, Unlock];
-const proofIcons = [Play, Github, FileText];
+const proofIcons = [Play, GithubIcon, FileText];
 
 export default function Home() {
   const params = useParams();
