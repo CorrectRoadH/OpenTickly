@@ -54,8 +54,10 @@ jobs:
 
       # ── Phase 1: v0.0.17 ────────────────────────────────────────────────────
 
-      - name: Switch to v0.0.17
-        run: git checkout v0.0.17
+      - name: Switch to v0.0.17 (clean worktree to avoid stale lockfiles)
+        run: |
+          git checkout -f v0.0.17
+          git clean -fdx
 
       - name: Install dependencies (v0.0.17)
         run: pnpm install --frozen-lockfile
