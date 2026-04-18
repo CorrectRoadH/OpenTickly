@@ -11,6 +11,7 @@
   "emailLabel": "邮箱",
   "timePreferences": "时间偏好",
   "timezone": "时区",
+  "searchTimezonePlaceholder": "搜索时区或偏移...",
   "country": "国家",
   "notSet": "未设置",
   "passwordActions": "密码操作",

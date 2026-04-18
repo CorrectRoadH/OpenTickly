@@ -167,6 +167,8 @@ func mapError(err error) Response {
 		return Response{StatusCode: 400, Body: "Value in date_format is invalid"}
 	case errors.Is(err, domain.ErrInvalidTimeOfDayFormat):
 		return Response{StatusCode: 400, Body: "Value in timeofday_format is invalid"}
+	case errors.Is(err, domain.ErrInvalidTimezone):
+		return Response{StatusCode: 400, Body: "Value in timezone is not a valid IANA name"}
 	case errors.Is(err, application.ErrUnknownAlphaFeature):
 		return Response{StatusCode: 400, Body: "Invalid feature code(s)"}
 	case errors.Is(err, application.ErrUnknownPreferencesClient):

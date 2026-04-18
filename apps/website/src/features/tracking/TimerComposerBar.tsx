@@ -277,7 +277,7 @@ export function TimerComposerBar({
           />
         ) : (
           <>
-            <TimerElapsedDisplay runningEntry={composer.runningEntry} />
+            <TimerElapsedDisplay runningEntry={composer.runningEntry} timezone={timezone} />
             <TimerActionButton
               isRunning={!!composer.runningEntry}
               disabled={composer.timerMutationPending}

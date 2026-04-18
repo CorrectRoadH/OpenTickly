@@ -27,7 +27,15 @@ Every param is optional. A bare `curl https://update.opentoggl.com/` returns the
   "releaseUrl": "https://github.com/CorrectRoadH/opentoggl/releases/tag/v0.3.1",
   "releaseNotes": "…markdown body of the latest release…",
   "announcements": [
-    { "id": "welcome-2026-04", "title": "…", "severity": "info", "publishedAt": "…", "expiresAt": "…", "link": "…", "bodyMarkdown": "…" }
+    {
+      "id": "welcome-2026-04",
+      "title": "…",
+      "severity": "info",
+      "publishedAt": "…",
+      "expiresAt": "…",
+      "link": "…",
+      "bodyMarkdown": "…"
+    }
   ]
 }
 ```
@@ -45,18 +53,20 @@ Just **publish a GitHub Release** on [CorrectRoadH/opentoggl](https://github.com
 Announcements aren't in GitHub Releases — they're baked into the Worker at deploy time from `content/announcements/*.md`.
 
 1. Add `content/announcements/<slug>.md` with frontmatter:
+
    ```markdown
    ---
    id: "freeze-2026-05"
    title: "Scheduled maintenance May 3rd"
-   severity: "warning"              # info | warning | critical
+   severity: "warning" # info | warning | critical
    publishedAt: "2026-05-01"
-   expiresAt: "2026-05-04"          # optional
-   link: "https://status.opentoggl.com/..."  # optional
+   expiresAt: "2026-05-04" # optional
+   link: "https://status.opentoggl.com/..." # optional
    ---
 
    …markdown body…
    ```
+
 2. Commit + push to `main`. GitHub Actions (`.github/workflows/update-worker-deploy.yml`) redeploys.
 3. Expired announcements are filtered out at request time.
 

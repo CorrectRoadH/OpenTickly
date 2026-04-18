@@ -38,7 +38,7 @@ test.describe("Story: user preferences control how times and durations display",
   const password = "secret-pass";
 
   test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ timezoneId: "UTC" });
 
     await registerE2eUser(page, test.info(), {
       email,

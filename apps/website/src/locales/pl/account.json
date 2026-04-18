@@ -11,6 +11,7 @@
   "emailLabel": "E-mail",
   "timePreferences": "Preferencje czasu",
   "timezone": "Strefa czasowa",
+  "searchTimezonePlaceholder": "Wyszukaj strefę lub offset...",
   "country": "Kraj",
   "notSet": "Nie ustawiono",
   "passwordActions": "Działania dotyczące hasła",

@@ -11,6 +11,7 @@
   "emailLabel": "Email",
   "timePreferences": "Time Preferences",
   "timezone": "Timezone",
+  "searchTimezonePlaceholder": "Search timezone or offset...",
   "country": "Country",
   "notSet": "Not set",
   "passwordActions": "Password Actions",

@@ -24,7 +24,16 @@ services:
 
   redis:
     image: redis:8-alpine
-    command: ["redis-server", "--save", "", "--appendonly", "no", "--requirepass", "${OPENTOGGL_REDIS_PASSWORD:-opentoggl}"]
+    command:
+      [
+        "redis-server",
+        "--save",
+        "",
+        "--appendonly",
+        "no",
+        "--requirepass",
+        "${OPENTOGGL_REDIS_PASSWORD:-opentoggl}",
+      ]
     environment:
       REDISCLI_AUTH: ${OPENTOGGL_REDIS_PASSWORD:-opentoggl}
     networks: [internal]

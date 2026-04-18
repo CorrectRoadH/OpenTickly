@@ -11,6 +11,7 @@
   "emailLabel": "이메일",
   "timePreferences": "시간 환경설정",
   "timezone": "시간대",
+  "searchTimezonePlaceholder": "시간대 또는 오프셋 검색...",
   "country": "국가",
   "notSet": "설정되지 않음",
   "passwordActions": "비밀번호 관리",

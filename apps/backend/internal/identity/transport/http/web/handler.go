@@ -20,9 +20,10 @@ type Response struct {
 }
 
 type RegisterRequest struct {
-	Email    string
-	FullName string
-	Password string
+	Email    string `json:"email"`
+	FullName string `json:"fullname"`
+	Password string `json:"password"`
+	Timezone string `json:"timezone"`
 }
 
 type LoginRequest struct {
@@ -111,6 +112,7 @@ func (handler *Handler) Register(ctx context.Context, request RegisterRequest) R
 		Email:    request.Email,
 		FullName: request.FullName,
 		Password: request.Password,
+		Timezone: request.Timezone,
 	})
 	if err != nil {
 		return handler.mapError(ctx, "register", err)
@@ -399,6 +401,7 @@ func (handler *Handler) mapError(ctx context.Context, operation string, err erro
 		errors.Is(err, domain.ErrCurrentPasswordInvalid),
 		errors.Is(err, domain.ErrInvalidDateFormat),
 		errors.Is(err, domain.ErrInvalidTimeOfDayFormat),
+		errors.Is(err, domain.ErrInvalidTimezone),
 		errors.Is(err, domain.ErrPreferencesFieldProtected),
 		errors.Is(err, application.ErrUnknownAlphaFeature),
 		errors.Is(err, application.ErrUnknownPreferencesClient):

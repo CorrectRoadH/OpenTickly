@@ -52,6 +52,7 @@ export function AuthForm({
         email: parsed.email,
         fullname: parsed.fullName,
         password: parsed.password,
+        timezone: resolveBrowserTimezone(),
       });
       return;
     }
@@ -114,6 +115,15 @@ export function AuthForm({
       </p>
     </form>
   );
+}
+
+function resolveBrowserTimezone(): string | undefined {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof tz === "string" && tz.length > 0 ? tz : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function Field(props: { children: ReactElement; label: string }): ReactElement {

@@ -11,6 +11,7 @@
   "emailLabel": "E-mail",
   "timePreferences": "Préférences horaires",
   "timezone": "Fuseau horaire",
+  "searchTimezonePlaceholder": "Rechercher un fuseau ou un décalage...",
   "country": "Pays",
   "notSet": "Non défini",
   "passwordActions": "Actions sur le mot de passe",

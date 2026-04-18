@@ -196,6 +196,57 @@ func TestPreferencesRejectProtectedAndInvalidFields(t *testing.T) {
 	}
 }
 
+func TestRegisterUserValidatesTimezone(t *testing.T) {
+	if _, err := RegisterUser(RegisterParams{
+		ID:           91,
+		Email:        "person@example.com",
+		FullName:     "Test Person",
+		Password:     "secret1",
+		PasswordHash: hashSecret("secret1"),
+		APIToken:     "token-91",
+		Timezone:     "Not/A_Zone",
+	}); err != ErrInvalidTimezone {
+		t.Fatalf("expected invalid timezone to be rejected, got %v", err)
+	}
+
+	user, err := RegisterUser(RegisterParams{
+		ID:           92,
+		Email:        "person@example.com",
+		FullName:     "Test Person",
+		Password:     "secret1",
+		PasswordHash: hashSecret("secret1"),
+		APIToken:     "token-92",
+		Timezone:     "Asia/Shanghai",
+	})
+	if err != nil {
+		t.Fatalf("expected valid timezone to be accepted: %v", err)
+	}
+	if user.Timezone() != "Asia/Shanghai" {
+		t.Fatalf("expected Asia/Shanghai, got %q", user.Timezone())
+	}
+}
+
+func TestUpdateProfileRejectsInvalidTimezone(t *testing.T) {
+	user, err := RegisterUser(RegisterParams{
+		ID:           93,
+		Email:        "person@example.com",
+		FullName:     "Test Person",
+		Password:     "secret1",
+		PasswordHash: hashSecret("secret1"),
+		APIToken:     "token-93",
+	})
+	if err != nil {
+		t.Fatalf("expected registration params to be accepted: %v", err)
+	}
+
+	if err := user.UpdateProfile(ProfileUpdate{Timezone: "Not/A_Zone"}); err != ErrInvalidTimezone {
+		t.Fatalf("expected invalid timezone to be rejected, got %v", err)
+	}
+	if user.Timezone() != "UTC" {
+		t.Fatalf("expected timezone to stay UTC after rejected update, got %q", user.Timezone())
+	}
+}
+
 func TestDeactivatedAndDeletedUsersStayDistinct(t *testing.T) {
 	user, err := RegisterUser(RegisterParams{
 		ID:           31,

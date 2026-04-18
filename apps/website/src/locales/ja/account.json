@@ -11,6 +11,7 @@
   "emailLabel": "メールアドレス",
   "timePreferences": "時間設定",
   "timezone": "タイムゾーン",
+  "searchTimezonePlaceholder": "タイムゾーンまたはオフセットを検索...",
   "country": "国",
   "notSet": "未設定",
   "passwordActions": "パスワード操作",

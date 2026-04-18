@@ -50,8 +50,9 @@ OPENTOGGL_REDIS_PASSWORD=opentoggl
 Essas três variáveis são as **únicas** configurações sobrescrevíveis em todo o arquivo compose — todo o resto (nome do banco, usuário, imagem, strings de conexão internas) é fixado diretamente no arquivo para evitar desvios de configuração. Para personalizações mais profundas, edite o `docker-compose.yml` diretamente.
 
 <Callout type="warn">
-  Em produção, sempre troque as duas senhas. Os valores padrão servem apenas para testes locais. Mesmo que o Postgres/Redis
-  não exponham portas ao host, definir uma senha é o mínimo de defesa contra invasões na rede interna.
+  Em produção, sempre troque as duas senhas. Os valores padrão servem apenas para testes locais.
+  Mesmo que o Postgres/Redis não exponham portas ao host, definir uma senha é o mínimo de defesa
+  contra invasões na rede interna.
 </Callout>
 
 ### Passo 3 — Iniciar os containers
@@ -113,7 +114,8 @@ O Synology DSM 7.2+ suporta Docker Compose através do **Container Manager**:
 4. Avance pelo assistente até concluir
 
 <Callout type="info">
-  Se a porta `8080` entrar em conflito com o DSM, adicione `OPENTOGGL_PORT=9090` (ou qualquer porta livre) nas configurações de ambiente antes de criar o projeto.
+  Se a porta `8080` entrar em conflito com o DSM, adicione `OPENTOGGL_PORT=9090` (ou qualquer porta
+  livre) nas configurações de ambiente antes de criar o projeto.
 </Callout>
 
 ### fnOS
@@ -140,20 +142,20 @@ As plataformas abaixo seguem exatamente o mesmo fluxo de Docker Compose:
 
 O arquivo compose inteiro tem apenas três configurações sobrescrevíveis:
 
-| Variável                      | Padrão      | Descrição                                              |
-| ----------------------------- | ----------- | ------------------------------------------------------ |
-| `OPENTOGGL_PORT`              | `8080`      | Porta externa da interface web e da API                |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Senha do Postgres (obrigatório trocar em produção)     |
-| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Senha do Redis (obrigatório trocar em produção)        |
+| Variável                      | Padrão      | Descrição                                          |
+| ----------------------------- | ----------- | -------------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`      | Porta externa da interface web e da API            |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Senha do Postgres (obrigatório trocar em produção) |
+| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Senha do Redis (obrigatório trocar em produção)    |
 
 Todas as outras configurações (nome do banco, usuário, tag da imagem, strings de conexão internas, nomes de volume) estão fixadas diretamente no `docker-compose.yml`. Para alterá-las, edite o arquivo.
 
 ### Endpoints de health check
 
-| Caminho    | Finalidade                                      |
-| ---------- | ----------------------------------------------- |
-| `/readyz`  | Checagem de prontidão (depende de DB + Redis)   |
-| `/healthz` | Checagem de liveness (se o processo está vivo)  |
+| Caminho    | Finalidade                                     |
+| ---------- | ---------------------------------------------- |
+| `/readyz`  | Checagem de prontidão (depende de DB + Redis)  |
+| `/healthz` | Checagem de liveness (se o processo está vivo) |
 
 ---
 

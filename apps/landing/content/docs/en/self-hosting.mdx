@@ -114,7 +114,8 @@ Synology DSM 7.2+ supports Docker Compose through **Container Manager**:
 4. Click through the wizard to finish
 
 <Callout type="info">
-  If `8080` conflicts with DSM, add `OPENTOGGL_PORT=9090` (or any free port) in the environment settings before creating the project.
+  If `8080` conflicts with DSM, add `OPENTOGGL_PORT=9090` (or any free port) in the environment
+  settings before creating the project.
 </Callout>
 
 ### fnOS
@@ -141,18 +142,18 @@ The following platforms follow the same Docker Compose flow:
 
 The entire compose file only has three overridable settings:
 
-| Variable                      | Default     | Description                                      |
-| ----------------------------- | ----------- | ------------------------------------------------ |
-| `OPENTOGGL_PORT`              | `8080`      | Exposed port for the web UI and API              |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Postgres password (must change in production)    |
-| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Redis password (must change in production)       |
+| Variable                      | Default     | Description                                   |
+| ----------------------------- | ----------- | --------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`      | Exposed port for the web UI and API           |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Postgres password (must change in production) |
+| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Redis password (must change in production)    |
 
 Everything else (database name, user, image tags, internal connection strings, volume names) is hard-coded in `docker-compose.yml`. If you need to change it, edit the file.
 
 ### Health Check Endpoints
 
-| Path       | Purpose                                |
-| ---------- | -------------------------------------- |
+| Path       | Purpose                                 |
+| ---------- | --------------------------------------- |
 | `/readyz`  | Readiness check (depends on DB + Redis) |
 | `/healthz` | Liveness check (is the process running) |
 

@@ -11,5 +11,11 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
     headless: true,
     locale: "en-US",
+    // Pin browser timezone so tests that assert literal time strings stay
+    // deterministic across machines. At registration the app now sends the
+    // browser's IANA zone, so a drifting host clock would rewrite every
+    // entry's displayed time. Specs that need a different zone can override
+    // with test.use({ timezoneId: ... }) or a per-context newContext().
+    timezoneId: "UTC",
   },
 });

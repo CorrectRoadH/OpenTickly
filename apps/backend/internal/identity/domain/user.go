@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"strings"
+	"time"
 )
 
 var (
@@ -17,6 +18,7 @@ var (
 	ErrInvalidFullName           = errors.New("invalid fullname")
 	ErrInvalidPassword           = errors.New("password should be at least 6 characters")
 	ErrInvalidTimeOfDayFormat    = errors.New("value in timeofday_format is invalid")
+	ErrInvalidTimezone           = errors.New("value in timezone is not a valid IANA name")
 	ErrPreferencesFieldProtected = errors.New("cannot set value for ToSAcceptNeeded")
 	ErrEmailAlreadyRegistered    = errors.New("email is already registered")
 	ErrUserDeactivated           = errors.New("user is deactivated")
@@ -40,6 +42,7 @@ type RegisterParams struct {
 	Password                 string
 	PasswordHash             string
 	APIToken                 string
+	Timezone                 string
 	SendProductEmails        *bool
 	SendWeeklyReport         *bool
 	ToSAcceptNeeded          *bool
@@ -161,13 +164,21 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		initialState = UserStatePendingVerification
 	}
 
+	timezone := "UTC"
+	if params.Timezone != "" {
+		if _, err := time.LoadLocation(params.Timezone); err != nil {
+			return nil, ErrInvalidTimezone
+		}
+		timezone = params.Timezone
+	}
+
 	return &User{
 		id:                       params.ID,
 		email:                    strings.ToLower(strings.TrimSpace(params.Email)),
 		fullName:                 strings.TrimSpace(params.FullName),
 		passwordHash:             params.PasswordHash,
 		apiToken:                 params.APIToken,
-		timezone:                 "UTC",
+		timezone:                 timezone,
 		beginningOfWeek:          1,
 		state:                    initialState,
 		sendProductEmails:        sendProductEmails,
@@ -355,6 +366,9 @@ func (user *User) UpdateProfile(update ProfileUpdate) error {
 	}
 
 	if update.Timezone != "" {
+		if _, err := time.LoadLocation(update.Timezone); err != nil {
+			return ErrInvalidTimezone
+		}
 		user.timezone = update.Timezone
 	}
 

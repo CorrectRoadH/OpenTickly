@@ -50,9 +50,9 @@ OPENTOGGL_REDIS_PASSWORD=opentoggl
 Te trzy zmienne to **jedyne** nadpisywalne ustawienia w całym pliku compose — wszystko inne (nazwa bazy, użytkownik, obrazy, wewnętrzne ciągi połączeń) jest zaszyte na stałe, aby uniknąć dryfu konfiguracji. Jeśli potrzebujesz głębszych zmian, edytuj `docker-compose.yml` bezpośrednio.
 
 <Callout type="warn">
-  Na produkcji koniecznie zmień oba hasła. Wartości domyślne nadają się wyłącznie do
-  lokalnych eksperymentów. Nawet jeśli Postgres/Redis nie są wystawione na host,
-  ustawienie haseł jest podstawowym zabezpieczeniem na wypadek włamania do sieci wewnętrznej.
+  Na produkcji koniecznie zmień oba hasła. Wartości domyślne nadają się wyłącznie do lokalnych
+  eksperymentów. Nawet jeśli Postgres/Redis nie są wystawione na host, ustawienie haseł jest
+  podstawowym zabezpieczeniem na wypadek włamania do sieci wewnętrznej.
 </Callout>
 
 ### Krok 3 — Uruchom kontenery
@@ -114,7 +114,8 @@ Synology DSM 7.2+ obsługuje Docker Compose poprzez **Container Manager**:
 4. Przejdź przez kreator, klikając dalej aż do końca
 
 <Callout type="info">
-  Jeśli port `8080` koliduje z DSM, przed utworzeniem projektu dodaj w ustawieniach środowiska `OPENTOGGL_PORT=9090` (lub dowolny wolny port).
+  Jeśli port `8080` koliduje z DSM, przed utworzeniem projektu dodaj w ustawieniach środowiska
+  `OPENTOGGL_PORT=9090` (lub dowolny wolny port).
 </Callout>
 
 ### fnOS
@@ -141,9 +142,9 @@ Poniższe platformy korzystają z tego samego procesu Docker Compose:
 
 Cały plik compose ma tylko trzy nadpisywalne ustawienia:
 
-| Zmienna                       | Domyślna    | Opis                                         |
-| ----------------------------- | ----------- | -------------------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`      | Port zewnętrzny dla Web UI i API             |
+| Zmienna                       | Domyślna    | Opis                                           |
+| ----------------------------- | ----------- | ---------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`      | Port zewnętrzny dla Web UI i API               |
 | `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Hasło Postgres (na produkcji koniecznie zmień) |
 | `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Hasło Redis (na produkcji koniecznie zmień)    |
 
@@ -151,10 +152,10 @@ Wszystkie pozostałe ustawienia (nazwa bazy, użytkownik, tagi obrazów, wewnęt
 
 ### Punkty końcowe health check
 
-| Ścieżka    | Zastosowanie                                  |
-| ---------- | --------------------------------------------- |
-| `/readyz`  | Sprawdzenie gotowości (zależy od DB + Redis)  |
-| `/healthz` | Sprawdzenie żywotności (czy proces działa)    |
+| Ścieżka    | Zastosowanie                                 |
+| ---------- | -------------------------------------------- |
+| `/readyz`  | Sprawdzenie gotowości (zależy od DB + Redis) |
+| `/healthz` | Sprawdzenie żywotności (czy proces działa)   |
 
 ---
 

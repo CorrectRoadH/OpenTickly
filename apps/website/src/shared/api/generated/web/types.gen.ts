@@ -114,6 +114,10 @@ export type RegisterRequest = {
   email: string;
   password: string;
   fullname?: string;
+  /**
+   * IANA timezone name detected from the client's browser (e.g. Asia/Shanghai). Validated server-side; invalid values are rejected with 400.
+   */
+  timezone?: string;
 };
 
 export type RegistrationPendingVerification = {

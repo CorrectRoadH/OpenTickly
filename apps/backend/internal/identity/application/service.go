@@ -102,6 +102,7 @@ type RegisterInput struct {
 	Email    string
 	FullName string
 	Password string
+	Timezone string
 }
 
 type Session struct {
@@ -260,6 +261,7 @@ func (service *Service) Register(ctx context.Context, input RegisterInput) (Regi
 		FullName:            input.FullName,
 		Password:            input.Password,
 		APIToken:            apiToken,
+		Timezone:            input.Timezone,
 		PendingVerification: needsVerification,
 	})
 	if err != nil {

@@ -267,7 +267,7 @@ export function Dropdown({
   align,
   children,
   className,
-  panelClassName = "rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] shadow-[0_14px_32px_var(--track-shadow-overlay)]",
+  panelClassName = "max-h-[min(60vh,480px)] overflow-y-auto rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] shadow-[0_14px_32px_var(--track-shadow-overlay)]",
   placement,
   testId,
   trigger,

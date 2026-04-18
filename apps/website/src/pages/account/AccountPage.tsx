@@ -20,6 +20,7 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 import { PreferenceCard, PreferenceSelect } from "../profile/ProfilePagePrimitives.tsx";
+import { TimezonePicker } from "./TimezonePicker.tsx";
 import i18n, {
   languageLabels,
   normalizeSupportedLanguage,
@@ -227,26 +228,31 @@ function TimezoneSection({
     staleTime: Infinity,
   });
 
-  const options = (timezonesQuery.data ?? [timezone]).map((tz) => {
-    const name = typeof tz === "string" ? tz : (tz as { name: string }).name;
-    return { label: name, value: name };
-  });
+  const timezones = (timezonesQuery.data ?? [timezone]).map((tz) =>
+    typeof tz === "string" ? tz : (tz as { name: string }).name,
+  );
 
   return (
     <PreferenceCard title={t("timePreferences")}>
       <div className="px-5 py-5">
-        <PreferenceSelect
-          label={t("timezone")}
-          onChange={(value) => {
-            void onSave(value).catch((err: unknown) =>
-              toast.error(
-                err instanceof WebApiError ? err.userMessage : t("failedToUpdateTimezone"),
-              ),
-            );
-          }}
-          options={options}
-          value={timezone}
-        />
+        <label className="block text-[11px] font-semibold uppercase leading-[11px] text-[var(--track-text-soft)]">
+          {t("timezone")}
+        </label>
+        <div className="mt-[10px] w-full md:w-[260px]">
+          <TimezonePicker
+            onChange={(value) => {
+              void onSave(value).catch((err: unknown) =>
+                toast.error(
+                  err instanceof WebApiError ? err.userMessage : t("failedToUpdateTimezone"),
+                ),
+              );
+            }}
+            searchPlaceholder={t("searchTimezonePlaceholder")}
+            testId="timezone-select"
+            timezones={timezones}
+            value={timezone}
+          />
+        </div>
       </div>
     </PreferenceCard>
   );
