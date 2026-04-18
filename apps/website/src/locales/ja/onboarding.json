@@ -1,6 +1,8 @@
 {
   "languageTitle": "言語を選択",
   "languageDescription": "お好みの言語を選択してください。後からアカウント設定で変更できます。",
+  "detectedTimezone": "検出されたタイムゾーン",
+  "changeTimezone": "変更",
   "aiWorkflowTitle": "AI ツールと連携",
   "aiWorkflowDescription": "OpenToggl は CLI を通じて AI エージェントやコーディングアシスタントと統合できます。作業中に AI が自動で時間を記録します。",
   "aiWorkflowSetupGuide": "AI 連携ガイドを見る",

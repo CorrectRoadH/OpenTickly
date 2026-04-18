@@ -1,5 +1,6 @@
 import { AppButton } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,15 +11,18 @@ import i18n, {
   supportedLanguages,
   type SupportedLanguage,
 } from "../../app/i18n.ts";
-import { WebApiError } from "../../shared/api/web-client.ts";
+import { getTimezones } from "../../shared/api/public/track/index.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import {
   useCompleteOnboardingMutation,
   useOnboardingQuery,
   usePreferencesQuery,
+  useUpdateProfileMutation,
   useUpdatePreferencesMutation,
 } from "../../shared/query/web-shell.ts";
+import { TimezonePicker } from "../../pages/account/TimezonePicker.tsx";
 import { ModalDialogWithNav } from "../../shared/ui/ModalDialog.tsx";
 
 export const ONBOARDING_VERSION = 1;
@@ -120,22 +124,38 @@ function saveStep(stepIndex: number): void {
 export function OnboardingDialog(): ReactElement | null {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentWorkspace } = useSession();
+  const { currentWorkspace, user } = useSession();
 
   const onboardingQuery = useOnboardingQuery();
   const preferencesQuery = usePreferencesQuery();
   const updatePreferencesMutation = useUpdatePreferencesMutation();
+  const updateProfileMutation = useUpdateProfileMutation();
   const completeOnboardingMutation = useCompleteOnboardingMutation();
+  const timezonesQuery = useQuery({
+    queryFn: () => unwrapWebApiResult(getTimezones()),
+    queryKey: ["timezones"],
+    staleTime: Infinity,
+  });
 
   const [isOpen, setIsOpen] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(loadSavedStep);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>(
     normalizeSupportedLanguage(i18n.language),
   );
+  const detectedTimezone = user.timezone ?? "UTC";
+  const [selectedTimezone, setSelectedTimezone] = useState<string>(detectedTimezone);
 
   const handleLanguageSelect = (lang: SupportedLanguage) => {
     setSelectedLanguage(lang);
   };
+
+  const timezoneNames = (timezonesQuery.data ?? [detectedTimezone])
+    .map((tz) => {
+      if (typeof tz === "string") return tz;
+      const record = tz as { name?: string } | null;
+      return record?.name ?? "";
+    })
+    .filter((name): name is string => name.length > 0);
 
   const steps = getOnboardingSteps();
   const currentStep = steps[currentStepIndex];
@@ -149,6 +169,7 @@ export function OnboardingDialog(): ReactElement | null {
       setSelectedLanguage(
         normalizeSupportedLanguage(preferencesQuery.data?.language_code ?? i18n.language),
       );
+      setSelectedTimezone(detectedTimezone);
       setCurrentStepIndex(loadSavedStep());
       setIsOpen(true);
     }
@@ -157,6 +178,7 @@ export function OnboardingDialog(): ReactElement | null {
     onboardingQuery.isPending,
     onboardingQuery.isFetching,
     preferencesQuery.data?.language_code,
+    detectedTimezone,
     isOpen,
   ]);
 
@@ -186,6 +208,10 @@ export function OnboardingDialog(): ReactElement | null {
     if (nextIndex >= steps.length) {
       // Last step - complete onboarding
       try {
+        if (selectedTimezone && selectedTimezone !== detectedTimezone) {
+          await updateProfileMutation.mutateAsync({ timezone: selectedTimezone });
+        }
+
         await updatePreferencesMutation.mutateAsync({
           language_code: selectedLanguage,
         });
@@ -258,7 +284,14 @@ export function OnboardingDialog(): ReactElement | null {
       <div className="space-y-4">
         <StepIllustration stepId={currentStep.id} />
         {currentStep.id === "language" ? (
-          <LanguageStep selectedLanguage={selectedLanguage} onSelect={handleLanguageSelect} t={t} />
+          <LanguageStep
+            onSelect={handleLanguageSelect}
+            onTimezoneChange={setSelectedTimezone}
+            selectedLanguage={selectedLanguage}
+            selectedTimezone={selectedTimezone}
+            t={t}
+            timezones={timezoneNames}
+          />
         ) : (
           <StepContent descriptionKey={currentStep.descriptionKey} t={t} />
         )}
@@ -268,14 +301,23 @@ export function OnboardingDialog(): ReactElement | null {
 }
 
 function LanguageStep({
-  selectedLanguage,
   onSelect,
+  onTimezoneChange,
+  selectedLanguage,
+  selectedTimezone,
   t,
+  timezones,
 }: {
-  selectedLanguage: SupportedLanguage;
   onSelect: (lang: SupportedLanguage) => void;
+  onTimezoneChange: (timezone: string) => void;
+  selectedLanguage: SupportedLanguage;
+  selectedTimezone: string;
   t: (key: string) => string;
+  timezones: readonly string[];
 }): ReactElement {
+  const [showPicker, setShowPicker] = useState(false);
+  const offset = formatOffsetLabel(selectedTimezone);
+
   return (
     <div className="space-y-4">
       <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
@@ -303,8 +345,55 @@ function LanguageStep({
           );
         })}
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] px-4 py-3">
+        <span
+          className="text-[13px] text-[var(--track-text-muted)]"
+          data-testid="onboarding-detected-timezone"
+        >
+          <span className="mr-1 text-[var(--track-text-soft)]">
+            {t("onboarding:detectedTimezone")}:
+          </span>
+          <span className="font-medium text-white">{selectedTimezone}</span>
+          {offset ? <span className="ml-1 tabular-nums">({offset})</span> : null}
+        </span>
+        {showPicker ? (
+          <TimezonePicker
+            onChange={(value) => {
+              onTimezoneChange(value);
+              setShowPicker(false);
+            }}
+            searchPlaceholder={t("account:searchTimezonePlaceholder")}
+            testId="timezone-select"
+            timezones={timezones}
+            value={selectedTimezone}
+          />
+        ) : (
+          <button
+            className="text-[13px] font-medium text-[var(--track-accent-text)] underline-offset-4 hover:underline"
+            onClick={() => setShowPicker(true)}
+            type="button"
+          >
+            {t("onboarding:changeTimezone")}
+          </button>
+        )}
+      </div>
     </div>
   );
+}
+
+function formatOffsetLabel(timezone: string): string | null {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      timeZoneName: "longOffset",
+    }).formatToParts(new Date());
+    const offset = parts.find((part) => part.type === "timeZoneName")?.value ?? "";
+    const stripped = offset.replace(/^GMT/, "").replace(/^UTC/, "");
+    return stripped === "" ? "UTC+00:00" : `UTC${stripped}`;
+  } catch {
+    return null;
+  }
 }
 
 function StepContent({

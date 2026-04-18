@@ -1,6 +1,8 @@
 {
   "languageTitle": "选择语言",
   "languageDescription": "选择您的首选语言。您之后可以在账户设置中随时更改。",
+  "detectedTimezone": "检测到的时区",
+  "changeTimezone": "更改",
   "aiWorkflowTitle": "与你的 AI 工具无缝集成",
   "aiWorkflowDescription": "OpenToggl 支持通过 CLI 与 AI Agent、编程助手集成，让 AI 在你工作的同时自动追踪时间。",
   "aiWorkflowSetupGuide": "查看 AI 集成文档",

@@ -1,6 +1,8 @@
 {
   "languageTitle": "Choisissez votre langue",
   "languageDescription": "Sélectionnez votre langue préférée. Vous pourrez la modifier plus tard dans les paramètres du compte.",
+  "detectedTimezone": "Fuseau horaire détecté",
+  "changeTimezone": "Modifier",
   "aiWorkflowTitle": "Fonctionne avec vos outils IA",
   "aiWorkflowDescription": "OpenToggl s'intègre avec les agents IA et les assistants de programmation via CLI — laissez votre IA suivre le temps automatiquement pendant que vous travaillez.",
   "aiWorkflowSetupGuide": "Voir le guide d'intégration IA",
