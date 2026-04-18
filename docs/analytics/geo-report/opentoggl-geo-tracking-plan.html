@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenToggl GEO 后端归因框架与跟踪体系方案</title>
+  <style>
+    :root {
+      --font-sans: "IBM Plex Sans", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-serif: "IBM Plex Serif", "Songti SC", Georgia, serif;
+      --ink: #16202a;
+      --muted: #5a6b7c;
+      --line: #d7e0e8;
+      --line-strong: #b9c6d2;
+      --bg: #edf2f5;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-strong: #ffffff;
+      --panel-muted: #f7fafc;
+      --accent: #ae5630;
+      --accent-soft: #f8e1d5;
+      --accent-alt: #1f5a73;
+      --success: #557a46;
+      --navy-soft: #eef4f7;
+      --shadow: 0 18px 42px rgba(22, 32, 42, 0.08);
+      --shadow-soft: 0 10px 24px rgba(22, 32, 42, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)) 0 0 / 100% 140px no-repeat,
+        radial-gradient(circle at top left, rgba(174, 86, 48, 0.12), transparent 26%),
+        radial-gradient(circle at top right, rgba(31, 90, 115, 0.1), transparent 24%),
+        linear-gradient(180deg, #f6f8fa 0%, var(--bg) 100%);
+      line-height: 1.7;
+    }
+
+    .page {
+      width: min(1240px, calc(100vw - 36px));
+      margin: 22px auto 72px;
+    }
+
+    .hero {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 253, 0.96)),
+        linear-gradient(120deg, rgba(174, 86, 48, 0.04), rgba(31, 90, 115, 0.04));
+      border: 1px solid rgba(22, 32, 42, 0.08);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      padding: 40px 42px 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, var(--accent-alt), var(--accent), var(--success));
+    }
+
+    .eyebrow {
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: var(--accent-alt);
+      margin: 0 0 12px;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(34px, 4vw, 52px);
+      line-height: 1.08;
+      margin: 0 0 14px;
+      max-width: 880px;
+    }
+
+    .subtitle {
+      font-size: 17px;
+      color: var(--muted);
+      margin: 0 0 20px;
+      max-width: 840px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .meta span {
+      padding: 7px 12px;
+      border: 1px solid rgba(31, 90, 115, 0.16);
+      border-radius: 999px;
+      background: rgba(247, 250, 252, 0.92);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .summary-card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid rgba(22, 32, 42, 0.08);
+      border-radius: 22px;
+      padding: 20px 20px 18px;
+      min-height: 170px;
+      backdrop-filter: blur(10px);
+    }
+
+    .summary-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(31, 90, 115, 0.8), rgba(174, 86, 48, 0.7));
+    }
+
+    .summary-label {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-alt);
+    }
+
+    .summary-value {
+      margin: 0 0 10px;
+      font-family: var(--font-serif);
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    .summary-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .report-nav {
+      margin-top: 18px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(22, 32, 42, 0.08);
+      border-radius: 24px;
+      padding: 18px 20px 20px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(10px);
+    }
+
+    .report-nav-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .report-nav-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-alt);
+    }
+
+    .report-nav-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .report-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .nav-chip {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 13px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(22, 32, 42, 0.08);
+      background: var(--panel-muted);
+      color: inherit;
+      text-decoration: none;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .nav-chip:hover {
+      transform: translateY(-1px);
+      border-color: rgba(31, 90, 115, 0.26);
+      box-shadow: 0 10px 20px rgba(22, 32, 42, 0.06);
+      text-decoration: none;
+    }
+
+    .nav-chip-index {
+      flex: 0 0 auto;
+      min-width: 34px;
+      padding: 5px 0;
+      border-radius: 999px;
+      background: rgba(31, 90, 115, 0.1);
+      color: var(--accent-alt);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .nav-chip-label {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    .report-section {
+      margin-top: 26px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(22, 32, 42, 0.08);
+      border-radius: 24px;
+      padding: 28px 30px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .section-head {
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-heading {
+      min-width: 0;
+    }
+
+    .section-kicker {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-alt);
+    }
+
+    .section-anchor {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(22, 32, 42, 0.08);
+      background: var(--navy-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .section-anchor:hover {
+      color: var(--accent-alt);
+      text-decoration: none;
+    }
+
+    .report-section h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .report-section p,
+    .report-section li {
+      font-size: 15px;
+    }
+
+    .report-section ul {
+      margin: 12px 0 0 1.2em;
+      padding: 0;
+    }
+
+    .callout {
+      margin: 16px 0;
+      border-left: 4px solid var(--accent-alt);
+      background: linear-gradient(180deg, rgba(239, 246, 249, 0.96), rgba(248, 250, 251, 0.98));
+      padding: 16px 18px 16px 20px;
+      border-radius: 14px;
+      font-weight: 600;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: inset 0 0 0 1px rgba(22, 32, 42, 0.02);
+    }
+
+    .flow-block {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid rgba(31, 90, 115, 0.14);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(247, 249, 252, 0.96), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-title {
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-alt);
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .flow-step {
+      position: relative;
+      padding: 16px 16px 14px;
+      border-radius: 18px;
+      background: white;
+      border: 1px solid rgba(28, 36, 49, 0.08);
+      box-shadow: 0 8px 18px rgba(28, 36, 49, 0.05);
+    }
+
+    .flow-step::after {
+      content: "→";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(31, 90, 115, 0.45);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .flow-step:last-child::after {
+      display: none;
+    }
+
+    .flow-label {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .flow-step-title {
+      margin: 0 0 8px;
+      font-family: Georgia, "Songti SC", serif;
+      font-size: 21px;
+      line-height: 1.2;
+    }
+
+    .flow-step-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .allocation-block {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(28, 36, 49, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 245, 241, 0.96));
+    }
+
+    .allocation-title {
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-alt);
+    }
+
+    .allocation-bar {
+      display: flex;
+      min-height: 24px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e7edf3;
+      box-shadow: inset 0 0 0 1px rgba(28, 36, 49, 0.06);
+    }
+
+    .allocation-segment {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      min-width: 52px;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+
+    .allocation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .allocation-card {
+      border-radius: 18px;
+      background: white;
+      border: 1px solid rgba(28, 36, 49, 0.08);
+      padding: 14px 15px;
+      box-shadow: 0 8px 18px rgba(28, 36, 49, 0.05);
+    }
+
+    .allocation-card-label {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .allocation-card-value {
+      margin: 0 0 6px;
+      font-family: Georgia, "Songti SC", serif;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .allocation-card-range {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .allocation-card-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+      background: white;
+    }
+
+    thead {
+      background: linear-gradient(135deg, #203345, #365671);
+      color: white;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fbfd;
+    }
+
+    a {
+      color: var(--accent-alt);
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 26px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100vw - 24px, 1160px);
+        margin-top: 12px;
+      }
+
+      .hero,
+      .report-section,
+      .report-nav {
+        padding: 22px 18px;
+        border-radius: 20px;
+      }
+
+      .section-head {
+        flex-direction: column;
+      }
+
+      .flow-step::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">GEO Tracking Plan</p>
+      <h1>OpenToggl GEO 后端归因框架与跟踪体系方案</h1>
+      <p class="subtitle">面向 opentoggl.com / track.opentoggl.com 与 GitHub 仓库的 AI 搜索曝光归因设计；结合海外 GEO 与 PLG + 开源分发混合业务形态。</p>
+      <div class="meta">
+        <span>公司：OpenToggl</span>
+        <span>分析日期：2026-04-18</span>
+        <span>生成方式：docs/analytics 规划稿</span>
+      </div>
+      <section class="summary-grid">
+        <article class="summary-card">
+              <p class="summary-label">业务形态</p>
+              <p class="summary-value">PLG / SaaS + 开源分发</p>
+              <p class="summary-note">核心转化不是付费，而是 GitHub Star、demo 试用、自托管安装、文档深读与贡献，需要同时兼顾 PLG 归因与开源分发链路。</p>
+            </article><article class="summary-card">
+              <p class="summary-label">主转化动作</p>
+              <p class="summary-value">Star / Demo / Self-host install</p>
+              <p class="summary-note">直接效果围绕 landing 外链点击、demo first-visit、自托管实例首次心跳的来源标签建立。</p>
+            </article><article class="summary-card">
+              <p class="summary-label">市场分层</p>
+              <p class="summary-value">海外 GEO 为主</p>
+              <p class="summary-note">8 种 locale 中英文为默认，面向全球开源开发者。平台优先 ChatGPT / Gemini / Perplexity / Claude，国内 GEO 当前仅做监控，不配专属承接资产。</p>
+            </article><article class="summary-card">
+              <p class="summary-label">当前成熟度</p>
+              <p class="summary-value">基础设施偏弱</p>
+              <p class="summary-note">landing 已接 Ahrefs Web Analytics 与 UTM helper，但 demo 站无 analytics、GitHub 外链无位置归因、GEO 零可观测性。</p>
+            </article>
+      </section>
+    </header>
+    <section class="report-nav" aria-label="Report modules">
+      <div class="report-nav-head">
+        <p class="report-nav-title">Report Modules</p>
+        <p class="report-nav-note">Design-system style navigation for quick scanning, review, and handoff.</p>
+      </div>
+      <div class="report-nav-grid">
+        <a class="nav-chip" href="#company-summary">
+              <span class="nav-chip-index">01</span>
+              <span class="nav-chip-label">企业理解摘要</span>
+            </a><a class="nav-chip" href="#market-split">
+              <span class="nav-chip-index">02</span>
+              <span class="nav-chip-label">市场分层判断</span>
+            </a><a class="nav-chip" href="#public-evidence">
+              <span class="nav-chip-index">03</span>
+              <span class="nav-chip-label">公开证据表</span>
+            </a><a class="nav-chip" href="#site-verification">
+              <span class="nav-chip-index">04</span>
+              <span class="nav-chip-label">官网核验</span>
+            </a><a class="nav-chip" href="#current-state">
+              <span class="nav-chip-index">05</span>
+              <span class="nav-chip-label">现状诊断</span>
+            </a><a class="nav-chip" href="#method-principle">
+              <span class="nav-chip-index">06</span>
+              <span class="nav-chip-label">效果追踪方法与原理说明</span>
+            </a><a class="nav-chip" href="#direct-effect">
+              <span class="nav-chip-index">07</span>
+              <span class="nav-chip-label">直接效果追踪方案</span>
+            </a><a class="nav-chip" href="#indirect-effect">
+              <span class="nav-chip-index">08</span>
+              <span class="nav-chip-label">间接效果追踪方案</span>
+            </a><a class="nav-chip" href="#boundary">
+              <span class="nav-chip-index">09</span>
+              <span class="nav-chip-label">监测效果边界说明</span>
+            </a><a class="nav-chip" href="#observability">
+              <span class="nav-chip-index">10</span>
+              <span class="nav-chip-label">可观测性估算框架</span>
+            </a><a class="nav-chip" href="#data-model">
+              <span class="nav-chip-index">11</span>
+              <span class="nav-chip-label">归因口径与数据表设计</span>
+            </a><a class="nav-chip" href="#roadmap">
+              <span class="nav-chip-index">12</span>
+              <span class="nav-chip-label">优先级路线图</span>
+            </a><a class="nav-chip" href="#confidence-gaps">
+              <span class="nav-chip-index">13</span>
+              <span class="nav-chip-label">置信度与缺口</span>
+            </a>
+      </div>
+    </section>
+    <section class="report-section" id="company-summary"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 01</p><h2>企业理解摘要</h2></div><a class="section-anchor" href="#company-summary">#01</a></div>
+<p>OpenToggl 是开源、可自托管的 Toggl Track 替代品，官方站点分为 landing（opentoggl.com，SSR，多语言）与 demo（track.opentoggl.com，SPA，noindex），核心代码仓库在 github.com/CorrectRoadH/opentoggl。</p>
+<p>从 GEO 后端归因角度看，这类公司需要把归因目标拆成四层：GitHub Star / Fork、demo 试用、自托管安装、文档深读；只看 landing pageview 会漏掉真正定义产品价值的安装与留存行为。</p>
+<ul><li>已验证事实：apps/landing 根布局 root.tsx 已加载 Ahrefs Web Analytics 脚本。</li>
+<li>已验证事实：apps/landing/app/lib/utm.ts 提供 appendUtm，home.tsx 已给 GitHub / demo 外链挂上 utm_source=opentoggl_landing 等参数。</li>
+<li>已验证事实：apps/website/index.html 为 noindex, nofollow 的 SPA，且未加载任何 web analytics。</li>
+<li>已验证事实：apps/update-worker 使用 Cloudflare Analytics Engine 记录自托管实例版本、OS、架构、country（blobs 1-6）。</li>
+<li>推断：由于 GitHub 不读外链 UTM，现状下 hero_cta / proof_card / footer 等位置级点击归因无法在任何后台恢复。</li>
+<li>推断：landing 到 demo 的转化路径当前断裂，所有来自 AI 平台的线索在 demo 侧会被计为 direct 或 unknown。</li></ul>
+</section><section class="report-section" id="market-split"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 02</p><h2>市场分层判断</h2></div><a class="section-anchor" href="#market-split">#02</a></div>
+<p>OpenToggl 当前主要面向海外开源开发者社区，landing 默认语言为英文，核心发现场景是 GitHub、Hacker News、Reddit、X、以及 ChatGPT / Gemini / Perplexity / Claude 给出的 open-source time tracker 推荐。</p>
+<p>因此方案主骨架放在海外 GEO：用官网页矩阵、表单字段、页面事件、自托管安装回传作为主链路，不为国内 GEO 配专属企微 / 电话 / 口令等承接资产。国内 GEO 仅保留 Brand Radar 监控与中文 landing 曝光观察，等有明确信号再补。</p>
+<ul><li>海外 GEO：ChatGPT / Gemini / Perplexity / Claude 为核心；主归因依赖 landing/demo 页矩阵、/go/:target 中转、install_source 回传。</li>
+<li>国内 GEO：DeepSeek / 豆包 / 元宝 / Kimi 仅做 Brand Radar 监控；暂不建立口令、企微、电话等来源补丁。</li>
+<li>混合收口：所有归因事件写入同一张 inbound_event 表，ai_platform 字段按 enum 存，便于后续按国内 / 海外拆分。</li></ul>
+</section><section class="report-section" id="public-evidence"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 03</p><h2>公开证据表</h2></div><a class="section-anchor" href="#public-evidence">#03</a></div>
+<p>本节记录用于本方案的公开证据来源。仓库内部文件按相对路径给出，日期为本次分析的快照日。</p>
+<div class="table-wrap"><table><thead><tr><th>来源系统</th><th>定位 / 路径</th><th>绝对时间</th><th>关键事实</th><th>用途</th></tr></thead><tbody><tr><td>Official Website</td><td><a href="https://opentoggl.com/">https://opentoggl.com/</a></td><td>2026-04-18</td><td>多语言 landing，SSR；hero + feature + FAQ + footer 结构。</td><td>作为 GEO 主承接页面；nav 中 GitHub / demo CTA 是主要外链点。</td></tr><tr><td>Official Website</td><td><a href="https://track.opentoggl.com/">https://track.opentoggl.com/</a></td><td>2026-04-18</td><td>Demo / App；canonical 指向自身，robots noindex, nofollow。</td><td>landing→demo 转化落点；目前无 web analytics。</td></tr><tr><td>GitHub</td><td><a href="https://github.com/CorrectRoadH/opentoggl">https://github.com/CorrectRoadH/opentoggl</a></td><td>2026-04-18</td><td>核心开源仓库。</td><td>主 star / fork / self-host 分发入口；Traffic Insights 仅保留 14 天。</td></tr><tr><td>Repo File</td><td>apps/landing/app/root.tsx:50-54</td><td>2026-04-18</td><td>已加载 analytics.ahrefs.com/analytics.js。</td><td>复用为 landing pageview 底座，不需新增 tracker。</td></tr><tr><td>Repo File</td><td>apps/landing/app/routes/home.tsx:38-56</td><td>2026-04-18</td><td>GitHub / demo 外链已挂 UTM（utm_source=opentoggl_landing）。</td><td>UTM 对 GitHub 无效，需要改造成 /go/:target 中转。</td></tr><tr><td>Repo File</td><td>apps/website/index.html:6</td><td>2026-04-18</td><td>demo 站为 noindex, nofollow 且无 analytics。</td><td>需补 1st-party ingress 端点或 Plausible 打点。</td></tr><tr><td>Repo File</td><td>apps/update-worker/src/analytics.ts:20-41</td><td>2026-04-18</td><td>已用 CF Analytics Engine 写入 instance_id + version + os + arch + locale + country。</td><td>扩展 install_source blob，打通自托管安装归因。</td></tr></tbody></table></div>
+</section><section class="report-section" id="site-verification"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 04</p><h2>官网核验</h2></div><a class="section-anchor" href="#site-verification">#04</a></div>
+<p>通过仓库内多份文件交叉核验官方域名与 GitHub 仓库；避免把文档站、镜像站或媒体稿当作权威入口。</p>
+<ul><li>Landing 域名：opentoggl.com；由 apps/landing/app/lib/seo.ts 中 resolveSiteUrl() 指定。</li>
+<li>Demo 域名：track.opentoggl.com；由 apps/website/index.html 的 canonical link 指定。</li>
+<li>GitHub 仓库：github.com/CorrectRoadH/opentoggl；由 git remote 和 CLAUDE.md 项目描述一致确认。</li>
+<li>多语言版本：en / zh / es / ja / fr / ko / pl / pt 八种 locale；landing 使用 fumadocs-ui i18n 分发。</li></ul>
+</section><section class="report-section" id="current-state"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 05</p><h2>现状诊断</h2></div><a class="section-anchor" href="#current-state">#05</a></div>
+<p>现状可以拆成已具备资产与明显缺口两类，直接决定后续优先级路线图。</p>
+<ul><li>已具备：Ahrefs Web Analytics（landing pageview / referrer / country）。</li>
+<li>已具备：Ahrefs 订阅覆盖 Brand Radar / GSC / Keywords Explorer / Site Explorer。</li>
+<li>已具备：landing UTM helper appendUtm。</li>
+<li>已具备：update-worker Analytics Engine 自托管实例 country × version 统计。</li>
+<li>缺口：GitHub 外链无位置级归因（UTM 对 GitHub 不生效，且 GitHub Traffic Insights 仅留 14 天）。</li>
+<li>缺口：demo 站完全无 analytics，landing→demo 转化无法测量。</li>
+<li>缺口：Google Search Console / Bing Webmaster 无周度报表机制。</li>
+<li>缺口：GEO prompt 监控 / Brand Radar 尚未启用，AI 答案曝光零可观测。</li>
+<li>缺口：自托管 docker run / 二进制安装的 install_source 字段缺失。</li></ul>
+</section><section class="report-section" id="method-principle"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 06</p><h2>效果追踪方法与原理说明</h2></div><a class="section-anchor" href="#method-principle">#06</a></div>
+<p>按 skill 要求，先把 GEO 价值拆成三层：品牌层价值、直接效果、间接效果；每一层都给出方法、原理、适用场景与执行动作，避免方案被当成只看一项指标的单线归因。</p>
+<div class="flow-block"><p class="flow-title">AI 曝光 → 承接 → 识别 → 归因 → 复盘 链路</p><div class="flow-grid"><article class="flow-step">
+              <p class="flow-label">阶段 1</p>
+              <h3 class="flow-step-title">AI 曝光</h3>
+              <p class="flow-step-note">固定 prompt 在 ChatGPT / Gemini / Perplexity / Claude 查询，Brand Radar 记录 mention 与 cited-pages。</p>
+            </article><article class="flow-step">
+              <p class="flow-label">阶段 2</p>
+              <h3 class="flow-step-title">站外承接</h3>
+              <p class="flow-step-note">用户点击 AI 答案里的链接，或自行搜 opentoggl 抵达 opentoggl.com / GitHub。</p>
+            </article><article class="flow-step">
+              <p class="flow-label">阶段 3</p>
+              <h3 class="flow-step-title">识别</h3>
+              <p class="flow-step-note">/go/:target 中转记录外链点击位置；landing pageview 由 Ahrefs 记录；demo first_visit 由自建 ingress 记录。</p>
+            </article><article class="flow-step">
+              <p class="flow-label">阶段 4</p>
+              <h3 class="flow-step-title">归因</h3>
+              <p class="flow-step-note">ot_v 跨域串联 + install_source 回传 + 首问问卷三条补丁把来源写回 inbound_event 表。</p>
+            </article><article class="flow-step">
+              <p class="flow-label">阶段 5</p>
+              <h3 class="flow-step-title">复盘</h3>
+              <p class="flow-step-note">每周对比 Brand Radar mention、GSC 品牌词、GitHub star 与自托管新增实例是否同向增长，指导下一轮内容 / 外链动作。</p>
+            </article></div></div>
+<div class="table-wrap"><table><thead><tr><th>层级</th><th>方法</th><th>监测原理</th><th>适用场景</th><th>关键执行动作</th></tr></thead><tbody><tr><td>品牌层</td><td>AI 答案 mention 计数</td><td>被 AI 作为推荐 / 对比 / 引用对象即构成高信任度第三方背书。</td><td>ChatGPT / Gemini / Perplexity / Claude 四大海外平台。</td><td>Ahrefs Brand Radar 固定 prompt 库 + 周度快照。</td></tr><tr><td>直接层</td><td>/go/:target 1st-party 中转</td><td>服务端 302 前写日志，位置级 slot 标签在 client 不可达时仍能记录。</td><td>所有站外 GitHub / demo / X 外链。</td><td>Cloudflare Worker 记日志到 Analytics Engine；PR 可审 outbound 白名单。</td></tr><tr><td>直接层</td><td>跨域 visitor stitching</td><td>landing 写 1st-party cookie ot_v，/go/demo 中转透传到 demo URL 首个事件里。</td><td>landing → demo 转化路径。</td><td>demo bootstrap 读 ot_v 并写 first_visit，然后从 URL 清理参数。</td></tr><tr><td>直接层</td><td>install_source 回传</td><td>安装脚本带来源标签，update-worker 首次心跳落盘。</td><td>自托管 curl install.sh 或 docker-compose 安装。</td><td>扩展 update-worker blob7 / blob8；README 更新安装命令模板。</td></tr><tr><td>间接层</td><td>品牌词搜索曝光</td><td>AI 曝光后用户主动搜 opentoggl 等品牌词，由 GSC 记录。</td><td>全平台通用。</td><td>固定品牌词包，按周对比 GSC 数据。</td></tr><tr><td>间接层</td><td>demo 首问问卷</td><td>无 referer 时让用户自报来源，恢复 AI 引用但无链接的场景。</td><td>ChatGPT Pro 私有会话、AI 口头推荐等链路。</td><td>demo onboarding 第一步加 How did you hear about OpenToggl。</td></tr><tr><td>间接层</td><td>GitHub Star 增速</td><td>AI 曝光的滞后代理指标；与 Brand Radar / GSC 同向才算 GEO 在起作用。</td><td>全平台通用。</td><td>每日抓 stargazers_count，留 github_metrics_daily.jsonl。</td></tr></tbody></table></div>
+</section><section class="report-section" id="direct-effect"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 07</p><h2>直接效果追踪方案</h2></div><a class="section-anchor" href="#direct-effect">#07</a></div>
+<p>直接效果的设计目标是让每一次点击 / 试用 / 安装都尽量带上一个可被写回来源主键的 slot 标签；优先覆盖最容易丢失归因的 GitHub 外链与自托管安装两条路径。</p>
+<ul><li>D1 /go/:target 中转：Cloudflare Worker 路由 opentoggl.com/go/:target?ref=&lt;slot&gt;&amp;locale=&lt;xx&gt;；白名单 github / github-issues / github-discussions / demo / x / status / hn；fail-open 直接 302；写 Analytics Engine (index1=target, blob1=slot, blob2=locale, blob3=referer, blob4=country, blob5=ua_family, blob6=visitor_id)。</li>
+<li>D2 跨域 visitor stitching：landing 写 1st-party cookie ot_v（Domain=.opentoggl.com, SameSite=Lax），/go/demo 把 ot_v 透传到 track.opentoggl.com?ot_v=...&amp;src=...；demo bootstrap 读 ot_v/src → 发 first_visit 到 /api/ingress/first-visit → 从 URL 清理参数。</li>
+<li>D3 install_source 回传：update-worker 新增 install_source / install_campaign query；curl install.sh 默认带 INSTALL_SOURCE=github_readme；docker-compose 模板写 x-install-source=docs_docker_compose。</li>
+<li>D4 demo 首问问卷：demo 首次 onboarding 单选 How did you hear about OpenToggl，选项覆盖 ChatGPT / Claude / Perplexity / Gemini / GitHub / Google / X / HN / Reddit / Friend / Other；写入 user_attribution 表，一用户一条。</li>
+<li>Slot 命名规范：hero_cta / proof_card / footer / faq / docs_inline / readme_cta；仓库内以 config/outbound-targets.json 收口，PR review。</li></ul>
+</section><section class="report-section" id="indirect-effect"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 08</p><h2>间接效果追踪方案</h2></div><a class="section-anchor" href="#indirect-effect">#08</a></div>
+<p>间接效果用来覆盖直接归因不可达的场景：AI 私有会话、口碑扩散、用户从 AI 看到后再自己 Google 搜、GitHub 仓库被别的 README 提及等。这一层的核心是趋势判断，不是逐条归因。</p>
+<ul><li>I1 SEO：验证 opentoggl.com 与 track.opentoggl.com 两个 GSC property（DNS TXT）；通过 Ahrefs MCP gsc-keywords / gsc-pages / gsc-performance-history 每周自动拉报表。</li>
+<li>周度 SEO 四图：品牌词曝光 / 点击 / CTR；非品牌 query Top 20 涨跌（按 locale）；高曝光低 CTR 清单（title / description 优化线索）；page-level 曝光 Top 20。</li>
+<li>I2 Brand-level 信号：每天抓 repos/{owner}/{repo} API，留 github_metrics_daily.jsonl；周对比 Brand Radar mention、GitHub star、GSC 品牌词三条趋势。</li>
+<li>SoV 监控：Brand Radar 监控 OpenToggl 与竞品 Toggl Track / Clockify / Harvest / Timely / TimeCamp 的 share of voice。</li>
+<li>不做：Google Analytics、cookie-based 品牌指纹识别、用户级长期画像。</li></ul>
+</section><section class="report-section" id="boundary"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 09</p><h2>监测效果边界说明</h2></div><a class="section-anchor" href="#boundary">#09</a></div>
+<p>GEO 的完整价值通常不能被任何单一后台直接统计，OpenToggl 尤其如此。下列链路属于结构性不可观测，不应承诺能用后台数据补全。</p>
+<p>因此 20%~30% 的保守规划假设对 OpenToggl 不直接适用。OpenToggl 官网承接较强但用户后续 self-host 安装链路非常松散，应使用 海外官网承接强、表单成熟的 SaaS / PLG 区间作为起点，并对 Unobservable 层相对加权。</p>
+<ul><li>ChatGPT Pro / Claude Pro 私有会话里被引用到 OpenToggl 的对话，后台永远看不到。</li>
+<li>用户在 AI 答案里看到 OpenToggl 后不点链接，第二天自行 Google 搜 opentoggl 进入，这部分会被误计为 organic search 而非 GEO。</li>
+<li>AI 推荐后的口头推荐、Slack / Discord 私聊推荐，没有任何数字痕迹。</li>
+<li>self-host 的价值实现发生在安装与运行后，但安装脚本的来源完全依赖用户是否带 INSTALL_SOURCE，覆盖率天生不全。</li>
+<li>多数 AI 平台不在答案里稳定输出引用链接（Perplexity 稳定、ChatGPT 不稳定、Claude 以引用内容为主不给链接），referer 这一条在 GEO 场景天然稀缺。</li></ul>
+</section><section class="report-section" id="observability"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 10</p><h2>可观测性估算框架</h2></div><a class="section-anchor" href="#observability">#10</a></div>
+<p>按 skill 的 observability-estimation-framework，为 OpenToggl 给出 Observed / Recoverable / Unobservable 三层规划区间，并说明决定因素与下一阶段校准动作。</p>
+<p>规划区间上下界合计为 100%，是刻意设计：保守下界 25% + 20% + 55% = 100%，上界 35% + 30% + 35% = 100%。数字用作沟通基准，4~8 周后用实际数据校准。</p>
+<ul><li>下一阶段提升 Observed 的核心动作：把 README 所有外链换成 /go/：target、让 curl install.sh 默认带 INSTALL_SOURCE=github_readme、demo onboarding 默认挂首问问卷。</li>
+<li>下一阶段提升 Recoverable 的核心动作：在 GitHub issue 模板与 PR 模板里加一句 How did you discover OpenToggl，导出 CSV 纳入周报。</li>
+<li>Unobservable 永远不应该被承诺归零，正确姿态是持续用 Brand Radar mention、GitHub star 与 GSC 品牌词的同向趋势解释它。</li></ul>
+<div class="allocation-block"><p class="allocation-title">Observed / Recoverable / Unobservable 分层（全部方案落地后）</p><div class="allocation-bar"><div class="allocation-segment" style="background:#1f5a73;width:30.00%">Observed 30%</div><div class="allocation-segment" style="background:#9c3d26;width:25.00%">Recoverable 25%</div><div class="allocation-segment" style="background:#6c8b3c;width:45.00%">Unobservable 45%</div></div><div class="allocation-grid"><article class="allocation-card">
+              <p class="allocation-card-label" style="color:#1f5a73">Observed</p>
+              <p class="allocation-card-value">30%</p>
+              <p class="allocation-card-range">建议区间：25%~35%</p>
+              <p class="allocation-card-note">由 /go/:target 覆盖度、demo first-visit 率、install_source 填充率决定；可通过让安装脚本默认带 source 与 README 外链全部走 /go/ 进一步提升。</p>
+            </article><article class="allocation-card">
+              <p class="allocation-card-label" style="color:#9c3d26">Recoverable</p>
+              <p class="allocation-card-value">25%</p>
+              <p class="allocation-card-range">建议区间：20%~30%</p>
+              <p class="allocation-card-note">由 demo 首问问卷应答率和 issue / PR 作者自报比例决定；问卷放在 onboarding blocking 但可 skip 的位置，文案激励填写。</p>
+            </article><article class="allocation-card">
+              <p class="allocation-card-label" style="color:#6c8b3c">Unobservable</p>
+              <p class="allocation-card-value">45%</p>
+              <p class="allocation-card-range">建议区间：40%~50%</p>
+              <p class="allocation-card-note">AI 私有会话引用、口碑扩散、长决策成交滞后；不追求降到 0，用品牌词 / GitHub star 周增趋势作为代理指标。</p>
+            </article></div></div>
+</section><section class="report-section" id="data-model"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 11</p><h2>归因口径与数据表设计</h2></div><a class="section-anchor" href="#data-model">#11</a></div>
+<p>为了避免 Ahrefs / Analytics Engine / Postgres / GitHub API 四源数据无法对齐，所有归因事件收口到一张 inbound_event 字典；周报脚本把四源按 event_type 拉到 duckdb 视图再出图。</p>
+<ul><li>outbound_click / demo pageview → Cloudflare Analytics Engine。</li>
+<li>first_visit / install_ping / survey_answer → Postgres，和业务库同一实例。</li>
+<li>landing pageview → Ahrefs Web Analytics（外部只读）。</li>
+<li>周报脚本通过 CF REST API 与 Ahrefs MCP 拉取数据，duckdb 聚合后出图。</li></ul>
+<div class="table-wrap"><table><thead><tr><th>字段</th><th>类型</th><th>含义</th><th>来源</th></tr></thead><tbody><tr><td>event_id</td><td>uuid</td><td>事件主键</td><td>由采集端生成</td></tr><tr><td>event_time</td><td>timestamptz</td><td>事件发生时间</td><td>采集端时间，UTC</td></tr><tr><td>event_type</td><td>enum</td><td>pageview / outbound_click / first_visit / install_ping / survey_answer</td><td>按端区分</td></tr><tr><td>site</td><td>enum</td><td>landing / demo / github / update_worker</td><td>采集端</td></tr><tr><td>visitor_id</td><td>text</td><td>ot_v cookie；server-only 事件可为空</td><td>1st-party cookie</td></tr><tr><td>target</td><td>text</td><td>outbound_click：github / demo / x / hn 等</td><td>Worker 路由参数</td></tr><tr><td>slot</td><td>text</td><td>hero_cta / proof_card / readme_cta 等位置标签</td><td>Worker 路由参数</td></tr><tr><td>locale</td><td>text</td><td>en / zh / es / ja / fr / ko / pl / pt</td><td>landing i18n 传递</td></tr><tr><td>referer_domain</td><td>text</td><td>github.com / chatgpt.com / perplexity.ai 等</td><td>HTTP Referer</td></tr><tr><td>ai_platform</td><td>text</td><td>由 referer 或问卷答案推断</td><td>采集端推断</td></tr><tr><td>country</td><td>text</td><td>ISO-2；fallback ZZ</td><td>Cloudflare CF-IPCountry</td></tr><tr><td>campaign</td><td>text</td><td>UTM 兼容字段，覆盖外部入链场景</td><td>URL query</td></tr><tr><td>raw_referer</td><td>text</td><td>完整 referer，审计用</td><td>HTTP Referer</td></tr></tbody></table></div>
+</section><section class="report-section" id="roadmap"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 12</p><h2>优先级路线图</h2></div><a class="section-anchor" href="#roadmap">#12</a></div>
+<p>路线图按方案 PLAN-1（完整版）展开。如先走最小闭环（PLAN-3），仅保留 P0 三项。</p>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>动作</th><th>负责方</th><th>验收</th></tr></thead><tbody><tr><td>P0 本周</td><td>建 /go/:target Worker + 白名单 + landing 所有外链替换</td><td>landing 团队</td><td>点 hero CTA 访问 GitHub，CF Analytics Engine 有一条 slot=hero_cta 记录</td></tr><tr><td>P0 本周</td><td>GSC / Bing Webmaster 验证 + 周报脚本 v1</td><td>SEO 负责人</td><td>每周一收到自动报表</td></tr><tr><td>P0 本周</td><td>geo-prompts.yaml v1 + Brand Radar prompt 同步</td><td>GEO 负责人</td><td>Brand Radar 能看到 OpenToggl 本周 mention 计数</td></tr><tr><td>P1 2-3 周</td><td>demo bootstrap ingress + ot_v 跨域串联</td><td>demo 团队</td><td>landing 点 hero → demo 同一 visitor_id 的 first_visit</td></tr><tr><td>P1 2-3 周</td><td>install_source 参数 + 安装脚本更新 + update-worker blob 扩展</td><td>backend</td><td>curl install.sh 默认带 github_readme</td></tr><tr><td>P2 4-6 周</td><td>demo onboarding 首问问卷 + user_attribution 表</td><td>backend + frontend</td><td>新 demo 账号 ≥60% 回答问卷</td></tr><tr><td>P2 4-6 周</td><td>周报可视化（duckdb 视图 → Grafana / Metabase）</td><td>analytics</td><td>每周一张 GEO 综合仪表板</td></tr><tr><td>P3 按需</td><td>geo-prompts.yaml 轮替 + 竞品 SoV 月度复盘</td><td>GEO 负责人</td><td>月度 SoV 趋势图</td></tr></tbody></table></div>
+</section><section class="report-section" id="confidence-gaps"><div class="section-head"><div class="section-heading"><p class="section-kicker">Module 13</p><h2>置信度与缺口</h2></div><a class="section-anchor" href="#confidence-gaps">#13</a></div>
+<ul><li>高置信度：/go/:target 中转、GSC 接入、Brand Radar 接入，这三条是成熟路径。</li>
+<li>中置信度：跨域 visitor stitching；Safari ITP / Firefox ETP 下 1st-party cookie TTL 可能被缩到 7 天，对长周期归因有损。</li>
+<li>低置信度：install_source 覆盖率，取决于用户是否改 install 命令；不强制、不 block release。</li>
+<li>缺口 1：国内 GEO 的实际流量占比未知；等 Brand Radar 数据回来再决定是否补 DeepSeek / 豆包 / 元宝 / Kimi 专项监控。</li>
+<li>缺口 2：self-hosted 实例活跃度与来源的相关性未知，update-worker 需要多跑几周积累样本。</li>
+<li>缺口 3：GEO prompt 库初始版需 1-2 次迭代才稳定；v1 只是起点不是答案。</li></ul>
+</section>
+    <p class="footer">Generated on 2026-04-18 09:49:48</p>
+  </main>
+</body>
+</html>

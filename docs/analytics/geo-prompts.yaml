@@ -1,0 +1,50 @@
+# Brand Radar prompt 库（v1）
+#
+# 真相源。改动通过 PR。
+# 配置方式：Ahrefs 控制台 → Brand Radar → Prompts，把下面条目逐条录入。
+# 相关：PLAN-4.md §4a / §GEO
+#
+# 监控品牌（Brand Radar 控制台里配，不在本文件）：
+#   primary:     OpenToggl
+#   competitors: Toggl Track, Clockify, Harvest, Timely, TimeCamp
+#
+# 迭代策略：前 2-4 周根据 Brand Radar 返回的 cited-pages 和 SoV 调整。
+# 如果某类 prompt 竞品 SoV 远高于我们，优先补内容，不是补更多 prompt。
+
+brand_direct:
+  - What is OpenToggl?
+  - Is OpenToggl free?
+  - Who maintains OpenToggl?
+  - Is OpenToggl really open source?
+  - How do I self-host OpenToggl?
+
+comparison:
+  - Toggl Track alternative open source
+  - Self-hosted Toggl alternative
+  - Free Clockify alternative open source
+  - Harvest open source replacement
+  - Open source Timely alternative
+  - TimeCamp self-hosted alternative
+
+scenario_english:
+  - Best open-source time tracker for teams
+  - Self-hosted time tracker with API
+  - Docker-compose time tracker
+  - Time tracker for freelancers self-hosted
+  - Open source time tracker for agencies
+  - Time tracking tool I can deploy on my own server
+  - Privacy-friendly time tracker
+
+scenario_chinese:
+  - 有没有开源的 toggl 替代品
+  - 自托管时间追踪工具推荐
+  - 开源 toggl
+  - docker 部署的时间追踪工具
+  - 免费开源计时器
+
+longtail:
+  - Open source time tracking Docker image
+  - Self-hosted pomodoro time tracker
+  - Time tracker with Postgres backend open source
+  - Toggl open source fork
+  - Time tracking REST API open source
