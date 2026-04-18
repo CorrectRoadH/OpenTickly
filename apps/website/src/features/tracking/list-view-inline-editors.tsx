@@ -215,6 +215,10 @@ export function ListRowProjectPicker({
   const displayName = resolvedProject?.name ?? entry.project_name ?? "";
   const displayColor = resolvedProject?.color ?? resolveEntryColor(entry);
   const displayClientName = resolvedProject?.clientName ?? entry.client_name ?? undefined;
+  const taskIdFromEntry = entry.task_id ?? entry.tid ?? null;
+  const resolvedTaskName =
+    taskIdFromEntry != null ? tasks?.find((t) => t.id === taskIdFromEntry)?.name : undefined;
+  const displayTaskName = resolvedTaskName ?? entry.task_name ?? undefined;
 
   return (
     <div className="relative" ref={containerRef}>
@@ -235,6 +239,12 @@ export function ListRowProjectPicker({
           <span className="truncate" style={{ color: displayColor }}>
             {displayName}
           </span>
+          {displayTaskName ? (
+            <span className="truncate text-[var(--track-text-muted)]">
+              <span className="mx-0.5">·</span>
+              <span>{displayTaskName}</span>
+            </span>
+          ) : null}
           {displayClientName ? (
             <span className="truncate text-[var(--track-text-muted)]">
               <span className="mx-0.5">·</span>

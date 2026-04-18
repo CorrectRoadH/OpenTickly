@@ -195,11 +195,16 @@ export function ConnectedListView({
     if (typeof entry.id === "number" && typeof wid === "number") {
       const picked =
         projectId == null ? null : (projectOptions.find((p) => p.id === projectId) ?? null);
+      // Tasks are scoped to a single project, so switching project must
+      // also clear the stale task_id. Otherwise the server rejects the
+      // PUT with "catalog task not found" because the old task does not
+      // belong to the new project.
       void mutRef.current.update.mutateAsync({
         request: {
           projectColor: picked?.color ?? null,
           projectId,
           projectName: picked?.name ?? null,
+          taskId: null,
         },
         timeEntryId: entry.id,
         workspaceId: wid,

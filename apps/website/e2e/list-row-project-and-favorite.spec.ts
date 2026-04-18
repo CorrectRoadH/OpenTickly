@@ -267,6 +267,113 @@ test.describe("List row inline actions", () => {
       .toEqual({ projectId, taskId });
   });
 
+  test("switching project on an entry that has a task clears the task", async ({ page }) => {
+    const email = `list-row-switchproj-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "List Row Switch Project User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+
+    // Project A owns the task. Project B is the switch target — the entry's
+    // existing task belongs to project A and must be cleared once we pick B.
+    const projectAName = `switch-src-${Date.now()}`;
+    const projectAId = await createProjectForWorkspace(page, {
+      name: projectAName,
+      workspaceId: session.currentWorkspaceId,
+    });
+    const targetToken = `zzswitch${test.info().workerIndex}${Date.now()}`;
+    const projectBName = `${targetToken}-dst`;
+    const projectBId = await createProjectForWorkspace(page, {
+      name: projectBName,
+      workspaceId: session.currentWorkspaceId,
+    });
+    const taskName = `task-bound-to-A-${Date.now()}`;
+    const taskId = await createTaskForProject(page, {
+      name: taskName,
+      projectId: projectAId,
+      workspaceId: session.currentWorkspaceId,
+    });
+
+    const description = `switch-project-entry-${Date.now()}`;
+    const now = new Date();
+    const startUtc = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 6, 0, 0),
+    );
+    const stopUtc = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 7, 0, 0),
+    );
+    const entryId = await createTimeEntryForWorkspace(page, {
+      description,
+      projectId: projectAId,
+      start: startUtc.toISOString(),
+      stop: stopUtc.toISOString(),
+      taskId,
+      workspaceId: session.currentWorkspaceId,
+    });
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByTestId("timer-list-view")).toBeVisible();
+
+    const row = page.locator(`[data-testid="time-entry-list-row"][data-entry-id="${entryId}"]`);
+    await expect(row).toBeVisible();
+
+    // Sanity: row starts on project A, task bound to A.
+    const changeProjectButton = row.getByRole("button", {
+      name: `Change project for ${description}`,
+    });
+    await expect(changeProjectButton).toContainText(projectAName);
+    await expect(changeProjectButton).toContainText(taskName);
+
+    await changeProjectButton.click();
+    const picker = page.getByTestId("bulk-edit-project-picker");
+    await expect(picker).toBeVisible();
+    await picker.getByText(projectBName, { exact: true }).click();
+
+    // Server is source of truth: project flips to B AND task_id is cleared.
+    // Before the fix, the PUT kept the old task_id, the server rejected it
+    // with "catalog task not found", and the entry stayed on project A with
+    // the stale task still attached.
+    await expect
+      .poll(
+        async () => {
+          return page.evaluate(async (id) => {
+            const response = await fetch(`/api/v9/me/time_entries`, {
+              credentials: "include",
+            });
+            if (!response.ok) return null;
+            const payload = (await response.json()) as {
+              id?: number;
+              project_id?: number | null;
+              task_id?: number | null;
+            }[];
+            const match = payload.find((e) => e.id === id);
+            if (!match) return null;
+            return {
+              projectId: match.project_id ?? null,
+              taskId: match.task_id ?? null,
+            };
+          }, entryId);
+        },
+        { timeout: 10_000 },
+      )
+      .toEqual({ projectId: projectBId, taskId: null });
+
+    // Row reflects the new project and no longer shows the stale task name.
+    await expect(changeProjectButton).toContainText(projectBName);
+    await expect(changeProjectButton).not.toContainText(taskName);
+
+    // No "catalog task not found" (or any *not found*) error toast surfaced.
+    await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
+  });
+
   test("pinning an entry as favorite from the list row more-actions menu creates a favorite", async ({
     page,
   }) => {

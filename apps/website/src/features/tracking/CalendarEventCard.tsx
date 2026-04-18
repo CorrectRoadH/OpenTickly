@@ -101,6 +101,12 @@ function CalendarEventCardImpl({
               style={{ color: vividColor(color) }}
             >
               {entry.project_name}
+              {entry.task_name ? (
+                <span className="text-[var(--track-text-muted)]">
+                  <span className="mx-0.5">·</span>
+                  {entry.task_name}
+                </span>
+              ) : null}
             </span>
           ) : null}
           {entry.tags && entry.tags.length > 0 ? (

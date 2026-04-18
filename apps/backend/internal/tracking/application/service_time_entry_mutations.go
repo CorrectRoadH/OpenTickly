@@ -48,7 +48,11 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		}
 	}
 	if command.TaskID != nil {
-		current.TaskID = command.TaskID
+		if *command.TaskID == 0 {
+			current.TaskID = nil
+		} else {
+			current.TaskID = command.TaskID
+		}
 	}
 	clientID, err := service.resolveTrackingReferences(ctx, command.WorkspaceID, current.ProjectID, current.TaskID)
 	if err != nil {

@@ -26,6 +26,7 @@ func newPublicTrackRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, erro
 	}
 
 	swagger = withAbsoluteTrackPaths(swagger, "/api/v9")
+	allowTrackTaskIDNullClearing(swagger)
 	validator := echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
@@ -62,6 +63,31 @@ func withAbsoluteTrackPaths(swagger *openapi3.T, basePath string) *openapi3.T {
 	}
 	swagger.Paths = updatedPaths
 	return swagger
+}
+
+// allowTrackTaskIDNullClearing relaxes the `timeentry.Payload` schema so that
+// `task_id` / `tid` accept an explicit JSON null as a clearing signal. The
+// upstream Toggl swagger (which we treat as read-only per CLAUDE.md) only
+// marks `project_id` / `pid` as `x-nullable`; without this in-memory patch the
+// OpenAPI request validator rejects `task_id: null` with a 400 before the
+// handler can interpret it, so switching a time entry's project while a task
+// is still attached leaves the stale `task_id` in place and fails with
+// "catalog task not found" on the server-side reference check.
+func allowTrackTaskIDNullClearing(swagger *openapi3.T) {
+	if swagger == nil || swagger.Components == nil || swagger.Components.Schemas == nil {
+		return
+	}
+	payload := swagger.Components.Schemas["timeentry.Payload"]
+	if payload == nil || payload.Value == nil || payload.Value.Properties == nil {
+		return
+	}
+	for _, field := range []string{"task_id", "tid"} {
+		prop := payload.Value.Properties[field]
+		if prop == nil || prop.Value == nil {
+			continue
+		}
+		prop.Value.Nullable = true
+	}
 }
 
 func skipPublicTrackOpenAPIValidation(ctx echo.Context) bool {

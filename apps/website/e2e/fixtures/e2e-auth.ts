@@ -172,6 +172,7 @@ export async function createTimeEntryForWorkspace(
     start: string;
     stop: string;
     tagIds?: number[];
+    taskId?: number;
     workspaceId: number;
   },
 ): Promise<number> {
@@ -185,6 +186,7 @@ export async function createTimeEntryForWorkspace(
         start: request.start,
         stop: request.stop,
         tag_ids: request.tagIds,
+        task_id: request.taskId,
         workspace_id: request.workspaceId,
       }),
       credentials: "include",

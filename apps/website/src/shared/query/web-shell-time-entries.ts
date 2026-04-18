@@ -343,6 +343,11 @@ export function useUpdateTimeEntryMutation() {
     }) =>
       unwrapWebApiResult(
         putWorkspaceTimeEntryHandler({
+          // Explicit null on `task_id` is the clearing signal — `?? undefined`
+          // would drop it and leave the server-side task_id untouched, which
+          // breaks project-switch flows where the stale task belongs to the
+          // old project. Upstream Toggl OpenAPI types `task_id` as `number`
+          // only, so we cast at this boundary to preserve the null.
           body: {
             billable: request.billable,
             description: request.description,
@@ -350,7 +355,8 @@ export function useUpdateTimeEntryMutation() {
             start: toTrackUtcString(request.start),
             stop: toTrackUtcString(request.stop),
             tag_ids: request.tagIds,
-            task_id: request.taskId ?? undefined,
+            task_id:
+              request.taskId === undefined ? undefined : (request.taskId as unknown as number),
           },
           path: {
             time_entry_id: timeEntryId,
@@ -388,7 +394,10 @@ export function useUpdateTimeEntryMutation() {
         ...(request.start !== undefined && { start: request.start }),
         ...(request.stop !== undefined && { stop: request.stop }),
         ...(request.tagIds !== undefined && { tag_ids: request.tagIds }),
-        ...(request.taskId !== undefined && { task_id: request.taskId }),
+        ...(request.taskId !== undefined && {
+          task_id: request.taskId,
+          task_name: request.taskId === null ? undefined : entry.task_name,
+        }),
       });
 
       const previousCurrent = queryClient.getQueryData(currentTimeEntryQueryKey);

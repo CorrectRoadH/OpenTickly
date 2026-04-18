@@ -256,6 +256,19 @@ func resolveTrackNullableProjectID(rawFields map[string]json.RawMessage, values 
 	return nil
 }
 
+// resolveTrackNullableTaskID mirrors resolveTrackNullableProjectID for
+// task_id. An explicit JSON null (or "tid") is the clearing signal and is
+// surfaced to the service as *int64 = 0, matching the project_id convention.
+func resolveTrackNullableTaskID(rawFields map[string]json.RawMessage, values ...*int) *int64 {
+	if resolved := firstTrackIntPointerAsInt64(values...); resolved != nil {
+		return resolved
+	}
+	if hasExplicitTrackJSONNull(rawFields, "task_id", "tid") {
+		return lo.ToPtr(int64(0))
+	}
+	return nil
+}
+
 func hasExplicitTrackJSONNull(rawFields map[string]json.RawMessage, keys ...string) bool {
 	for _, key := range keys {
 		rawValue, ok := rawFields[key]

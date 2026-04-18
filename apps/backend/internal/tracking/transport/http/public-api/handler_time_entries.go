@@ -216,7 +216,7 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 		Stop:        stop,
 		Duration:    int64PointerToIntPointer(payload.Duration),
 		ProjectID:   resolveTrackNullableProjectID(rawBodyFields, payload.ProjectId, payload.Pid),
-		TaskID:      firstTrackIntPointerAsInt64(payload.TaskId, payload.Tid),
+		TaskID:      resolveTrackNullableTaskID(rawBodyFields, payload.TaskId, payload.Tid),
 		TagIDs:      tagIDs,
 		ReplaceTags: payload.TagIds != nil || payload.Tags != nil,
 	})
