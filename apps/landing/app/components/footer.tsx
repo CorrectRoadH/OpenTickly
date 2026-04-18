@@ -1,6 +1,6 @@
 import { i18n } from "@/lib/i18n";
 import { repoUrl } from "@/lib/seo";
-import { appendUtm } from "@/lib/utm";
+import { appendSlot } from "@/lib/utm";
 
 const languageNames: Record<string, string> = {
   en: "English",
@@ -13,12 +13,8 @@ const languageNames: Record<string, string> = {
 
 export default function Footer({ locale }: { locale: string }) {
   const currentPrefix = locale === i18n.defaultLanguage ? "" : `/${locale}`;
-  const githubHref = appendUtm(repoUrl, {
-    source: "opentoggl_landing",
-    medium: "footer",
-    campaign: "github",
-    content: locale,
-  });
+  // GitHub ignores UTM; ?s=footer lets Ahrefs outbound report split by slot.
+  const githubHref = appendSlot(repoUrl, "footer");
 
   return (
     <footer className="mt-auto border-t border-[var(--track-border)] bg-[var(--track-surface-muted)]">

@@ -20,7 +20,7 @@ import {
   resolveLocalizedDescription,
   resolveSiteUrl,
 } from "@/lib/seo";
-import { appendUtm } from "@/lib/utm";
+import { appendSlot, appendUtm } from "@/lib/utm";
 
 const featureIcons = [RefreshCw, Server, Unlock];
 const proofIcons = [Play, GithubIcon, FileText];
@@ -44,6 +44,12 @@ export default function Home() {
 
   const proofItems = strings.proof.items.map((item) => {
     if (!item.href.startsWith("http")) return item;
+    // GitHub ignores UTM; use ?s=<slot> so Ahrefs outbound report splits by slot.
+    if (item.href.includes("github.com")) {
+      return { ...item, href: appendSlot(item.href, "proof_card") };
+    }
+    // demo (track.opentoggl.com) keeps UTM so the future landing→demo
+    // attribution work (GOALS.md deferred) has an initial signal to read.
     return {
       ...item,
       href: appendUtm(item.href, {

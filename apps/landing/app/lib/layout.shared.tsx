@@ -1,6 +1,6 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { i18n } from "./i18n";
-import { appendUtm } from "./utm";
+import { appendSlot } from "./utm";
 
 export const gitConfig = {
   user: "CorrectRoadH",
@@ -10,7 +10,6 @@ export const gitConfig = {
 
 export function baseOptions(locale?: string): BaseLayoutProps {
   const prefix = locale && locale !== i18n.defaultLanguage ? `/${locale}` : "";
-  const resolvedLocale = locale ?? i18n.defaultLanguage;
   return {
     nav: {
       title: "OpenToggl",
@@ -24,11 +23,7 @@ export function baseOptions(locale?: string): BaseLayoutProps {
         active: "nested-url",
       },
     ],
-    githubUrl: appendUtm(`https://github.com/${gitConfig.user}/${gitConfig.repo}`, {
-      source: "opentoggl_landing",
-      medium: "nav_header",
-      campaign: "github",
-      content: resolvedLocale,
-    }),
+    // GitHub ignores UTM; ?s=nav_header lets Ahrefs outbound report split by slot.
+    githubUrl: appendSlot(`https://github.com/${gitConfig.user}/${gitConfig.repo}`, "nav_header"),
   };
 }

@@ -25,3 +25,17 @@ export function appendUtm(url: string, params: UtmParams): string {
   const sep = base.includes("?") ? "&" : "?";
   return `${base}${sep}${pairs.join("&")}${hash}`;
 }
+
+/**
+ * Append a `?s=<slot>` query param to mark the on-page origin of an outbound
+ * link. Used for targets that don't read UTM (e.g. GitHub): the full URL then
+ * appears in Ahrefs Web Analytics outbound-link reports grouped by slot.
+ * See docs/analytics/PLAN-4.md.
+ */
+export function appendSlot(url: string, slot: string): string {
+  const hashIndex = url.indexOf("#");
+  const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : url.slice(hashIndex);
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}s=${encodeURIComponent(slot)}${hash}`;
+}
