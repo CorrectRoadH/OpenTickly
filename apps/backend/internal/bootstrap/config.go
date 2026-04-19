@@ -12,6 +12,7 @@ type FileStoreConfig = platformconfig.FileStoreConfig
 type JobsConfig = platformconfig.JobsConfig
 type GovernanceConfig = platformconfig.GovernanceConfig
 type TelemetryConfig = platformconfig.TelemetryConfig
+type WebhookConfig = platformconfig.WebhookConfig
 
 func DefaultConfig() Config {
 	return Config{

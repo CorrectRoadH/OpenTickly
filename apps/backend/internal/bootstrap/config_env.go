@@ -37,6 +37,7 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	applyStringOverride(&cfg.Jobs.QueueName, getEnv("OPENTOGGL_JOBS_QUEUE_NAME"))
 	applyIntOverride(&cfg.Governance.AuditLogRetentionDays, getEnv("OPENTOGGL_AUDIT_LOG_RETENTION_DAYS"))
 	applyBoolOverride(&cfg.Telemetry.Enabled, getEnv("OPENTOGGL_TELEMETRY"))
+	applyBoolOverride(&cfg.Webhook.AllowPrivateTargets, getEnv("OPENTOGGL_WEBHOOK_ALLOW_PRIVATE_TARGETS"))
 
 	return withDefaults(cfg), nil
 }

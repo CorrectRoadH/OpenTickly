@@ -11,6 +11,7 @@ type StartupConfig struct {
 	Jobs        JobsConfig
 	Governance  GovernanceConfig
 	Telemetry   TelemetryConfig
+	Webhook     WebhookConfig
 }
 
 type ServerConfig struct {
@@ -42,4 +43,14 @@ type GovernanceConfig struct {
 // (https://update.opentoggl.com/) is hardcoded — forkers change it in code.
 type TelemetryConfig struct {
 	Enabled bool
+}
+
+// WebhookConfig controls outbound HTTP fetched from user-supplied URLs.
+// AllowPrivateTargets=false is the safe default: loopback, RFC1918, link-local
+// (including 169.254.169.254), and CGNAT ranges are refused to prevent SSRF
+// against the host, the local network, and cloud metadata endpoints. Operators
+// on a trusted LAN that genuinely needs to reach intranet webhook receivers can
+// set OPENTOGGL_WEBHOOK_ALLOW_PRIVATE_TARGETS=true to opt back in.
+type WebhookConfig struct {
+	AllowPrivateTargets bool
 }

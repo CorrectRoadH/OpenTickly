@@ -2,8 +2,10 @@ package platform
 
 import (
 	"context"
+	"net/http"
 
 	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
+	"opentoggl/backend/apps/backend/internal/platform/safehttp"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,6 +23,7 @@ type Handles struct {
 	Cache     *RedisClient
 	FileStore FileStoreHandle
 	Jobs      *JobRunner
+	Webhook   WebhookHandle
 }
 
 func NewHandles(cfg platformconfig.StartupConfig) *Handles {
@@ -46,6 +49,12 @@ func NewHandles(cfg platformconfig.StartupConfig) *Handles {
 		Jobs: &JobRunner{
 			queueName: cfg.Jobs.QueueName,
 			jobs:      make(map[string]JobDefinition),
+		},
+		Webhook: WebhookHandle{
+			client: safehttp.NewClient(safehttp.Options{
+				AllowPrivateTargets: cfg.Webhook.AllowPrivateTargets,
+			}),
+			allowPrivateTargets: cfg.Webhook.AllowPrivateTargets,
 		},
 	}
 }
@@ -100,4 +109,21 @@ type FileStoreHandle struct {
 
 func (store FileStoreHandle) Namespace() string {
 	return store.namespace
+}
+
+// WebhookHandle exposes the SSRF-hardened HTTP client used for all outbound
+// requests to user-supplied webhook callback URLs. The client's Transport
+// refuses loopback, RFC1918, link-local, and cloud-metadata ranges unless the
+// operator explicitly opted in via OPENTOGGL_WEBHOOK_ALLOW_PRIVATE_TARGETS.
+type WebhookHandle struct {
+	client              *http.Client
+	allowPrivateTargets bool
+}
+
+func (h WebhookHandle) HTTPClient() *http.Client {
+	return h.client
+}
+
+func (h WebhookHandle) AllowPrivateTargets() bool {
+	return h.allowPrivateTargets
 }

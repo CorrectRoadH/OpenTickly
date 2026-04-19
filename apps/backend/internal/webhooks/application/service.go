@@ -23,13 +23,25 @@ type Store interface {
 	SetValidated(ctx context.Context, workspaceID, subscriptionID int64) (domain.Subscription, error)
 }
 
+// Prober probes whether a user-supplied callback URL is reachable. Injected so
+// tests can use an in-memory implementation and so the bootstrap layer can
+// pick an SSRF-hardened HTTP client. Passing nil to NewService wires in a
+// default prober that blocks private and loopback targets.
+type Prober interface {
+	Probe(ctx context.Context, url string) error
+}
+
 type Service struct {
 	store  Store
 	logger log.Logger
+	prober Prober
 }
 
-func NewService(store Store, logger log.Logger) *Service {
-	return &Service{store: store, logger: logger}
+func NewService(store Store, logger log.Logger, prober Prober) *Service {
+	if prober == nil {
+		prober = defaultProber{}
+	}
+	return &Service{store: store, logger: logger, prober: prober}
 }
 
 func (s *Service) ListSubscriptions(ctx context.Context, workspaceID int64) ([]domain.Subscription, error) {
@@ -81,7 +93,7 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 		}
 	}
 
-	if err := probeCallback(cmd.URLCallback); err != nil {
+	if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
 		return domain.Subscription{}, err
 	}
 
@@ -176,7 +188,7 @@ func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscription
 		}
 	}
 
-	if err := probeCallback(cmd.URLCallback); err != nil {
+	if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
 		return domain.Subscription{}, err
 	}
 
@@ -205,7 +217,7 @@ func (s *Service) PatchSubscription(ctx context.Context, workspaceID, subscripti
 			return domain.Subscription{}, fmt.Errorf("user %d already reached the limit of %d enabled subscriptions for workspace %d", userID, maxWebhooks, workspaceID)
 		}
 
-		if err := probeCallback(existing.URLCallback); err != nil {
+		if err := s.prober.Probe(ctx, existing.URLCallback); err != nil {
 			return domain.Subscription{}, err
 		}
 	}
@@ -222,7 +234,7 @@ func (s *Service) Ping(ctx context.Context, workspaceID, subscriptionID int64) e
 	if err != nil {
 		return err
 	}
-	return probeCallback(sub.URLCallback)
+	return s.prober.Probe(ctx, sub.URLCallback)
 }
 
 func (s *Service) Validate(ctx context.Context, workspaceID, subscriptionID int64, validationCode string) (domain.Subscription, error) {
@@ -251,15 +263,25 @@ func validateFilters(filters []domain.EventFilter) error {
 	return nil
 }
 
-func probeCallback(url string) error {
+// defaultProber is the zero-dependency fallback used when NewService receives
+// a nil Prober. It mirrors the original behaviour but validates scheme and
+// still hits the network directly, so it MUST NOT be used in production —
+// production wiring in bootstrap always injects a safehttp-backed prober.
+type defaultProber struct{}
+
+func (defaultProber) Probe(ctx context.Context, rawURL string) error {
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
-		return fmt.Errorf("URL endpoint %s request failed with error: %v", url, err)
+		return fmt.Errorf("URL endpoint %s request failed with error: %v", rawURL, err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("URL endpoint %s request failed with error: %v", rawURL, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("URL endpoint %s responded with status %d instead of 200", url, resp.StatusCode)
+		return fmt.Errorf("URL endpoint %s responded with status %d instead of 200", rawURL, resp.StatusCode)
 	}
 	return nil
 }

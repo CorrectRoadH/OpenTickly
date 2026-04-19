@@ -157,7 +157,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver, appLogger)
 	reportsService.WithSavedReportStore(reportspostgres.NewSavedReportStore(pool))
 	reportsService.WithScheduledReportStore(reportspostgres.NewScheduledReportStore(pool))
-	webhooksService := webhooksapplication.NewService(webhookspostgres.NewStore(pool), appLogger)
+	webhookProber := newSafeHTTPProber(platformHandles.Webhook.HTTPClient())
+	webhooksService := webhooksapplication.NewService(webhookspostgres.NewStore(pool), appLogger, webhookProber)
 
 	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool), appLogger)
 	if err != nil {
