@@ -107,10 +107,19 @@ type UpdateTimeEntryCommand struct {
 	ReplaceTags bool
 }
 
-type TimeEntryPatch struct {
-	Op    string
-	Path  string
-	Value any
+type PatchTimeEntriesCommand struct {
+	WorkspaceID  int64
+	UserID       int64
+	TimeEntryIDs []int64
+	Billable     *bool
+	Description  *string
+	Start        *time.Time
+	Stop         *time.Time
+	Duration     *int
+	ProjectID    *int64
+	TaskID       *int64
+	TagIDs       []int64
+	ReplaceTags  bool
 }
 
 type FavoriteView struct {

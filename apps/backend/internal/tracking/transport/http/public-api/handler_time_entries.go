@@ -241,15 +241,19 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 	if err := ctx.Bind(&payload); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	patches := make([]trackingapplication.TimeEntryPatch, 0, len(payload))
-	for _, patch := range payload {
-		patches = append(patches, trackingapplication.TimeEntryPatch{
-			Op:    lo.FromPtr(patch.Op),
-			Path:  lo.FromPtr(patch.Path),
-			Value: interfaceValue(patch.Value),
-		})
+
+	command := trackingapplication.PatchTimeEntriesCommand{
+		WorkspaceID:  workspaceID,
+		UserID:       user.ID,
+		TimeEntryIDs: timeEntryIDs,
 	}
-	success, err := handler.tracking.PatchTimeEntries(ctx.Request().Context(), workspaceID, user.ID, timeEntryIDs, patches)
+	for _, patch := range payload {
+		if err := handler.applyTimeEntryPatch(ctx.Request().Context(), &command, patch); err != nil {
+			return err
+		}
+	}
+
+	success, err := handler.tracking.PatchTimeEntries(ctx.Request().Context(), command)
 	if err != nil {
 		return writePublicTrackTrackingError(err)
 	}
@@ -260,6 +264,110 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, publictrackapi.TimeentryPatchOutput{
 		Success: &successIDs,
 	})
+}
+
+// applyTimeEntryPatch maps a single JSON-Patch operation onto the bulk command.
+// Unknown op, unknown path, or value-type mismatches produce a 400 instead of
+// being silently dropped — silent drops were the root cause of the bulk-edit
+// "200 OK but nothing saved" bug.
+func (handler *Handler) applyTimeEntryPatch(
+	ctx context.Context,
+	command *trackingapplication.PatchTimeEntriesCommand,
+	patch publictrackapi.TimeentryPatchInput,
+) error {
+	op := strings.TrimSpace(lo.FromPtr(patch.Op))
+	path := strings.TrimSpace(lo.FromPtr(patch.Path))
+	if !strings.EqualFold(op, "replace") {
+		return echo.NewHTTPError(http.StatusBadRequest, "unsupported op: "+op)
+	}
+	value := interfaceValue(patch.Value)
+
+	switch path {
+	case "/description":
+		text, ok := value.(string)
+		if !ok {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /description must be a string")
+		}
+		command.Description = &text
+	case "/billable":
+		flag, ok := value.(bool)
+		if !ok {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /billable must be a boolean")
+		}
+		command.Billable = &flag
+	case "/project_id", "/pid":
+		if value == nil {
+			command.ProjectID = lo.ToPtr(int64(0))
+			return nil
+		}
+		id, err := jsonPatchValueAsInt64(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for "+path+" must be an integer or null")
+		}
+		command.ProjectID = &id
+	case "/task_id", "/tid":
+		if value == nil {
+			command.TaskID = lo.ToPtr(int64(0))
+			return nil
+		}
+		id, err := jsonPatchValueAsInt64(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for "+path+" must be an integer or null")
+		}
+		command.TaskID = &id
+	case "/tag_ids":
+		ids, err := jsonPatchValueAsInt64Slice(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /tag_ids must be an array of integers")
+		}
+		command.TagIDs = ids
+		command.ReplaceTags = true
+	case "/tags":
+		names, err := jsonPatchValueAsStringSlice(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /tags must be an array of strings")
+		}
+		ids, err := handler.catalog.EnsureTagsByName(ctx, command.WorkspaceID, command.UserID, names)
+		if err != nil {
+			return writePublicTrackTrackingError(err)
+		}
+		command.TagIDs = ids
+		command.ReplaceTags = true
+	case "/start":
+		text, ok := value.(string)
+		if !ok {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /start must be an RFC3339 string")
+		}
+		parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(text))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /start must be an RFC3339 string").SetInternal(err)
+		}
+		utc := parsed.UTC()
+		command.Start = &utc
+	case "/stop":
+		if value == nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "clearing /stop via null is not supported; set /duration to a negative value to resume")
+		}
+		text, ok := value.(string)
+		if !ok {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /stop must be an RFC3339 string")
+		}
+		parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(text))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /stop must be an RFC3339 string").SetInternal(err)
+		}
+		utc := parsed.UTC()
+		command.Stop = &utc
+	case "/duration":
+		seconds, err := jsonPatchValueAsInt64(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /duration must be an integer")
+		}
+		command.Duration = lo.ToPtr(int(seconds))
+	default:
+		return echo.NewHTTPError(http.StatusBadRequest, "unsupported path: "+path)
+	}
+	return nil
 }
 
 func (handler *Handler) StopPublicTrackTimeEntry(ctx echo.Context) error {

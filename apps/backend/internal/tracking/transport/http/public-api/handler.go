@@ -142,6 +142,55 @@ func interfaceValue(value *interface{}) any {
 	return *value
 }
 
+// jsonPatchValueAsInt64 accepts the numeric representations that encoding/json
+// produces for JSON-Patch values: float64 (default), int, and json.Number.
+func jsonPatchValueAsInt64(value any) (int64, error) {
+	switch typed := value.(type) {
+	case float64:
+		return int64(typed), nil
+	case int:
+		return int64(typed), nil
+	case int64:
+		return typed, nil
+	case json.Number:
+		return typed.Int64()
+	default:
+		return 0, errors.New("value is not an integer")
+	}
+}
+
+func jsonPatchValueAsInt64Slice(value any) ([]int64, error) {
+	items, ok := value.([]any)
+	if !ok {
+		return nil, errors.New("value is not an array")
+	}
+	result := make([]int64, 0, len(items))
+	for _, item := range items {
+		id, err := jsonPatchValueAsInt64(item)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, id)
+	}
+	return result, nil
+}
+
+func jsonPatchValueAsStringSlice(value any) ([]string, error) {
+	items, ok := value.([]any)
+	if !ok {
+		return nil, errors.New("value is not an array")
+	}
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		text, ok := item.(string)
+		if !ok {
+			return nil, errors.New("array element is not a string")
+		}
+		result = append(result, text)
+	}
+	return result, nil
+}
+
 func parseOptionalPathID(ctx echo.Context, key string) (int64, bool) {
 	value := strings.TrimSpace(ctx.Param(key))
 	if value == "" {

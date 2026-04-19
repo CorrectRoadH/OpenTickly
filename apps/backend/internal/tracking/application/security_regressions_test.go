@@ -742,14 +742,16 @@ func TestSameWorkspaceUserACannotPatchUserBTimeEntries(t *testing.T) {
 	// VAL-SEC-TRACK-004: user A attempts to patch user B's entries along with their own.
 	// The batch includes user B's entries (which should be denied) and user A's own entry.
 	attackerPatchDescription := "Attacker patched description"
-	patches := []trackingapplication.TimeEntryPatch{
-		{Op: "replace", Path: "/description", Value: attackerPatchDescription},
-	}
 
 	// Call PatchTimeEntries with user A's userID but targeting user B's entry IDs.
 	// This tests whether the batch operation partially applies to user A's own entry
 	// while denying user B's entries, or whether it fails atomically.
-	_, err = trackingService.PatchTimeEntries(ctx, workspaceID, ownerID, []int64{memberEntry1.ID, ownerEntry.ID}, patches)
+	_, err = trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+		WorkspaceID:  workspaceID,
+		UserID:       ownerID,
+		TimeEntryIDs: []int64{memberEntry1.ID, ownerEntry.ID},
+		Description:  &attackerPatchDescription,
+	})
 
 	// PatchTimeEntries calls UpdateTimeEntry for each ID in sequence.
 	// If it hits user B's entry first, UpdateTimeEntry will return ErrTimeEntryNotFound
@@ -1031,12 +1033,14 @@ func TestSameWorkspaceBatchMutationExcludesUnauthorizedEntries(t *testing.T) {
 
 	// VAL-SEC-TRACK-004: user A attempts to patch ONLY user B's entries
 	attackerPatchDescription := "Attacker patched"
-	patches := []trackingapplication.TimeEntryPatch{
-		{Op: "replace", Path: "/description", Value: attackerPatchDescription},
-	}
 
 	// Call PatchTimeEntries targeting only user B's entries with user A's userID
-	_, err = trackingService.PatchTimeEntries(ctx, workspaceID, ownerID, []int64{memberEntry1.ID, memberEntry2.ID}, patches)
+	_, err = trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+		WorkspaceID:  workspaceID,
+		UserID:       ownerID,
+		TimeEntryIDs: []int64{memberEntry1.ID, memberEntry2.ID},
+		Description:  &attackerPatchDescription,
+	})
 
 	// The batch must be denied - all targeted entries belong to user B
 	if err == nil {

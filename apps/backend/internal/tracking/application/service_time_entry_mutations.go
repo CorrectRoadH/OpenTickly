@@ -157,32 +157,22 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 	return updated, nil
 }
 
-func (service *Service) PatchTimeEntries(
-	ctx context.Context,
-	workspaceID int64,
-	userID int64,
-	timeEntryIDs []int64,
-	patches []TimeEntryPatch,
-) ([]int64, error) {
-	success := make([]int64, 0, len(timeEntryIDs))
-	for _, timeEntryID := range timeEntryIDs {
+func (service *Service) PatchTimeEntries(ctx context.Context, command PatchTimeEntriesCommand) ([]int64, error) {
+	success := make([]int64, 0, len(command.TimeEntryIDs))
+	for _, timeEntryID := range command.TimeEntryIDs {
 		update := UpdateTimeEntryCommand{
-			WorkspaceID: workspaceID,
+			WorkspaceID: command.WorkspaceID,
 			TimeEntryID: timeEntryID,
-			UserID:      userID,
-		}
-		for _, patch := range patches {
-			if !strings.EqualFold(strings.TrimSpace(patch.Op), "replace") {
-				continue
-			}
-			switch strings.TrimSpace(patch.Path) {
-			case "/description":
-				value, _ := patch.Value.(string)
-				update.Description = &value
-			case "/billable":
-				value, _ := patch.Value.(bool)
-				update.Billable = &value
-			}
+			UserID:      command.UserID,
+			Billable:    command.Billable,
+			Description: command.Description,
+			Start:       command.Start,
+			Stop:        command.Stop,
+			Duration:    command.Duration,
+			ProjectID:   command.ProjectID,
+			TaskID:      command.TaskID,
+			TagIDs:      command.TagIDs,
+			ReplaceTags: command.ReplaceTags,
 		}
 		if _, err := service.UpdateTimeEntry(ctx, update); err != nil {
 			return nil, err
