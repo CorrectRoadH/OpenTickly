@@ -54,6 +54,8 @@ func NewServerWithOptions(
 
 	server.Use(middleware.RequestID())
 	server.Use(newRequestLogMiddleware(logger))
+	server.Use(newSecureHeadersMiddleware())
+	server.Use(middleware.BodyLimit("16M"))
 
 	healthHandler := func(c echo.Context) error {
 		return c.JSON(http.StatusOK, health)
@@ -269,6 +271,22 @@ func isLowerHex(value string) bool {
 		}
 	}
 	return true
+}
+
+// newSecureHeadersMiddleware applies static response hardening that is safe for
+// both HTTP and HTTPS self-hosted deployments. HSTS is intentionally omitted
+// because many self-hosted instances serve plain HTTP.
+func newSecureHeadersMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			headers := c.Response().Header()
+			headers.Set("X-Content-Type-Options", "nosniff")
+			headers.Set("X-Frame-Options", "SAMEORIGIN")
+			headers.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			headers.Set("X-Permitted-Cross-Domain-Policies", "none")
+			return next(c)
+		}
+	}
 }
 
 /*
