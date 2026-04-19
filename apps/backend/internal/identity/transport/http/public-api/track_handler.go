@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 
 	"crypto/sha256"
@@ -17,6 +16,7 @@ import (
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
 	"opentoggl/backend/apps/backend/internal/platform/filestore"
+	"opentoggl/backend/apps/backend/internal/platform/imageupload"
 
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -567,9 +567,13 @@ func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) erro
 	}
 	defer file.Close()
 
-	content, err := io.ReadAll(file)
+	content, err := io.ReadAll(io.LimitReader(file, imageupload.MaxBytes+1))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Failed to read uploaded file"})
+	}
+	sniffedType, err := imageupload.DetectAllowedImage(content)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
 	}
 
 	// Delete old avatar blob if one exists.
@@ -579,10 +583,10 @@ func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) erro
 
 	hash := sha256.Sum256(content)
 	contentHash := hex.EncodeToString(hash[:8])
-	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(fileHeader.Filename)))
+	ext := imageupload.CanonicalExtension(sniffedType)
 	storageKey := fmt.Sprintf("identity/avatars/%d/%s%s", user.ID, contentHash, ext)
 
-	if err := handler.files.Put(ctx.Request().Context(), storageKey, fileHeader.Header.Get("Content-Type"), content); err != nil {
+	if err := handler.files.Put(ctx.Request().Context(), storageKey, sniffedType, content); err != nil {
 		slog.Error("avatar upload: failed to store file", "error", err, "key", storageKey)
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Failed to store avatar"})
 	}

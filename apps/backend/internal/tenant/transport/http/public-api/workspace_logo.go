@@ -7,10 +7,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"path/filepath"
-	"strings"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/platform/imageupload"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
@@ -46,9 +45,13 @@ func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx echo.Context) error {
 	}
 	defer file.Close()
 
-	content, err := io.ReadAll(file)
+	content, err := io.ReadAll(io.LimitReader(file, imageupload.MaxBytes+1))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Failed to read uploaded file"})
+	}
+	sniffedType, err := imageupload.DetectAllowedImage(content)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
 	}
 
 	// Delete old logo blob if one exists.
@@ -59,8 +62,8 @@ func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx echo.Context) error {
 
 	hash := sha256.Sum256(content)
 	contentHash := hex.EncodeToString(hash[:8])
-	storageKey := workspaceLogoStorageKey(workspaceID, contentHash, fileHeader.Filename)
-	if err := handler.files.Put(ctx.Request().Context(), storageKey, fileHeader.Header.Get("Content-Type"), content); err != nil {
+	storageKey := workspaceLogoStorageKey(workspaceID, contentHash, sniffedType)
+	if err := handler.files.Put(ctx.Request().Context(), storageKey, sniffedType, content); err != nil {
 		slog.Error("logo upload: failed to store file", "error", err, "key", storageKey)
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Failed to store logo"})
 	}
@@ -120,7 +123,6 @@ func workspaceLogoBody(view tenantapplication.WorkspaceView) publictrackapi.Mode
 	}
 }
 
-func workspaceLogoStorageKey(workspaceID int64, contentHash string, fileName string) string {
-	extension := strings.ToLower(strings.TrimSpace(filepath.Ext(fileName)))
-	return fmt.Sprintf("tenant/workspaces/%d/%s%s", workspaceID, contentHash, extension)
+func workspaceLogoStorageKey(workspaceID int64, contentHash string, sniffedContentType string) string {
+	return fmt.Sprintf("tenant/workspaces/%d/%s%s", workspaceID, contentHash, imageupload.CanonicalExtension(sniffedContentType))
 }

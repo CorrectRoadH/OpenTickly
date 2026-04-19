@@ -64,7 +64,10 @@ func TestPublicTrackWorkspaceLogoLifecycle(t *testing.T) {
 		nil,
 		"file",
 		"workspace-logo.png",
-		[]byte("png-bytes"),
+		// Real PNG magic bytes: upload handler now sniffs content-type and
+		// rejects anything that isn't a real PNG/JPEG/WebP, so tests must
+		// supply bytes that actually pass the sniffer.
+		[]byte{0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D},
 		tokenAuthorization,
 	)
 	if postLogo.Code != http.StatusOK {
