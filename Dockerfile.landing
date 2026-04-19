@@ -21,8 +21,10 @@ RUN npm install -g serve@14
 
 WORKDIR /app
 
-COPY --from=builder /workspace/apps/landing/dist ./dist
-COPY --from=builder /workspace/apps/landing/serve.json ./dist/serve.json
+COPY --from=builder --chown=node:node /workspace/apps/landing/dist ./dist
+COPY --from=builder --chown=node:node /workspace/apps/landing/serve.json ./dist/serve.json
+
+USER node
 
 EXPOSE 8080
 

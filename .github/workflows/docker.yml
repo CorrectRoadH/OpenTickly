@@ -78,13 +78,13 @@ jobs:
 
       - name: Generate changelog from commits
         id: changelog
-        uses: orhun/git-cliff-action@v4
+        uses: orhun/git-cliff-action@c93ef52f3d0ddcdcc9bd5447d98d458a11cd4f72 # v4
         with:
           config: cliff.toml
           args: --latest --strip header
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           body: ${{ steps.changelog.outputs.content }}
 
@@ -126,6 +126,6 @@ jobs:
             -o opentoggl-linux-${{ matrix.goarch }} ./apps/backend
 
       - name: Upload binary to release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           files: opentoggl-linux-${{ matrix.goarch }}
