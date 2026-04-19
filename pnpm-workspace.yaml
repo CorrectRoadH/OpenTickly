@@ -13,7 +13,7 @@ catalog:
   babel-plugin-react-compiler: ^1.0.0
   date-fns: ^4.1.0
   execa: ^9.6.1
-  i18next: ^26.0.5
+  i18next: ^26.0.6
   i18next-resources-to-backend: ^1.2.1
   immer: ^11.1.4
   jspdf: ^4.2.1
@@ -26,13 +26,13 @@ catalog:
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.1.32
   react-hook-form: ^7.72.1
-  react-i18next: ^17.0.3
+  react-i18next: ^17.0.4
   sharp: ^0.34.5
   sonner: ^2.0.7
   typescript: ^6
   vite: npm:@voidzero-dev/vite-plus-core@0.1.12
   vite-plugin-pwa: ^1.2.0
-  vite-plus: 0.1.12
+  vite-plus: 0.1.18
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.12
   workbox-background-sync: ^7.4.0
   workbox-core: ^7.4.0
