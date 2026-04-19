@@ -30,10 +30,10 @@ catalog:
   sharp: ^0.34.5
   sonner: ^2.0.7
   typescript: ^6
-  vite: npm:@voidzero-dev/vite-plus-core@0.1.12
+  vite: npm:@voidzero-dev/vite-plus-core@0.1.18
   vite-plugin-pwa: ^1.2.0
   vite-plus: 0.1.18
-  vitest: npm:@voidzero-dev/vite-plus-test@0.1.12
+  vitest: npm:@voidzero-dev/vite-plus-test@0.1.18
   workbox-background-sync: ^7.4.0
   workbox-core: ^7.4.0
   workbox-expiration: ^7.4.0
