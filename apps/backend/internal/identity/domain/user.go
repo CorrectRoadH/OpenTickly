@@ -2,6 +2,7 @@ package domain
 
 import (
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -307,11 +308,14 @@ func (user *User) CanWriteBusinessData() bool {
 }
 
 func (user *User) MatchesPassword(password string) bool {
-	return user.passwordHash == hashSecret(password)
+	return subtle.ConstantTimeCompare([]byte(user.passwordHash), []byte(hashSecret(password))) == 1
 }
 
 func (user *User) MatchesAPIToken(token string) bool {
-	return user.apiToken != "" && user.apiToken == token
+	if user.apiToken == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(user.apiToken), []byte(token)) == 1
 }
 
 // AuthenticateBasic keeps Toggl's two supported Basic Auth shapes explicit:
