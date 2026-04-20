@@ -3,14 +3,30 @@ title: OpenToggl 是什么
 description: OpenToggl 开源文档：快速上手、Docker 自托管部署、Toggl API 兼容性说明，以及 AI Agent 集成指南。覆盖从安装到接入 Claude、Cursor 的完整参考。
 ---
 
-OpenToggl 是一个免费、隐私优先、AI友好 的 Toggl 替代方案。
+OpenToggl 是一个免费、隐私优先、AI 友好的 Toggl 替代方案。
 
-Toggl 是一个很棒的产品，但是太贵而且数据并没有真正的属于你。而且 30 次/小时的 API 调用限制又令人头疼，AI Agent 能在一分钟内就把一个小时的用量给消耗掉。
+Toggl 是个很棒的产品，但是太贵，而且数据并不真的属于你。更头疼的是 30 次/小时的 API 限制 —— AI Agent 能在一分钟里把一个小时的额度全部用掉。
 
-OpenToggl 的目标是与 Toggl 保持一致，你可以 0 损失的迁入与迁出用户数据在两者之间。保持一切工作流与使用习惯。什么都没有变，只是更好用、更便宜、更隐私了。
+OpenToggl 的目标是跟 Toggl 一模一样 —— 你可以零损失地把数据从 Toggl 迁进来，也可以随时带着数据迁回去。工作流和使用习惯一个都不用改，只是更便宜、更隐私、对 AI 更友好。
+
+## 主动式计时是刻意的
+
+OpenToggl 是主动式计时：你按下开始，它才开始。不截屏、不监听窗口。
+
+这不是"还没做到被动式"，是有意选择。主动式逼你在动手之前先想清楚"我现在要做什么"，对容易分心的人来说反而更专注 —— 有明确的进入点。被动式也有它的价值（Toggl Desktop 自己就有），我们会放在 Roadmap 里作为补充，但不会用它替换主动式的定位。
+
+## 和 Toggl 的边界
+
+核心功能 1:1 对齐 Toggl，不多也不少：
+
+- 好处是你随时能带着数据回 Toggl，不存在 vendor lock-in。
+- 代价是我们不会加 Toggl 不支持的字段或接口 —— 一旦加了，用户就回不去了。
+
+AI 相关的能力是**扩展**而不是**修改**：放在独立的接口上，不动 Toggl 原本的数据结构。所以你既能用上 AI，又不会被锁死在 OpenToggl 里。一种是方便迁进来，一种是方便迁回去。
 
 <Cards>
   <Card title="AI 集成" href="/zh/docs/ai-integration" />
+  <Card title="实践 / 工作流" href="/zh/docs/practices" />
   <Card title="自托管" href="/zh/docs/self-hosting" />
   <Card title="GitHub 仓库" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>

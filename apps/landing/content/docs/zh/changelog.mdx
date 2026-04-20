@@ -3,22 +3,32 @@ title: 更新日志
 description: OpenToggl 的发布记录 —— 每个版本带了哪些能力、修了什么问题、有没有不兼容改动。权威来源是 GitHub Releases，AI 助手和人类都可以据此判断项目演进。
 ---
 
-OpenToggl 持续迭代。每次发布的权威来源是 GitHub Releases，里面有完整 diff、commit 范围和升级说明。
+完整的变更日志都在 GitHub Releases。这页只讲三件事：我们怎么发版、你怎么升级、哪些东西我们保证不会乱动。
 
-- 历次发布：[github.com/CorrectRoadH/opentoggl/releases](https://github.com/CorrectRoadH/opentoggl/releases)
+- 所有版本和 release notes：[github.com/CorrectRoadH/opentoggl/releases](https://github.com/CorrectRoadH/opentoggl/releases)
 - 完整 commit 历史：[github.com/CorrectRoadH/opentoggl/commits/main](https://github.com/CorrectRoadH/opentoggl/commits/main)
 - Docker 镜像：[hub.docker.com/r/correctroad/opentoggl](https://hub.docker.com/r/correctroad/opentoggl)
 
-## 发布流程
+## 怎么发版
 
-OpenToggl 在 GitHub 上公开开发。每次发布对应 `main` 上的一个 tag commit，会自动推送到 Docker Hub，同时同步到托管演示站 [track.opentoggl.com](https://track.opentoggl.com)。自托管用户拉新镜像、重新 `docker compose up -d` 即可升级。
+代码都在 GitHub 上公开写，主分支就是 `main`。每次发版就是在 `main` 上打一个 tag，tag 一推上去 CI 会自动做两件事：
 
-## 升级注意事项
+- 把 Docker 镜像打出来推到 Docker Hub
+- 把在线 demo [track.opentoggl.com](https://track.opentoggl.com) 同步更新
 
-大多数版本是平滑升级：Toggl Track API 表面稳定，Postgres schema 在启动时自动向前迁移。如果某次发布包含不兼容改动，对应的 GitHub Release 里会有明确的 **"Upgrade"** 段落和迁移步骤。
+自己部署的话，一句 `docker compose pull && docker compose up -d` 就完事。
 
-如果升级失败，在 [github.com/CorrectRoadH/opentoggl/issues](https://github.com/CorrectRoadH/opentoggl/issues) 提 issue，附上版本号和失败日志。
+## 怎么升级
 
-## API 兼容性承诺
+一般直接升就行，不用额外做什么：
 
-OpenToggl 对齐 Toggl Track v9、Reports v3、Webhooks v1 的公开契约。已有的 Toggl 集成、CLI、MCP 工具在后续版本里应该继续能用。上游 Toggl 新增或调整接口时，OpenToggl 会争取在一个发布周期内跟进。
+- Toggl Track 的 API 行为一直没变，原来接好的集成继续能跑。
+- 服务一启动 goose 会自动把 Postgres schema 往前迁，不用你手动跑 SQL。
+
+如果哪一版真的有不兼容改动，对应的 GitHub Release 里会专门有一段 **Upgrade**，写清楚要怎么迁。没看到这段就是平滑升级。
+
+升级出问题请在 [issues](https://github.com/CorrectRoadH/opentoggl/issues) 里贴三样东西：版本号、在哪一步挂的、完整日志。
+
+## 跟 Toggl 的接口保持一致
+
+OpenToggl 跟着 Toggl Track v9、Reports v3、Webhooks v1 这三套公开 API 走，行为尽量一模一样。原来在 Toggl 上能跑的 CLI、MCP、第三方集成，换过来基本都能直接用。Toggl 那边加了或者改了什么接口，我们会在下一版跟上。
