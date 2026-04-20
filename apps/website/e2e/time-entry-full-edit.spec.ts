@@ -206,26 +206,51 @@ test.describe("Story: calendar view interactions", () => {
     ).toBeVisible();
   });
 
-  test("when the page loads, the current time indicator is scrolled into the visible area", async ({
+  test("when the page loads, the current time indicator is centered in the viewport", async ({
     page,
   }) => {
-    // The scroll-to-now feature should have scrolled the page so the
-    // current time indicator is visible in the viewport.
-    const indicator = page.locator(".rbc-current-time-indicator");
+    // Contract locked by this test:
+    //   1. The scroll-to-now effect actually ran to completion — we gate
+    //      on `data-scroll-to-now="done"` (the state signal CalendarView
+    //      writes when it applied `window.scrollTo`). "skipped" or
+    //      "pending" both fail — the user is on `/timer` with today in
+    //      the visible week, so the indicator MUST be present and the
+    //      scroll MUST fire.
+    //   2. The window actually scrolled (`scrollY > 0`). A test that
+    //      passes with `scrollY === 0` proves nothing — the calendar's
+    //      natural top-anchored layout can place the indicator in the
+    //      viewport without any scroll happening.
+    //   3. The indicator lands near the vertical middle of the
+    //      viewport — that is the UX promise ("进入后指示器在中间").
+    //      We allow a generous ±25% half-window tolerance (i.e. the
+    //      middle 50% of the viewport), strict enough to catch
+    //      "stuck at the top of the calendar" and "stuck below the
+    //      composer" regressions but loose enough to survive minor
+    //      header-height changes.
+    const wrapper = page.getByTestId("timer-calendar-view");
+    await expect(wrapper).toHaveAttribute("data-scroll-to-now", "done");
 
-    // Indicator may not exist if today isn't in the visible week range,
-    // so only assert if it's in the DOM.
-    const count = await indicator.count();
-    if (count > 0) {
-      await indicator.first().waitFor({ state: "visible", timeout: 5000 });
-      const box = await indicator.first().boundingBox();
-      expect(box).not.toBeNull();
-      if (box) {
-        // Should be within the viewport
-        expect(box.y).toBeGreaterThan(0);
-        expect(box.y).toBeLessThan(await page.evaluate(() => window.innerHeight));
-      }
-    }
+    const state = await page.evaluate(() => {
+      const indicator = document.querySelector<HTMLElement>(".rbc-current-time-indicator");
+      return {
+        indicatorTop: indicator ? indicator.getBoundingClientRect().top : null,
+        scrollY: window.scrollY,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    expect(state.scrollY).toBeGreaterThan(0);
+    expect(state.indicatorTop).not.toBeNull();
+    const indicatorTop = state.indicatorTop as number;
+    const center = state.viewportHeight / 2;
+    // ±15% of viewport height around the center — the indicator must
+    // land in the middle ~30% of the screen. At 720px this is y ∈
+    // [252, 468]. The current impl lands the indicator at
+    // `headerHeight + 40` (≈217px with a 177px header), which is
+    // firmly in the top third, not the middle — this assertion is what
+    // turns the regression red.
+    const tolerance = state.viewportHeight * 0.15;
+    expect(Math.abs(indicatorTop - center)).toBeLessThan(tolerance);
   });
 
   test("when the user right-clicks a calendar entry, the context menu appears with expected items", async ({

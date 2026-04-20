@@ -124,14 +124,20 @@ export function CalendarView({
 
   // Scroll-to-now on mount. The calendar uses window-level scroll (no
   // internal scrollbar, by design — see calendar.css:89), so we scroll
-  // the window. The earlier implementation used
-  // `indicator.scrollIntoView({ block: "center" })` which scrolled past
-  // the TimerComposerBar and hid it (8062128b removed it outright).
-  // Here we compute the target explicitly: land the current-time
-  // indicator ~40px below the sticky header, so the header stays pinned
-  // (its `position: sticky` holds barTop at 0) AND the user sees "now"
-  // without manually scrolling. If the indicator is already above that
-  // line (e.g. very early in the day), we leave the window unscrolled.
+  // the window. Land the current-time indicator at the vertical middle
+  // of the viewport — that is the UX contract locked in
+  // `time-entry-full-edit.spec.ts` ("current time indicator is centered
+  // in the viewport"). The page header uses `position: sticky; top: 0`,
+  // so pinning is independent of how far we scroll: once `scrollY > 0`
+  // the header stays at barTop=0 regardless of target. The earlier
+  // "headerHeight + 40" placement was there to guard against a
+  // non-sticky header layout that no longer exists, and it parked the
+  // indicator in the top third of the screen — visually "not in the
+  // middle".
+  //
+  // If the indicator's absolute position is already above the center
+  // line (very early in the day on a short-but-tall viewport), we
+  // leave `scrollY` alone.
   //
   // `.rbc-current-time-indicator` is added by RBC several layout passes
   // after our mount, so we can't read its position in a single frame.
@@ -148,12 +154,8 @@ export function CalendarView({
     if (!wrapper) return;
 
     const applyScrollFor = (indicator: HTMLElement) => {
-      const header = document.querySelector<HTMLElement>(
-        '[data-testid="tracking-timer-page"] > header',
-      );
-      const headerHeight = header?.getBoundingClientRect().height ?? 0;
       const indicatorAbsoluteY = indicator.getBoundingClientRect().top + window.scrollY;
-      const target = indicatorAbsoluteY - headerHeight - 40;
+      const target = indicatorAbsoluteY - window.innerHeight / 2;
       if (target > 0) {
         window.scrollTo({ top: target, behavior: "instant" });
         wrapper.dataset.scrollToNow = "done";
