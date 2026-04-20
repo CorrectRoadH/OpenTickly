@@ -1,10 +1,10 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import i18n from "../../app/i18n.ts";
 import {
   buildCalendarEventLayouts,
   resolveLayoutKey,
+  resolveMinutesSinceMidnight,
 } from "../../features/tracking/calendar-layout.ts";
 import {
   formatClockDuration,
@@ -48,23 +48,12 @@ export function MobileCalendarDayTimeline({
 
   const layouts = buildCalendarEventLayouts(entries, timezone, nowMs, viewDate);
 
-  // Current time position
-  const nowDate = new Date(nowMs);
-  const nowMinutes = (() => {
-    const h = Number(
-      new Intl.DateTimeFormat(i18n.language, {
-        hour: "2-digit",
-        hour12: false,
-        timeZone: timezone,
-      }).format(nowDate),
-    );
-    const m = Number(
-      new Intl.DateTimeFormat(i18n.language, { minute: "2-digit", timeZone: timezone }).format(
-        nowDate,
-      ),
-    );
-    return h * 60 + m;
-  })();
+  // Current time position in the target timezone. Must use
+  // `resolveMinutesSinceMidnight` (en-US + formatToParts) rather than
+  // `Intl.DateTimeFormat(i18n.language, ...)` — CJK locales append unit
+  // suffixes like "14时" that `Number(...)` turns into NaN, collapsing
+  // the indicator onto the 00:00 row.
+  const nowMinutes = resolveMinutesSinceMidnight(new Date(nowMs), timezone);
 
   // Scroll to current hour on mount
   useEffect(() => {

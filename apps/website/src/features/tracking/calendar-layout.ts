@@ -151,7 +151,14 @@ function buildIndexedEntry(
   };
 }
 
-function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
+/**
+ * Minutes since midnight for `date` in the given IANA `timezone`. Uses
+ * `en-US` + `formatToParts` on purpose: passing the UI's active language
+ * (e.g. `i18n.language`) lets CJK locales append unit suffixes like
+ * `"14时"` / `"30分"`, which `Number(...)` parses as NaN. See b022ca67 and
+ * the mobile current-time indicator regression.
+ */
+export function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
     hour12: false,
@@ -165,6 +172,10 @@ function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
     if (part.type === "hour") hours = Number(part.value);
     if (part.type === "minute") minutes = Number(part.value);
   }
+
+  // en-US + hour12:false notoriously returns "24" for midnight in some V8
+  // revisions; normalize so the result is always in [0, 1440).
+  if (hours === 24) hours = 0;
 
   return hours * 60 + minutes;
 }
