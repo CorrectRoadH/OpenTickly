@@ -1,0 +1,27 @@
+---
+title: Pratiques / Flux de travail
+description: Comment j'utilise OpenToggl au quotidien.
+---
+
+Voici comment l'auteur utilise OpenToggl au quotidien.
+
+## Laisser l'agent démarrer le timer
+
+Je ne clique pas sur « Démarrer » dans l'interface web. Je dis simplement à OpenClaw « je vais faire X », et l'agent démarre un time entry via [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli). En général je ne l'arrête pas non plus manuellement : quand je change de tâche, je dis « je passe à autre chose maintenant », un nouveau time entry démarre et le précédent s'arrête automatiquement.
+
+## Donner au agent votre plan de semaine et vos principes
+
+Je passe à l'agent ma mission personnelle, mes objectifs de la semaine et mes principes quotidiens — tout ça directement depuis Obsidian — comme contexte. Du coup, quand je lui dis « je vais scroller deux heures sur Xiaohongshu », il me relance : « Ton plan de la semaine, c'est de finir la fonctionnalité X — tu veux vraiment passer à Y ? »
+
+J'utilise aussi la méthode des 4 quadrants, j'ai donc six tags au total : important, non important, urgent, non urgent, concentré, non concentré. Les quatre premiers, l'IA les pose au démarrage d'une tâche ; pour les deux derniers, elle me demande à la fin si j'étais concentré. En fin de journée, je vois la répartition de mon temps entre les quadrants ainsi que le ratio concentré / non concentré.
+
+## Un cron nocturne pour que l'IA fasse la rétrospective
+
+J'ai un cron qui, chaque soir, extrait la répartition du temps de la journée et demande à l'IA de faire une rétrospective :
+
+- La répartition entre quadrants (important / urgent) est-elle raisonnable ?
+- Ai-je progressé par rapport à hier ou à la moyenne de la semaine ?
+- Est-ce que des trous noirs de temps inattendus sont apparus ?
+- Le travail d'aujourd'hui s'écarte-t-il du plan de la semaine ?
+
+C'est assez pénible à mettre en place sur le Toggl officiel : avec la limite de 30 requêtes/heure de l'API, une seule rétrospective où l'IA veut regarder plusieurs fois les données suffit à épuiser le quota.

@@ -1,0 +1,27 @@
+---
+title: Practices & Workflow
+description: How I actually use OpenToggl.
+---
+
+Here's how the author uses OpenToggl day to day.
+
+## Let the agent start the timer
+
+I don't click "Start" in the Web UI. I just tell OpenClaw "I'm going to work on X," and the agent starts a time entry via [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli). I usually don't stop it manually either — when I switch tasks I say "I'm going to do something else now," and a new time entry starts, which automatically closes the previous one.
+
+## Feed the agent your weekly plan and principles
+
+I give the agent my personal mission, this week's goals, and my daily principles straight from Obsidian as context. So when I say "I'm going to scroll Xiaohongshu for two hours," it pushes back: "Your plan for this week is to finish feature X — are you sure you want to switch to Y?"
+
+I also run a 4-quadrant system, so I use six tags in total: important, not important, urgent, not urgent, focused, unfocused. The AI tags the first four at the start of a task; for the last two, it asks me when the task ends whether I was focused. At the end of the day I can see the time distribution across quadrants plus my focused vs. unfocused ratio.
+
+## A nightly cron for AI review
+
+I have a cron job that pulls the day's time distribution and asks the AI for a review:
+
+- Is the time split across quadrants (important / urgent) reasonable?
+- Did I improve over yesterday or this week's average?
+- Did any unexpected time sinks show up?
+- Did today's work drift from this week's plan?
+
+This would be painful on official Toggl — the 30 requests/hour API limit means one review run can easily burn the whole quota just from the AI poking around.

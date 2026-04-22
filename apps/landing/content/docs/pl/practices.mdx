@@ -1,0 +1,27 @@
+---
+title: Praktyki / Przepływ pracy
+description: Jak sam korzystam z OpenToggl.
+---
+
+Poniżej opisuję, jak autor na co dzień używa OpenToggl.
+
+## Pozwól agentowi włączyć licznik
+
+Nie klikam "Start" w interfejsie webowym. Mówię po prostu do OpenClaw: „teraz zajmę się X" — a agent uruchamia time entry przez [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli). Zwykle też nie zatrzymuję go ręcznie: gdy zmieniam zadanie, mówię „teraz zajmę się czymś innym" i startuje nowy time entry, który automatycznie kończy poprzedni.
+
+## Daj agentowi swój plan tygodnia i zasady
+
+Przekazuję agentowi — wprost z Obsidiana — moją osobistą misję, cele na ten tydzień i codzienne zasady jako kontekst. Dzięki temu, gdy mówię „zaraz dwie godziny poscrolluję Xiaohongshu", odpowiada: „W tym tygodniu masz dokończyć funkcję X — na pewno chcesz zamiast tego robić Y?"
+
+Korzystam też z metody czterech ćwiartek, więc mam łącznie sześć tagów: ważne, nieważne, pilne, niepilne, skupiony, nieskupiony. Pierwsze cztery AI nadaje przy starcie zadania; dwa ostatnie po jego zakończeniu, dopytując, czy byłem skupiony. Na koniec dnia widzę, jak mój czas rozkłada się między ćwiartkami oraz jaki mam stosunek skupienia do rozproszenia.
+
+## Nocny cron z retrospektywą AI
+
+Mam crona, który co wieczór wyciąga rozkład czasu z danego dnia i prosi AI o retrospektywę:
+
+- Czy proporcje między ćwiartkami (ważne / pilne) są rozsądne?
+- Czy jest poprawa względem wczoraj lub średniej z tego tygodnia?
+- Czy pojawiły się nieoczekiwane czarne dziury czasowe?
+- Czy dzisiejsza praca nie odeszła od planu tygodnia?
+
+W oficjalnym Toggl taka retrospektywa jest uciążliwa — przy limicie 30 zapytań na godzinę wystarczy, że AI kilka razy zajrzy do danych, i cała godzinna pula znika.

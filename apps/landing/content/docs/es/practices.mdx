@@ -1,0 +1,27 @@
+---
+title: Prácticas / Flujo de trabajo
+description: Cómo uso OpenToggl en mi día a día.
+---
+
+Así es como el autor usa OpenToggl en su día a día.
+
+## Deja que el agente inicie el cronómetro
+
+No hago clic en el botón "Iniciar" de la interfaz web. Le digo a OpenClaw "ahora voy a hacer X" y el agente arranca un time entry mediante [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli). Por lo general tampoco lo paro yo manualmente: cuando cambio de tarea le digo "ahora voy a hacer otra cosa" y se inicia un nuevo time entry, que cierra automáticamente el anterior.
+
+## Pásale al agente tu plan semanal y tus principios
+
+Le doy al agente mi misión personal, los objetivos de la semana y mis principios diarios —escritos en Obsidian— como contexto. Así, cuando le digo "voy a pasarme dos horas en Xiaohongshu", me responde: "Tu plan de esta semana es terminar la función X, ¿seguro que quieres pasarte a Y?"
+
+Además uso el método de las 4 cuadrantes, así que tengo seis tags en total: importante, no importante, urgente, no urgente, concentrado, no concentrado. Los cuatro primeros los asigna la IA al empezar la tarea; los dos últimos los pregunta cuando termino, para saber si estuve concentrado. Al cerrar el día puedo ver cómo se reparte mi tiempo entre cuadrantes y la proporción entre concentrado y no concentrado.
+
+## Un cron nocturno para que la IA haga retrospectiva
+
+Tengo un cron que cada noche saca el reparto de tiempo del día y le pide a la IA que haga una retrospectiva:
+
+- ¿Es razonable la proporción entre cuadrantes (importante / urgente)?
+- ¿Mejoré respecto a ayer o a la media de la semana?
+- ¿Aparecieron agujeros de tiempo inesperados?
+- ¿El trabajo de hoy se desvió del plan de la semana?
+
+En el Toggl oficial esto es bastante complicado: con el límite de 30 peticiones por hora a la API, una sola retrospectiva en la que la IA quiera mirar los datos varias veces puede agotar la cuota.
