@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactElement } from "react";
+import { type ChangeEvent, type ReactElement, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -35,6 +35,8 @@ export function EditorDescriptionField({
     ui: { descriptionSuggestionsOpen, picker, timeEditor, timePicker },
   } = ctx;
 
+  const isComposingRef = useRef(false);
+
   return (
     <div className="mt-5">
       <div
@@ -56,9 +58,18 @@ export function EditorDescriptionField({
             onDescriptionChange(event.target.value)
           }
           onFocus={() => dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: true })}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposingRef.current = false;
+          }}
           onKeyDown={(event) => {
             if (
               event.key === "Enter" &&
+              !isComposingRef.current &&
+              !event.nativeEvent.isComposing &&
+              event.keyCode !== 229 &&
               !isSaving &&
               !picker &&
               !timeEditor &&
