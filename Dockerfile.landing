@@ -1,4 +1,7 @@
-FROM node:22.12.0-bookworm-slim AS builder
+# Force the builder stage to run natively on the CI runner arch (amd64 on GH hosted),
+# so pnpm install + vite build aren't executed under QEMU arm64 emulation (30min+ -> ~3min).
+# Output is a plain dist/ (static files), copied into the TARGETPLATFORM runtime image below.
+FROM --platform=$BUILDPLATFORM node:22.12.0-bookworm-slim AS builder
 
 WORKDIR /workspace
 
