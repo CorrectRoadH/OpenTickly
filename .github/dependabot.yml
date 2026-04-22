@@ -25,6 +25,15 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    # vite-plus and @voidzero-dev/vite-plus-{core,test} are pinned together in
+    # pnpm-workspace.yaml (catalog entries `vite:`, `vite-plus:`, `vitest:`).
+    # They must be bumped as a set by hand — mismatched versions crash
+    # rolldown napi, and Dependabot's per-package bumps also leave the lockfile
+    # out of sync with the catalog, breaking CI.
+    ignore:
+      - dependency-name: "vite-plus"
+      - dependency-name: "@voidzero-dev/vite-plus-core"
+      - dependency-name: "@voidzero-dev/vite-plus-test"
     groups:
       npm-development:
         dependency-type: "development"
@@ -36,6 +45,10 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "vite-plus"
+      - dependency-name: "@voidzero-dev/vite-plus-core"
+      - dependency-name: "@voidzero-dev/vite-plus-test"
     groups:
       npm-development:
         dependency-type: "development"
