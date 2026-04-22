@@ -129,6 +129,24 @@ export type VerifyEmailRequest = {
   token: string;
 };
 
+export type ResendVerificationEmailRequest = {
+  email: string;
+};
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ResetPasswordRequest = {
+  token: string;
+  password: string;
+};
+
+export type AuthPreconditionError = {
+  error: string;
+  message: string;
+};
+
 export type SessionBootstrap = {
   current_organization_id: number;
   current_workspace_id: number;
@@ -453,6 +471,81 @@ export type VerifyEmailResponses = {
 };
 
 export type VerifyEmailResponse = VerifyEmailResponses[keyof VerifyEmailResponses];
+
+export type ResendVerificationEmailData = {
+  body: ResendVerificationEmailRequest;
+  path?: never;
+  query?: never;
+  url: "/web/v1/auth/verify-email/resend";
+};
+
+export type ResendVerificationEmailErrors = {
+  /**
+   * Instance email configuration is missing
+   */
+  422: AuthPreconditionError;
+};
+
+export type ResendVerificationEmailError =
+  ResendVerificationEmailErrors[keyof ResendVerificationEmailErrors];
+
+export type ResendVerificationEmailResponses = {
+  /**
+   * Resend request accepted (silent on unknown email)
+   */
+  204: void;
+};
+
+export type ResendVerificationEmailResponse =
+  ResendVerificationEmailResponses[keyof ResendVerificationEmailResponses];
+
+export type RequestPasswordResetData = {
+  body: ForgotPasswordRequest;
+  path?: never;
+  query?: never;
+  url: "/web/v1/auth/forgot-password";
+};
+
+export type RequestPasswordResetErrors = {
+  /**
+   * Instance email configuration is missing
+   */
+  422: AuthPreconditionError;
+};
+
+export type RequestPasswordResetError =
+  RequestPasswordResetErrors[keyof RequestPasswordResetErrors];
+
+export type RequestPasswordResetResponses = {
+  /**
+   * Reset request accepted (silent on unknown email)
+   */
+  204: void;
+};
+
+export type RequestPasswordResetResponse =
+  RequestPasswordResetResponses[keyof RequestPasswordResetResponses];
+
+export type ResetPasswordData = {
+  body: ResetPasswordRequest;
+  path?: never;
+  query?: never;
+  url: "/web/v1/auth/reset-password";
+};
+
+export type ResetPasswordErrors = {
+  /**
+   * Token invalid, expired, or already used
+   */
+  400: unknown;
+};
+
+export type ResetPasswordResponses = {
+  /**
+   * Password reset completed
+   */
+  200: unknown;
+};
 
 export type GetWebSessionData = {
   body?: never;

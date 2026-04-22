@@ -1,11 +1,16 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 import { PublicMainPanelFrame } from "../../app/PublicMainPanelFrame.tsx";
 import { AuthLanguageSwitcher } from "../../features/auth/AuthLanguageSwitcher.tsx";
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
-import { useVerifyEmailMutation } from "../../shared/query/web-shell.ts";
+import {
+  useResendVerificationEmailMutation,
+  useVerifyEmailMutation,
+} from "../../shared/query/web-shell.ts";
 
 export function VerifyEmailPage(): ReactElement {
   const { t } = useTranslation("auth");
@@ -38,6 +43,7 @@ export function VerifyEmailPage(): ReactElement {
         <p className="text-[14px] text-[var(--track-text-muted)]">
           {email ? t("verificationEmailSentTo", { email }) : t("verificationEmailSent")}
         </p>
+        {email ? <ResendVerificationEmailButton email={email} /> : null}
         <a className="text-[14px] text-[var(--track-accent)] hover:underline" href="/login">
           {t("backToLogin")}
         </a>
@@ -45,6 +51,72 @@ export function VerifyEmailPage(): ReactElement {
       <AuthLanguageSwitcher />
     </PublicMainPanelFrame>
   );
+}
+
+function ResendVerificationEmailButton({ email }: { email: string }): ReactElement {
+  const { t } = useTranslation("auth");
+  const { t: tToast } = useTranslation("toast");
+  const mutation = useResendVerificationEmailMutation();
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const handle = window.setInterval(() => {
+      setCooldown((value) => (value <= 1 ? 0 : value - 1));
+    }, 1000);
+    return () => window.clearInterval(handle);
+  }, [cooldown]);
+
+  async function handleClick(): Promise<void> {
+    try {
+      await mutation.mutateAsync({ email });
+      toast.success(tToast("verificationEmailResent"));
+      setCooldown(60);
+    } catch (error) {
+      if (error instanceof WebApiError && error.status === 422) {
+        const code = extractErrorCode(error);
+        if (code === "site_url_not_configured") {
+          toast.error(tToast("siteUrlNotConfigured"));
+        } else {
+          toast.error(tToast("emailSendingNotConfigured"));
+        }
+        return;
+      }
+      toast.error(t("couldNotCompleteRequest"));
+    }
+  }
+
+  if (cooldown > 0) {
+    return (
+      <p className="text-[13px] text-[var(--track-text-muted)]">
+        {t("resendVerificationCooldown", { seconds: cooldown })}
+      </p>
+    );
+  }
+
+  return (
+    <button
+      className="text-[14px] font-semibold text-[var(--track-accent)] hover:underline disabled:opacity-50"
+      disabled={mutation.isPending}
+      onClick={handleClick}
+      type="button"
+    >
+      {mutation.isPending ? t("submitting") : t("resendVerificationButton")}
+    </button>
+  );
+}
+
+function extractErrorCode(error: WebApiError): string | undefined {
+  const data = error.data;
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "error" in data &&
+    typeof (data as { error: unknown }).error === "string"
+  ) {
+    return (data as { error: string }).error;
+  }
+  return undefined;
 }
 
 function VerifyTokenFlow({ token }: { token: string }): ReactElement {

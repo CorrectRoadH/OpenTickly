@@ -485,6 +485,19 @@ func (user *User) UpdatePreferences(preferences Preferences) error {
 	return nil
 }
 
+// ResetPassword sets a new password without requiring the current one. Caller
+// MUST have verified a valid reset token before invoking.
+func (user *User) ResetPassword(newPassword string) error {
+	if err := user.ensureMutable(); err != nil {
+		return err
+	}
+	if len(newPassword) < 6 {
+		return ErrInvalidPassword
+	}
+	user.passwordHash = hashSecret(newPassword)
+	return nil
+}
+
 func (user *User) RotateAPIToken(token string) error {
 	if err := user.ensureMutable(); err != nil {
 		return err

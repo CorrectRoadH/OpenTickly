@@ -2,9 +2,13 @@ package application
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -12,28 +16,44 @@ import (
 )
 
 var (
-	ErrSessionNotFound          = errors.New("session not found")
-	ErrUnknownPreferencesClient = errors.New("unknown client")
-	ErrUnknownAlphaFeature      = errors.New("invalid feature code(s)")
-	ErrRegistrationClosed       = errors.New("registration is currently closed")
-	ErrVerificationTokenExpired = errors.New("verification token has expired")
-	ErrVerificationTokenInvalid = errors.New("verification token is invalid")
+	ErrSessionNotFound             = errors.New("session not found")
+	ErrUnknownPreferencesClient    = errors.New("unknown client")
+	ErrUnknownAlphaFeature         = errors.New("invalid feature code(s)")
+	ErrRegistrationClosed          = errors.New("registration is currently closed")
+	ErrVerificationTokenExpired    = errors.New("verification token has expired")
+	ErrVerificationTokenInvalid    = errors.New("verification token is invalid")
+	ErrPasswordResetTokenInvalid   = errors.New("password reset token is invalid")
+	ErrPasswordResetTokenExpired   = errors.New("password reset token has expired")
+	ErrPasswordResetTokenConsumed  = errors.New("password reset token already used")
+	ErrVerificationResendCooldown  = errors.New("verification email resend cooldown in effect")
 )
+
+// passwordResetTokenTTL is how long a password reset link is valid.
+const passwordResetTokenTTL = time.Hour
+
+// passwordResetRateLimit caps reset requests per user per hour.
+const passwordResetRateLimit = 5
+
+// verificationResendCooldown is the minimum interval between resends of a
+// verification email for the same user.
+const verificationResendCooldown = 60 * time.Second
 
 const StopRunningTimerJobName = "identity.deactivated.stop_running_timer"
 
 type Config struct {
-	Users              UserRepository
-	Sessions           SessionRepository
-	PushServices       PushServiceRepository
-	JobRecorder        JobRecorder
-	RunningTimerLookup RunningTimerLookup
-	IDs                Sequence
-	KnownAlphaFeatures []string
-	RegistrationGuard  RegistrationGuard
-	EmailVerifier      EmailVerifier
-	VerificationTokens VerificationTokenRepository
-	Logger             log.Logger
+	Users                UserRepository
+	Sessions             SessionRepository
+	PushServices         PushServiceRepository
+	JobRecorder          JobRecorder
+	RunningTimerLookup   RunningTimerLookup
+	IDs                  Sequence
+	KnownAlphaFeatures   []string
+	RegistrationGuard    RegistrationGuard
+	EmailVerifier        EmailVerifier
+	VerificationTokens   VerificationTokenRepository
+	PasswordResetTokens  PasswordResetTokenRepository
+	PasswordResetEmailer PasswordResetEmailer
+	Logger               log.Logger
 }
 
 type UserRepository interface {
@@ -49,6 +69,7 @@ type SessionRepository interface {
 	Put(context.Context, Session) error
 	UserIDBySession(context.Context, string) (int64, error)
 	Delete(context.Context, string) error
+	DeleteByUserID(ctx context.Context, userID int64) error
 }
 
 type PushServiceRepository interface {
@@ -89,6 +110,7 @@ type EmailVerifier interface {
 type VerificationTokenRepository interface {
 	Save(ctx context.Context, token VerificationToken) error
 	ByToken(ctx context.Context, token string) (VerificationToken, error)
+	ByUserID(ctx context.Context, userID int64) (VerificationToken, error)
 	DeleteByUserID(ctx context.Context, userID int64) error
 }
 
@@ -96,6 +118,35 @@ type VerificationToken struct {
 	UserID    int64
 	Token     string
 	ExpiresAt time.Time
+	CreatedAt time.Time
+}
+
+// PasswordResetEmailer sends password reset links. Mirrors EmailVerifier.
+type PasswordResetEmailer interface {
+	SendPasswordResetEmail(ctx context.Context, email string, token string) error
+}
+
+// PasswordResetTokenRepository stores and retrieves password reset tokens.
+type PasswordResetTokenRepository interface {
+	Save(ctx context.Context, t PasswordResetToken) error
+	ByTokenHash(ctx context.Context, hash string) (PasswordResetToken, error)
+	MarkConsumed(ctx context.Context, id int64, at time.Time) error
+	CountRecentForUser(ctx context.Context, userID int64, since time.Time) (int, error)
+	DeleteByID(ctx context.Context, id int64) error
+}
+
+// PasswordResetToken is the stored record for a password reset request.
+// Only the SHA-256 hash of the emailed token is persisted: the plaintext
+// token is a credential delivered via email and stealing the DB must not
+// yield valid reset links (contrast with workspace invite tokens, which
+// are UI-visible plaintext for Copy-Link UX).
+type PasswordResetToken struct {
+	ID         int64
+	UserID     int64
+	TokenHash  string
+	ExpiresAt  time.Time
+	CreatedAt  time.Time
+	ConsumedAt *time.Time
 }
 
 type RegisterInput struct {
@@ -151,17 +202,20 @@ type RegisterResult struct {
 }
 
 type Service struct {
-	users              UserRepository
-	sessions           SessionRepository
-	pushServices       PushServiceRepository
-	jobRecorder        JobRecorder
-	runningTimerLookup RunningTimerLookup
-	ids                Sequence
-	knownAlphaFeatures map[string]struct{}
-	registrationGuard  RegistrationGuard
-	emailVerifier      EmailVerifier
-	verificationTokens VerificationTokenRepository
-	logger             log.Logger
+	users                UserRepository
+	sessions             SessionRepository
+	pushServices         PushServiceRepository
+	jobRecorder          JobRecorder
+	runningTimerLookup   RunningTimerLookup
+	ids                  Sequence
+	knownAlphaFeatures   map[string]struct{}
+	registrationGuard    RegistrationGuard
+	emailVerifier        EmailVerifier
+	verificationTokens   VerificationTokenRepository
+	passwordResetTokens  PasswordResetTokenRepository
+	passwordResetEmailer PasswordResetEmailer
+	now                  func() time.Time
+	logger               log.Logger
 }
 
 func NewService(cfg Config) *Service {
@@ -176,18 +230,30 @@ func NewService(cfg Config) *Service {
 	}
 
 	return &Service{
-		users:              cfg.Users,
-		sessions:           cfg.Sessions,
-		pushServices:       cfg.PushServices,
-		jobRecorder:        cfg.JobRecorder,
-		runningTimerLookup: cfg.RunningTimerLookup,
-		ids:                cfg.IDs,
-		knownAlphaFeatures: knownAlphaFeatures,
-		registrationGuard:  cfg.RegistrationGuard,
-		emailVerifier:      cfg.EmailVerifier,
-		verificationTokens: cfg.VerificationTokens,
-		logger:             logger,
+		users:                cfg.Users,
+		sessions:             cfg.Sessions,
+		pushServices:         cfg.PushServices,
+		jobRecorder:          cfg.JobRecorder,
+		runningTimerLookup:   cfg.RunningTimerLookup,
+		ids:                  cfg.IDs,
+		knownAlphaFeatures:   knownAlphaFeatures,
+		registrationGuard:    cfg.RegistrationGuard,
+		emailVerifier:        cfg.EmailVerifier,
+		verificationTokens:   cfg.VerificationTokens,
+		passwordResetTokens:  cfg.PasswordResetTokens,
+		passwordResetEmailer: cfg.PasswordResetEmailer,
+		now:                  time.Now,
+		logger:               logger,
 	}
+}
+
+// SetClockForTesting overrides the service clock for deterministic tests.
+func (service *Service) SetClockForTesting(now func() time.Time) {
+	if now == nil {
+		service.now = time.Now
+		return
+	}
+	service.now = now
 }
 
 func (service *Service) ListPushServices(ctx context.Context, userID int64) ([]domain.PushService, error) {
@@ -659,6 +725,250 @@ func (service *Service) AuthorizeBusinessWrite(ctx context.Context, userID int64
 	}
 
 	return nil
+}
+
+// RequestPasswordReset always succeeds from the caller's perspective so an
+// attacker cannot use it to enumerate accounts. If the email maps to an
+// active user, a reset token is minted and emailed. Rate-limited to 5
+// requests per hour per user. Only email-sender misconfiguration (site_url
+// or smtp missing) surfaces as an error so the admin can fix it.
+func (service *Service) RequestPasswordReset(ctx context.Context, email string) error {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	if normalized == "" {
+		return nil
+	}
+
+	user, err := service.users.ByEmail(ctx, normalized)
+	if err != nil {
+		service.logger.InfoContext(ctx, "password reset requested for unknown email",
+			"email", normalized,
+		)
+		return nil
+	}
+	if user.State() != domain.UserStateActive {
+		service.logger.InfoContext(ctx, "password reset requested for non-active user",
+			"user_id", user.ID(),
+			"state", string(user.State()),
+		)
+		return nil
+	}
+
+	if service.passwordResetTokens == nil {
+		return errors.New("password reset tokens repository is not configured")
+	}
+
+	now := service.now()
+	count, err := service.passwordResetTokens.CountRecentForUser(ctx, user.ID(), now.Add(-time.Hour))
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to count recent password reset tokens",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+	if count >= passwordResetRateLimit {
+		service.logger.WarnContext(ctx, "password reset rate-limited",
+			"user_id", user.ID(),
+			"recent_count", count,
+		)
+		return nil
+	}
+
+	plaintext, err := newPasswordResetToken()
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to mint password reset token",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+	tokenHash := sha256Hex(plaintext)
+
+	stored := PasswordResetToken{
+		UserID:    user.ID(),
+		TokenHash: tokenHash,
+		ExpiresAt: now.Add(passwordResetTokenTTL),
+		CreatedAt: now,
+	}
+	if err := service.passwordResetTokens.Save(ctx, stored); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save password reset token",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	if service.passwordResetEmailer == nil {
+		return errors.New("password reset emailer is not configured")
+	}
+	if err := service.passwordResetEmailer.SendPasswordResetEmail(ctx, user.Email(), plaintext); err != nil {
+		saved, lookupErr := service.passwordResetTokens.ByTokenHash(ctx, tokenHash)
+		if lookupErr == nil {
+			_ = service.passwordResetTokens.DeleteByID(ctx, saved.ID)
+		}
+		service.logger.ErrorContext(ctx, "failed to send password reset email",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	service.logger.InfoContext(ctx, "password reset email sent",
+		"user_id", user.ID(),
+	)
+	return nil
+}
+
+// ResetPassword validates the token, updates the password, consumes the
+// token, and revokes every session the user currently has.
+func (service *Service) ResetPassword(ctx context.Context, token string, newPassword string) error {
+	trimmed := strings.TrimSpace(token)
+	if trimmed == "" {
+		return ErrPasswordResetTokenInvalid
+	}
+	if service.passwordResetTokens == nil {
+		return errors.New("password reset tokens repository is not configured")
+	}
+
+	tokenHash := sha256Hex(trimmed)
+	stored, err := service.passwordResetTokens.ByTokenHash(ctx, tokenHash)
+	if err != nil {
+		if errors.Is(err, ErrPasswordResetTokenInvalid) {
+			return ErrPasswordResetTokenInvalid
+		}
+		return err
+	}
+
+	now := service.now()
+	if stored.ConsumedAt != nil {
+		return ErrPasswordResetTokenConsumed
+	}
+	if !stored.ExpiresAt.After(now) {
+		return ErrPasswordResetTokenExpired
+	}
+
+	user, err := service.users.ByID(ctx, stored.UserID)
+	if err != nil {
+		return err
+	}
+	if err := user.ResetPassword(newPassword); err != nil {
+		return err
+	}
+
+	// No cross-repo transaction primitive exists in this module yet; apply the
+	// three writes in order and log if the follow-up steps fail. Token consume
+	// happens before session purge so a retry after a transient session delete
+	// failure cannot re-use the same reset link.
+	if err := service.users.Save(ctx, user); err != nil {
+		service.logger.ErrorContext(ctx, "failed to persist password reset",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+	if err := service.passwordResetTokens.MarkConsumed(ctx, stored.ID, now); err != nil {
+		service.logger.ErrorContext(ctx, "failed to mark password reset token consumed",
+			"token_id", stored.ID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	if err := service.sessions.DeleteByUserID(ctx, user.ID()); err != nil {
+		service.logger.ErrorContext(ctx, "failed to revoke sessions after password reset",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	service.logger.InfoContext(ctx, "password reset complete",
+		"user_id", user.ID(),
+	)
+	return nil
+}
+
+// ResendVerificationEmail rotates the user's verification token and
+// re-sends the email. Silently succeeds for unknown emails and users not
+// in pending_verification (same non-enumerable guarantee as
+// RequestPasswordReset). Per-user cooldown of 60 seconds is enforced via
+// the VerificationToken row's created_at.
+func (service *Service) ResendVerificationEmail(ctx context.Context, email string) error {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	if normalized == "" {
+		return nil
+	}
+
+	user, err := service.users.ByEmail(ctx, normalized)
+	if err != nil {
+		service.logger.InfoContext(ctx, "verification resend requested for unknown email",
+			"email", normalized,
+		)
+		return nil
+	}
+	if user.State() != domain.UserStatePendingVerification {
+		service.logger.InfoContext(ctx, "verification resend requested for non-pending user",
+			"user_id", user.ID(),
+			"state", string(user.State()),
+		)
+		return nil
+	}
+
+	if service.verificationTokens == nil || service.emailVerifier == nil {
+		return errors.New("verification tokens or email verifier is not configured")
+	}
+
+	now := service.now()
+	existing, err := service.verificationTokens.ByUserID(ctx, user.ID())
+	if err == nil && !existing.CreatedAt.IsZero() && now.Sub(existing.CreatedAt) < verificationResendCooldown {
+		service.logger.InfoContext(ctx, "verification resend cooldown active",
+			"user_id", user.ID(),
+		)
+		return nil
+	}
+
+	if err := service.verificationTokens.DeleteByUserID(ctx, user.ID()); err != nil {
+		return err
+	}
+
+	tokenStr, err := service.ids.NextAPIToken()
+	if err != nil {
+		return err
+	}
+	fresh := VerificationToken{
+		UserID:    user.ID(),
+		Token:     tokenStr,
+		ExpiresAt: now.Add(24 * time.Hour),
+		CreatedAt: now,
+	}
+	if err := service.verificationTokens.Save(ctx, fresh); err != nil {
+		return err
+	}
+	if err := service.emailVerifier.SendVerificationEmail(ctx, user.Email(), tokenStr); err != nil {
+		service.logger.ErrorContext(ctx, "failed to resend verification email",
+			"user_id", user.ID(),
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	service.logger.InfoContext(ctx, "verification email resent",
+		"user_id", user.ID(),
+	)
+	return nil
+}
+
+// newPasswordResetToken generates 32 random bytes as hex (64 chars).
+func newPasswordResetToken() (string, error) {
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
+}
+
+func sha256Hex(value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:])
 }
 
 func (service *Service) issueSession(ctx context.Context, user *domain.User) (AuthenticatedSession, error) {

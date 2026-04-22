@@ -6,6 +6,7 @@ import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
 import { parseAcceptInviteSearch } from "../shared/url-state/accept-invite-location.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
+import { parseResetPasswordSearch } from "../shared/url-state/reset-password-location.ts";
 import { rootRoute } from "./root-route.tsx";
 import {
   isSessionAccessDenied,
@@ -18,8 +19,10 @@ import {
   AcceptInvitePage,
   AccountPage,
   AuthPage,
+  ForgotPasswordPage,
   InviteStatusJoinedPage,
   ProfilePage,
+  ResetPasswordPage,
   VerifyEmailPage,
 } from "./route-tree-lazy-pages.tsx";
 
@@ -95,6 +98,19 @@ export const verifyEmailRoute = createRoute({
   component: VerifyEmailRouteComponent,
 });
 
+export const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/forgot-password",
+  component: ForgotPasswordRouteComponent,
+});
+
+export const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reset-password",
+  validateSearch: parseResetPasswordSearch,
+  component: ResetPasswordRouteComponent,
+});
+
 export const inviteStatusJoinedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/invite-status/joined",
@@ -147,6 +163,22 @@ function VerifyEmailRouteComponent() {
   return (
     <Suspense fallback={pageSpinner}>
       <VerifyEmailPage />
+    </Suspense>
+  );
+}
+
+function ForgotPasswordRouteComponent() {
+  return (
+    <Suspense fallback={pageSpinner}>
+      <ForgotPasswordPage />
+    </Suspense>
+  );
+}
+
+function ResetPasswordRouteComponent() {
+  return (
+    <Suspense fallback={pageSpinner}>
+      <ResetPasswordPage />
     </Suspense>
   );
 }

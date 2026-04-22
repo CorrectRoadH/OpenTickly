@@ -478,6 +478,17 @@ func (repo *SessionRepository) Delete(ctx context.Context, sessionID string) err
 	return nil
 }
 
+func (repo *SessionRepository) DeleteByUserID(ctx context.Context, userID int64) error {
+	_, err := repo.pool.Exec(ctx, `
+		delete from identity_sessions
+		where user_id = $1
+	`, userID)
+	if err != nil {
+		return fmt.Errorf("delete identity sessions for user %d: %w", userID, err)
+	}
+	return nil
+}
+
 func scanUser(row rowScanner) (*domain.User, error) {
 	var (
 		id                                        int64

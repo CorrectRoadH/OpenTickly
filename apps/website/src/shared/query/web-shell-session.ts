@@ -5,7 +5,12 @@ import type {
   RegisterRequestDto,
   UpdateWebSessionRequestDto,
 } from "../api/web-contract.ts";
-import type { VerifyEmailRequest } from "../api/web/index.ts";
+import type {
+  ForgotPasswordRequest,
+  ResendVerificationEmailRequest,
+  ResetPasswordRequest,
+  VerifyEmailRequest,
+} from "../api/web/index.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   completeOnboarding,
@@ -14,7 +19,10 @@ import {
   loginWebUser,
   logoutWebUser,
   registerWebUser,
+  requestPasswordReset,
+  resendVerificationEmail,
   resetOnboarding,
+  resetPassword,
   updateWebSession,
   verifyEmail,
 } from "../api/web/index.ts";
@@ -69,6 +77,30 @@ export function useVerifyEmailMutation() {
     mutationFn: (request: VerifyEmailRequest) => unwrapWebApiResult(verifyEmail({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(sessionQueryKey, data);
+    },
+  });
+}
+
+export function useRequestPasswordResetMutation() {
+  return useMutation({
+    mutationFn: async (request: ForgotPasswordRequest) => {
+      await unwrapWebApiResult(requestPasswordReset({ body: request }));
+    },
+  });
+}
+
+export function useResetPasswordMutation() {
+  return useMutation({
+    mutationFn: async (request: ResetPasswordRequest) => {
+      await unwrapWebApiResult(resetPassword({ body: request }));
+    },
+  });
+}
+
+export function useResendVerificationEmailMutation() {
+  return useMutation({
+    mutationFn: async (request: ResendVerificationEmailRequest) => {
+      await unwrapWebApiResult(resendVerificationEmail({ body: request }));
     },
   });
 }

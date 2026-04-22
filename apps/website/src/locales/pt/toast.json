@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "Não foi possível salvar esta alteração. Tente novamente em instantes.",
   "failedToUpdateLanguage": "Falha ao atualizar o idioma",
   "timeEntrySaved": "Registro de tempo salvo",
-  "failedToSaveTimeEntry": "Falha ao salvar registro de tempo. Tente novamente."
+  "failedToSaveTimeEntry": "Falha ao salvar registro de tempo. Tente novamente.",
+  "passwordResetComplete": "Senha atualizada. Entre com a nova senha.",
+  "verificationEmailResent": "E-mail de verificação enviado. Verifique sua caixa de entrada."
 }

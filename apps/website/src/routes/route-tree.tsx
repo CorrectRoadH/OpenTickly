@@ -5,6 +5,8 @@ import {
   loginRoute,
   registerRoute,
   verifyEmailRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
   inviteStatusJoinedRoute,
   acceptInviteRoute,
   accountRoute,
@@ -63,6 +65,8 @@ export const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   verifyEmailRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
   inviteStatusJoinedRoute,
   acceptInviteRoute,
   protectedLayoutRoute.addChildren([

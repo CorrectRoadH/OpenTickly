@@ -176,18 +176,21 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	}
 
 	emailVerifier := newEmailVerifierFromDB(pool, emailSender)
+	passwordResetEmailer := newPasswordResetEmailerFromDB(pool, emailSender)
 	identityService := identityapplication.NewService(identityapplication.Config{
-		Users:              newCachedUserRepository(identitypostgres.NewUserRepository(pool), cache),
-		Sessions:           newCachedSessionRepository(identitypostgres.NewSessionRepository(pool), cache),
-		PushServices:       identitypostgres.NewPushServiceRepository(pool),
-		JobRecorder:        identitypostgres.NewJobRecorder(pool),
-		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(pool),
-		IDs:                identitypostgres.NewSequence(pool),
-		KnownAlphaFeatures: []string{"calendar-redesign"},
-		RegistrationGuard:  &registrationPolicyGuard{pool: pool},
-		EmailVerifier:      emailVerifier,
-		VerificationTokens: identitypostgres.NewVerificationTokenRepository(pool),
-		Logger:             appLogger,
+		Users:                newCachedUserRepository(identitypostgres.NewUserRepository(pool), cache),
+		Sessions:             newCachedSessionRepository(identitypostgres.NewSessionRepository(pool), cache),
+		PushServices:         identitypostgres.NewPushServiceRepository(pool),
+		JobRecorder:          identitypostgres.NewJobRecorder(pool),
+		RunningTimerLookup:   trackingpostgres.NewRunningTimerLookup(pool),
+		IDs:                  identitypostgres.NewSequence(pool),
+		KnownAlphaFeatures:   []string{"calendar-redesign"},
+		RegistrationGuard:    &registrationPolicyGuard{pool: pool},
+		EmailVerifier:        emailVerifier,
+		VerificationTokens:   identitypostgres.NewVerificationTokenRepository(pool),
+		PasswordResetTokens:  identitypostgres.NewPasswordResetTokenRepository(pool),
+		PasswordResetEmailer: passwordResetEmailer,
+		Logger:               appLogger,
 	})
 	userHomes := newCachedUserHomeRepository(tenantpostgres.NewUserHomeRepository(pool), cache)
 	shellProvider := newCachedSessionShellProvider(

@@ -110,6 +110,92 @@
         }
       }
     },
+    "/web/v1/auth/verify-email/resend": {
+      "post": {
+        "summary": "Resend the email verification message",
+        "operationId": "resend-verification-email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Resend request accepted (silent on unknown email)"
+          },
+          "422": {
+            "description": "Instance email configuration is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthPreconditionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/auth/forgot-password": {
+      "post": {
+        "summary": "Request a password reset email",
+        "operationId": "request-password-reset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Reset request accepted (silent on unknown email)"
+          },
+          "422": {
+            "description": "Instance email configuration is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthPreconditionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/auth/reset-password": {
+      "post": {
+        "summary": "Reset password using a previously emailed token",
+        "operationId": "reset-password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset completed"
+          },
+          "400": {
+            "description": "Token invalid, expired, or already used"
+          }
+        }
+      }
+    },
     "/web/v1/session": {
       "get": {
         "summary": "Bootstrap the current web session shell",
@@ -1199,6 +1285,50 @@
           }
         },
         "required": ["token"]
+      },
+      "ResendVerificationEmailRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["email"]
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["email"]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": ["token", "password"]
+      },
+      "AuthPreconditionError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["error", "message"]
       },
       "SessionBootstrap": {
         "type": "object",

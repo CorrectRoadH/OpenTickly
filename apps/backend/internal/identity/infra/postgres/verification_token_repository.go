@@ -34,16 +34,33 @@ func (r *VerificationTokenRepository) Save(ctx context.Context, token applicatio
 func (r *VerificationTokenRepository) ByToken(ctx context.Context, token string) (application.VerificationToken, error) {
 	var vt application.VerificationToken
 	err := r.pool.QueryRow(ctx,
-		`SELECT user_id, token, expires_at
+		`SELECT user_id, token, expires_at, created_at
 		 FROM identity_email_verification_tokens
 		 WHERE token = $1`,
 		token,
-	).Scan(&vt.UserID, &vt.Token, &vt.ExpiresAt)
+	).Scan(&vt.UserID, &vt.Token, &vt.ExpiresAt, &vt.CreatedAt)
 	if err == pgx.ErrNoRows {
 		return application.VerificationToken{}, application.ErrVerificationTokenInvalid
 	}
 	if err != nil {
 		return application.VerificationToken{}, fmt.Errorf("lookup verification token: %w", err)
+	}
+	return vt, nil
+}
+
+func (r *VerificationTokenRepository) ByUserID(ctx context.Context, userID int64) (application.VerificationToken, error) {
+	var vt application.VerificationToken
+	err := r.pool.QueryRow(ctx,
+		`SELECT user_id, token, expires_at, created_at
+		 FROM identity_email_verification_tokens
+		 WHERE user_id = $1`,
+		userID,
+	).Scan(&vt.UserID, &vt.Token, &vt.ExpiresAt, &vt.CreatedAt)
+	if err == pgx.ErrNoRows {
+		return application.VerificationToken{}, application.ErrVerificationTokenInvalid
+	}
+	if err != nil {
+		return application.VerificationToken{}, fmt.Errorf("lookup verification token by user: %w", err)
 	}
 	return vt, nil
 }

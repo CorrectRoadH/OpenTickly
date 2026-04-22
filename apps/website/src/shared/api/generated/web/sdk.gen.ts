@@ -40,10 +40,19 @@ import type {
   RegisterWebUserResponses,
   RemoveWorkspaceMemberData,
   RemoveWorkspaceMemberResponses,
+  RequestPasswordResetData,
+  RequestPasswordResetErrors,
+  RequestPasswordResetResponses,
+  ResendVerificationEmailData,
+  ResendVerificationEmailErrors,
+  ResendVerificationEmailResponses,
   ResendWorkspaceInviteData,
   ResendWorkspaceInviteResponses,
   ResetOnboardingData,
   ResetOnboardingResponses,
+  ResetPasswordData,
+  ResetPasswordErrors,
+  ResetPasswordResponses,
   RestoreWorkspaceMemberData,
   RestoreWorkspaceMemberResponses,
   SearchWorkspaceTimeEntriesData,
@@ -127,6 +136,59 @@ export const verifyEmail = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).post<VerifyEmailResponses, unknown, ThrowOnError>({
     url: "/web/v1/auth/verify-email",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Resend the email verification message
+ */
+export const resendVerificationEmail = <ThrowOnError extends boolean = false>(
+  options: Options<ResendVerificationEmailData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    ResendVerificationEmailResponses,
+    ResendVerificationEmailErrors,
+    ThrowOnError
+  >({
+    url: "/web/v1/auth/verify-email/resend",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Request a password reset email
+ */
+export const requestPasswordReset = <ThrowOnError extends boolean = false>(
+  options: Options<RequestPasswordResetData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    RequestPasswordResetResponses,
+    RequestPasswordResetErrors,
+    ThrowOnError
+  >({
+    url: "/web/v1/auth/forgot-password",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Reset password using a previously emailed token
+ */
+export const resetPassword = <ThrowOnError extends boolean = false>(
+  options: Options<ResetPasswordData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<ResetPasswordResponses, ResetPasswordErrors, ThrowOnError>({
+    url: "/web/v1/auth/reset-password",
     ...options,
     headers: {
       "Content-Type": "application/json",

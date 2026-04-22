@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "Impossible d'enregistrer cette modification. Réessayez dans un instant.",
   "failedToUpdateLanguage": "Échec de la mise à jour de la langue",
   "timeEntrySaved": "Entrée de temps enregistrée",
-  "failedToSaveTimeEntry": "Échec de l'enregistrement de l'entrée de temps. Réessayez."
+  "failedToSaveTimeEntry": "Échec de l'enregistrement de l'entrée de temps. Réessayez.",
+  "passwordResetComplete": "Mot de passe mis à jour. Connectez-vous avec votre nouveau mot de passe.",
+  "verificationEmailResent": "E-mail de vérification envoyé. Vérifiez votre boîte de réception."
 }

@@ -87,6 +87,17 @@ export function AuthForm({
         />
       </Field>
 
+      {mode === "login" ? (
+        <div className="flex justify-end">
+          <Link
+            className="text-[13px] text-[var(--track-accent-text)] underline-offset-4 hover:underline"
+            to="/forgot-password"
+          >
+            {t("forgotPasswordLink")}
+          </Link>
+        </div>
+      ) : null}
+
       <button
         className="flex h-9 w-full items-center justify-center rounded-[6px] border border-[var(--track-accent)] bg-[var(--track-accent)] px-3 text-[14px] font-semibold text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow,background] duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-px hover:bg-[var(--track-accent-fill-hover)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         disabled={isSubmitting}

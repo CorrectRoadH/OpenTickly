@@ -7,6 +7,14 @@ export const VerifyEmailPage = lazyNamed(
   () => import("../pages/auth/VerifyEmailPage.tsx"),
   "VerifyEmailPage",
 );
+export const ForgotPasswordPage = lazyNamed(
+  () => import("../pages/auth/ForgotPasswordPage.tsx"),
+  "ForgotPasswordPage",
+);
+export const ResetPasswordPage = lazyNamed(
+  () => import("../pages/auth/ResetPasswordPage.tsx"),
+  "ResetPasswordPage",
+);
 export const InviteStatusJoinedPage = lazyNamed(
   () => import("../pages/members/InviteStatusJoinedPage.tsx"),
   "InviteStatusJoinedPage",

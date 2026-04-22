@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "No pudimos guardar este cambio. Inténtalo de nuevo en un momento.",
   "failedToUpdateLanguage": "Error al actualizar el idioma",
   "timeEntrySaved": "Entrada de tiempo guardada",
-  "failedToSaveTimeEntry": "Error al guardar la entrada de tiempo. Inténtalo de nuevo."
+  "failedToSaveTimeEntry": "Error al guardar la entrada de tiempo. Inténtalo de nuevo.",
+  "passwordResetComplete": "Contraseña actualizada. Inicia sesión con tu nueva contraseña.",
+  "verificationEmailResent": "Correo de verificación enviado. Revisa tu bandeja de entrada."
 }

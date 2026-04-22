@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "이 변경 사항을 저장할 수 없습니다. 잠시 후 다시 시도해 주세요.",
   "failedToUpdateLanguage": "언어 업데이트에 실패했습니다",
   "timeEntrySaved": "시간 항목이 저장되었습니다",
-  "failedToSaveTimeEntry": "시간 항목 저장에 실패했습니다. 다시 시도해 주세요."
+  "failedToSaveTimeEntry": "시간 항목 저장에 실패했습니다. 다시 시도해 주세요.",
+  "passwordResetComplete": "비밀번호가 변경되었습니다. 새 비밀번호로 로그인하세요.",
+  "verificationEmailResent": "인증 이메일이 전송되었습니다. 받은 편지함을 확인하세요."
 }

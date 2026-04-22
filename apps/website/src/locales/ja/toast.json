@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "この変更を保存できませんでした。しばらくしてからもう一度お試しください。",
   "failedToUpdateLanguage": "言語の更新に失敗しました",
   "timeEntrySaved": "タイムエントリを保存しました",
-  "failedToSaveTimeEntry": "タイムエントリの保存に失敗しました。もう一度お試しください。"
+  "failedToSaveTimeEntry": "タイムエントリの保存に失敗しました。もう一度お試しください。",
+  "passwordResetComplete": "パスワードを更新しました。新しいパスワードでログインしてください。",
+  "verificationEmailResent": "確認メールを送信しました。受信トレイをご確認ください。"
 }

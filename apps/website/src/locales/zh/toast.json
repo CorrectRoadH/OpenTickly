@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "无法保存此更改，请稍后重试。",
   "failedToUpdateLanguage": "更新语言失败",
   "timeEntrySaved": "时间条目已保存",
-  "failedToSaveTimeEntry": "保存时间条目失败，请重试。"
+  "failedToSaveTimeEntry": "保存时间条目失败，请重试。",
+  "passwordResetComplete": "密码已更新，请使用新密码登录。",
+  "verificationEmailResent": "验证邮件已发送，请检查收件箱。"
 }

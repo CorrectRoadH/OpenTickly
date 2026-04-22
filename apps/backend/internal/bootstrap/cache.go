@@ -62,6 +62,16 @@ func (c *cachedSessionRepository) Delete(ctx context.Context, sessionID string) 
 	return c.inner.Delete(ctx, sessionID)
 }
 
+func (c *cachedSessionRepository) DeleteByUserID(ctx context.Context, userID int64) error {
+	// We cannot target individual session:<id> keys without a secondary index,
+	// so invalidate the per-user keys and let stale session:<id> entries expire
+	// on their TTL. The source-of-truth DELETE below ensures lookups that miss
+	// the cache will not resurrect the session.
+	_ = c.rc.Del(ctx, fmt.Sprintf("user:%d", userID))
+	_ = c.rc.Del(ctx, fmt.Sprintf("session_shell:%d", userID))
+	return c.inner.DeleteByUserID(ctx, userID)
+}
+
 // --- user repository cache ---
 
 type cachedUserRepository struct {

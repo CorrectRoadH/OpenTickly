@@ -30,6 +30,18 @@ func (server *webOpenAPIServer) VerifyEmail(ctx echo.Context) error {
 	return server.handlers.verifyEmail(ctx)
 }
 
+func (server *webOpenAPIServer) ResendVerificationEmail(ctx echo.Context) error {
+	return server.handlers.resendVerificationEmail(ctx)
+}
+
+func (server *webOpenAPIServer) RequestPasswordReset(ctx echo.Context) error {
+	return server.handlers.requestPasswordReset(ctx)
+}
+
+func (server *webOpenAPIServer) ResetPassword(ctx echo.Context) error {
+	return server.handlers.resetPassword(ctx)
+}
+
 func (server *webOpenAPIServer) DeleteOrganization(ctx echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.handlers.deleteOrganization(ctx)

@@ -39,5 +39,7 @@
   "failedToSaveWorkspaceSettings": "Nie udało się zapisać tej zmiany. Spróbuj ponownie za chwilę.",
   "failedToUpdateLanguage": "Nie udało się zaktualizować języka",
   "timeEntrySaved": "Wpis czasu zapisany",
-  "failedToSaveTimeEntry": "Nie udało się zapisać wpisu czasu. Spróbuj ponownie."
+  "failedToSaveTimeEntry": "Nie udało się zapisać wpisu czasu. Spróbuj ponownie.",
+  "passwordResetComplete": "Hasło zaktualizowane. Zaloguj się nowym hasłem.",
+  "verificationEmailResent": "E-mail weryfikacyjny wysłany. Sprawdź skrzynkę odbiorczą."
 }

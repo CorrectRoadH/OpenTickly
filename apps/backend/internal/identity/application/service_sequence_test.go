@@ -193,6 +193,10 @@ func (repo *sequenceTestSessionRepository) Delete(_ context.Context, _ string) e
 	return nil
 }
 
+func (repo *sequenceTestSessionRepository) DeleteByUserID(_ context.Context, _ int64) error {
+	return nil
+}
+
 type sequenceTestSequence struct {
 	nextUserID       int64
 	nextUserIDErr    error
