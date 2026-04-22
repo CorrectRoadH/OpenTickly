@@ -5,7 +5,7 @@ packages:
 
 catalog:
   "@hey-api/client-fetch": ^0.13.1
-  "@hey-api/openapi-ts": 0.96.0
+  "@hey-api/openapi-ts": 0.96.1
   "@orama/tokenizers": ^3.1.18
   "@types/node": ^25
   "@types/react-big-calendar": ^1.16.3
@@ -25,7 +25,7 @@ catalog:
   react-big-calendar: ^1.19.4
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.1.32
-  react-hook-form: ^7.72.1
+  react-hook-form: ^7.73.1
   react-i18next: ^17.0.4
   sharp: ^0.34.5
   sonner: ^2.0.7
