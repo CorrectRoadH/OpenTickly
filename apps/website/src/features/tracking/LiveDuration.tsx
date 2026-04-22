@@ -2,13 +2,16 @@ import { type ReactElement, useEffect, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration, resolveEntryDurationSeconds } from "./overview-data.ts";
-import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 /**
  * Self-updating duration display for a running time entry.
  * Ticks every second internally — the parent never re-renders.
  *
- * For stopped entries, use `formatClockDuration(resolveEntryDurationSeconds(entry))` directly.
+ * Always renders as `H:MM:SS` regardless of the user's `durationFormat` preference.
+ * Toggl does the same: the live running clock shows seconds ticking (`H:MM:SS`),
+ * while Classic/Decimal formats only apply to stopped entries.
+ *
+ * For stopped entries, use `formatClockDuration(resolveEntryDurationSeconds(entry), durationFormat)`.
  */
 export function LiveDuration({
   entry,
@@ -19,7 +22,6 @@ export function LiveDuration({
   className?: string;
   "data-testid"?: string;
 }): ReactElement {
-  const { durationFormat } = useUserPreferences();
   const [seconds, setSeconds] = useState(() => resolveEntryDurationSeconds(entry, Date.now()));
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function LiveDuration({
 
   return (
     <span className={className} data-testid={dataTestId}>
-      {formatClockDuration(seconds, durationFormat)}
+      {formatClockDuration(seconds)}
     </span>
   );
 }
