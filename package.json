@@ -33,5 +33,16 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "overrides": {
+      "dompurify": "^3.4.1",
+      "lodash": "^4.18.1",
+      "lodash-es": "^4.18.1",
+      "serialize-javascript": "^7.0.5",
+      "brace-expansion@1": "^1.1.13",
+      "picomatch@4": "^4.0.4",
+      "smol-toml": "^1.6.1"
+    }
+  }
 }
