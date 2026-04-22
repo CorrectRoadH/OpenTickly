@@ -6,6 +6,7 @@
   "timeEntriesImported": "Time entries imported successfully.",
   "invitationSent": "Invitation sent to {{email}}",
   "emailSendingNotConfigured": "Email sending is not configured. Configure SMTP in Instance Admin before sending invitations.",
+  "siteUrlNotConfigured": "Site URL is not set. Configure it in Instance Admin before sending invitations — the email needs a link recipients can open.",
   "registrationPolicySet": "Registration policy set to {{mode}}",
   "failedToUpdateRegistrationPolicy": "Failed to update registration policy",
   "userDisabled": "{{email}} disabled",

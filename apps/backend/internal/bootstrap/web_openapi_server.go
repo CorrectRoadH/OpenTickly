@@ -58,6 +58,24 @@ func (server *webOpenAPIServer) InviteWorkspaceMember(ctx echo.Context, workspac
 	return server.handlers.inviteWorkspaceMember(ctx)
 }
 
+func (server *webOpenAPIServer) ResendWorkspaceInvite(ctx echo.Context, workspaceId int, memberId int) error {
+	_ = workspaceId
+	_ = memberId
+	return server.handlers.resendWorkspaceInvite(ctx)
+}
+
+func (server *webOpenAPIServer) GetWorkspaceInvite(ctx echo.Context, token string) error {
+	return server.handlers.getInvite(ctx, token)
+}
+
+func (server *webOpenAPIServer) AcceptWorkspaceInvite(ctx echo.Context, token string) error {
+	return server.handlers.acceptInvite(ctx, token)
+}
+
+func (server *webOpenAPIServer) AcceptWorkspaceInviteSignup(ctx echo.Context, token string) error {
+	return server.handlers.acceptInviteSignup(ctx, token)
+}
+
 func (server *webOpenAPIServer) RemoveWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
 	_ = workspaceId
 	_ = memberId

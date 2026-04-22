@@ -108,11 +108,23 @@ func NewHandlerWithShell(service *application.Service, shellProvider SessionShel
 }
 
 func (handler *Handler) Register(ctx context.Context, request RegisterRequest) Response {
+	return handler.register(ctx, request, false)
+}
+
+// RegisterPreVerified registers a user whose email has already been verified
+// out-of-band (e.g. via a workspace invite link). The email-verification
+// flow is skipped and a session is issued immediately.
+func (handler *Handler) RegisterPreVerified(ctx context.Context, request RegisterRequest) Response {
+	return handler.register(ctx, request, true)
+}
+
+func (handler *Handler) register(ctx context.Context, request RegisterRequest, emailAlreadyVerified bool) Response {
 	result, err := handler.service.Register(ctx, application.RegisterInput{
-		Email:    request.Email,
-		FullName: request.FullName,
-		Password: request.Password,
-		Timezone: request.Timezone,
+		Email:                request.Email,
+		FullName:             request.FullName,
+		Password:             request.Password,
+		Timezone:             request.Timezone,
+		EmailAlreadyVerified: emailAlreadyVerified,
 	})
 	if err != nil {
 		return handler.mapError(ctx, "register", err)
@@ -121,9 +133,9 @@ func (handler *Handler) Register(ctx context.Context, request RegisterRequest) R
 	if result.VerificationRequired {
 		return Response{
 			StatusCode: 200,
-			Body: map[string]any{
-				"email_verification_required": true,
-				"email":                       result.Email,
+			Body: webapi.RegistrationPendingVerification{
+				Email:                     openapi_types.Email(result.Email),
+				EmailVerificationRequired: true,
 			},
 		}
 	}

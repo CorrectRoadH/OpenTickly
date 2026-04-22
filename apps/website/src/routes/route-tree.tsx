@@ -6,6 +6,7 @@ import {
   registerRoute,
   verifyEmailRoute,
   inviteStatusJoinedRoute,
+  acceptInviteRoute,
   accountRoute,
   profileRoute,
 } from "./route-tree-auth.tsx";
@@ -63,6 +64,7 @@ export const routeTree = rootRoute.addChildren([
   registerRoute,
   verifyEmailRoute,
   inviteStatusJoinedRoute,
+  acceptInviteRoute,
   protectedLayoutRoute.addChildren([
     homeRoute,
     accountRoute,

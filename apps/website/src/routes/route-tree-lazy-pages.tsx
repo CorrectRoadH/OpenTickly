@@ -11,6 +11,10 @@ export const InviteStatusJoinedPage = lazyNamed(
   () => import("../pages/members/InviteStatusJoinedPage.tsx"),
   "InviteStatusJoinedPage",
 );
+export const AcceptInvitePage = lazyNamed(
+  () => import("../pages/members/AcceptInvitePage.tsx"),
+  "AcceptInvitePage",
+);
 export const AccountPage = lazyNamed(
   () => import("../pages/account/AccountPage.tsx"),
   "AccountPage",

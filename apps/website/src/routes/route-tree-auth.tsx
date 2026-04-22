@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
+import { parseAcceptInviteSearch } from "../shared/url-state/accept-invite-location.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
 import { rootRoute } from "./root-route.tsx";
 import {
@@ -14,6 +15,7 @@ import {
   SessionUnavailablePanel,
 } from "./route-tree-shared.tsx";
 import {
+  AcceptInvitePage,
   AccountPage,
   AuthPage,
   InviteStatusJoinedPage,
@@ -100,6 +102,13 @@ export const inviteStatusJoinedRoute = createRoute({
   component: InviteStatusJoinedRouteComponent,
 });
 
+export const acceptInviteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/accept-invite",
+  validateSearch: parseAcceptInviteSearch,
+  component: AcceptInviteRouteComponent,
+});
+
 export const accountRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/account",
@@ -151,6 +160,16 @@ function InviteStatusJoinedRouteComponent() {
         workspaceId={search.workspaceId}
         workspaceName={search.workspaceName}
       />
+    </Suspense>
+  );
+}
+
+function AcceptInviteRouteComponent() {
+  const search = acceptInviteRoute.useSearch();
+
+  return (
+    <Suspense fallback={pageSpinner}>
+      <AcceptInvitePage token={search.token} />
     </Suspense>
   );
 }

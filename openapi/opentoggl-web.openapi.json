@@ -582,7 +582,137 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/resend-invite": {
+      "post": {
+        "summary": "Resend a workspace member invitation",
+        "operationId": "resend-workspace-invite",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Refreshed workspace member invitation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/invites/{token}": {
+      "get": {
+        "summary": "Look up a workspace invite by token",
+        "operationId": "get-workspace-invite",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace invite summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceInviteInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/invites/{token}/accept": {
+      "post": {
+        "summary": "Accept a workspace invite with the current session",
+        "operationId": "accept-workspace-invite",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedWorkspaceInvite"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/invites/{token}/signup": {
+      "post": {
+        "summary": "Create an account and accept the workspace invite",
+        "operationId": "accept-workspace-invite-signup",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceInviteSignupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registered session bootstrap after accepting the invite",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBootstrap"
                 }
               }
             }
@@ -1430,9 +1560,88 @@
           "labor_cost": {
             "type": "number",
             "nullable": true
+          },
+          "invite_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "Plaintext invite token for members still in the invited state. Null once the invite is accepted or revoked."
+          },
+          "invite_token_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Expiry timestamp for the active invite token, if any."
           }
         },
         "required": ["id", "workspace_id", "email", "name", "role", "status", "hourly_rate", "labor_cost"]
+      },
+      "WorkspaceInviteInfo": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "workspace_name": {
+            "type": "string"
+          },
+          "organization_id": {
+            "type": "integer"
+          },
+          "organization_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "inviter_name": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "One of pending | expired | consumed"
+          }
+        },
+        "required": ["workspace_id", "workspace_name", "organization_id", "organization_name", "email", "inviter_name", "status"]
+      },
+      "AcceptedWorkspaceInvite": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "workspace_name": {
+            "type": "string"
+          },
+          "organization_id": {
+            "type": "integer"
+          },
+          "organization_name": {
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "workspace_name", "organization_id", "organization_name"]
+      },
+      "WorkspaceInviteSignupRequest": {
+        "type": "object",
+        "properties": {
+          "fullname": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone name detected from the client's browser."
+          }
+        },
+        "required": ["fullname", "password"]
       },
       "WorkspaceMemberInvitationRequest": {
         "type": "object",

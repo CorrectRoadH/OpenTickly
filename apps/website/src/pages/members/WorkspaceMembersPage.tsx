@@ -16,6 +16,7 @@ import { MembersIcon, PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
   useRemoveWorkspaceMemberMutation,
+  useResendWorkspaceInviteMutation,
   useRestoreWorkspaceMemberMutation,
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
@@ -59,6 +60,7 @@ export function WorkspaceMembersPage(): ReactElement {
   const disableMutation = useDisableWorkspaceMemberMutation(workspaceId);
   const restoreMutation = useRestoreWorkspaceMemberMutation(workspaceId);
   const removeMutation = useRemoveWorkspaceMemberMutation(workspaceId);
+  const resendInviteMutation = useResendWorkspaceInviteMutation(workspaceId);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<MemberStatusFilter>("all");
   const [search, setSearch] = useState("");
@@ -87,6 +89,8 @@ export function WorkspaceMembersPage(): ReactElement {
   function renderMemberRow(member: (typeof members)[number]): ReactNode {
     const canDisable = member.status === "joined" || member.status === "restored";
     const canRestore = member.status === "disabled";
+    const isInvited = member.status === "invited";
+    const inviteToken = member.invite_token;
 
     return (
       <>
@@ -122,10 +126,32 @@ export function WorkspaceMembersPage(): ReactElement {
         </div>
         <div className="flex h-[54px] items-center justify-end">
           <MemberRowActions
+            canCopyInviteLink={Boolean(inviteToken)}
             canDisable={canDisable}
             canRestore={canRestore}
+            isInvited={isInvited}
             memberId={member.id}
             memberName={member.name}
+            onCancelInvite={(id) => {
+              void removeMutation
+                .mutateAsync(id)
+                .then(() => toast.success(t("inviteCancelled")))
+                .catch((error) =>
+                  toast.error(
+                    error instanceof WebApiError ? error.userMessage : t("couldNotCancelInvite"),
+                  ),
+                );
+            }}
+            onCopyInviteLink={(id) => {
+              if (!inviteToken) {
+                toast.error(t("couldNotCopyInviteLink"));
+                return;
+              }
+              void copyInviteLink(inviteToken)
+                .then(() => toast.success(t("inviteLinkCopied")))
+                .catch(() => toast.error(t("couldNotCopyInviteLink")));
+              void id;
+            }}
             onDisable={(id) => {
               void disableMutation
                 .mutateAsync(id)
@@ -144,6 +170,14 @@ export function WorkspaceMembersPage(): ReactElement {
                   toast.error(
                     error instanceof WebApiError ? error.userMessage : t("couldNotRemoveMember"),
                   ),
+                );
+            }}
+            onResendInvite={(id) => {
+              void resendInviteMutation
+                .mutateAsync(id)
+                .then(() => toast.success(t("inviteResent")))
+                .catch((error) =>
+                  toast.error(resolveInviteMutationError(error, t, "couldNotResendInvite")),
                 );
             }}
             onRestore={(id) => {
@@ -250,3 +284,39 @@ export function WorkspaceMembersPage(): ReactElement {
 }
 
 export default WorkspaceMembersPage;
+
+async function copyInviteLink(token: string): Promise<void> {
+  const url = `${window.location.origin}/accept-invite?token=${encodeURIComponent(token)}`;
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(url);
+    return;
+  }
+  throw new Error("clipboard_unavailable");
+}
+
+function resolveInviteMutationError(
+  error: unknown,
+  t: (key: string) => string,
+  fallbackKey: "couldNotResendInvite" | "couldNotSendInvitation",
+): string {
+  if (error instanceof WebApiError) {
+    if (error.status === 422 && typeof error.data === "object" && error.data !== null) {
+      const code = (error.data as { error?: unknown }).error;
+      if (code === "smtp_not_configured") {
+        return t("toast:emailSendingNotConfigured");
+      }
+      if (code === "site_url_not_configured") {
+        return t("toast:siteUrlNotConfigured");
+      }
+    }
+    const raw = error.userMessage;
+    if (raw.includes("smtp_not_configured") || raw.includes("SMTP")) {
+      return t("toast:emailSendingNotConfigured");
+    }
+    if (raw.includes("site_url_not_configured") || raw.includes("site URL")) {
+      return t("toast:siteUrlNotConfigured");
+    }
+    if (raw) return raw;
+  }
+  return t(fallbackKey);
+}

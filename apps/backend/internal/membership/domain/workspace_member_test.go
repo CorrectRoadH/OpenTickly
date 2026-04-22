@@ -5,6 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+	"time"
 
 	"github.com/samber/lo"
 )
@@ -191,6 +192,50 @@ func TestNewWorkspaceMemberRejectsNegativeRateCost(t *testing.T) {
 	)
 	if err != ErrNegativeWorkspaceMemberLaborCost {
 		t.Fatalf("expected ErrNegativeWorkspaceMemberLaborCost, got %v", err)
+	}
+}
+
+func TestWorkspaceMemberInviteTokenRequiresInvitedState(t *testing.T) {
+	invited, _ := NewWorkspaceMember(1, "a@example.com", "A", WorkspaceRoleMember, WorkspaceMemberStateInvited, nil, nil)
+	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	if err := invited.SetInviteToken("abc", expiresAt); err != nil {
+		t.Fatalf("expected SetInviteToken to succeed on invited, got %v", err)
+	}
+	if invited.InviteToken == nil || *invited.InviteToken != "abc" {
+		t.Fatalf("expected invite token to be stored, got %#v", invited.InviteToken)
+	}
+	if invited.InviteTokenExpiresAt == nil {
+		t.Fatalf("expected invite token expiry to be stored, got nil")
+	}
+
+	joined, _ := NewWorkspaceMember(2, "b@example.com", "B", WorkspaceRoleMember, WorkspaceMemberStateJoined, nil, nil)
+	if err := joined.SetInviteToken("zzz", expiresAt); err != ErrWorkspaceMemberNotInvited {
+		t.Fatalf("expected SetInviteToken to reject joined state, got %v", err)
+	}
+}
+
+func TestWorkspaceMemberAcceptInviteTransitionsAndClearsToken(t *testing.T) {
+	member, _ := NewWorkspaceMember(1, "a@example.com", "A", WorkspaceRoleMember, WorkspaceMemberStateInvited, nil, nil)
+	if err := member.SetInviteToken("abc", time.Now().Add(7*24*time.Hour)); err != nil {
+		t.Fatalf("set invite token: %v", err)
+	}
+
+	if err := member.AcceptInvite(); err != nil {
+		t.Fatalf("expected AcceptInvite to succeed, got %v", err)
+	}
+	if member.State != WorkspaceMemberStateJoined {
+		t.Fatalf("expected state %s, got %s", WorkspaceMemberStateJoined, member.State)
+	}
+	if member.InviteToken != nil {
+		t.Fatalf("expected invite token cleared, got %#v", member.InviteToken)
+	}
+	if member.InviteTokenExpiresAt != nil {
+		t.Fatalf("expected invite token expiry cleared, got %#v", member.InviteTokenExpiresAt)
+	}
+
+	// AcceptInvite again on joined state should return ErrWorkspaceMemberNotInvited.
+	if err := member.AcceptInvite(); err != ErrWorkspaceMemberNotInvited {
+		t.Fatalf("expected ErrWorkspaceMemberNotInvited, got %v", err)
 	}
 }
 

@@ -146,9 +146,12 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	}
 
 	emailSender := newEmailSenderFromDB(pool)
+	siteURLReader := &siteURLReaderFromDB{pool: pool}
 	membershipService, err := membershipapplication.NewService(
 		membershipStore,
 		membershipapplication.WithLogger(appLogger),
+		membershipapplication.WithEmailSender(emailSender),
+		membershipapplication.WithSiteURLReader(siteURLReader),
 	)
 	if err != nil {
 		return nil, err
@@ -197,7 +200,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		),
 		cache,
 	)
-	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, &siteURLReaderFromDB{pool: pool})
+	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, siteURLReader)
 
 	return &routeHandlers{
 		pool:            pool,

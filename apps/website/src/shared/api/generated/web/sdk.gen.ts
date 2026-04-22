@@ -4,6 +4,10 @@
 import { client } from "./client.gen.js";
 import type { Client, Options as Options2, TDataShape } from "./client/index.js";
 import type {
+  AcceptWorkspaceInviteData,
+  AcceptWorkspaceInviteResponses,
+  AcceptWorkspaceInviteSignupData,
+  AcceptWorkspaceInviteSignupResponses,
   CompleteOnboardingData,
   CompleteOnboardingResponses,
   DeleteOrganizationData,
@@ -16,6 +20,8 @@ import type {
   GetWebSessionResponses,
   GetWorkspaceCapabilitiesData,
   GetWorkspaceCapabilitiesResponses,
+  GetWorkspaceInviteData,
+  GetWorkspaceInviteResponses,
   GetWorkspacePermissionsData,
   GetWorkspacePermissionsResponses,
   GetWorkspaceQuotaData,
@@ -34,6 +40,8 @@ import type {
   RegisterWebUserResponses,
   RemoveWorkspaceMemberData,
   RemoveWorkspaceMemberResponses,
+  ResendWorkspaceInviteData,
+  ResendWorkspaceInviteResponses,
   ResetOnboardingData,
   ResetOnboardingResponses,
   RestoreWorkspaceMemberData,
@@ -304,6 +312,54 @@ export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).post<InviteWorkspaceMemberResponses, unknown, ThrowOnError>({
     url: "/web/v1/workspaces/{workspace_id}/members/invitations",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Resend a workspace member invitation
+ */
+export const resendWorkspaceInvite = <ThrowOnError extends boolean = false>(
+  options: Options<ResendWorkspaceInviteData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<ResendWorkspaceInviteResponses, unknown, ThrowOnError>({
+    url: "/web/v1/workspaces/{workspace_id}/members/{member_id}/resend-invite",
+    ...options,
+  });
+
+/**
+ * Look up a workspace invite by token
+ */
+export const getWorkspaceInvite = <ThrowOnError extends boolean = false>(
+  options: Options<GetWorkspaceInviteData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<GetWorkspaceInviteResponses, unknown, ThrowOnError>({
+    url: "/web/v1/invites/{token}",
+    ...options,
+  });
+
+/**
+ * Accept a workspace invite with the current session
+ */
+export const acceptWorkspaceInvite = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptWorkspaceInviteData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<AcceptWorkspaceInviteResponses, unknown, ThrowOnError>({
+    url: "/web/v1/invites/{token}/accept",
+    ...options,
+  });
+
+/**
+ * Create an account and accept the workspace invite
+ */
+export const acceptWorkspaceInviteSignup = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptWorkspaceInviteSignupData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<AcceptWorkspaceInviteSignupResponses, unknown, ThrowOnError>({
+    url: "/web/v1/invites/{token}/signup",
     ...options,
     headers: {
       "Content-Type": "application/json",

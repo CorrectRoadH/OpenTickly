@@ -196,18 +196,17 @@ func (s *Store) CountUsers(ctx context.Context) (int, error) {
 
 func (s *Store) GetConfig(ctx context.Context) (application.InstanceConfigView, error) {
 	var cfg application.InstanceConfigView
-	var smtpUsername string
 	err := s.pool.QueryRow(ctx,
-		`SELECT site_url, sender_email, sender_name, smtp_host, smtp_port, smtp_username, email_verification_required, updated_at
+		`SELECT site_url, sender_email, sender_name, smtp_host, smtp_port, smtp_username, smtp_password, email_verification_required, updated_at
 		 FROM instance_admin_config WHERE id = 1`,
-	).Scan(&cfg.SiteURL, &cfg.SenderEmail, &cfg.SenderName, &cfg.SMTPHost, &cfg.SMTPPort, &smtpUsername, &cfg.EmailVerificationRequired, &cfg.UpdatedAt)
+	).Scan(&cfg.SiteURL, &cfg.SenderEmail, &cfg.SenderName, &cfg.SMTPHost, &cfg.SMTPPort, &cfg.SMTPUsername, &cfg.SMTPPassword, &cfg.EmailVerificationRequired, &cfg.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return application.InstanceConfigView{SenderName: "OpenToggl"}, nil
 	}
 	if err != nil {
 		return application.InstanceConfigView{}, fmt.Errorf("instance-admin get config: %w", err)
 	}
-	cfg.SMTPConfigured = cfg.SMTPHost != "" && smtpUsername != ""
+	cfg.SMTPConfigured = cfg.SMTPHost != "" && cfg.SMTPUsername != ""
 	return cfg, nil
 }
 
@@ -257,12 +256,50 @@ func (s *Store) UpdateConfig(ctx context.Context, update application.InstanceCon
 		}
 	}
 	if update.EmailVerificationRequired != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET email_verification_required = $1, updated_at = now() WHERE id = 1`, *update.EmailVerificationRequired); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update email_verification_required: %w", err)
+		if err := s.setEmailVerificationRequired(ctx, *update.EmailVerificationRequired); err != nil {
+			return application.InstanceConfigView{}, err
 		}
 	}
 
 	return s.GetConfig(ctx)
+}
+
+// setEmailVerificationRequired flips the verification toggle. Turning it OFF
+// also activates every user currently stuck in pending_verification — without
+// that same-transaction cleanup, admins would toggle the flag off but the
+// affected users remain unable to log in (the guard is checked at login time,
+// not registration time). deactivated/deleted users are intentionally left
+// alone: their lockout is not a verification concern.
+func (s *Store) setEmailVerificationRequired(ctx context.Context, required bool) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("instance-admin begin tx for email_verification_required: %w", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	if _, err := tx.Exec(ctx, `UPDATE instance_admin_config SET email_verification_required = $1, updated_at = now() WHERE id = 1`, required); err != nil {
+		return fmt.Errorf("instance-admin update email_verification_required: %w", err)
+	}
+
+	if !required {
+		if _, err := tx.Exec(ctx, `UPDATE identity_users SET state = 'active', updated_at = now() WHERE state = 'pending_verification'`); err != nil {
+			return fmt.Errorf("instance-admin activate pending verification users: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM identity_email_verification_tokens`); err != nil {
+			return fmt.Errorf("instance-admin clear pending verification tokens: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("instance-admin commit email_verification_required: %w", err)
+	}
+	committed = true
+	return nil
 }
 
 // --- OrganizationLister ---

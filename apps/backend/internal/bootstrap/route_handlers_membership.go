@@ -70,10 +70,31 @@ func (handlers *routeHandlers) inviteWorkspaceMember(ctx echo.Context) error {
 		role := membershipdomain.WorkspaceRole(*request.Role)
 		command.Role = &role
 	}
-	if _, err := handlers.membershipApp.InviteWorkspaceMember(ctx.Request().Context(), command); err != nil {
+	member, err := handlers.membershipApp.InviteWorkspaceMember(ctx.Request().Context(), command)
+	if err != nil {
 		return writeMembershipError(err)
 	}
-	return ctx.JSON(http.StatusCreated, struct{}{})
+	return ctx.JSON(http.StatusCreated, membershipBody(member))
+}
+
+func (handlers *routeHandlers) resendWorkspaceInvite(ctx echo.Context) error {
+	if response, ok := handlers.authorizeSession(ctx); !ok {
+		return response
+	}
+	workspaceID, memberID, user, err := handlers.workspaceMemberMutationContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	member, err := handlers.membershipApp.ResendWorkspaceInvite(ctx.Request().Context(), membershipapplication.ResendWorkspaceInviteCommand{
+		WorkspaceID: workspaceID,
+		MemberID:    memberID,
+		RequestedBy: user.ID,
+	})
+	if err != nil {
+		return writeMembershipError(err)
+	}
+	return ctx.JSON(http.StatusOK, membershipBody(member))
 }
 
 func (handlers *routeHandlers) disableWorkspaceMember(ctx echo.Context) error {
@@ -175,14 +196,16 @@ func membershipBodies(members []membershipapplication.WorkspaceMemberView) []web
 
 func membershipBody(member membershipapplication.WorkspaceMemberView) webapi.WorkspaceMember {
 	body := webapi.WorkspaceMember{
-		Email:       member.Email,
-		HourlyRate:  float32PointerFromFloat64(member.HourlyRate),
-		Id:          int(member.ID),
-		LaborCost:   float32PointerFromFloat64(member.LaborCost),
-		Name:        member.FullName,
-		Role:        string(member.Role),
-		Status:      string(member.State),
-		WorkspaceId: int(member.WorkspaceID),
+		Email:                member.Email,
+		HourlyRate:           float32PointerFromFloat64(member.HourlyRate),
+		Id:                   int(member.ID),
+		InviteToken:          member.InviteToken,
+		InviteTokenExpiresAt: member.InviteTokenExpiresAt,
+		LaborCost:            float32PointerFromFloat64(member.LaborCost),
+		Name:                 member.FullName,
+		Role:                 string(member.Role),
+		Status:               string(member.State),
+		WorkspaceId:          int(member.WorkspaceID),
 	}
 	if member.UserID != nil {
 		uid := int(*member.UserID)
@@ -199,12 +222,35 @@ func float32PointerFromFloat64(value *float64) *float32 {
 	return &converted
 }
 
+// invitePreconditionBody is the canonical shape used when invite creation or
+// resend cannot proceed due to missing instance configuration (SMTP, site URL).
+type invitePreconditionBody struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
 func writeMembershipError(err error) error {
 	switch {
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
 		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+	case errors.Is(err, membershipapplication.ErrSMTPNotConfigured):
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, invitePreconditionBody{
+			Error:   "smtp_not_configured",
+			Message: "Configure SMTP under instance admin settings before inviting members.",
+		}).SetInternal(err)
+	case errors.Is(err, membershipapplication.ErrSiteURLNotConfigured):
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, invitePreconditionBody{
+			Error:   "site_url_not_configured",
+			Message: "Set the site URL under instance admin settings before inviting members — invites carry a link recipients must be able to open.",
+		}).SetInternal(err)
+	case errors.Is(err, membershipapplication.ErrInviteTokenInvalid):
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+	case errors.Is(err, membershipapplication.ErrInviteTokenExpired),
+		errors.Is(err, membershipapplication.ErrInviteTokenAlreadyConsumed),
+		errors.Is(err, membershipapplication.ErrInviteEmailMismatch):
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberExists),
 		errors.Is(err, membershipapplication.ErrWorkspaceMemberEmailBlank),
 		errors.Is(err, membershipdomain.ErrInvalidWorkspaceRole),

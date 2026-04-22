@@ -103,6 +103,10 @@ type RegisterInput struct {
 	FullName string
 	Password string
 	Timezone string
+	// EmailAlreadyVerified skips the email-verification flow entirely — the
+	// caller has already proven ownership of the email (e.g. by presenting a
+	// valid workspace invite token that was delivered to that address).
+	EmailAlreadyVerified bool
 }
 
 type Session struct {
@@ -239,6 +243,9 @@ func (service *Service) Register(ctx context.Context, input RegisterInput) (Regi
 	}
 
 	needsVerification := service.emailVerifier != nil && service.emailVerifier.IsVerificationRequired(ctx)
+	if input.EmailAlreadyVerified {
+		needsVerification = false
+	}
 
 	userID, err := service.ids.NextUserID()
 	if err != nil {

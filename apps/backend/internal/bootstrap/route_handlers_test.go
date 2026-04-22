@@ -748,6 +748,9 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 		t.Fatalf("expected joined admin membership, got %#v", membersBody.Members[0])
 	}
 
+	// Invite requires a working SMTP sender. Without one configured this
+	// endpoint must hard-fail with HTTP 422 and the structured error shape,
+	// instead of quietly creating a row the recipient can never reach.
 	invite := performJSONRequest(
 		t,
 		app,
@@ -759,8 +762,22 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 		},
 		ownerCookie,
 	)
-	if invite.Code != http.StatusCreated {
-		t.Fatalf("expected invite status 201, got %d body=%s", invite.Code, invite.Body.String())
+	if invite.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected invite status 422 without SMTP, got %d body=%s", invite.Code, invite.Body.String())
+	}
+
+	// The rest of the lifecycle assertions operate on a seeded invited
+	// member row so they don't depend on live SMTP.
+	if _, err := database.Pool.Exec(
+		context.Background(),
+		`insert into membership_workspace_members (workspace_id, email, full_name, role, state, created_by)
+		 values ($1, $2, $3, 'admin', 'invited', $4)`,
+		workspaceID,
+		invitedEmail,
+		"Invited Member",
+		ownerBody.User.ID,
+	); err != nil {
+		t.Fatalf("seed invited member row: %v", err)
 	}
 
 	var invitedState string

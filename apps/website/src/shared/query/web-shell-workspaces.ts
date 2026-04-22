@@ -13,16 +13,21 @@ import {
   getWorkspaceTopActivity,
 } from "../api/public/track/index.ts";
 import {
+  acceptWorkspaceInvite,
+  acceptWorkspaceInviteSignup,
   disableWorkspaceMember,
+  getWorkspaceInvite,
   getWorkspacePermissions,
   getWorkspaceSettings,
   inviteWorkspaceMember,
   listWorkspaceMembers,
   removeWorkspaceMember,
+  resendWorkspaceInvite,
   restoreWorkspaceMember,
   updateWorkspacePermissions,
   updateWorkspaceSettings,
 } from "../api/web/index.ts";
+import type { WorkspaceInviteSignupRequest } from "../api/generated/web/types.gen.ts";
 
 import {
   sessionQueryKey,
@@ -213,6 +218,66 @@ export function useRemoveWorkspaceMemberMutation(workspaceId: number) {
         queryKey: ["workspace-members", workspaceId],
       });
     },
+  });
+}
+
+export function useResendWorkspaceInviteMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: number) =>
+      unwrapWebApiResult(
+        resendWorkspaceInvite({
+          path: {
+            member_id: memberId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["workspace-members", workspaceId],
+      });
+    },
+  });
+}
+
+export function useWorkspaceInviteQuery(token: string | undefined) {
+  return useQuery({
+    enabled: Boolean(token),
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceInvite({
+          path: {
+            token: token ?? "",
+          },
+        }),
+      ),
+    queryKey: ["workspace-invite", token ?? ""],
+    retry: false,
+  });
+}
+
+export function useAcceptWorkspaceInviteMutation() {
+  return useMutation({
+    mutationFn: (token: string) =>
+      unwrapWebApiResult(
+        acceptWorkspaceInvite({
+          path: { token },
+        }),
+      ),
+  });
+}
+
+export function useAcceptWorkspaceInviteSignupMutation() {
+  return useMutation({
+    mutationFn: (params: { token: string; body: WorkspaceInviteSignupRequest }) =>
+      unwrapWebApiResult(
+        acceptWorkspaceInviteSignup({
+          body: params.body,
+          path: { token: params.token },
+        }),
+      ),
   });
 }
 

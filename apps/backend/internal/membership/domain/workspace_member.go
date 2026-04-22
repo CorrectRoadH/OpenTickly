@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/xptr"
 )
@@ -51,6 +52,9 @@ var (
 	ErrWorkspaceMemberNotDisabled            = errors.New("workspace member not disabled")
 	ErrWorkspaceMemberRemoved                = errors.New("workspace member already removed")
 	ErrWorkspaceMemberAlreadyRemoved         = errors.New("workspace member already removed")
+	ErrWorkspaceMemberInviteTokenExpired     = errors.New("workspace member invite token expired")
+	ErrWorkspaceMemberInviteTokenInvalid     = errors.New("workspace member invite token invalid")
+	ErrWorkspaceMemberEmailMismatch          = errors.New("workspace member email does not match invite")
 )
 
 type WorkspaceMemberLifecycleFact struct {
@@ -58,14 +62,16 @@ type WorkspaceMemberLifecycleFact struct {
 }
 
 type WorkspaceMember struct {
-	ID         int64
-	Email      string
-	FullName   string
-	Role       WorkspaceRole
-	State      WorkspaceMemberState
-	HourlyRate *float64
-	LaborCost  *float64
-	facts      []WorkspaceMemberLifecycleFact
+	ID                    int64
+	Email                 string
+	FullName              string
+	Role                  WorkspaceRole
+	State                 WorkspaceMemberState
+	HourlyRate            *float64
+	LaborCost             *float64
+	InviteToken           *string
+	InviteTokenExpiresAt  *time.Time
+	facts                 []WorkspaceMemberLifecycleFact
 }
 
 /*
@@ -130,6 +136,37 @@ func (m *WorkspaceMember) Join() error {
 
 	m.State = WorkspaceMemberStateJoined
 	m.recordLifecycleFact(m.State)
+	return nil
+}
+
+/*
+SetInviteToken stores a plaintext invite token and its expiry on an invited
+workspace member. The operation is only valid while the member is still in the
+invited state; other states either already represent an accepted membership or
+a revoked lifecycle and must not receive a new token.
+*/
+func (m *WorkspaceMember) SetInviteToken(token string, expiresAt time.Time) error {
+	if m.State != WorkspaceMemberStateInvited {
+		return ErrWorkspaceMemberNotInvited
+	}
+	tokenCopy := token
+	expiryCopy := expiresAt
+	m.InviteToken = &tokenCopy
+	m.InviteTokenExpiresAt = &expiryCopy
+	return nil
+}
+
+/*
+AcceptInvite transitions an invited member into joined state and clears the
+invite token material so it can no longer be used. Callers are responsible for
+persisting the user_id on the membership row alongside this transition.
+*/
+func (m *WorkspaceMember) AcceptInvite() error {
+	if err := m.Join(); err != nil {
+		return err
+	}
+	m.InviteToken = nil
+	m.InviteTokenExpiresAt = nil
 	return nil
 }
 
@@ -230,6 +267,11 @@ func (m *WorkspaceMember) Clone() *WorkspaceMember {
 	copyMember := *m
 	copyMember.HourlyRate = xptr.Clone(m.HourlyRate)
 	copyMember.LaborCost = xptr.Clone(m.LaborCost)
+	copyMember.InviteToken = xptr.Clone(m.InviteToken)
+	if m.InviteTokenExpiresAt != nil {
+		expiry := *m.InviteTokenExpiresAt
+		copyMember.InviteTokenExpiresAt = &expiry
+	}
 	copyMember.facts = append([]WorkspaceMemberLifecycleFact(nil), m.facts...)
 	return &copyMember
 }

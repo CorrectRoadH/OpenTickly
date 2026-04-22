@@ -102,9 +102,35 @@ export function InviteMemberDialog({ onClose }: InviteMemberDialogProps): ReactE
 }
 
 function resolveInviteErrorMessage(error: unknown, t: (key: string) => string): string {
-  const raw = error instanceof WebApiError ? error.userMessage : t("couldNotSendInvitation");
-  if (raw.includes("SMTP") || raw.includes("email sending")) {
-    return t("toast:emailSendingNotConfigured");
+  if (error instanceof WebApiError) {
+    const code = invitePreconditionCode(error);
+    if (code === "smtp_not_configured") {
+      return t("toast:emailSendingNotConfigured");
+    }
+    if (code === "site_url_not_configured") {
+      return t("toast:siteUrlNotConfigured");
+    }
+    return error.userMessage || t("couldNotSendInvitation");
   }
-  return raw;
+  return t("couldNotSendInvitation");
+}
+
+function invitePreconditionCode(error: WebApiError): string | null {
+  if (error.status === 422) {
+    const data = error.data;
+    if (typeof data === "object" && data !== null && "error" in data) {
+      const code = (data as { error?: unknown }).error;
+      if (typeof code === "string") {
+        return code;
+      }
+    }
+  }
+  const message = error.userMessage ?? "";
+  if (message.includes("smtp_not_configured") || message.includes("SMTP")) {
+    return "smtp_not_configured";
+  }
+  if (message.includes("site_url_not_configured") || message.includes("site URL")) {
+    return "site_url_not_configured";
+  }
+  return null;
 }

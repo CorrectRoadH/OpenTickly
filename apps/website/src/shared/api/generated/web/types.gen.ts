@@ -238,6 +238,44 @@ export type WorkspaceMember = {
   status: string;
   hourly_rate: number;
   labor_cost: number;
+  /**
+   * Plaintext invite token for members still in the invited state. Null once the invite is accepted or revoked.
+   */
+  invite_token?: string;
+  /**
+   * Expiry timestamp for the active invite token, if any.
+   */
+  invite_token_expires_at?: string;
+};
+
+export type WorkspaceInviteInfo = {
+  workspace_id: number;
+  workspace_name: string;
+  organization_id: number;
+  organization_name: string;
+  email: string;
+  inviter_name: string;
+  expires_at?: string;
+  /**
+   * One of pending | expired | consumed
+   */
+  status: string;
+};
+
+export type AcceptedWorkspaceInvite = {
+  workspace_id: number;
+  workspace_name: string;
+  organization_id: number;
+  organization_name: string;
+};
+
+export type WorkspaceInviteSignupRequest = {
+  fullname: string;
+  password: string;
+  /**
+   * IANA timezone name detected from the client's browser.
+   */
+  timezone?: string;
 };
 
 export type WorkspaceMemberInvitationRequest = {
@@ -693,13 +731,88 @@ export type InviteWorkspaceMemberResponses = {
   /**
    * Workspace member invitation accepted
    */
-  201: {
-    [key: string]: unknown;
-  };
+  201: WorkspaceMember;
 };
 
 export type InviteWorkspaceMemberResponse =
   InviteWorkspaceMemberResponses[keyof InviteWorkspaceMemberResponses];
+
+export type ResendWorkspaceInviteData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+    member_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/members/{member_id}/resend-invite";
+};
+
+export type ResendWorkspaceInviteResponses = {
+  /**
+   * Refreshed workspace member invitation
+   */
+  200: WorkspaceMember;
+};
+
+export type ResendWorkspaceInviteResponse =
+  ResendWorkspaceInviteResponses[keyof ResendWorkspaceInviteResponses];
+
+export type GetWorkspaceInviteData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: "/web/v1/invites/{token}";
+};
+
+export type GetWorkspaceInviteResponses = {
+  /**
+   * Workspace invite summary
+   */
+  200: WorkspaceInviteInfo;
+};
+
+export type GetWorkspaceInviteResponse =
+  GetWorkspaceInviteResponses[keyof GetWorkspaceInviteResponses];
+
+export type AcceptWorkspaceInviteData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: "/web/v1/invites/{token}/accept";
+};
+
+export type AcceptWorkspaceInviteResponses = {
+  /**
+   * Invite accepted
+   */
+  200: AcceptedWorkspaceInvite;
+};
+
+export type AcceptWorkspaceInviteResponse =
+  AcceptWorkspaceInviteResponses[keyof AcceptWorkspaceInviteResponses];
+
+export type AcceptWorkspaceInviteSignupData = {
+  body: WorkspaceInviteSignupRequest;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: "/web/v1/invites/{token}/signup";
+};
+
+export type AcceptWorkspaceInviteSignupResponses = {
+  /**
+   * Registered session bootstrap after accepting the invite
+   */
+  200: SessionBootstrap;
+};
+
+export type AcceptWorkspaceInviteSignupResponse =
+  AcceptWorkspaceInviteSignupResponses[keyof AcceptWorkspaceInviteSignupResponses];
 
 export type SearchWorkspaceTimeEntriesData = {
   body?: never;

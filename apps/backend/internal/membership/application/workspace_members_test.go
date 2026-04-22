@@ -65,7 +65,12 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 		t.Fatalf("create organization: %v", err)
 	}
 
-	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(log.NopLogger()))
+	service, err := membershipapplication.NewService(
+		membershippostgres.NewStore(database.Pool),
+		membershipapplication.WithLogger(log.NopLogger()),
+		membershipapplication.WithEmailSender(newFakeEmailSender()),
+		membershipapplication.WithSiteURLReader(&fakeSiteURLReader{url: "https://example.test"}),
+	)
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}
@@ -257,14 +262,12 @@ func TestServiceListMembersWithLegacyOwnerRole(t *testing.T) {
 	}
 }
 
-// TestInviteWorkspaceMemberSucceedsWithoutSMTP captures the inversion
-// of the previous "reject when SMTP missing" guard. The old behavior
-// blocked every workspace invite on self-hosted / offline instances
-// where SMTP was not configured — but the invite record itself can be
-// created independently of email delivery, and admins can hand out
-// the invitation link out-of-band. Creating the membership row is
-// now the source of truth; any email delivery is best-effort on top.
-func TestInviteWorkspaceMemberSucceedsWithoutSMTP(t *testing.T) {
+// TestInviteWorkspaceMemberRejectedWithoutSMTP verifies that the invite
+// creation flow fails fast when no SMTP sender is wired up. Workspace
+// invites are only useful if the recipient actually receives the invite
+// email — silently creating an invite row without delivery would leave
+// the invitee with no way to accept.
+func TestInviteWorkspaceMemberRejectedWithoutSMTP(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
@@ -327,16 +330,12 @@ func TestInviteWorkspaceMemberSucceedsWithoutSMTP(t *testing.T) {
 		t.Fatalf("ensure owner: %v", err)
 	}
 
-	view, err := service.InviteWorkspaceMember(ctx, membershipapplication.InviteWorkspaceMemberCommand{
+	if _, err := service.InviteWorkspaceMember(ctx, membershipapplication.InviteWorkspaceMemberCommand{
 		WorkspaceID: int64(tenantResult.WorkspaceID),
 		RequestedBy: ownerID,
 		Email:       inviteeEmail,
-	})
-	if err != nil {
-		t.Fatalf("invite without SMTP must succeed, got %v", err)
-	}
-	if view.Email != inviteeEmail {
-		t.Fatalf("expected invite email %q, got %q", inviteeEmail, view.Email)
+	}); err != membershipapplication.ErrSMTPNotConfigured {
+		t.Fatalf("expected ErrSMTPNotConfigured, got %v", err)
 	}
 }
 
