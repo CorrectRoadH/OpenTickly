@@ -283,15 +283,13 @@ export function CalendarView({
           const nextStart = new Date(start);
           const nextEnd = new Date(end);
           const minutesDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+          // A drop is a MOVE: onMoveEntry already shifts both start and
+          // stop in a single PUT. Do NOT additionally fire onResizeEntry
+          // here — that would issue a second concurrent PUT computed from
+          // the stale pre-move snapshot, and last-write-wins would reset
+          // `start` back to the original.
           if (minutesDelta !== 0) {
             void onMoveEntry?.(event.id, minutesDelta);
-          }
-          if (event.entry.stop && nextEnd.getTime() !== event.end.getTime()) {
-            void onResizeEntry?.(
-              event.id,
-              "end",
-              Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000),
-            );
           }
           (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult = {
             eventId: event.id,

@@ -3,6 +3,25 @@ import { resolveEntryColor, sumForDate } from "./overview-data.ts";
 import type { CalendarEvent } from "./calendar-types.ts";
 import { isRunningTimeEntry, splitAtMidnight } from "./calendar-types.ts";
 
+/**
+ * react-big-calendar's dragAndDrop addon classifies any event whose start
+ * and stop fall in the SAME MINUTE as "zero duration" and silently adds a
+ * full day to the end before computing drag previews
+ * (node_modules/.../dragAndDrop/common.js:58-60). That logic is meant for
+ * all-day midnight events, but it misfires on legitimate sub-minute time
+ * entries (e.g. 15:59:00 → 15:59:30), so we snap the display-only `end`
+ * past the next minute boundary to stay clear of the trigger. The
+ * persisted `entry.stop` is untouched; this only affects the Date we hand
+ * to r-b-c for layout.
+ */
+const MINUTE_MS = 60_000;
+function displayEndForCalendar(start: Date, end: Date): Date {
+  const startMinute = Math.floor(start.getTime() / MINUTE_MS);
+  const endMinute = Math.floor(end.getTime() / MINUTE_MS);
+  if (startMinute !== endMinute) return end;
+  return new Date((startMinute + 1) * MINUTE_MS);
+}
+
 export function buildEvents(
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
   draftEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined,
@@ -20,7 +39,7 @@ export function buildEvents(
     )
     .flatMap((entry) => {
       const start = new Date(entry.start ?? entry.at ?? Date.now());
-      const end = new Date(entry.stop!);
+      const end = displayEndForCalendar(start, new Date(entry.stop!));
       const resource = {
         color: resolveEntryColor(entry),
         isDraft: false,
