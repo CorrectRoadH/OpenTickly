@@ -57,6 +57,8 @@
   "smtpPort": "SMTP 端口",
   "smtpUsername": "SMTP 用户名",
   "smtpPassword": "SMTP 密码",
+  "showSecret": "显示密码",
+  "hideSecret": "隐藏密码",
   "saveEmailSettings": "保存邮件设置",
   "sendTestEmail": "发送测试邮件",
   "sending": "发送中...",

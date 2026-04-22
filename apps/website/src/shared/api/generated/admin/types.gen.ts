@@ -87,6 +87,8 @@ export type InstanceConfig = {
   sender_name: string;
   smtp_host?: string;
   smtp_port?: number;
+  smtp_username?: string;
+  smtp_password?: string;
   smtp_configured: boolean;
   email_verification_required: boolean;
   registration_mode: "open" | "closed" | "invite_only";

@@ -1,6 +1,3 @@
-
-❯ 能不能不给email，用github的漏洞上报机制
-
 # Security Policy
 
 ## Supported Versions

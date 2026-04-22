@@ -27,7 +27,18 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const text = await response.text();
-    throw new AdminApiError(text || response.statusText, response.status);
+    // Prefer `message` from a JSON error body (e.g. SMTP failure reason)
+    // so the UI can show the real cause instead of a raw response dump.
+    let message = text || response.statusText;
+    try {
+      const parsed = JSON.parse(text) as { message?: unknown };
+      if (typeof parsed.message === "string" && parsed.message.length > 0) {
+        message = parsed.message;
+      }
+    } catch {
+      // body wasn't JSON — keep the raw text
+    }
+    throw new AdminApiError(message, response.status);
   }
   return response.json() as Promise<T>;
 }

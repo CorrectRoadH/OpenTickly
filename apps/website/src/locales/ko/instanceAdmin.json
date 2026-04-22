@@ -57,6 +57,8 @@
   "smtpPort": "SMTP 포트",
   "smtpUsername": "SMTP 사용자 이름",
   "smtpPassword": "SMTP 비밀번호",
+  "showSecret": "비밀 표시",
+  "hideSecret": "비밀 숨기기",
   "saveEmailSettings": "이메일 설정 저장",
   "sendTestEmail": "테스트 이메일 보내기",
   "sending": "발송 중...",

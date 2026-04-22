@@ -1,4 +1,5 @@
 import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
+import { Eye, EyeOff } from "lucide-react";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -109,6 +110,10 @@ export function AdminConfigTab(): ReactElement {
         configured={config.smtp_configured}
         senderEmail={config.sender_email}
         senderName={config.sender_name}
+        smtpHost={config.smtp_host ?? ""}
+        smtpPassword={config.smtp_password ?? ""}
+        smtpPort={config.smtp_port ?? 587}
+        smtpUsername={config.smtp_username ?? ""}
         onSave={(values) => {
           updateMutation.mutate(values, {
             onSuccess: () => toast.success(t("toast:emailSettingsUpdated")),
@@ -279,22 +284,30 @@ function SmtpSection({
   configured,
   senderEmail,
   senderName,
+  smtpHost,
+  smtpPassword,
+  smtpPort,
+  smtpUsername,
   onSave,
   saving,
 }: {
   configured: boolean;
   senderEmail: string;
   senderName: string;
+  smtpHost: string;
+  smtpPassword: string;
+  smtpPort: number;
+  smtpUsername: string;
   onSave: (values: Record<string, unknown>) => void;
   saving: boolean;
 }): ReactElement {
   const { t } = useTranslation();
   const [email, setEmail] = useState(senderEmail);
   const [name, setName] = useState(senderName);
-  const [host, setHost] = useState("");
-  const [port, setPort] = useState("587");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [host, setHost] = useState(smtpHost);
+  const [port, setPort] = useState(String(smtpPort));
+  const [username, setUsername] = useState(smtpUsername);
+  const [password, setPassword] = useState(smtpPassword);
   const [testTo, setTestTo] = useState("");
   const testMutation = useSendTestEmailMutation();
 
@@ -333,10 +346,9 @@ function SmtpSection({
             onChange={setUsername}
             value={username}
           />
-          <ConfigField
+          <SecretField
             label={t("instanceAdmin:smtpPassword")}
             onChange={setPassword}
-            type="password"
             value={password}
           />
         </div>
@@ -348,14 +360,10 @@ function SmtpSection({
               onSave({
                 sender_name: name,
                 sender_email: email,
-                ...(host
-                  ? {
-                      smtp_host: host,
-                      smtp_port: parseInt(port, 10),
-                      smtp_username: username,
-                      smtp_password: password,
-                    }
-                  : {}),
+                smtp_host: host,
+                smtp_port: parseInt(port, 10),
+                smtp_username: username,
+                smtp_password: password,
               })
             }
             type="button"
@@ -389,12 +397,15 @@ function SmtpSection({
                         toast.error(result.message);
                       }
                     },
-                    onError: (err) =>
-                      toast.error(
-                        err instanceof WebApiError
-                          ? err.userMessage
-                          : t("toast:failedToSendTestEmail"),
-                      ),
+                    onError: (err) => {
+                      const fallback = t("toast:failedToSendTestEmail");
+                      if (err instanceof WebApiError) {
+                        toast.error(err.userMessage);
+                        return;
+                      }
+                      const detail = err instanceof Error ? err.message : "";
+                      toast.error(detail ? `${fallback}: ${detail}` : fallback);
+                    },
                   });
                 }}
                 type="button"
@@ -432,6 +443,44 @@ function ConfigField({
         type={type}
         value={value}
       />
+    </label>
+  );
+}
+
+function SecretField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}): ReactElement {
+  const [visible, setVisible] = useState(false);
+  const { t } = useTranslation();
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[12px] font-medium text-[var(--track-text-muted)]">{label}</span>
+      <div className="relative">
+        <input
+          className="w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 pr-10 text-[14px] text-[var(--track-text)] placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          type={visible ? "text" : "password"}
+          value={value}
+        />
+        <button
+          aria-label={visible ? t("instanceAdmin:hideSecret") : t("instanceAdmin:showSecret")}
+          className="absolute top-1/2 right-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-[6px] text-[var(--track-text-muted)] hover:bg-[var(--track-surface-hover)] hover:text-[var(--track-text)]"
+          onClick={() => setVisible((v) => !v)}
+          tabIndex={-1}
+          type="button"
+        >
+          {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
     </label>
   );
 }

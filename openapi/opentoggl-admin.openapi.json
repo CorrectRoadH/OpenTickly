@@ -624,6 +624,12 @@
           "smtp_port": {
             "type": "integer"
           },
+          "smtp_username": {
+            "type": "string"
+          },
+          "smtp_password": {
+            "type": "string"
+          },
           "smtp_configured": {
             "type": "boolean"
           },

@@ -57,6 +57,8 @@
   "smtpPort": "SMTPポート",
   "smtpUsername": "SMTPユーザー名",
   "smtpPassword": "SMTPパスワード",
+  "showSecret": "シークレットを表示",
+  "hideSecret": "シークレットを非表示",
   "saveEmailSettings": "メール設定を保存",
   "sendTestEmail": "テストメールを送信",
   "sending": "送信中...",

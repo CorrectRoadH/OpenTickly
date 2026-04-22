@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"time"
@@ -232,8 +233,13 @@ func (h *Handler) SendTestEmail(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil || req.To == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Email address required").SetInternal(err)
 	}
-	if err := h.service.SendTestEmail(ctx.Request().Context(), req.To); err != nil {
-		return ctx.JSON(http.StatusOK, sendTestEmailResponse{
+	// Safety-net deadline on top of the SMTP client's own dial/IO timeouts,
+	// so a stuck handler can never outlive the request.
+	reqCtx, cancel := context.WithTimeout(ctx.Request().Context(), 12*time.Second)
+	defer cancel()
+	if err := h.service.SendTestEmail(reqCtx, req.To); err != nil {
+		ctx.Logger().Errorf("send test email to %s failed: %v", req.To, err)
+		return ctx.JSON(http.StatusBadGateway, sendTestEmailResponse{
 			Success: false,
 			Message: err.Error(),
 		})
@@ -249,7 +255,7 @@ func (h *Handler) GetInstanceFeatureGate(ctx echo.Context, capabilityKey string)
 }
 
 func instanceConfigResponse(cfg application.InstanceConfigView) adminapi.InstanceConfig {
-	return adminapi.InstanceConfig{
+	resp := adminapi.InstanceConfig{
 		SiteUrl:                   cfg.SiteURL,
 		SenderEmail:               cfg.SenderEmail,
 		SenderName:                cfg.SenderName,
@@ -258,6 +264,25 @@ func instanceConfigResponse(cfg application.InstanceConfigView) adminapi.Instanc
 		RegistrationMode:          adminapi.InstanceConfigRegistrationMode(cfg.RegistrationMode),
 		UpdatedAt:                 cfg.UpdatedAt,
 	}
+	// Echo saved SMTP connection settings back so the admin UI can re-render
+	// them after refresh. The endpoint is already gated to instance admins.
+	if cfg.SMTPHost != "" {
+		h := cfg.SMTPHost
+		resp.SmtpHost = &h
+	}
+	if cfg.SMTPPort != 0 {
+		p := cfg.SMTPPort
+		resp.SmtpPort = &p
+	}
+	if cfg.SMTPUsername != "" {
+		u := cfg.SMTPUsername
+		resp.SmtpUsername = &u
+	}
+	if cfg.SMTPPassword != "" {
+		p := cfg.SMTPPassword
+		resp.SmtpPassword = &p
+	}
+	return resp
 }
 
 func bootstrapStateResponse(state domain.BootstrapState) adminapi.BootstrapState {

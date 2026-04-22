@@ -57,6 +57,8 @@
   "smtpPort": "Puerto SMTP",
   "smtpUsername": "Usuario SMTP",
   "smtpPassword": "Contraseña SMTP",
+  "showSecret": "Mostrar secreto",
+  "hideSecret": "Ocultar secreto",
   "saveEmailSettings": "Guardar configuración de correo",
   "sendTestEmail": "Enviar correo de prueba",
   "sending": "Enviando...",

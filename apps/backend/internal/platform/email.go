@@ -2,9 +2,13 @@ package platform
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
+	"net"
 	"net/smtp"
 	"strings"
+	"time"
 )
 
 // EmailConfig holds SMTP connection parameters.
@@ -31,8 +35,23 @@ func (s *EmailSender) IsConfigured() bool {
 	return s.config.Host != "" && s.config.Username != ""
 }
 
-// Send delivers a single email. Returns an error if SMTP is not configured or delivery fails.
-func (s *EmailSender) Send(_ context.Context, to string, subject string, bodyHTML string) error {
+// smtpDialTimeout bounds the TCP handshake with the SMTP server.
+const smtpDialTimeout = 5 * time.Second
+
+// smtpIOTimeout bounds the SMTP conversation once connected
+// (EHLO → STARTTLS → AUTH → MAIL → RCPT → DATA → QUIT).
+const smtpIOTimeout = 5 * time.Second
+
+// Send delivers a single email. Returns an error if SMTP is not configured
+// or delivery fails. Connect and I/O are bounded by timeouts so a dead or
+// firewalled SMTP host fails fast instead of hanging indefinitely.
+//
+// The `net/smtp.SendMail` helper in the stdlib does *not* apply any timeout
+// and ignores context cancellation — which is why a misconfigured host used
+// to freeze the Send-Test-Email request for ~75s per resolved IP. We drive
+// the SMTP conversation manually so we can set both a dial timeout and a
+// per-operation deadline, and so ctx cancellation aborts the dial.
+func (s *EmailSender) Send(ctx context.Context, to string, subject string, bodyHTML string) error {
 	if !s.IsConfigured() {
 		return ErrSMTPNotConfigured
 	}
@@ -45,12 +64,58 @@ func (s *EmailSender) Send(_ context.Context, to string, subject string, bodyHTM
 	msg := buildMIMEMessage(s.config.SenderName, from, to, subject, bodyHTML)
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 
-	var auth smtp.Auth
-	if s.config.Password != "" {
-		auth = smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host)
+	dialer := &net.Dialer{Timeout: smtpDialTimeout}
+	conn, err := dialer.DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return fmt.Errorf("smtp dial %s: %w", addr, err)
+	}
+	// Bound the rest of the conversation. Refreshed after each major step.
+	_ = conn.SetDeadline(time.Now().Add(smtpIOTimeout))
+
+	client, err := smtp.NewClient(conn, s.config.Host)
+	if err != nil {
+		_ = conn.Close()
+		return fmt.Errorf("smtp handshake %s: %w", addr, err)
+	}
+	defer func() {
+		_ = client.Close()
+	}()
+
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		if err := client.StartTLS(&tls.Config{ServerName: s.config.Host}); err != nil {
+			return fmt.Errorf("smtp STARTTLS: %w", err)
+		}
 	}
 
-	return smtp.SendMail(addr, auth, from, []string{to}, []byte(msg))
+	if s.config.Password != "" {
+		auth := smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host)
+		if err := client.Auth(auth); err != nil {
+			return fmt.Errorf("smtp auth: %w", err)
+		}
+	}
+
+	_ = conn.SetDeadline(time.Now().Add(smtpIOTimeout))
+
+	if err := client.Mail(from); err != nil {
+		return fmt.Errorf("smtp MAIL FROM %q: %w", from, err)
+	}
+	if err := client.Rcpt(to); err != nil {
+		return fmt.Errorf("smtp RCPT TO %q: %w", to, err)
+	}
+	w, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("smtp DATA: %w", err)
+	}
+	if _, err := w.Write([]byte(msg)); err != nil {
+		return fmt.Errorf("smtp write body: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("smtp close body: %w", err)
+	}
+	if err := client.Quit(); err != nil && !errors.Is(err, net.ErrClosed) {
+		return fmt.Errorf("smtp QUIT: %w", err)
+	}
+	return nil
 }
 
 // SendTest sends a verification email to confirm SMTP is working.

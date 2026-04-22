@@ -67,6 +67,8 @@ type InstanceConfigView struct {
 	SenderName                string
 	SMTPHost                  string
 	SMTPPort                  int
+	SMTPUsername              string
+	SMTPPassword              string
 	SMTPConfigured            bool
 	EmailVerificationRequired bool
 	RegistrationMode          string
