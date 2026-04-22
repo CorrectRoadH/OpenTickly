@@ -40,17 +40,9 @@ updates:
       npm-production:
         dependency-type: "production"
 
-  - package-ecosystem: "npm"
-    directory: "/apps/landing"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: "vite-plus"
-      - dependency-name: "@voidzero-dev/vite-plus-core"
-      - dependency-name: "@voidzero-dev/vite-plus-test"
-    groups:
-      npm-development:
-        dependency-type: "development"
-      npm-production:
-        dependency-type: "production"
+    # Note: no separate `/apps/landing` entry. The root entry already scans
+    # every pnpm workspace member (including apps/landing, apps/website,
+    # apps/update-worker, packages/*). After apps/landing/pnpm-lock.yaml was
+    # dropped in commit 4ecd6fd4, a `directory: /apps/landing` entry could
+    # only bump apps/landing/package.json without touching the root lockfile,
+    # producing ERR_PNPM_OUTDATED_LOCKFILE on every PR.
