@@ -31,17 +31,13 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm      # 原生 arm64, 仅服务 k3s/opentoggl-saas
     permissions:
       contents: read
       packages: write
 
     steps:
       - uses: actions/checkout@v6
-
-      - uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
 
       - uses: docker/setup-buildx-action@v4
 
@@ -66,7 +62,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.landing
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
