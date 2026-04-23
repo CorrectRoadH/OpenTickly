@@ -395,6 +395,15 @@ export function collapseSimilarEntries(groups: EntryGroup[]): EntryGroup[] {
 
 function buildSimilarityKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
   const desc = (entry.description ?? "").trim().toLowerCase();
+  // Empty description is not a "same entry" signal. Two untitled blocks on
+  // the same project + tag are still two separate tracked intervals, and
+  // merging them into a single collapsed row hides the non-representative
+  // one (its `data-entry-id` never reaches the DOM until the user expands).
+  // Only collapse when the user has explicitly named the entry.
+  if (!desc) {
+    const id = typeof entry.id === "number" ? String(entry.id) : `noid:${entry.start ?? ""}`;
+    return `entry:${id}`;
+  }
   const projectId = resolveTimeEntryProjectId(entry) ?? 0;
   const tagIds = [...(entry.tag_ids ?? [])].sort((a, b) => a - b).join(",");
   return `${desc}|${projectId}|${tagIds}`;

@@ -179,7 +179,17 @@ test.describe("Story: full time entry editing from calendar", () => {
  * right-click menu functionality.
  */
 test.describe("Story: calendar view interactions", () => {
+  // Freeze clock so "now" straddles the seeded 14:00–15:00 entry. Without
+  // this the scroll-to-now contract (indicator centered in viewport) is
+  // clock-dependent: CalendarView now refines its scroll target to keep
+  // any above-"now" entries in view, so when the wall clock drifts far
+  // from the 14:00–15:00 seed the indicator intentionally slides off
+  // center to show the earlier entry. Pinning "now" to 14:30 on today's
+  // date keeps the entry around "now" and preserves the centered-indicator
+  // promise — without hardcoding a calendar date that would rot.
   test.beforeEach(async ({ page }) => {
+    const today = todayISO();
+    await page.clock.install({ time: new Date(`${today}T14:30:00Z`) });
     const email = `cal-interact-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -192,7 +202,6 @@ test.describe("Story: calendar view interactions", () => {
     await page.context().clearCookies();
     const session = await loginE2eUser(page, test.info(), { email, password });
 
-    const today = todayISO();
     await createStoppedTimeEntry(page, {
       description: "Context menu test entry",
       start: `${today}T14:00:00Z`,

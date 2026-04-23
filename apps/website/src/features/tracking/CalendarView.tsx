@@ -124,20 +124,20 @@ export function CalendarView({
 
   // Scroll-to-now on mount. The calendar uses window-level scroll (no
   // internal scrollbar, by design — see calendar.css:89), so we scroll
-  // the window. Land the current-time indicator at the vertical middle
-  // of the viewport — that is the UX contract locked in
+  // the window. Default target lands the current-time indicator at the
+  // vertical middle of the viewport — the UX contract locked in
   // `time-entry-full-edit.spec.ts` ("current time indicator is centered
-  // in the viewport"). The page header uses `position: sticky; top: 0`,
-  // so pinning is independent of how far we scroll: once `scrollY > 0`
-  // the header stays at barTop=0 regardless of target. The earlier
-  // "headerHeight + 40" placement was there to guard against a
-  // non-sticky header layout that no longer exists, and it parked the
-  // indicator in the top third of the screen — visually "not in the
-  // middle".
+  // in the viewport").
   //
-  // If the indicator's absolute position is already above the center
-  // line (very early in the day on a short-but-tall viewport), we
-  // leave `scrollY` alone.
+  // Refinement: if any entry card on the visible range renders ABOVE the
+  // now-centered scroll target (e.g. an 01:00 entry when "now" is 16:00),
+  // pull the scroll up so the earliest entry stays visible with a small
+  // header margin. Without this, entries above "now" are in the DOM but
+  // outside the scroll viewport — users report them as "invisible".
+  //
+  // The refinement only ever scrolls LESS than the now-centered target,
+  // never more — so when entries are around or below "now" the indicator
+  // still lands at viewport center and the existing contract holds.
   //
   // `.rbc-current-time-indicator` is added by RBC several layout passes
   // after our mount, so we can't read its position in a single frame.
@@ -153,9 +153,30 @@ export function CalendarView({
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
 
+    const EARLIEST_EVENT_HEADER_MARGIN_PX = 80;
+
+    const computeEarliestEventAbsoluteTop = (): number | null => {
+      const cards = wrapper.querySelectorAll<HTMLElement>('[data-testid^="calendar-entry-"]');
+      if (cards.length === 0) return null;
+      let min = Number.POSITIVE_INFINITY;
+      for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        // Skip zero-height placeholders during layout.
+        if (rect.height <= 0) continue;
+        const absoluteTop = rect.top + window.scrollY;
+        if (absoluteTop < min) min = absoluteTop;
+      }
+      return Number.isFinite(min) ? min : null;
+    };
+
     const applyScrollFor = (indicator: HTMLElement) => {
       const indicatorAbsoluteY = indicator.getBoundingClientRect().top + window.scrollY;
-      const target = indicatorAbsoluteY - window.innerHeight / 2;
+      const nowCenteredTarget = indicatorAbsoluteY - window.innerHeight / 2;
+      const earliestEventTop = computeEarliestEventAbsoluteTop();
+      const target =
+        earliestEventTop !== null
+          ? Math.min(nowCenteredTarget, earliestEventTop - EARLIEST_EVENT_HEADER_MARGIN_PX)
+          : nowCenteredTarget;
       if (target > 0) {
         window.scrollTo({ top: target, behavior: "instant" });
         wrapper.dataset.scrollToNow = "done";
