@@ -9,7 +9,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   GHCR_REGISTRY: ghcr.io
   GHCR_IMAGE: ${{ github.repository }}
-  DOCKERHUB_IMAGE: correctroad/opentoggl
 
 jobs:
   build-and-push:
@@ -53,7 +52,7 @@ jobs:
         with:
           images: |
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE }}
-            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ secrets.DOCKERHUB_IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr

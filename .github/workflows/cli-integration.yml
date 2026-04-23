@@ -75,7 +75,7 @@ jobs:
           done
 
       - name: Install toggl CLI
-        run: npm install -g @correctroadh/toggl-cli
+        run: npm install -g "${{ secrets.TOGGL_CLI_PACKAGE }}"
 
       - name: Run CLI integration tests
         env:

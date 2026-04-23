@@ -6,10 +6,10 @@ name: Build and Push Landing Image
 #
 # Required repo secrets:
 #   TS_OAUTH_CLIENT_ID / TS_OAUTH_SECRET  — Tailscale OAuth client with tag:ci
-#                                           (same pair as it-infra repo; must be
-#                                           allowed to reach REDACTED.ts.net)
-#   ARGOCD_AUTH_TOKEN                     — ArgoCD API token for account opentoggl-ci
-#                                           (argocd account generate-token --account <user>)
+#                                           (must be allowed to reach ARGOCD_SERVER)
+#   ARGOCD_SERVER                         — ArgoCD MagicDNS host on the tailnet
+#   ARGOCD_AUTH_TOKEN                     — ArgoCD API token
+#   GHCR_LANDING_IMAGE                    — GHCR image path (owner/repo)
 
 on:
   push:
@@ -27,7 +27,6 @@ on:
 
 env:
   GHCR_REGISTRY: ghcr.io
-  GHCR_IMAGE: correctroadh/opentoggl-landing
 
 jobs:
   build-and-push:
@@ -50,7 +49,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE }}
+          images: ${{ env.GHCR_REGISTRY }}/${{ secrets.GHCR_LANDING_IMAGE }}
           tags: |
             type=ref,event=branch
             type=raw,value=latest,enable={{is_default_branch}}
@@ -91,7 +90,7 @@ jobs:
       - name: Restart opentoggl-landing deployment
         env:
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-          ARGOCD_SERVER: REDACTED.ts.net
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
         run: |
           # selfHeal is on: pull the latest image by bouncing pods (image tag stays :latest)
           argocd app actions run opentoggl-saas restart \
