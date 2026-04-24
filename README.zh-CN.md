@@ -41,8 +41,6 @@ Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 
 - [x] API 完全兼容 track v9 和 report v3
 - [ ] track web 完全一致实现
 - [x] 手机端 PWA，支持离线使用
-- [ ] OpenTickly Focus
-- [ ] OpenTickly Plan
 
 ## 开始使用
 

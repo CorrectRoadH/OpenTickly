@@ -1,5 +1,8 @@
 [中文](README.zh-CN.md)
 
+> [!IMPORTANT]
+> **This project was renamed.** The original repository was taken down following a trademark complaint — entirely due to my own ignorance about the rules around the name, and I'm truly sorry for the confusion. We love Toggl and never intended any impact on their brand. The project is being renamed to **OpenTickly**; the migration is still in progress, so you may still see the old name in some places while the rebrand is finished.
+
 <p align="center">
   <img src="apps/website/public/favicon.svg" alt="OpenTickly icon" width="72" height="72">
 </p>
@@ -41,8 +44,6 @@ The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Andro
 - [x] Full API compatibility with Track v9 and Reports v3
 - [ ] Full parity with Toggl Track web
 - [x] Mobile PWA with offline support
-- [ ] OpenTickly Focus
-- [ ] OpenTickly Plan
 
 ## Get Started
 
