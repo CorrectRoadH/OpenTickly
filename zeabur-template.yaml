@@ -141,7 +141,7 @@ spec:
       domainKey: PUBLIC_DOMAIN
       spec:
         source:
-          image: ghcr.io/correctroadh/opentickly:0.2
+          image: correctroad/opentoggl:0.2
           command:
             - /bin/sh
             - -c
