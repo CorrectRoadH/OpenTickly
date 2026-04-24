@@ -367,12 +367,12 @@ func TestPublicReportsSearchTimeEntriesNullProjectFilter(t *testing.T) {
 // with only `start_date` and consumes `{user_id, project_id, tracked_seconds}`
 // rows, including rows where `project_id` is an explicit JSON null for time
 // tracked without a project. A user running the plugin against a self-hosted
-// OpenToggl instance reported two divergences vs api.track.toggl.com:
+// OpenTickly instance reported two divergences vs api.track.toggl.com:
 //
-//  1. OpenToggl returned 400 "At least one parameter must be set" when only
+//  1. OpenTickly returned 400 "At least one parameter must be set" when only
 //     `start_date` was sent. Official treats a single bound as a one-day
 //     window.
-//  2. OpenToggl returned rows shaped `{project_id, user_id, id}` (no
+//  2. OpenTickly returned rows shaped `{project_id, user_id, id}` (no
 //     `tracked_seconds`, `billable_seconds` missing) and dropped null-project
 //     rows entirely, because the handler used the wrong generated type
 //     (`DtoProjectUserResponse` instead of `UsersProjectUsersSummaryRow`).

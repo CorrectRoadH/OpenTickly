@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from "@opentoggl/web-ui";
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from "@opentickly/web-ui";
 
 type ModalDialogProps = {
   children: ReactNode;
@@ -14,7 +14,7 @@ type ModalDialogProps = {
 
 /**
  * Backwards-compatible wrapper around web-ui Dialog.
- * New code should import Dialog, DialogHeader, DialogBody, DialogFooter from @opentoggl/web-ui directly.
+ * New code should import Dialog, DialogHeader, DialogBody, DialogFooter from @opentickly/web-ui directly.
  */
 export function ModalDialog({
   children,

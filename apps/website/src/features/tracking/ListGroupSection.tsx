@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 
-import { AppCheckbox } from "@opentoggl/web-ui";
+import { AppCheckbox } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";

@@ -37,7 +37,7 @@ export function PublicMainPanelFrame({
                 t
               </text>
             </svg>
-            <span className="text-[20px] font-semibold text-[var(--track-text)]">OpenToggl</span>
+            <span className="text-[20px] font-semibold text-[var(--track-text)]">OpenTickly</span>
           </div>
 
           <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-depth-shadow-rest)]">

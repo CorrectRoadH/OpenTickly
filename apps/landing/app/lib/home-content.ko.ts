@@ -1,4 +1,11 @@
 export const homeContentKo = {
+  notice: {
+    title: "중요 공지",
+    body: "상표 관련 이의 제기로 인해 저희 GitHub 저장소가 내려졌습니다. Toggl 에 영향을 주지 않도록 가능한 한 빨리 프로젝트 이름을 변경하겠습니다. 이것은 전적으로 제 자신의 무지 때문입니다. 저희는 Toggl 을 정말 좋아하며, 훌륭한 제품이라고 생각합니다. 혼란을 드려 죄송하며, 이해해 주셔서 감사합니다.",
+  },
+
+  nameTbd: "OpenTickly",
+
   hero: {
     taglineBefore: "",
     taglineAfter: " Toggl 대안.",
@@ -38,10 +45,10 @@ export const homeContentKo = {
       },
       {
         title: "소스코드",
-        value: "CorrectRoadH/opentoggl",
+        value: "CorrectRoadH/OpenTickly",
         body: "코드, 이슈, 토론 — 모두 공개.",
         cta: "GitHub 열기",
-        href: "https://github.com/CorrectRoadH/opentoggl",
+        href: "https://github.com/CorrectRoadH/OpenTickly",
       },
       {
         title: "문서",
@@ -57,7 +64,7 @@ export const homeContentKo = {
     {
       question: "Toggl Track을 대체할 수 있나요?",
       answer:
-        "네. OpenToggl은 Toggl의 Track, Reports, Webhooks API와 호환됩니다. Toggl API로 연동하는 도구라면 수정 없이 그대로 사용할 수 있습니다.",
+        "네. OpenTickly은 Toggl의 Track, Reports, Webhooks API와 호환됩니다. Toggl API로 연동하는 도구라면 수정 없이 그대로 사용할 수 있습니다.",
     },
     {
       question: "Toggl 데이터를 가져올 수 있나요?",

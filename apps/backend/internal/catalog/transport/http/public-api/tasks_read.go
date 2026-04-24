@@ -279,7 +279,7 @@ func filterTrackCompatibleTasks(tasks []catalogapplication.TaskView) []catalogap
 	filtered := make([]catalogapplication.TaskView, 0, len(tasks))
 	for _, task := range tasks {
 		// Track's `/me/tasks` contract only lists tasks that belong to a project and
-		// includes `project_id` as a required field. OpenToggl also supports
+		// includes `project_id` as a required field. OpenTickly also supports
 		// workspace-level tasks with no project, but exposing them on the Track
 		// compatibility route breaks Track clients that deserialize `project_id` as
 		// required. Keep those tasks available through native routes, but hide them

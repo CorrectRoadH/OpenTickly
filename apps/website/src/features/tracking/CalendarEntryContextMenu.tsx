@@ -1,7 +1,7 @@
 import { type ReactElement, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { MenuItem, MenuLink } from "@opentoggl/web-ui";
+import { MenuItem, MenuLink } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";

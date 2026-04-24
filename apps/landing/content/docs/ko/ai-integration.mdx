@@ -3,7 +3,7 @@ title: AI 연동
 description: Claude, Cursor 등 AI 에이전트가 toggl-cli와 설치형 스킬 팩을 통해 자동으로 시간을 기록하고, 타이머를 시작·정지하며, 프로젝트와 태그를 관리하도록 하세요. AI 워크플로를 위해 설계된 오픈소스 시간 추적.
 ---
 
-[`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)를 사용하면 Claude Code, OpenClaw, Hermes Agent, Codex, Cursor 등의 AI 에이전트를 연동할 수 있습니다. 에이전트가 커맨드라인을 통해 직접 OpenToggl 인스턴스를 조작하여 자동으로 시간을 기록하고, 타이머를 시작·정지하며, 프로젝트와 태그를 관리하도록 만들 수 있습니다.
+[`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)를 사용하면 Claude Code, OpenClaw, Hermes Agent, Codex, Cursor 등의 AI 에이전트를 연동할 수 있습니다. 에이전트가 커맨드라인을 통해 직접 OpenTickly 인스턴스를 조작하여 자동으로 시간을 기록하고, 타이머를 시작·정지하며, 프로젝트와 태그를 관리하도록 만들 수 있습니다.
 
 - `toggl` CLI — 커맨드라인에서 직접 조작
 - `SKILL.md` 스킬 팩 — 에이전트 환경에 설치하여 바로 사용
@@ -18,15 +18,15 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## 설정
 
-이 CLI는 Toggl과 OpenToggl을 동시에 지원하며, 기본적으로는 공식 Toggl API를 가리킵니다. 자신의 인스턴스로 바꾸려면 인증 시 `--api-type opentoggl`과 `--api-url`을 추가하세요.
+이 CLI는 Toggl과 OpenTickly을 동시에 지원하며, 기본적으로는 공식 Toggl API를 가리킵니다. 자신의 인스턴스로 바꾸려면 인증 시 `--api-type opentoggl`과 `--api-url`을 추가하세요.
 
-Toggl에는 시간당 30회 API 제한이 있으므로, AI 에이전트의 잠재력을 최대한 끌어내려면 OpenToggl과 함께 사용하는 것을 강력히 권장합니다.
+Toggl에는 시간당 30회 API 제한이 있으므로, AI 에이전트의 잠재력을 최대한 끌어내려면 OpenTickly과 함께 사용하는 것을 강력히 권장합니다.
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-`YOUR_API_TOKEN`은 OpenToggl 웹 UI의 프로필 아바타 → Profile → API Token에서 확인할 수 있습니다.
+`YOUR_API_TOKEN`은 OpenTickly 웹 UI의 프로필 아바타 → Profile → API Token에서 확인할 수 있습니다.
 
 ## 참고
 

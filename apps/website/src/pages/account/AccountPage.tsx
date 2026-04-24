@@ -1,4 +1,4 @@
-import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentickly/web-ui";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";

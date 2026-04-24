@@ -1,7 +1,7 @@
 {
   "subscription": "Suscripción",
   "selfHosted": "Autoalojado",
-  "selfHostedDescription": "Estás ejecutando una instancia autoalojada de OpenToggl. Todas las funciones están incluidas sin costo para {{organizationName}}.",
+  "selfHostedDescription": "Estás ejecutando una instancia autoalojada de OpenTickly. Todas las funciones están incluidas sin costo para {{organizationName}}.",
   "workspace": "Espacio de trabajo",
   "access": "Acceso",
   "allFeaturesIncluded": "Todas las funciones incluidas",
@@ -15,7 +15,7 @@
   "reportsAndAnalytics": "Informes y analíticas",
   "goalsAndFavorites": "Objetivos y favoritos",
   "apiAccess": "Acceso a API",
-  "opentoggl": "OpenToggl",
-  "opentogglDescription": "OpenToggl es la alternativa de código abierto y autoalojada a Toggl Track. Tus datos de seguimiento de tiempo permanecen en tu propia infraestructura con control total sobre privacidad, copias de seguridad y personalización. Sin suscripciones, sin tarifas por usuario, sin límites de uso.",
+  "opentoggl": "OpenTickly",
+  "opentogglDescription": "OpenTickly es la alternativa de código abierto y autoalojada a Toggl Track. Tus datos de seguimiento de tiempo permanecen en tu propia infraestructura con control total sobre privacidad, copias de seguridad y personalización. Sin suscripciones, sin tarifas por usuario, sin límites de uso.",
   "viewOnGithub": "Ver en GitHub"
 }

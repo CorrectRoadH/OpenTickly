@@ -1,4 +1,4 @@
-import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SurfaceCard } from "@opentickly/web-ui";
 import { useNavigate } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";

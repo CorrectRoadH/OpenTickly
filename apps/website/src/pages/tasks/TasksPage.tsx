@@ -7,7 +7,7 @@ import {
   type DirectoryTableColumn,
   DirectoryTableCell,
   DirectoryTableRenderCountBadge,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import { MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";

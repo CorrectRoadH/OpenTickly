@@ -8,7 +8,7 @@ import {
   type DirectoryTableColumn,
   DirectoryTableRenderCountBadge,
   SelectDropdown,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";

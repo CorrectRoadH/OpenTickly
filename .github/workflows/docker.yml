@@ -114,8 +114,8 @@ jobs:
 
       - name: Build frontend
         run: |
-          pnpm install --filter @opentoggl/website... --no-frozen-lockfile --ignore-scripts
-          pnpm --filter @opentoggl/website run build
+          pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
+          pnpm --filter @opentickly/website run build
           cp -r apps/website/dist apps/backend/internal/web/dist
 
       - name: Build binary

@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement, type ReactNode } from "react";
 import { useRenderCount } from "@uidotdev/usehooks";
-import { AppInput } from "@opentoggl/web-ui";
+import { AppInput } from "@opentickly/web-ui";
 
 import { SearchIcon } from "./icons.tsx";
 

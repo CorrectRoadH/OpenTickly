@@ -82,10 +82,10 @@ test.describe("Story: showTimeInTitle controls document.title when timer is runn
     // Wait for the title update interval to kick in
     await expect
       .poll(async () => page.evaluate(() => document.title), { timeout: 10_000 })
-      .toMatch(/\d+:\d+:\d+.*OpenToggl/);
+      .toMatch(/\d+:\d+:\d+.*OpenTickly/);
   });
 
-  test("Given showTimeInTitle is OFF, when a timer runs, then document.title stays 'OpenToggl'", async ({
+  test("Given showTimeInTitle is OFF, when a timer runs, then document.title stays 'OpenTickly'", async ({
     page,
   }) => {
     await loginE2eUser(page, test.info(), { email, password });
@@ -100,14 +100,14 @@ test.describe("Story: showTimeInTitle controls document.title when timer is runn
     await page.reload();
     await expect(page.getByTestId("app-shell")).toBeVisible();
 
-    // Verify title stays "OpenToggl" even after timer ticks (showTimeInTitle is off).
+    // Verify title stays "OpenTickly" even after timer ticks (showTimeInTitle is off).
     // Poll over 2s to confirm title never changes.
     await expect
       .poll(async () => page.evaluate(() => document.title), {
         intervals: [500],
         timeout: 2000,
       })
-      .toBe("OpenToggl");
+      .toBe("OpenTickly");
   });
 });
 

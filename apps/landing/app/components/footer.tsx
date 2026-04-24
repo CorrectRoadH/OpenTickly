@@ -22,7 +22,7 @@ export default function Footer({ locale }: { locale: string }) {
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           {/* Site links */}
           <div className="flex flex-col gap-2 text-[12px]">
-            <p className="font-semibold text-[var(--track-text)]">OpenToggl</p>
+            <p className="font-semibold text-[var(--track-text)]">OpenTickly</p>
             <a
               href={`${currentPrefix}/docs`}
               className="text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
@@ -67,7 +67,7 @@ export default function Footer({ locale }: { locale: string }) {
         </div>
 
         <p className="mt-6 text-[11px] text-[var(--track-text-muted)]">
-          © {new Date().getFullYear()} OpenToggl. Open-source time tracking.
+          © {new Date().getFullYear()} OpenTickly. Open-source time tracking.
         </p>
       </div>
     </footer>

@@ -2,7 +2,7 @@ import { memo, type ReactElement } from "react";
 import { useRenderCount } from "@uidotdev/usehooks";
 import { useTranslation } from "react-i18next";
 
-import { AppCheckbox } from "@opentoggl/web-ui";
+import { AppCheckbox } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { DollarIcon, PlayIcon } from "../../shared/ui/icons.tsx";

@@ -50,7 +50,7 @@
   "couldNotCopyInviteLink": "无法复制邀请链接",
   "acceptInviteEyebrow": "工作区邀请",
   "acceptInviteHeading": "加入 {{workspace}}",
-  "acceptInviteBlurb": "{{inviter}} 邀请 {{email}} 加入 OpenToggl 的 {{organization}}。",
+  "acceptInviteBlurb": "{{inviter}} 邀请 {{email}} 加入 OpenTickly 的 {{organization}}。",
   "acceptInviteUnknownInviter": "某人",
   "acceptInviteCreateAccount": "创建账户",
   "acceptInviteHaveAccount": "我已有账户",

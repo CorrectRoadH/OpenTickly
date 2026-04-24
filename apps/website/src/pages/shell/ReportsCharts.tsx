@@ -17,7 +17,7 @@ import {
 
 import type { ReportsDayRow, ReportsDistributionSegment } from "./reports-page-data.ts";
 import type { SliceDimension } from "./useReportsPageState.ts";
-import { SelectDropdown } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentickly/web-ui";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 

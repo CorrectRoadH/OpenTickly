@@ -9,7 +9,7 @@ import {
   DirectoryTableRenderCountBadge,
   PageLayout,
   SelectDropdown,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import { GoalsIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";

@@ -1,4 +1,4 @@
-import { Dropdown, SelectButton, useDropdownClose } from "@opentoggl/web-ui";
+import { Dropdown, SelectButton, useDropdownClose } from "@opentickly/web-ui";
 import { type ReactElement, useMemo, useState } from "react";
 
 type TimezoneOption = {

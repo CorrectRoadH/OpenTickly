@@ -11,7 +11,7 @@ import {
   MenuSeparator,
   SelectDropdown,
   useDropdownClose,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import { buildWorkspaceReportsPath } from "../../shared/lib/workspace-routing.ts";

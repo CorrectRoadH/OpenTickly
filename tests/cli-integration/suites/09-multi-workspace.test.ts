@@ -88,7 +88,7 @@ describe("Story: single user, multi-workspace data scoping", () => {
     // against api.track.toggl.com (default workspace + a second
     // workspace each holding one project → response contains both).
     // A previous revision of this test asserted the opposite based on
-    // a since-fixed OpenToggl backend bug that collapsed /me/projects
+    // a since-fixed OpenTickly backend bug that collapsed /me/projects
     // to the user's home workspace via web_user_homes.
     const projects = await togglJson<Project[]>(["project", "list"], { user });
     const names = projects.map((p) => p.name);

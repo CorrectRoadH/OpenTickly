@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppCheckbox } from "@opentoggl/web-ui";
+import { AppCheckbox } from "@opentickly/web-ui";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";

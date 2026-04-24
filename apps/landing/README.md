@@ -1,6 +1,6 @@
-# OpenToggl Landing
+# OpenTickly Landing
 
-This app is the public OpenToggl introduction site built with Fumadocs on top of the React Router SPA template.
+This app is the public OpenTickly introduction site built with Fumadocs on top of the React Router SPA template.
 
 Run it from the repository root:
 

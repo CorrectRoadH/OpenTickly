@@ -1,7 +1,7 @@
 // Package safehttp provides an HTTP client that refuses to connect to private,
 // loopback, link-local, or cloud-metadata network ranges. It exists so that
 // user-supplied URLs (webhook callbacks today, potentially exports, avatars,
-// or other outbound fetches later) cannot turn the OpenToggl server into an
+// or other outbound fetches later) cannot turn the OpenTickly server into an
 // SSRF pivot against its own host, other internal services, or cloud
 // metadata endpoints such as 169.254.169.254.
 package safehttp

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import { DropdownMenu, MenuItem, MenuLink, MenuSeparator } from "@opentoggl/web-ui";
+import { DropdownMenu, MenuItem, MenuLink, MenuSeparator } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { MoreIcon } from "../../shared/ui/icons.tsx";

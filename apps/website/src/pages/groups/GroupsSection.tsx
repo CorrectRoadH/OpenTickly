@@ -10,7 +10,7 @@ import {
   DropdownMenu,
   IconButton,
   useDropdownClose,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { type FormEvent, type ReactElement, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";

@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
-import { DropdownMenu, IconButton, MenuItem } from "@opentoggl/web-ui";
+import { DropdownMenu, IconButton, MenuItem } from "@opentickly/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";

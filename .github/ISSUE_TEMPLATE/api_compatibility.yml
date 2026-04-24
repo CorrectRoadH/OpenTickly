@@ -1,5 +1,5 @@
 name: API Compatibility Issue
-description: Report a difference between OpenToggl and Toggl Track API behavior
+description: Report a difference between OpenTickly and Toggl Track API behavior
 labels: ["api-compat"]
 body:
   - type: input
@@ -22,8 +22,8 @@ body:
   - type: textarea
     id: opentoggl-behavior
     attributes:
-      label: OpenToggl Behavior (Actual)
-      description: What OpenToggl returns or does for this endpoint
+      label: OpenTickly Behavior (Actual)
+      description: What OpenTickly returns or does for this endpoint
     validations:
       required: true
 

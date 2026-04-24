@@ -11,7 +11,7 @@ import {
   DirectoryTableRenderCountBadge,
   PageHeader,
   SurfaceCard,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";

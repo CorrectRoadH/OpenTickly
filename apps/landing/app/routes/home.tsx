@@ -1,6 +1,15 @@
-import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
+import { AppLinkButton, SurfaceCard } from "@opentickly/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import { ArrowUpRight, ChevronDown, FileText, Play, RefreshCw, Server, Unlock } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  ChevronDown,
+  FileText,
+  Play,
+  RefreshCw,
+  Server,
+  Unlock,
+} from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 
@@ -75,11 +84,29 @@ export default function Home() {
       />
 
       <main id="main-content" className="landing-home">
+        {/* Trademark takedown notice */}
+        <section
+          role="alert"
+          aria-label={strings.notice.title}
+          className="mx-auto w-full max-w-6xl px-4 pt-6 md:px-6"
+        >
+          <div className="flex items-start gap-3 rounded-[8px] border border-amber-300/70 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="text-[14px] font-semibold">{strings.notice.title}</p>
+              <p className="mt-1 text-[13px] leading-6">{strings.notice.body}</p>
+            </div>
+          </div>
+        </section>
+
         {/* Hero */}
         <section className="mx-auto w-full max-w-6xl px-4 py-12 md:px-6 md:py-16">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-[14px] font-semibold uppercase tracking-[0.1em] text-[var(--track-text-muted)]">
-              OpenToggl
+              <span className="line-through">OpenToggl</span>
+            </p>
+            <p className="mt-1 text-[12px] font-medium tracking-[0.08em] text-[var(--track-text-muted)]">
+              {strings.nameTbd}
             </p>
             <h1 className="mt-3 text-[28px] font-semibold leading-[38px] text-[var(--track-text)] md:text-[36px] md:leading-[46px]">
               {strings.hero.taglineBefore}

@@ -42,7 +42,7 @@ const localizedHeadings: Record<
 };
 
 /**
- * Build a locale-aware Markdown summary of OpenToggl for LLM consumption.
+ * Build a locale-aware Markdown summary of OpenTickly for LLM consumption.
  * Prepended to /llms.txt and /llms-full.txt so LLMs receive positioning,
  * key facts and FAQ alongside the raw docs index.
  */
@@ -60,7 +60,7 @@ export function buildLlmsSummary(locale: Locale): string {
 
   const localePrefix = locale === "en" ? "" : `/${locale}`;
 
-  return `# OpenToggl
+  return `# OpenTickly
 
 > ${content.hero.subtitle}
 

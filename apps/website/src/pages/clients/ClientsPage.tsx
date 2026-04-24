@@ -11,7 +11,7 @@ import {
   DirectoryTableRenderCountBadge,
   IconButton,
   PageLayout,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import {
   ArchiveIcon,

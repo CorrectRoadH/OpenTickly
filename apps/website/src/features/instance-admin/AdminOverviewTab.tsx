@@ -1,4 +1,4 @@
-import { AppLinkButton, AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
+import { AppLinkButton, AppSurfaceState, SurfaceCard } from "@opentickly/web-ui";
 import type { ReactElement, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Info, Megaphone, Zap } from "lucide-react";
@@ -45,14 +45,14 @@ function OnboardingBanner(): ReactElement {
         </div>
         <div className="flex-1">
           <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
-            {t("instanceAdmin:welcomeToOpenToggl")}
+            {t("instanceAdmin:welcomeToOpenTickly")}
           </h3>
           <p className="mt-1 text-[14px] leading-relaxed text-[var(--track-text-muted)]">
             {t("instanceAdmin:welcomeDescription")}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <AppLinkButton
-              href="https://github.com/CorrectRoadH/opentoggl"
+              href="https://github.com/CorrectRoadH/OpenTickly"
               rel="noopener noreferrer"
               target="_blank"
               variant="primary"
@@ -61,14 +61,14 @@ function OnboardingBanner(): ReactElement {
               {t("instanceAdmin:starOnGithub")}
             </AppLinkButton>
             <AppLinkButton
-              href="https://github.com/CorrectRoadH/opentoggl/issues"
+              href="https://github.com/CorrectRoadH/OpenTickly/issues"
               target="_blank"
               variant="ghost"
             >
               {t("instanceAdmin:reportAnIssue")}
             </AppLinkButton>
             <AppLinkButton
-              href="https://github.com/CorrectRoadH/opentoggl/blob/main/CHANGELOG.md"
+              href="https://github.com/CorrectRoadH/OpenTickly/blob/main/CHANGELOG.md"
               target="_blank"
               variant="ghost"
             >
@@ -103,7 +103,7 @@ function VersionCard(): ReactElement {
         <div>
           <div className="flex items-center gap-3">
             <span className="text-[14px] font-medium text-[var(--track-text)]">
-              OpenToggl v{version?.current_version ?? "unknown"}
+              OpenTickly v{version?.current_version ?? "unknown"}
             </span>
             {version?.update_available ? (
               <span className="rounded-full bg-[var(--track-accent)]/15 px-2.5 py-0.5 text-[12px] font-medium text-[var(--track-accent)]">

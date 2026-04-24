@@ -75,7 +75,7 @@ export function MobileShell(): ReactElement {
   // Update document.title every second when a timer is running (no re-render).
   useEffect(() => {
     if (!runningEntry || !showTimeInTitle) {
-      document.title = "OpenToggl";
+      document.title = "OpenTickly";
       return;
     }
     function updateTitle() {
@@ -83,13 +83,13 @@ export function MobileShell(): ReactElement {
       const h = Math.floor(seconds / 3600);
       const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
       const s = String(seconds % 60).padStart(2, "0");
-      document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
+      document.title = `${h}:${m}:${s} \u00B7 OpenTickly`;
     }
     updateTitle();
     const id = setInterval(updateTitle, 1000);
     return () => {
       clearInterval(id);
-      document.title = "OpenToggl";
+      document.title = "OpenTickly";
     };
   }, [runningEntry, showTimeInTitle]);
 

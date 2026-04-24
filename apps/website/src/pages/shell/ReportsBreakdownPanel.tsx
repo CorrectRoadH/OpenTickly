@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import type { ReportsBreakdownRow } from "./reports-page-data.ts";
 import type { BreakdownDimension } from "./useReportsPageState.ts";
-import { SelectDropdown } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentickly/web-ui";
 import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 type BreakdownPanelProps = {

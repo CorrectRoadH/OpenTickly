@@ -8,8 +8,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY apps/website ./apps/website
 COPY packages ./packages
 
-RUN pnpm install --filter @opentoggl/website... --no-frozen-lockfile --ignore-scripts
-RUN pnpm --filter @opentoggl/website run build
+RUN pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
+RUN pnpm --filter @opentickly/website run build
 
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
@@ -40,9 +40,9 @@ RUN printf '# required by current bootstrap env loader for runtime startup\n' > 
 RUN chmod +x /usr/local/bin/opentoggl-entrypoint
 
 ARG OPENTOGGL_VERSION=dev
-LABEL org.opencontainers.image.title="OpenToggl" \
-      org.opencontainers.image.description="Single-image OpenToggl runtime (web + API)" \
-      org.opencontainers.image.source="https://github.com/CorrectRoadH/opentoggl" \
+LABEL org.opencontainers.image.title="OpenTickly" \
+      org.opencontainers.image.description="Single-image OpenTickly runtime (web + API)" \
+      org.opencontainers.image.source="https://github.com/CorrectRoadH/OpenTickly" \
       org.opencontainers.image.version="${OPENTOGGL_VERSION}"
 
 RUN adduser -D -u 10001 opentoggl

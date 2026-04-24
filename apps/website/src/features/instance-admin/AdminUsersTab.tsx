@@ -1,4 +1,4 @@
-import { AppSurfaceState, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SelectDropdown, SurfaceCard } from "@opentickly/web-ui";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";

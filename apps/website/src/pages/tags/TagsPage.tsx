@@ -7,7 +7,7 @@ import {
   type DirectoryTableColumn,
   DirectoryTableRenderCountBadge,
   PageLayout,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import { CloseIcon, PlusIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";

@@ -34,7 +34,7 @@
   "reset": "Réinitialiser",
   "copied": "Copié",
   "copyApiToken": "Copier le jeton API",
-  "openTogglNoRateLimits": "OpenToggl n'a pas de limites de débit.",
+  "openTogglNoRateLimits": "OpenTickly n'a pas de limites de débit.",
   "apiTokenRotated": "Jeton API renouvelé",
   "couldNotRotateApiToken": "Impossible de renouveler le jeton API",
   "profilePreferencesUpdated": "Vos préférences de profil ont été mises à jour",

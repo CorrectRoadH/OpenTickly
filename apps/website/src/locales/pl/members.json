@@ -54,7 +54,7 @@
   "couldNotCopyInviteLink": "Nie udało się skopiować linku zaproszenia",
   "acceptInviteEyebrow": "Zaproszenie do przestrzeni roboczej",
   "acceptInviteHeading": "Dołącz do {{workspace}}",
-  "acceptInviteBlurb": "{{inviter}} zaprosił(a) {{email}} do dołączenia do {{organization}} w OpenToggl.",
+  "acceptInviteBlurb": "{{inviter}} zaprosił(a) {{email}} do dołączenia do {{organization}} w OpenTickly.",
   "acceptInviteUnknownInviter": "Ktoś",
   "acceptInviteCreateAccount": "Utwórz konto",
   "acceptInviteHaveAccount": "Mam już konto",

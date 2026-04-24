@@ -54,7 +54,7 @@
   "couldNotCopyInviteLink": "초대 링크를 복사할 수 없습니다",
   "acceptInviteEyebrow": "워크스페이스 초대",
   "acceptInviteHeading": "{{workspace}}에 참여",
-  "acceptInviteBlurb": "{{inviter}}님이 OpenToggl의 {{organization}}에 {{email}}을(를) 초대했습니다.",
+  "acceptInviteBlurb": "{{inviter}}님이 OpenTickly의 {{organization}}에 {{email}}을(를) 초대했습니다.",
   "acceptInviteUnknownInviter": "누군가",
   "acceptInviteCreateAccount": "계정 만들기",
   "acceptInviteHaveAccount": "이미 계정이 있습니다",

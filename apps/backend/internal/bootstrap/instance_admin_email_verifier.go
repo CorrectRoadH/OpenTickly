@@ -68,9 +68,9 @@ func (v *dbBackedEmailVerifier) SendVerificationEmail(ctx context.Context, email
 
 	verifyURL := fmt.Sprintf("%s/verify-email?token=%s", siteURL, token)
 
-	subject := "Verify your OpenToggl email"
+	subject := "Verify your OpenTickly email"
 	body := fmt.Sprintf(`<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-<h2 style="color: #1a1a1a;">Welcome to OpenToggl</h2>
+<h2 style="color: #1a1a1a;">Welcome to OpenTickly</h2>
 <p>Please verify your email address by clicking the button below:</p>
 <p style="text-align: center; margin: 32px 0;">
   <a href="%s" style="background: #e05d26; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">

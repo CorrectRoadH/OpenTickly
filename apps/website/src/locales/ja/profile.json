@@ -34,7 +34,7 @@
   "reset": "リセット",
   "copied": "コピーしました",
   "copyApiToken": "APIトークンをコピー",
-  "openTogglNoRateLimits": "OpenTogglにはレート制限がありません。",
+  "openTogglNoRateLimits": "OpenTicklyにはレート制限がありません。",
   "apiTokenRotated": "APIトークンをローテーションしました",
   "couldNotRotateApiToken": "APIトークンをローテーションできませんでした",
   "profilePreferencesUpdated": "プロフィール設定が更新されました",

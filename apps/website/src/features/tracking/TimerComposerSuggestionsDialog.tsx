@@ -1,7 +1,7 @@
 import { type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { MenuSeparator } from "@opentoggl/web-ui";
+import { MenuSeparator } from "@opentickly/web-ui";
 import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,

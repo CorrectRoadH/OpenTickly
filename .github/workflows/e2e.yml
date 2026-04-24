@@ -55,7 +55,7 @@ jobs:
         run: go build -o /tmp/opentoggl ./apps/backend
 
       - name: Build frontend
-        run: pnpm --filter @opentoggl/website run build
+        run: pnpm --filter @opentickly/website run build
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium webkit

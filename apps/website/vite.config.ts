@@ -67,8 +67,8 @@ export default defineConfig(() => {
         includeAssets: ["favicon.svg", "apple-touch-icon.png"],
         manifest: {
           id: "/",
-          name: "OpenToggl",
-          short_name: "OpenToggl",
+          name: "OpenTickly",
+          short_name: "OpenTickly",
           description: "Open-source time tracking",
           start_url: "/m/timer",
           scope: "/",

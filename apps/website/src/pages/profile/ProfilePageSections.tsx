@@ -1,4 +1,4 @@
-import { AppButton, AppInlineNotice } from "@opentoggl/web-ui";
+import { AppButton, AppInlineNotice } from "@opentickly/web-ui";
 import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 

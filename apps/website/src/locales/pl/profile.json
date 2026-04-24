@@ -34,7 +34,7 @@
   "reset": "Resetuj",
   "copied": "Skopiowano",
   "copyApiToken": "Kopiuj token API",
-  "openTogglNoRateLimits": "OpenToggl nie ma limitów żądań.",
+  "openTogglNoRateLimits": "OpenTickly nie ma limitów żądań.",
   "apiBaseUrls": "Bazowe adresy URL API",
   "trackApiV9": "Track API (v9)",
   "reportsApiV3": "Reports API (v3)",

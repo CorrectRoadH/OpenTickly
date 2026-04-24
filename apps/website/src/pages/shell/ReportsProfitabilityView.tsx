@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SelectDropdown } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentickly/web-ui";
 import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";

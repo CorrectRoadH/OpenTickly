@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton } from "@opentickly/web-ui";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";
 import { postWorkspaceUserInvoice } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";

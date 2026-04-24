@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement, type Ref, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton } from "@opentickly/web-ui";
 
 import { CalendarPanel } from "./CalendarPanel.tsx";
 import { CalendarIcon } from "../../shared/ui/icons.tsx";

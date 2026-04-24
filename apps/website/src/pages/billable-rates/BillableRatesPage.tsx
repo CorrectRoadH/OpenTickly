@@ -1,4 +1,4 @@
-import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SelectDropdown, SurfaceCard } from "@opentickly/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";

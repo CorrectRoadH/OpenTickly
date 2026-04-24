@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SurfaceCard } from "@opentickly/web-ui";
 
 import type { ReportsPageMetric } from "./reports-page-data.ts";
 

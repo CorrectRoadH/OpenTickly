@@ -3,7 +3,7 @@ title: AI Integration
 description: Let Claude, Cursor, and other AI agents auto-track time, start and stop timers, and manage projects and tags through toggl-cli and installable skill packs. Open-source time tracking built for AI workflows.
 ---
 
-Use [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) to hook up Claude Code, OpenClaw, Hermes Agent, Codex, Cursor and other AI agents — letting them drive your OpenToggl instance directly from the command line to auto-track time, start and stop timers, and manage projects and tags.
+Use [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) to hook up Claude Code, OpenClaw, Hermes Agent, Codex, Cursor and other AI agents — letting them drive your OpenTickly instance directly from the command line to auto-track time, start and stop timers, and manage projects and tags.
 
 - `toggl` CLI — operate directly from the command line
 - `SKILL.md` skill pack — install into an agent environment, one-command use
@@ -18,15 +18,15 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## Configure
 
-The CLI is compatible with both Toggl and OpenToggl, and defaults to the official Toggl API. To point it at your own instance, pass `--api-type opentoggl` and `--api-url` during auth:
+The CLI is compatible with both Toggl and OpenTickly, and defaults to the official Toggl API. To point it at your own instance, pass `--api-type opentoggl` and `--api-url` during auth:
 
-Because Toggl has a 30 requests/hour API limit, we strongly recommend pairing the CLI with OpenToggl to unlock the full potential of AI agents:
+Because Toggl has a 30 requests/hour API limit, we strongly recommend pairing the CLI with OpenTickly to unlock the full potential of AI agents:
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-You can find `YOUR_API_TOKEN` in the OpenToggl web UI under your avatar → Profile → API Token.
+You can find `YOUR_API_TOKEN` in the OpenTickly web UI under your avatar → Profile → API Token.
 
 ## References
 

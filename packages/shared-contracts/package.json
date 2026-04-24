@@ -1,5 +1,5 @@
 {
-  "name": "@opentoggl/shared-contracts",
+  "name": "@opentickly/shared-contracts",
   "version": "0.0.0",
   "private": true,
   "type": "module",

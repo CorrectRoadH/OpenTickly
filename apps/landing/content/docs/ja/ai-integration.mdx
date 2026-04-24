@@ -3,7 +3,7 @@ title: AI 連携
 description: Claude、Cursor などの AI エージェントに、toggl-cli とインストール可能なスキルパックを通じて、時間の記録、タイマーの開始・停止、プロジェクトやタグの管理を自動で任せましょう。AI ワークフローのために設計されたオープンソースの時間追跡。
 ---
 
-[`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) を使って Claude Code、OpenClaw、Hermes Agent、Codex、Cursor などの AI エージェントを接続し、コマンドラインから直接 OpenToggl インスタンスを操作させましょう。時間の記録、タイマーの開始・停止、プロジェクトやタグの管理を自動化できます。
+[`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) を使って Claude Code、OpenClaw、Hermes Agent、Codex、Cursor などの AI エージェントを接続し、コマンドラインから直接 OpenTickly インスタンスを操作させましょう。時間の記録、タイマーの開始・停止、プロジェクトやタグの管理を自動化できます。
 
 - `toggl` CLI — コマンドラインから直接操作
 - `SKILL.md` スキルパック — エージェント環境に入れればワンタッチで利用可能
@@ -18,15 +18,15 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## 設定
 
-この CLI は Toggl と OpenToggl の両方に対応しており、デフォルトでは公式 Toggl API を指しています。自分のインスタンスに向けたい場合は、認証時に `--api-type opentoggl` と `--api-url` を指定してください。
+この CLI は Toggl と OpenTickly の両方に対応しており、デフォルトでは公式 Toggl API を指しています。自分のインスタンスに向けたい場合は、認証時に `--api-type opentoggl` と `--api-url` を指定してください。
 
-ただし Toggl には 1 時間あたり 30 回という API 制限があるため、AI エージェントの真価を解放するには OpenToggl と組み合わせることを強くおすすめします。
+ただし Toggl には 1 時間あたり 30 回という API 制限があるため、AI エージェントの真価を解放するには OpenTickly と組み合わせることを強くおすすめします。
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-`YOUR_API_TOKEN` は OpenToggl Web UI のプロフィールアイコン → Profile → API Token から取得できます。
+`YOUR_API_TOKEN` は OpenTickly Web UI のプロフィールアイコン → Profile → API Token から取得できます。
 
 ## 参考
 

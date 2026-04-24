@@ -1,5 +1,5 @@
 {
-  "name": "@opentoggl/landing",
+  "name": "@opentickly/landing",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
-    "@opentoggl/web-ui": "workspace:*",
+    "@opentickly/web-ui": "workspace:*",
     "@orama/orama": "^3.1.18",
     "@react-router/node": "^7.14.2",
     "fumadocs-core": "16.8.2",

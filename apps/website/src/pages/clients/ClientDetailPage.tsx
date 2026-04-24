@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppPanel } from "@opentickly/web-ui";
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 

@@ -33,7 +33,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --filter @opentoggl/update-worker...
+        run: pnpm install --filter @opentickly/update-worker...
 
       - name: Type-check + test
         working-directory: apps/update-worker

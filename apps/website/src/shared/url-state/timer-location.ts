@@ -2,7 +2,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export type TimerSearch = {
   date?: unknown;
-  /** OpenToggl start-link params */
+  /** OpenTickly start-link params */
   description?: unknown;
   project_id?: unknown;
   tag_ids?: unknown;
@@ -25,7 +25,7 @@ export type ParsedTimerSearch = {
 
 /**
  * Parses the ?date=YYYY-MM-DD search param and optional start-link params
- * for the /timer route. Supports both OpenToggl params (description, project_id,
+ * for the /timer route. Supports both OpenTickly params (description, project_id,
  * tag_ids, billable) and Toggl-compatible aliases (desc, wid).
  */
 export function parseTimerSearch(search: TimerSearch | undefined): ParsedTimerSearch {

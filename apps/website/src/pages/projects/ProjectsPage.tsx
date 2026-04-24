@@ -15,7 +15,7 @@ import {
   PageLayout,
   RadioFilterDropdown,
   SelectDropdown,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import {
   ArchiveIcon,

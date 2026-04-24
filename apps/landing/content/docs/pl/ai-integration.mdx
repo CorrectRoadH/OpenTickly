@@ -3,7 +3,7 @@ title: Integracja z AI
 description: Pozwól Claude, Cursor i innym agentom AI — za pośrednictwem toggl-cli oraz instalowalnej paczki umiejętności — automatycznie rejestrować czas, uruchamiać i zatrzymywać timery oraz zarządzać projektami i tagami. Otwartoźródłowe śledzenie czasu zaprojektowane pod przepływy AI.
 ---
 
-Użyj [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), aby podłączyć Claude Code, OpenClaw, Hermes Agent, Codex, Cursor i innych agentów AI — niech obsługują Twoją instancję OpenToggl bezpośrednio z wiersza poleceń, automatycznie rejestrując czas, startując i zatrzymując timery oraz zarządzając projektami i tagami.
+Użyj [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), aby podłączyć Claude Code, OpenClaw, Hermes Agent, Codex, Cursor i innych agentów AI — niech obsługują Twoją instancję OpenTickly bezpośrednio z wiersza poleceń, automatycznie rejestrując czas, startując i zatrzymując timery oraz zarządzając projektami i tagami.
 
 - `toggl` CLI — bezpośrednia obsługa z wiersza poleceń
 - Paczka umiejętności `SKILL.md` — wgrywasz do środowiska agenta i korzystasz jednym kliknięciem
@@ -18,15 +18,15 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## Konfiguracja
 
-CLI jest jednocześnie kompatybilne z Toggl i OpenToggl, domyślnie kierując zapytania do oficjalnego Toggl API. Aby przełączyć je na własną instancję, podczas autoryzacji dodaj `--api-type opentoggl` oraz `--api-url`:
+CLI jest jednocześnie kompatybilne z Toggl i OpenTickly, domyślnie kierując zapytania do oficjalnego Toggl API. Aby przełączyć je na własną instancję, podczas autoryzacji dodaj `--api-type opentoggl` oraz `--api-url`:
 
-Ponieważ Toggl ma limit 30 wywołań API na godzinę, zdecydowanie zalecamy używanie CLI razem z OpenToggl, aby w pełni uwolnić potencjał agentów AI:
+Ponieważ Toggl ma limit 30 wywołań API na godzinę, zdecydowanie zalecamy używanie CLI razem z OpenTickly, aby w pełni uwolnić potencjał agentów AI:
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-`YOUR_API_TOKEN` znajdziesz w interfejsie webowym OpenToggl: awatar użytkownika → Profile → API Token.
+`YOUR_API_TOKEN` znajdziesz w interfejsie webowym OpenTickly: awatar użytkownika → Profile → API Token.
 
 ## Materiały
 

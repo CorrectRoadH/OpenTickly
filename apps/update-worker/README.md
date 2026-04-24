@@ -1,4 +1,4 @@
-# @opentoggl/update-worker
+# @opentickly/update-worker
 
 Cloudflare Worker behind [`https://update.opentoggl.com/`](https://update.opentoggl.com/). One GET endpoint. Proxies GitHub Releases + serves baked announcements.
 
@@ -24,7 +24,7 @@ Every param is optional. A bare `curl https://update.opentoggl.com/` returns the
   "latestTag": "v0.3.1",
   "updateAvailable": true,
   "releasedAt": "2026-04-16T12:00:00Z",
-  "releaseUrl": "https://github.com/CorrectRoadH/opentoggl/releases/tag/v0.3.1",
+  "releaseUrl": "https://github.com/CorrectRoadH/OpenTickly/releases/tag/v0.3.1",
   "releaseNotes": "…markdown body of the latest release…",
   "announcements": [
     {
@@ -46,7 +46,7 @@ Cache: the Worker edge-caches the composed response for 60s; the inner GitHub fe
 
 ## Publishing a new release
 
-Just **publish a GitHub Release** on [CorrectRoadH/opentoggl](https://github.com/CorrectRoadH/opentoggl/releases). That's it — the worker picks it up on the next cache miss. No redeploy needed.
+Just **publish a GitHub Release** on [CorrectRoadH/opentoggl](https://github.com/CorrectRoadH/OpenTickly/releases). That's it — the worker picks it up on the next cache miss. No redeploy needed.
 
 ## Publishing an announcement
 

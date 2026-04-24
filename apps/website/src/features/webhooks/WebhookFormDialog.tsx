@@ -6,7 +6,7 @@ import {
   DialogBody,
   DialogFooter,
   DialogHeader,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 

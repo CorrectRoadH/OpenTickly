@@ -1,4 +1,4 @@
-import { AppButton, PageLayout, SelectDropdown } from "@opentoggl/web-ui";
+import { AppButton, PageLayout, SelectDropdown } from "@opentickly/web-ui";
 import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";

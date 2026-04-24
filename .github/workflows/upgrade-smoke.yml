@@ -78,7 +78,7 @@ jobs:
         run: /tmp/opentoggl-v0.0.17 schema-apply
 
       - name: Build frontend (v0.0.17)
-        run: pnpm --filter @opentoggl/website run build
+        run: pnpm --filter @opentickly/website run build
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium webkit
@@ -144,7 +144,7 @@ jobs:
         run: go build -o /tmp/opentoggl-main ./apps/backend
 
       - name: Build frontend (main)
-        run: pnpm --filter @opentoggl/website run build
+        run: pnpm --filter @opentickly/website run build
 
       - name: Start backend (main)
         env:

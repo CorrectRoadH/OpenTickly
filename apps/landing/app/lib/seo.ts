@@ -1,37 +1,37 @@
 import type { Locale } from "./i18n";
 
-export const siteName = "OpenToggl";
+export const siteName = "OpenTickly";
 export const siteUrl = "https://opentoggl.com";
 export const defaultTitle = "Open-Source Time Tracking and Toggl Alternative";
 export const defaultDescription =
-  "OpenToggl is a free, open-source time tracking and time management app for individuals and teams, and a practical alternative to Toggl.";
+  "OpenTickly is a free, open-source time tracking and time management app for individuals and teams, and a practical alternative to Toggl.";
 export const defaultOgImagePath = "/og-image.png";
 
-export const repoUrl = "https://github.com/CorrectRoadH/opentoggl";
+export const repoUrl = "https://github.com/CorrectRoadH/OpenTickly";
 export const demoUrl = "https://track.opentoggl.com";
 
 export const localizedDescriptions: Record<Locale, string> = {
-  en: "OpenToggl is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
-  zh: "OpenToggl 是开源的 Toggl 替代方案：100% 兼容 Toggl API，一键 Docker 自托管，数据完全在你手里。无座位限制，个人与团队免费使用。",
-  es: "OpenToggl es la alternativa open source a Toggl: 100% compatible con la API de Toggl, autoalojamiento con Docker en un comando, tus datos siguen siendo tuyos. Sin límite de asientos, gratis para individuos y equipos.",
-  ja: "OpenToggl はオープンソースの Toggl 代替ツール。Toggl API に 100% 互換、Docker ワンコマンドでセルフホスト、データはあなたの手の中に。シート数無制限、個人・チームとも無料で利用可能。",
-  fr: "OpenToggl est l'alternative open source à Toggl : 100 % compatible avec l'API Toggl, auto-hébergement Docker en une commande, vos données restent les vôtres. Sans limite d'utilisateurs, gratuit pour les particuliers et les équipes.",
-  ko: "OpenToggl은 오픈소스 Toggl 대안입니다. Toggl API 100% 호환, Docker 한 줄 명령으로 셀프호스팅, 데이터는 전적으로 본인 관리. 좌석 수 제한 없이 개인과 팀 모두 무료로 사용 가능.",
-  pl: "OpenToggl to otwartoźródłowa alternatywa dla Toggl: w 100% zgodna z API Toggl, samodzielny hosting Dockera jedną komendą, Twoje dane pozostają Twoje. Bez limitu miejsc — darmowa dla osób i zespołów.",
-  pt: "OpenToggl é a alternativa open source ao Toggl: 100% compatível com a API do Toggl, auto-hospedagem Docker em um comando, seus dados continuam seus. Sem limite de assentos — grátis para indivíduos e equipes.",
+  en: "OpenTickly is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
+  zh: "OpenTickly 是开源的 Toggl 替代方案：100% 兼容 Toggl API，一键 Docker 自托管，数据完全在你手里。无座位限制，个人与团队免费使用。",
+  es: "OpenTickly es la alternativa open source a Toggl: 100% compatible con la API de Toggl, autoalojamiento con Docker en un comando, tus datos siguen siendo tuyos. Sin límite de asientos, gratis para individuos y equipos.",
+  ja: "OpenTickly はオープンソースの Toggl 代替ツール。Toggl API に 100% 互換、Docker ワンコマンドでセルフホスト、データはあなたの手の中に。シート数無制限、個人・チームとも無料で利用可能。",
+  fr: "OpenTickly est l'alternative open source à Toggl : 100 % compatible avec l'API Toggl, auto-hébergement Docker en une commande, vos données restent les vôtres. Sans limite d'utilisateurs, gratuit pour les particuliers et les équipes.",
+  ko: "OpenTickly은 오픈소스 Toggl 대안입니다. Toggl API 100% 호환, Docker 한 줄 명령으로 셀프호스팅, 데이터는 전적으로 본인 관리. 좌석 수 제한 없이 개인과 팀 모두 무료로 사용 가능.",
+  pl: "OpenTickly to otwartoźródłowa alternatywa dla Toggl: w 100% zgodna z API Toggl, samodzielny hosting Dockera jedną komendą, Twoje dane pozostają Twoje. Bez limitu miejsc — darmowa dla osób i zespołów.",
+  pt: "OpenTickly é a alternativa open source ao Toggl: 100% compatível com a API do Toggl, auto-hospedagem Docker em um comando, seus dados continuam seus. Sem limite de assentos — grátis para indivíduos e equipes.",
 };
 
-const defaultOgImageAlt = "OpenToggl open source time tracking platform";
+const defaultOgImageAlt = "OpenTickly open source time tracking platform";
 
 export const localizedOgImageAlt: Record<Locale, string> = {
   en: defaultOgImageAlt,
-  zh: "OpenToggl 开源时间追踪平台",
-  es: "OpenToggl plataforma de seguimiento de tiempo de código abierto",
-  ja: "OpenToggl オープンソース時間管理プラットフォーム",
-  fr: "OpenToggl plateforme open source de suivi du temps",
-  ko: "OpenToggl 오픈소스 시간 추적 플랫폼",
-  pl: "OpenToggl — open-source'owa platforma śledzenia czasu",
-  pt: "OpenToggl — plataforma open source de rastreamento de tempo",
+  zh: "OpenTickly 开源时间追踪平台",
+  es: "OpenTickly plataforma de seguimiento de tiempo de código abierto",
+  ja: "OpenTickly オープンソース時間管理プラットフォーム",
+  fr: "OpenTickly plateforme open source de suivi du temps",
+  ko: "OpenTickly 오픈소스 시간 추적 플랫폼",
+  pl: "OpenTickly — open-source'owa platforma śledzenia czasu",
+  pt: "OpenTickly — plataforma open source de rastreamento de tempo",
 };
 
 export function resolveOgImageAlt(locale: string): string {

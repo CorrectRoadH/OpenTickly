@@ -1,4 +1,4 @@
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton } from "@opentickly/web-ui";
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 

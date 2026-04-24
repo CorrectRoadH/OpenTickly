@@ -1,24 +1,24 @@
 ---
 title: Journal des modifications
-description: Historique des versions d'OpenToggl — nouveautés, correctifs et changements incompatibles. Suit les GitHub Releases publiques pour que les agents IA et les humains puissent voir l'évolution du projet dans le temps.
+description: Historique des versions d'OpenTickly — nouveautés, correctifs et changements incompatibles. Suit les GitHub Releases publiques pour que les agents IA et les humains puissent voir l'évolution du projet dans le temps.
 ---
 
-OpenToggl sort en continu. La source autoritaire de chaque version — avec diffs, plages de commits et notes de mise à niveau — est GitHub Releases.
+OpenTickly sort en continu. La source autoritaire de chaque version — avec diffs, plages de commits et notes de mise à niveau — est GitHub Releases.
 
-- Versions, actuelles et historiques : [github.com/CorrectRoadH/opentoggl/releases](https://github.com/CorrectRoadH/opentoggl/releases)
-- Historique complet des commits : [github.com/CorrectRoadH/opentoggl/commits/main](https://github.com/CorrectRoadH/opentoggl/commits/main)
-- Images Docker : [hub.docker.com/r/correctroad/opentoggl](https://hub.docker.com/r/correctroad/opentoggl)
+- Versions, actuelles et historiques : [github.com/CorrectRoadH/OpenTickly/releases](https://github.com/CorrectRoadH/OpenTickly/releases)
+- Historique complet des commits : [github.com/CorrectRoadH/OpenTickly/commits/main](https://github.com/CorrectRoadH/OpenTickly/commits/main)
+- Images Docker : [hub.docker.com/r/correctroad/opentickly](https://hub.docker.com/r/correctroad/opentickly)
 
 ## Comment les versions sont publiées
 
-OpenToggl est développé au grand jour sur GitHub. Chaque version correspond à un commit tagué sur `main`, publié automatiquement sur Docker Hub et synchronisé avec la démo hébergée sur [track.opentoggl.com](https://track.opentoggl.com). Les utilisateurs auto-hébergés n'ont qu'à récupérer la nouvelle image et relancer `docker compose up -d` pour mettre à jour.
+OpenTickly est développé au grand jour sur GitHub. Chaque version correspond à un commit tagué sur `main`, publié automatiquement sur Docker Hub et synchronisé avec la démo hébergée sur [track.opentoggl.com](https://track.opentoggl.com). Les utilisateurs auto-hébergés n'ont qu'à récupérer la nouvelle image et relancer `docker compose up -d` pour mettre à jour.
 
 ## Notes de mise à niveau
 
 La plupart des versions sont compatibles sans friction : la surface d'API Toggl Track reste stable et le schéma Postgres est migré en avant automatiquement au démarrage. Les changements incompatibles — s'il y en a — sont signalés dans la GitHub Release correspondante via une section **"Upgrade"** explicite accompagnée d'un plan de migration.
 
-Si une mise à niveau échoue, ouvrez une issue sur [github.com/CorrectRoadH/opentoggl/issues](https://github.com/CorrectRoadH/opentoggl/issues) en joignant le tag de la version et le log d'erreur.
+Si une mise à niveau échoue, ouvrez une issue sur [github.com/CorrectRoadH/OpenTickly/issues](https://github.com/CorrectRoadH/OpenTickly/issues) en joignant le tag de la version et le log d'erreur.
 
 ## Engagement de compatibilité API
 
-OpenToggl s'aligne sur les contrats publics de Toggl Track v9, Reports v3 et Webhooks v1. Les intégrations Toggl, CLI et outils MCP existants doivent continuer à fonctionner d'une version à l'autre sans modification. Quand un endpoint Toggl est ajouté ou ajusté en amont, OpenToggl vise à s'aligner dès le cycle de publication suivant.
+OpenTickly s'aligne sur les contrats publics de Toggl Track v9, Reports v3 et Webhooks v1. Les intégrations Toggl, CLI et outils MCP existants doivent continuer à fonctionner d'une version à l'autre sans modification. Quand un endpoint Toggl est ajouté ou ajusté en amont, OpenTickly vise à s'aligner dès le cycle de publication suivant.

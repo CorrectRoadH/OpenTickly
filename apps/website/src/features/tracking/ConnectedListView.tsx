@@ -1,5 +1,5 @@
 import { type ReactElement, useRef } from "react";
-import { useStableList } from "@opentoggl/web-ui";
+import { useStableList } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {

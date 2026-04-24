@@ -49,7 +49,7 @@ This repo is implemented from `docs/` and `openapi/`.
 Files in `openapi/` fall into two categories:
 
 - **Upstream (read-only)**: `toggl-track-api-v9.swagger.json`, `toggl-reports-v3.swagger.json`, `toggl-webhooks-v1.swagger.json`. These are external Toggl API specs we must stay compatible with. **Never modify these files.** Work around their quirks in code (e.g. skip validator, adapter layer).
-- **Ours (editable)**: `opentoggl-*.openapi.json`. These are our own API definitions. Edit these when adding or changing OpenToggl-specific endpoints.
+- **Ours (editable)**: `opentoggl-*.openapi.json`. These are our own API definitions. Edit these when adding or changing OpenTickly-specific endpoints.
 
 ## API Contract & Go Typing Rules
 

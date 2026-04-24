@@ -1,1 +1,1 @@
-export { useDismiss } from "@opentoggl/web-ui";
+export { useDismiss } from "@opentickly/web-ui";

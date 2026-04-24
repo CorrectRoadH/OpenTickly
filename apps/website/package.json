@@ -1,5 +1,5 @@
 {
-  "name": "@opentoggl/website",
+  "name": "@opentickly/website",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@hey-api/client-fetch": "catalog:",
-    "@opentoggl/shared-contracts": "workspace:*",
-    "@opentoggl/web-ui": "workspace:*",
+    "@opentickly/shared-contracts": "workspace:*",
+    "@opentickly/web-ui": "workspace:*",
     "@tanstack/react-query": "^5.99.2",
     "@tanstack/react-router": "^1.168.23",
     "@types/react-big-calendar": "catalog:",

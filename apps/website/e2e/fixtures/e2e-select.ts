@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 /**
  * Select an option from a custom SelectDropdown component (button + listbox).
  *
- * Works with the @opentoggl/web-ui SelectDropdown which renders:
+ * Works with the @opentickly/web-ui SelectDropdown which renders:
  *   <button data-testid="..." aria-haspopup="listbox"> (trigger)
  *   <div role="listbox"> → <button role="option"> (options)
  *

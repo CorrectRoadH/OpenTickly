@@ -2,7 +2,7 @@ import { type ReactElement, type ReactNode, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
-import { AppButton, PageLayout, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, PageLayout, SurfaceCard } from "@opentickly/web-ui";
 import { useTranslation } from "react-i18next";
 
 import i18n from "../../app/i18n.ts";

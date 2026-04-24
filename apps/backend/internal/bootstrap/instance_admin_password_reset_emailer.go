@@ -46,9 +46,9 @@ func (e *dbBackedPasswordResetEmailer) SendPasswordResetEmail(ctx context.Contex
 
 	resetURL := fmt.Sprintf("%s/reset-password?token=%s", siteURL, token)
 
-	subject := "Reset your OpenToggl password"
+	subject := "Reset your OpenTickly password"
 	body := fmt.Sprintf(`<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-<h2 style="color: #1a1a1a;">Reset your OpenToggl password</h2>
+<h2 style="color: #1a1a1a;">Reset your OpenTickly password</h2>
 <p>We received a request to reset the password for this account. Click the button below to choose a new password:</p>
 <p style="text-align: center; margin: 32px 0;">
   <a href="%s" style="background: #e05d26; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">

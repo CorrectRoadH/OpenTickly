@@ -3,7 +3,7 @@ import { type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LiveDuration } from "../features/tracking/LiveDuration.tsx";
 
-import { Dropdown, MenuSeparator, useDropdownClose } from "@opentoggl/web-ui";
+import { Dropdown, MenuSeparator, useDropdownClose } from "@opentickly/web-ui";
 
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
@@ -69,7 +69,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   // Uses a self-contained interval so the Shell component never re-renders.
   useEffect(() => {
     if (!runningEntry || !showTimeInTitle) {
-      document.title = "OpenToggl";
+      document.title = "OpenTickly";
       return;
     }
     function updateTitle() {
@@ -77,13 +77,13 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       const h = Math.floor(seconds / 3600);
       const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
       const s = String(seconds % 60).padStart(2, "0");
-      document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
+      document.title = `${h}:${m}:${s} \u00B7 OpenTickly`;
     }
     updateTitle();
     const id = setInterval(updateTitle, 1000);
     return () => {
       clearInterval(id);
-      document.title = "OpenToggl";
+      document.title = "OpenTickly";
     };
   }, [runningEntry, showTimeInTitle]);
 

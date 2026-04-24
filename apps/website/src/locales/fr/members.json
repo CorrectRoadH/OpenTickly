@@ -54,7 +54,7 @@
   "couldNotCopyInviteLink": "Impossible de copier le lien d'invitation",
   "acceptInviteEyebrow": "Invitation à l'espace de travail",
   "acceptInviteHeading": "Rejoindre {{workspace}}",
-  "acceptInviteBlurb": "{{inviter}} a invité {{email}} à rejoindre {{organization}} sur OpenToggl.",
+  "acceptInviteBlurb": "{{inviter}} a invité {{email}} à rejoindre {{organization}} sur OpenTickly.",
   "acceptInviteUnknownInviter": "Quelqu'un",
   "acceptInviteCreateAccount": "Créer un compte",
   "acceptInviteHaveAccount": "J'ai déjà un compte",

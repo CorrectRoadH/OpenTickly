@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { Link, Pin, Search } from "lucide-react";
-import { SelectDropdown } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentickly/web-ui";
 import { useTranslation } from "react-i18next";
 
 import { useSession } from "../../shared/session/session-context.tsx";

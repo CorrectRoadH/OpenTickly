@@ -2,12 +2,12 @@
 apiVersion: zeabur.com/v1
 kind: Template
 metadata:
-  name: OpenToggl
+  name: OpenTickly
 spec:
   description: |
     A free, private-first, AI-friendly self-hosted alternative to Toggl Track. Compatible with Toggl Track v9 and Reports v3 APIs so you can move data in and out without any loss.
-  icon: https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/apps/website/public/favicon.svg
-  coverImage: https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/apps/landing/public/hero/opentoggl-calendar-view.webp
+  icon: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/website/public/favicon.svg
+  coverImage: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/landing/public/hero/opentoggl-calendar-view.webp
   tags:
     - Productivity
     - Tool
@@ -15,11 +15,11 @@ spec:
     - key: PUBLIC_DOMAIN
       type: DOMAIN
       name: Public Domain
-      description: The public domain used to access OpenToggl from your browser and the toggl-cli.
+      description: The public domain used to access OpenTickly from your browser and the toggl-cli.
   readme: |
-    # OpenToggl on Zeabur
+    # OpenTickly on Zeabur
 
-    [OpenToggl](https://github.com/CorrectRoadH/opentoggl) is a free, private-first, AI-friendly alternative to Toggl Track. Bring your own data, keep your existing Toggl workflow, and pay only for what you host.
+    [OpenTickly](https://github.com/CorrectRoadH/OpenTickly) is a free, private-first, AI-friendly alternative to Toggl Track. Bring your own data, keep your existing Toggl workflow, and pay only for what you host.
 
     This template provisions everything you need in one click:
 
@@ -41,13 +41,13 @@ spec:
     ## Updates
 
     To upgrade, change the image tag of the `opentoggl` service to a newer release from
-    [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) and redeploy.
+    [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) and redeploy.
 
     ## License & attribution
 
-    OpenToggl is licensed under [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
-    Source: <https://github.com/CorrectRoadH/opentoggl> · Website: <https://opentoggl.com>.
-    OpenToggl's design and API surface are inspired by [Toggl](https://toggl.com).
+    OpenTickly is licensed under [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
+    Source: <https://github.com/CorrectRoadH/OpenTickly> · Website: <https://opentoggl.com>.
+    OpenTickly's design and API surface are inspired by [Toggl](https://toggl.com).
   services:
     - name: postgresql
       icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
@@ -133,7 +133,7 @@ spec:
             readonly: true
 
     - name: opentoggl
-      icon: https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/apps/website/public/favicon.svg
+      icon: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/website/public/favicon.svg
       template: PREBUILT_V2
       dependencies:
         - postgresql
@@ -141,7 +141,7 @@ spec:
       domainKey: PUBLIC_DOMAIN
       spec:
         source:
-          image: ghcr.io/correctroadh/opentoggl:0.2
+          image: ghcr.io/correctroadh/opentickly:0.2
           command:
             - /bin/sh
             - -c
@@ -190,11 +190,11 @@ localization:
     variables:
       - key: PUBLIC_DOMAIN
         name: 公開網域
-        description: 用來透過瀏覽器及 toggl-cli 存取 OpenToggl 的公開網域。
+        description: 用來透過瀏覽器及 toggl-cli 存取 OpenTickly 的公開網域。
     readme: |
-      # OpenToggl on Zeabur
+      # OpenTickly on Zeabur
 
-      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) 是一款免費、隱私優先、對 AI 友善的 Toggl Track 替代方案。資料完全屬於你,既能保留現有的 Toggl 工作流程,又只需支付實際自託管的成本。
+      [OpenTickly](https://github.com/CorrectRoadH/OpenTickly) 是一款免費、隱私優先、對 AI 友善的 Toggl Track 替代方案。資料完全屬於你,既能保留現有的 Toggl 工作流程,又只需支付實際自託管的成本。
 
       此模板將一鍵部署所需的全部服務:
 
@@ -215,13 +215,13 @@ localization:
 
       ## 升級
 
-      若要升級,將 `opentoggl` 服務的 image tag 換成 [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) 上的新版本後重新部署即可。
+      若要升級,將 `opentoggl` 服務的 image tag 換成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本後重新部署即可。
 
       ## 授權與致謝
 
-      OpenToggl 採用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 授權。
-      原始碼:<https://github.com/CorrectRoadH/opentoggl> · 官方網站:<https://opentoggl.com>。
-      OpenToggl 的設計與 API 介面皆受 [Toggl](https://toggl.com) 啟發。
+      OpenTickly 採用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 授權。
+      原始碼:<https://github.com/CorrectRoadH/OpenTickly> · 官方網站:<https://opentoggl.com>。
+      OpenTickly 的設計與 API 介面皆受 [Toggl](https://toggl.com) 啟發。
 
   zh-CN:
     description: |
@@ -229,11 +229,11 @@ localization:
     variables:
       - key: PUBLIC_DOMAIN
         name: 公开域名
-        description: 用于通过浏览器以及 toggl-cli 访问 OpenToggl 的公开域名。
+        description: 用于通过浏览器以及 toggl-cli 访问 OpenTickly 的公开域名。
     readme: |
-      # OpenToggl on Zeabur
+      # OpenTickly on Zeabur
 
-      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) 是一款免费、隐私优先、对 AI 友好的 Toggl Track 替代方案。数据完全归你所有,既能保留现有的 Toggl 工作流,又只需支付实际自托管的成本。
+      [OpenTickly](https://github.com/CorrectRoadH/OpenTickly) 是一款免费、隐私优先、对 AI 友好的 Toggl Track 替代方案。数据完全归你所有,既能保留现有的 Toggl 工作流,又只需支付实际自托管的成本。
 
       此模板将一键部署所需的全部服务:
 
@@ -254,13 +254,13 @@ localization:
 
       ## 升级
 
-      升级时,将 `opentoggl` 服务的 image tag 换成 [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) 上的新版本,然后重新部署即可。
+      升级时,将 `opentoggl` 服务的 image tag 换成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本,然后重新部署即可。
 
       ## 许可与致谢
 
-      OpenToggl 采用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 许可协议。
-      源代码:<https://github.com/CorrectRoadH/opentoggl> · 官方网站:<https://opentoggl.com>。
-      OpenToggl 的设计与 API 接口皆受 [Toggl](https://toggl.com) 启发。
+      OpenTickly 采用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 许可协议。
+      源代码:<https://github.com/CorrectRoadH/OpenTickly> · 官方网站:<https://opentoggl.com>。
+      OpenTickly 的设计与 API 接口皆受 [Toggl](https://toggl.com) 启发。
 
   ja-JP:
     description: |
@@ -268,11 +268,11 @@ localization:
     variables:
       - key: PUBLIC_DOMAIN
         name: 公開ドメイン
-        description: ブラウザおよび toggl-cli から OpenToggl にアクセスするための公開ドメイン。
+        description: ブラウザおよび toggl-cli から OpenTickly にアクセスするための公開ドメイン。
     readme: |
-      # OpenToggl on Zeabur
+      # OpenTickly on Zeabur
 
-      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) は、無料でプライバシー優先、AI に優しい Toggl Track の代替サービスです。データはすべてあなたのもの、Toggl の既存ワークフローを保ちながら、実際にホストする分だけの費用で済みます。
+      [OpenTickly](https://github.com/CorrectRoadH/OpenTickly) は、無料でプライバシー優先、AI に優しい Toggl Track の代替サービスです。データはすべてあなたのもの、Toggl の既存ワークフローを保ちながら、実際にホストする分だけの費用で済みます。
 
       このテンプレートは必要な構成を一括でデプロイします:
 
@@ -293,13 +293,13 @@ localization:
 
       ## アップデート
 
-      アップデートする場合は、`opentoggl` サービスの image タグを [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) の新しいリリースに変更して再デプロイしてください。
+      アップデートする場合は、`opentoggl` サービスの image タグを [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) の新しいリリースに変更して再デプロイしてください。
 
       ## ライセンスとクレジット
 
-      OpenToggl は [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) ライセンスです。
-      ソース:<https://github.com/CorrectRoadH/opentoggl> · 公式サイト:<https://opentoggl.com>。
-      OpenToggl のデザインと API は [Toggl](https://toggl.com) にインスパイアされています。
+      OpenTickly は [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) ライセンスです。
+      ソース:<https://github.com/CorrectRoadH/OpenTickly> · 公式サイト:<https://opentoggl.com>。
+      OpenTickly のデザインと API は [Toggl](https://toggl.com) にインスパイアされています。
 
   es-ES:
     description: |
@@ -307,11 +307,11 @@ localization:
     variables:
       - key: PUBLIC_DOMAIN
         name: Dominio Público
-        description: El dominio público usado para acceder a OpenToggl desde tu navegador y desde toggl-cli.
+        description: El dominio público usado para acceder a OpenTickly desde tu navegador y desde toggl-cli.
     readme: |
-      # OpenToggl en Zeabur
+      # OpenTickly en Zeabur
 
-      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) es una alternativa a Toggl Track, gratuita, centrada en la privacidad y compatible con IA. Conserva tus datos, mantén tu flujo de trabajo de Toggl y paga solo por lo que alojes.
+      [OpenTickly](https://github.com/CorrectRoadH/OpenTickly) es una alternativa a Toggl Track, gratuita, centrada en la privacidad y compatible con IA. Conserva tus datos, mantén tu flujo de trabajo de Toggl y paga solo por lo que alojes.
 
       Esta plantilla provisiona todo lo necesario en un clic:
 
@@ -332,13 +332,13 @@ localization:
 
       ## Actualizaciones
 
-      Para actualizar, cambia el tag de imagen del servicio `opentoggl` a una versión más reciente de [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) y vuelve a desplegar.
+      Para actualizar, cambia el tag de imagen del servicio `opentoggl` a una versión más reciente de [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) y vuelve a desplegar.
 
       ## Licencia y atribución
 
-      OpenToggl está licenciado bajo [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
-      Código: <https://github.com/CorrectRoadH/opentoggl> · Sitio: <https://opentoggl.com>.
-      El diseño y la superficie de API de OpenToggl están inspirados en [Toggl](https://toggl.com).
+      OpenTickly está licenciado bajo [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
+      Código: <https://github.com/CorrectRoadH/OpenTickly> · Sitio: <https://opentoggl.com>.
+      El diseño y la superficie de API de OpenTickly están inspirados en [Toggl](https://toggl.com).
 
   id-ID:
     description: |
@@ -346,11 +346,11 @@ localization:
     variables:
       - key: PUBLIC_DOMAIN
         name: Domain Publik
-        description: Domain publik untuk mengakses OpenToggl dari browser dan toggl-cli.
+        description: Domain publik untuk mengakses OpenTickly dari browser dan toggl-cli.
     readme: |
-      # OpenToggl di Zeabur
+      # OpenTickly di Zeabur
 
-      [OpenToggl](https://github.com/CorrectRoadH/opentoggl) adalah alternatif Toggl Track yang gratis, mengutamakan privasi, dan ramah AI. Data sepenuhnya milik Anda, alur kerja Toggl tetap, dan Anda hanya membayar untuk apa yang di-host.
+      [OpenTickly](https://github.com/CorrectRoadH/OpenTickly) adalah alternatif Toggl Track yang gratis, mengutamakan privasi, dan ramah AI. Data sepenuhnya milik Anda, alur kerja Toggl tetap, dan Anda hanya membayar untuk apa yang di-host.
 
       Template ini menyediakan semua yang dibutuhkan dalam satu klik:
 
@@ -371,10 +371,10 @@ localization:
 
       ## Pembaruan
 
-      Untuk memperbarui, ubah tag image service `opentoggl` ke rilis terbaru dari [GHCR](https://github.com/CorrectRoadH/opentoggl/pkgs/container/opentoggl) lalu deploy ulang.
+      Untuk memperbarui, ubah tag image service `opentoggl` ke rilis terbaru dari [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) lalu deploy ulang.
 
       ## Lisensi & atribusi
 
-      OpenToggl dilisensikan di bawah [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
-      Kode sumber: <https://github.com/CorrectRoadH/opentoggl> · Situs: <https://opentoggl.com>.
-      Desain dan permukaan API OpenToggl terinspirasi dari [Toggl](https://toggl.com).
+      OpenTickly dilisensikan di bawah [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
+      Kode sumber: <https://github.com/CorrectRoadH/OpenTickly> · Situs: <https://opentoggl.com>.
+      Desain dan permukaan API OpenTickly terinspirasi dari [Toggl](https://toggl.com).

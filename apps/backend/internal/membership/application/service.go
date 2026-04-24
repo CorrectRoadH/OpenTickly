@@ -362,7 +362,7 @@ func (service *Service) sendInviteEmail(
 
 	workspaceName := strings.TrimSpace(member.FullName)
 	if workspaceName == "" {
-		workspaceName = "OpenToggl"
+		workspaceName = "OpenTickly"
 	}
 	// Workspace name is not carried on the member row; fall back to a
 	// generic string if we can't resolve it here. The AcceptInvite flow
@@ -394,7 +394,7 @@ func (service *Service) resolveSiteURL(ctx context.Context) (string, error) {
 
 // workspaceNameForInvite returns a best-effort human-readable workspace name
 // for invite-email copy. It does not fail the invite flow if the lookup
-// errors — the email just falls back to "your OpenToggl workspace".
+// errors — the email just falls back to "your OpenTickly workspace".
 func workspaceNameForInvite(ctx context.Context, service *Service, workspaceID int64) string {
 	type workspaceNameLookup interface {
 		WorkspaceName(ctx context.Context, workspaceID int64) (string, bool, error)
@@ -404,7 +404,7 @@ func workspaceNameForInvite(ctx context.Context, service *Service, workspaceID i
 			return name
 		}
 	}
-	return "your OpenToggl workspace"
+	return "your OpenTickly workspace"
 }
 
 // composeInviteEmail builds the HTML email body used for both the initial
@@ -412,7 +412,7 @@ func workspaceNameForInvite(ctx context.Context, service *Service, workspaceID i
 // so the visual style stays consistent across transactional email.
 func composeInviteEmail(inviterName, workspaceName, token, siteURL string, expiresAt time.Time) (string, string) {
 	acceptURL := fmt.Sprintf("%s/accept-invite?token=%s", strings.TrimRight(siteURL, "/"), token)
-	subject := fmt.Sprintf("You've been invited to %s on OpenToggl", workspaceName)
+	subject := fmt.Sprintf("You've been invited to %s on OpenTickly", workspaceName)
 	inviterBlurb := "Someone"
 	if strings.TrimSpace(inviterName) != "" {
 		inviterBlurb = inviterName
@@ -423,7 +423,7 @@ func composeInviteEmail(inviterName, workspaceName, token, siteURL string, expir
 	}
 	body := fmt.Sprintf(`<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
 <h2 style="color: #1a1a1a;">You've been invited to %s</h2>
-<p>%s has invited you to join <strong>%s</strong> on OpenToggl.</p>
+<p>%s has invited you to join <strong>%s</strong> on OpenTickly.</p>
 <p style="text-align: center; margin: 32px 0;">
   <a href="%s" style="background: #e05d26; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
     Accept invitation

@@ -201,7 +201,7 @@ func (s *Store) GetConfig(ctx context.Context) (application.InstanceConfigView, 
 		 FROM instance_admin_config WHERE id = 1`,
 	).Scan(&cfg.SiteURL, &cfg.SenderEmail, &cfg.SenderName, &cfg.SMTPHost, &cfg.SMTPPort, &cfg.SMTPUsername, &cfg.SMTPPassword, &cfg.EmailVerificationRequired, &cfg.UpdatedAt)
 	if err == pgx.ErrNoRows {
-		return application.InstanceConfigView{SenderName: "OpenToggl"}, nil
+		return application.InstanceConfigView{SenderName: "OpenTickly"}, nil
 	}
 	if err != nil {
 		return application.InstanceConfigView{}, fmt.Errorf("instance-admin get config: %w", err)
@@ -213,7 +213,7 @@ func (s *Store) GetConfig(ctx context.Context) (application.InstanceConfigView, 
 func (s *Store) UpdateConfig(ctx context.Context, update application.InstanceConfigUpdate) (application.InstanceConfigView, error) {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO instance_admin_config (id, site_url, sender_email, sender_name, smtp_host, smtp_port, smtp_username, smtp_password, updated_at)
-		 VALUES (1, '', '', 'OpenToggl', '', 0, '', '', now())
+		 VALUES (1, '', '', 'OpenTickly', '', 0, '', '', now())
 		 ON CONFLICT (id) DO NOTHING`,
 	)
 	if err != nil {

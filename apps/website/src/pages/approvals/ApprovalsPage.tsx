@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
-import { PageHeader } from "@opentoggl/web-ui";
+import { PageHeader } from "@opentickly/web-ui";
 
 import { useSession } from "../../shared/session/session-context.tsx";
 import { ApprovalsIcon } from "../../shared/ui/icons.tsx";

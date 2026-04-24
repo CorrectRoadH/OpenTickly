@@ -67,7 +67,7 @@ func (server *publicTrackUnimplementedServer) GetIcal(ctx echo.Context, token st
 
 // Calendar integration endpoints are intentionally unimplemented.
 // These require third-party OAuth connections (Google Calendar, Outlook)
-// which are not supported in self-hosted OpenToggl deployments.
+// which are not supported in self-hosted OpenTickly deployments.
 // Upstream Toggl Track provides these as a SaaS-only feature.
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendar(ctx echo.Context) error {

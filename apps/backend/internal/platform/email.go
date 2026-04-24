@@ -120,9 +120,9 @@ func (s *EmailSender) Send(ctx context.Context, to string, subject string, bodyH
 
 // SendTest sends a verification email to confirm SMTP is working.
 func (s *EmailSender) SendTest(ctx context.Context, to string, siteURL string) error {
-	subject := "OpenToggl SMTP Test"
+	subject := "OpenTickly SMTP Test"
 	body := fmt.Sprintf(`<h2>SMTP Configuration Verified</h2>
-<p>This is a test email from your OpenToggl instance.</p>
+<p>This is a test email from your OpenTickly instance.</p>
 <p>Site URL: <a href="%s">%s</a></p>
 <p>If you received this email, your SMTP settings are working correctly.</p>`,
 		siteURL, siteURL)

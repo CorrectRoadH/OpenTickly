@@ -1,7 +1,13 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppButton, DropdownMenu, IconButton, MenuItem, useDropdownClose } from "@opentoggl/web-ui";
+import {
+  AppButton,
+  DropdownMenu,
+  IconButton,
+  MenuItem,
+  useDropdownClose,
+} from "@opentickly/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 

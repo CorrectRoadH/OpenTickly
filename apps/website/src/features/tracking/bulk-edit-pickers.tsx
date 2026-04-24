@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppCheckbox } from "@opentoggl/web-ui";
+import { AppCheckbox } from "@opentickly/web-ui";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";

@@ -5,7 +5,7 @@ import {
   MenuSeparator,
   SelectButton,
   useDropdownClose,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 

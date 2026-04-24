@@ -8,7 +8,7 @@ import {
   type DirectoryTableColumn,
   DirectoryTableRenderCountBadge,
   SelectDropdown,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import { MembersIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {

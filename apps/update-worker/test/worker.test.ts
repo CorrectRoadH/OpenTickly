@@ -21,8 +21,8 @@ function makeCtx(): ExecutionContext {
 function githubRelease(overrides: Partial<GithubRelease> = {}): GithubRelease {
   return {
     tag_name: "v0.1.0",
-    name: "OpenToggl 0.1.0",
-    html_url: "https://github.com/CorrectRoadH/opentoggl/releases/tag/v0.1.0",
+    name: "OpenTickly 0.1.0",
+    html_url: "https://github.com/CorrectRoadH/OpenTickly/releases/tag/v0.1.0",
     published_at: "2026-04-16T00:00:00Z",
     body: "Initial public release.",
     draft: false,

@@ -3,7 +3,7 @@ import { type InputHTMLAttributes, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
-import { AppCheckbox } from "@opentoggl/web-ui";
+import { AppCheckbox } from "@opentickly/web-ui";
 
 import { deleteWorkspaceLogo, client } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";

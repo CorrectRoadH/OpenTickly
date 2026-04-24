@@ -1,4 +1,11 @@
 export const homeContentZh = {
+  notice: {
+    title: "重要通知",
+    body: "我们的 GitHub 仓库因商标投诉已被下架。我们会尽快给项目改名，避免对 Toggl 造成影响。这完全是我自己的无知。我们真心喜欢 Toggl——它是一款非常棒的软件，对于造成的困扰深表歉意。感谢大家的理解。",
+  },
+
+  nameTbd: "OpenTickly",
+
   hero: {
     taglineBefore: "",
     taglineAfter: "的 Toggl 替代方案。",
@@ -38,10 +45,10 @@ export const homeContentZh = {
       },
       {
         title: "源码",
-        value: "CorrectRoadH/opentoggl",
+        value: "CorrectRoadH/OpenTickly",
         body: "代码、issue、讨论，全部公开。",
         cta: "打开 GitHub",
-        href: "https://github.com/CorrectRoadH/opentoggl",
+        href: "https://github.com/CorrectRoadH/OpenTickly",
       },
       {
         title: "文档",
@@ -57,7 +64,7 @@ export const homeContentZh = {
     {
       question: "能直接替代 Toggl Track 吗？",
       answer:
-        "能。OpenToggl 兼容 Toggl 的 Track、Reports 和 Webhooks API。如果你现在用的工具是通过 Toggl API 对接的，切过来基本不用改。",
+        "能。OpenTickly 兼容 Toggl 的 Track、Reports 和 Webhooks API。如果你现在用的工具是通过 Toggl API 对接的，切过来基本不用改。",
     },
     {
       question: "能把 Toggl 的数据迁移过来吗？",

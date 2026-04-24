@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AppCheckbox, AppInput, useDismiss } from "@opentoggl/web-ui";
+import { AppCheckbox, AppInput, useDismiss } from "@opentickly/web-ui";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
 

@@ -1,5 +1,5 @@
 import { BaseProvider } from "baseui";
-import { appTheme } from "@opentoggl/web-ui";
+import { appTheme } from "@opentickly/web-ui";
 import { type ReactNode } from "react";
 import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";

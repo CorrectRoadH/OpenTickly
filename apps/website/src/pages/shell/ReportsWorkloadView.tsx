@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SelectDropdown } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentickly/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";

@@ -1,4 +1,4 @@
-# OpenToggl Design System
+# OpenTickly Design System
 
 This document is the visual source of truth for the website workspace UI until a fuller token system is implemented in code.
 
@@ -12,7 +12,7 @@ This document is intentionally opinionated. If current code differs, the code sh
 
 ## 1. Core Visual Direction
 
-OpenToggl workspace UI uses a dense dark enterprise UI:
+OpenTickly workspace UI uses a dense dark enterprise UI:
 
 - Black-first workspace chrome
 - Charcoal content surfaces
@@ -147,7 +147,7 @@ Rules:
 
 ### 2.5D Interaction Model
 
-OpenToggl uses a **tactile 2.5D interaction style** inspired by PostHog. Every interactive element communicates depth through shadow, position, and border shifts. The UI should feel like physical controls that respond to touch — buttons press down, cards lift on hover, surfaces have clear Z-layer separation.
+OpenTickly uses a **tactile 2.5D interaction style** inspired by PostHog. Every interactive element communicates depth through shadow, position, and border shifts. The UI should feel like physical controls that respond to touch — buttons press down, cards lift on hover, surfaces have clear Z-layer separation.
 
 Core depth principles:
 
@@ -514,7 +514,7 @@ Rules:
 
 ## 8. Motion & Interaction System
 
-OpenToggl uses a restrained but tactile motion system. Every animation serves a purpose: confirming interaction, guiding attention, or expressing spatial relationships.
+OpenTickly uses a restrained but tactile motion system. Every animation serves a purpose: confirming interaction, guiding attention, or expressing spatial relationships.
 
 ### Easing Curves
 

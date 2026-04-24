@@ -1,4 +1,4 @@
-import { AppSurfaceState, PageLayout, pageLayoutTabClass, SurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, PageLayout, pageLayoutTabClass, SurfaceCard } from "@opentickly/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";

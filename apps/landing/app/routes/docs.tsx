@@ -54,7 +54,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
     },
   ) {
     const siteUrl = resolveSiteUrl();
-    const description = frontmatter.description ?? "OpenToggl documentation";
+    const description = frontmatter.description ?? "OpenTickly documentation";
     const localePrefix = locale === "en" ? "" : `/${locale}`;
     const breadcrumbItems = [
       { name: siteName, url: buildCanonicalUrl(`${localePrefix}/`, siteUrl) },

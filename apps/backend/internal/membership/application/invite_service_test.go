@@ -325,8 +325,8 @@ func TestInviteWorkspaceMemberGeneratesTokenAndSendsEmail(t *testing.T) {
 	if sender.lastTo != "invitee@example.com" {
 		t.Fatalf("expected recipient invitee@example.com, got %q", sender.lastTo)
 	}
-	if got := sender.lastSubj; got == "" || !contains(got, "OpenToggl") {
-		t.Fatalf("expected subject to mention OpenToggl, got %q", got)
+	if got := sender.lastSubj; got == "" || !contains(got, "OpenTickly") {
+		t.Fatalf("expected subject to mention OpenTickly, got %q", got)
 	}
 }
 

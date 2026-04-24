@@ -1,9 +1,9 @@
 ---
 title: Self-Hosting
-description: Deploy OpenToggl on your own machine — Docker Compose brings up Web + API + Postgres + Redis in one command, online in 5 minutes. 100% Toggl API compatible, works with the official clients out of the box.
+description: Deploy OpenTickly on your own machine — Docker Compose brings up Web + API + Postgres + Redis in one command, online in 5 minutes. 100% Toggl API compatible, works with the official clients out of the box.
 ---
 
-Running OpenToggl on your own machine only takes a single `docker-compose.yml`. Here's the full path from zero to working.
+Running OpenTickly on your own machine only takes a single `docker-compose.yml`. Here's the full path from zero to working.
 
 ## System Requirements
 
@@ -25,7 +25,7 @@ Create a new directory and pull down the official compose file:
 mkdir -p opentoggl && cd opentoggl
 
 wget -O docker-compose.yml \
-  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+  https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
 This compose file defines three containers:
@@ -69,13 +69,13 @@ Open `http://<your-ip>:8080` in a browser, register the first account, and start
 
 ### Mobile
 
-There's no official mobile app yet, but you can add the web UI to your phone's home screen (PWA). Third-party Toggl clients such as timery — we're currently reaching out to their developers about OpenToggl support.
+There's no official mobile app yet, but you can add the web UI to your phone's home screen (PWA). Third-party Toggl clients such as timery — we're currently reaching out to their developers about OpenTickly support.
 
 ---
 
 ## Hook Up AI Agents
 
-OpenToggl has no 30 requests/hour rate limit, which means Claude, Cursor, and similar agents can go all-in. Pair it with [`toggl-cli`](/docs/ai-integration) to install the skill pack into an agent environment, and in a few minutes you can have AI start/stop timers and tidy up projects for you.
+OpenTickly has no 30 requests/hour rate limit, which means Claude, Cursor, and similar agents can go all-in. Pair it with [`toggl-cli`](/docs/ai-integration) to install the skill pack into an agent environment, and in a few minutes you can have AI start/stop timers and tidy up projects for you.
 
 ## Upgrade
 
@@ -88,13 +88,13 @@ docker compose up -d
 
 ## Deploy to NAS / Homelab
 
-OpenToggl runs on anything that supports Docker Compose. The flows below are just the same steps wrapped in each platform's UI — the underlying commands are identical.
+OpenTickly runs on anything that supports Docker Compose. The flows below are just the same steps wrapped in each platform's UI — the underlying commands are identical.
 
 ### CasaOS
 
 1. Open the CasaOS dashboard
 2. Go to **App Store** → **Custom Install** → **Import docker-compose**
-3. Paste the contents of [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+3. Paste the contents of [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 4. Set the **Web UI** port to `8080` and save
 5. Launch from the dashboard
 
@@ -110,7 +110,7 @@ Synology DSM 7.2+ supports Docker Compose through **Container Manager**:
 
 1. Open **Container Manager** → **Project** → **Create**
 2. Set a project name, e.g. `opentoggl`
-3. Choose **Use docker-compose.yml** and paste the [compose file](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+3. Choose **Use docker-compose.yml** and paste the [compose file](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 4. Click through the wizard to finish
 
 <Callout type="info">
@@ -125,7 +125,7 @@ Synology DSM 7.2+ supports Docker Compose through **Container Manager**:
 1. Open the **Docker** app from the fnOS desktop
 2. In the left sidebar, choose **Compose** → **New Project**
 3. Project name `opentoggl`, leave the storage path at its default
-4. Paste the [compose file](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) into **Compose Content**
+4. Paste the [compose file](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml) into **Compose Content**
 5. Click **Deploy** and wait for all three containers to turn green
 
 ### Other Platforms
@@ -162,5 +162,5 @@ Everything else (database name, user, image tags, internal connection strings, v
 ## Next Steps
 
 - [AI Integration](/docs/ai-integration) — Connect Claude, Cursor, and friends to your own instance
-- [GitHub Repository](https://github.com/CorrectRoadH/opentoggl) — Source, Issues, Discussions
-- Hitting issues during deployment? Let us know in [Issues](https://github.com/CorrectRoadH/opentoggl/issues)
+- [GitHub Repository](https://github.com/CorrectRoadH/OpenTickly) — Source, Issues, Discussions
+- Hitting issues during deployment? Let us know in [Issues](https://github.com/CorrectRoadH/OpenTickly/issues)

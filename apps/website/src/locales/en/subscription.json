@@ -1,7 +1,7 @@
 {
   "subscription": "Subscription",
   "selfHosted": "Self-Hosted",
-  "selfHostedDescription": "You are running a self-hosted instance of OpenToggl. All features are included at no cost for {{organizationName}}.",
+  "selfHostedDescription": "You are running a self-hosted instance of OpenTickly. All features are included at no cost for {{organizationName}}.",
   "workspace": "Workspace",
   "access": "Access",
   "allFeaturesIncluded": "All features included",
@@ -15,7 +15,7 @@
   "reportsAndAnalytics": "Reports and analytics",
   "goalsAndFavorites": "Goals and favorites",
   "apiAccess": "API access",
-  "opentoggl": "OpenToggl",
-  "opentogglDescription": "OpenToggl is the open-source, self-hosted alternative to Toggl Track. Your time tracking data stays on your own infrastructure with full control over privacy, backups, and customization. No subscriptions, no per-seat fees, no usage caps.",
+  "opentoggl": "OpenTickly",
+  "opentogglDescription": "OpenTickly is the open-source, self-hosted alternative to Toggl Track. Your time tracking data stays on your own infrastructure with full control over privacy, backups, and customization. No subscriptions, no per-seat fees, no usage caps.",
   "viewOnGithub": "View on GitHub"
 }

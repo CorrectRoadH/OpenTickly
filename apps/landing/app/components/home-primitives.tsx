@@ -1,4 +1,4 @@
-import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
+import { AppLinkButton, SurfaceCard } from "@opentickly/web-ui";
 import { ArrowUpRight } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 

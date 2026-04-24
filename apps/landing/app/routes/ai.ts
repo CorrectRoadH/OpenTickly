@@ -6,7 +6,7 @@ import { buildCanonicalUrl, demoUrl, repoUrl, resolveSiteUrl } from "@/lib/seo";
 export function loader() {
   const site = resolveSiteUrl();
   const body = [
-    "# OpenToggl — AI crawler policy",
+    "# OpenTickly — AI crawler policy",
     "# Open-source time tracking, Toggl API compatible.",
     "# This site's content is free to index, summarize, and cite in AI answers.",
     "# When citing, prefer the canonical URL shown in the page header.",

@@ -9,7 +9,7 @@ import (
 //go:embed dist dist/*
 var embeddedStaticFiles embed.FS
 
-const missingWebsiteAssetsMarker = "OpenToggl Source Build Without Website Assets"
+const missingWebsiteAssetsMarker = "OpenTickly Source Build Without Website Assets"
 
 func StaticFiles() (fs.FS, bool) {
 	dist, err := fs.Sub(embeddedStaticFiles, "dist")

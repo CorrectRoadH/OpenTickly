@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { AppButton, AppCheckbox, SelectDropdown } from "@opentoggl/web-ui";
+import { AppButton, AppCheckbox, SelectDropdown } from "@opentickly/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";

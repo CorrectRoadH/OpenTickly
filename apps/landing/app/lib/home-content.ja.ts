@@ -1,4 +1,11 @@
 export const homeContentJa = {
+  notice: {
+    title: "重要なお知らせ",
+    body: "商標に関する申し立てにより、GitHub リポジトリが取り下げられました。Toggl への影響を避けるため、できるだけ早くプロジェクト名を変更いたします。これは完全に私自身の無知によるものです。私たちは Toggl を心から愛用しており、素晴らしいプロダクトだと思っています。ご迷惑をおかけして申し訳ありません。ご理解のほどよろしくお願いいたします。",
+  },
+
+  nameTbd: "OpenTickly",
+
   hero: {
     taglineBefore: "",
     taglineAfter: "な Toggl 代替ツール。",
@@ -38,10 +45,10 @@ export const homeContentJa = {
       },
       {
         title: "ソースコード",
-        value: "CorrectRoadH/opentoggl",
+        value: "CorrectRoadH/OpenTickly",
         body: "コード、Issue、ディスカッション — すべて公開。",
         cta: "GitHub を開く",
-        href: "https://github.com/CorrectRoadH/opentoggl",
+        href: "https://github.com/CorrectRoadH/OpenTickly",
       },
       {
         title: "ドキュメント",
@@ -57,7 +64,7 @@ export const homeContentJa = {
     {
       question: "Toggl Track の代わりに使えますか？",
       answer:
-        "はい。OpenToggl は Toggl の Track、Reports、Webhooks API と互換性があります。Toggl API 経由で接続しているツールなら、変更なしでそのまま動くはずです。",
+        "はい。OpenTickly は Toggl の Track、Reports、Webhooks API と互換性があります。Toggl API 経由で接続しているツールなら、変更なしでそのまま動くはずです。",
     },
     {
       question: "Toggl のデータを移行できますか？",

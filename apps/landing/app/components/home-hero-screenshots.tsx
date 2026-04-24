@@ -13,44 +13,44 @@ const images = [
 
 const altByLocale: Record<Locale, Record<string, string>> = {
   en: {
-    overview: "OpenToggl time tracking overview with timer and entries",
-    free: "OpenToggl free and open source time tracking",
-    calendar: "OpenToggl calendar view showing tracked time by day",
+    overview: "OpenTickly time tracking overview with timer and entries",
+    free: "OpenTickly free and open source time tracking",
+    calendar: "OpenTickly calendar view showing tracked time by day",
   },
   zh: {
-    overview: "OpenToggl 时间追踪概览，含计时器和条目",
-    free: "OpenToggl 免费开源时间追踪",
-    calendar: "OpenToggl 日历视图，按天展示追踪时间",
+    overview: "OpenTickly 时间追踪概览，含计时器和条目",
+    free: "OpenTickly 免费开源时间追踪",
+    calendar: "OpenTickly 日历视图，按天展示追踪时间",
   },
   es: {
-    overview: "Vista general de seguimiento de tiempo de OpenToggl",
-    free: "OpenToggl seguimiento de tiempo gratuito y de código abierto",
-    calendar: "Vista de calendario de OpenToggl mostrando tiempo por día",
+    overview: "Vista general de seguimiento de tiempo de OpenTickly",
+    free: "OpenTickly seguimiento de tiempo gratuito y de código abierto",
+    calendar: "Vista de calendario de OpenTickly mostrando tiempo por día",
   },
   ja: {
-    overview: "OpenToggl タイムトラッキング概要（タイマーとエントリ付き）",
-    free: "OpenToggl 無料オープンソースのタイムトラッキング",
-    calendar: "OpenToggl カレンダービュー（日別の追跡時間表示）",
+    overview: "OpenTickly タイムトラッキング概要（タイマーとエントリ付き）",
+    free: "OpenTickly 無料オープンソースのタイムトラッキング",
+    calendar: "OpenTickly カレンダービュー（日別の追跡時間表示）",
   },
   fr: {
-    overview: "Vue d'ensemble du suivi du temps OpenToggl avec minuteur et entrées",
-    free: "OpenToggl suivi du temps gratuit et open source",
-    calendar: "Vue calendrier OpenToggl affichant le temps suivi par jour",
+    overview: "Vue d'ensemble du suivi du temps OpenTickly avec minuteur et entrées",
+    free: "OpenTickly suivi du temps gratuit et open source",
+    calendar: "Vue calendrier OpenTickly affichant le temps suivi par jour",
   },
   ko: {
-    overview: "OpenToggl 시간 추적 개요 (타이머 및 항목 포함)",
-    free: "OpenToggl 무료 오픈소스 시간 추적",
-    calendar: "OpenToggl 캘린더 뷰 (일별 추적 시간 표시)",
+    overview: "OpenTickly 시간 추적 개요 (타이머 및 항목 포함)",
+    free: "OpenTickly 무료 오픈소스 시간 추적",
+    calendar: "OpenTickly 캘린더 뷰 (일별 추적 시간 표시)",
   },
   pl: {
-    overview: "Przegląd śledzenia czasu OpenToggl z timerem i wpisami",
-    free: "OpenToggl — darmowe śledzenie czasu open source",
-    calendar: "Widok kalendarza OpenToggl pokazujący śledzony czas wg dnia",
+    overview: "Przegląd śledzenia czasu OpenTickly z timerem i wpisami",
+    free: "OpenTickly — darmowe śledzenie czasu open source",
+    calendar: "Widok kalendarza OpenTickly pokazujący śledzony czas wg dnia",
   },
   pt: {
-    overview: "Visão geral do rastreamento de tempo do OpenToggl com timer e registros",
-    free: "OpenToggl rastreamento de tempo gratuito e de código aberto",
-    calendar: "Visualização de calendário do OpenToggl mostrando tempo rastreado por dia",
+    overview: "Visão geral do rastreamento de tempo do OpenTickly com timer e registros",
+    free: "OpenTickly rastreamento de tempo gratuito e de código aberto",
+    calendar: "Visualização de calendário do OpenTickly mostrando tempo rastreado por dia",
   },
 };
 

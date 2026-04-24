@@ -1,4 +1,4 @@
-import { PageHeader } from "@opentoggl/web-ui";
+import { PageHeader } from "@opentickly/web-ui";
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 

@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { AppButton, pageLayoutTabClass } from "@opentoggl/web-ui";
+import { AppButton, pageLayoutTabClass } from "@opentickly/web-ui";
 
 import { ChevronRightIcon, FocusIcon } from "../../shared/ui/icons.tsx";
 import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";

@@ -1,4 +1,4 @@
-import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SurfaceCard } from "@opentickly/web-ui";
 import { Eye, EyeOff } from "lucide-react";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";

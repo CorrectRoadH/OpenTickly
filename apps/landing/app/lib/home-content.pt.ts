@@ -1,4 +1,11 @@
 export const homeContentPt = {
+  notice: {
+    title: "Aviso importante",
+    body: "Nosso repositório no GitHub foi retirado após uma reclamação de marca registrada. Vamos renomear o projeto o mais rápido possível para não impactar o Toggl. Isso foi inteiramente por minha própria ignorância. Gostamos muito do Toggl — é um produto excelente, e pedimos desculpas por qualquer confusão. Obrigado pela compreensão.",
+  },
+
+  nameTbd: "OpenTickly",
+
   hero: {
     taglineBefore: "A alternativa ",
     taglineAfter: " ao Toggl.",
@@ -38,10 +45,10 @@ export const homeContentPt = {
       },
       {
         title: "Código fonte",
-        value: "CorrectRoadH/opentoggl",
+        value: "CorrectRoadH/OpenTickly",
         body: "Código, issues, discussões — tudo aberto.",
         cta: "Abrir GitHub",
-        href: "https://github.com/CorrectRoadH/opentoggl",
+        href: "https://github.com/CorrectRoadH/OpenTickly",
       },
       {
         title: "Documentação",
@@ -57,7 +64,7 @@ export const homeContentPt = {
     {
       question: "Pode substituir o Toggl Track?",
       answer:
-        "Sim. O OpenToggl é compatível com as APIs Track, Reports e Webhooks do Toggl. Se suas ferramentas se comunicam com o Toggl via API, elas devem funcionar com o OpenToggl sem alterações.",
+        "Sim. O OpenTickly é compatível com as APIs Track, Reports e Webhooks do Toggl. Se suas ferramentas se comunicam com o Toggl via API, elas devem funcionar com o OpenTickly sem alterações.",
     },
     {
       question: "Posso trazer meus dados do Toggl?",

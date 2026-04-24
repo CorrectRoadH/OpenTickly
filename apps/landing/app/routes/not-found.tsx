@@ -1,15 +1,15 @@
 import type { Route } from "./+types/not-found";
-import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
+import { AppLinkButton, SurfaceCard } from "@opentickly/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
 import { baseOptions } from "@/lib/layout.shared";
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: "Page Not Found | OpenToggl" },
+    { title: "Page Not Found | OpenTickly" },
     {
       name: "description",
       content:
-        "The page you are looking for does not exist. Return to the OpenToggl documentation or homepage.",
+        "The page you are looking for does not exist. Return to the OpenTickly documentation or homepage.",
     },
     { name: "robots", content: "noindex,nofollow" },
   ];

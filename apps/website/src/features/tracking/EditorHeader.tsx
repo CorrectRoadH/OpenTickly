@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { DropdownMenu, MenuItem, MenuLink } from "@opentoggl/web-ui";
+import { DropdownMenu, MenuItem, MenuLink } from "@opentickly/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";

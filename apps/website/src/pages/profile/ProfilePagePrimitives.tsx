@@ -2,7 +2,7 @@ import { type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
-import { AppCheckbox, AppPanel, SelectDropdown } from "@opentoggl/web-ui";
+import { AppCheckbox, AppPanel, SelectDropdown } from "@opentickly/web-ui";
 
 import { deleteAvatars, client } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";

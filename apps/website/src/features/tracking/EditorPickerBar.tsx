@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { AppInput } from "@opentoggl/web-ui";
+import { AppInput } from "@opentickly/web-ui";
 
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
 import { DollarIcon, ProjectsIcon, SearchIcon, TagsIcon } from "../../shared/ui/icons.tsx";

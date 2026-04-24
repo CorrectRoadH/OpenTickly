@@ -1,4 +1,4 @@
-import type { CapabilitySnapshot, QuotaWindow } from "@opentoggl/shared-contracts";
+import type { CapabilitySnapshot, QuotaWindow } from "@opentickly/shared-contracts";
 
 import type {
   WebCurrentUserProfileDto,

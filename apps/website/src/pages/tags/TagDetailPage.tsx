@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppButton, PageLayout } from "@opentoggl/web-ui";
+import { AppButton, PageLayout } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { TimeEntriesTable } from "../../features/tracking/TimeEntriesTable.tsx";

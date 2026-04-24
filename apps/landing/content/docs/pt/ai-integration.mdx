@@ -3,7 +3,7 @@ title: Integração com IA
 description: Permita que Claude, Cursor e outros agentes de IA registrem tempo automaticamente, iniciem e parem temporizadores e gerenciem projetos e tags por meio do toggl-cli e pacotes de habilidades instaláveis. Time tracking open source projetado para workflows de IA.
 ---
 
-Use o [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) para conectar Claude Code, OpenClaw, Hermes Agent, Codex, Cursor e outros agentes de IA, deixando-os operar sua instância do OpenToggl diretamente pela linha de comando — registrando tempo automaticamente, iniciando e parando temporizadores, gerenciando projetos e tags.
+Use o [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) para conectar Claude Code, OpenClaw, Hermes Agent, Codex, Cursor e outros agentes de IA, deixando-os operar sua instância do OpenTickly diretamente pela linha de comando — registrando tempo automaticamente, iniciando e parando temporizadores, gerenciando projetos e tags.
 
 - CLI `toggl` — opere diretamente pela linha de comando
 - Pacote de habilidades `SKILL.md` — instale no ambiente do agente e use com um comando
@@ -18,15 +18,15 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## Configuração
 
-A CLI é compatível tanto com o Toggl quanto com o OpenToggl e, por padrão, aponta para a API oficial do Toggl. Para alterar para a sua própria instância, adicione `--api-type opentoggl` e `--api-url` no momento da autenticação:
+A CLI é compatível tanto com o Toggl quanto com o OpenTickly e, por padrão, aponta para a API oficial do Toggl. Para alterar para a sua própria instância, adicione `--api-type opentoggl` e `--api-url` no momento da autenticação:
 
-Como o Toggl tem um limite de 30 chamadas de API por hora, recomendamos fortemente usar a CLI com o OpenToggl para liberar todo o potencial dos agentes de IA:
+Como o Toggl tem um limite de 30 chamadas de API por hora, recomendamos fortemente usar a CLI com o OpenTickly para liberar todo o potencial dos agentes de IA:
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://sua-instancia.com/api/v9
 ```
 
-O `YOUR_API_TOKEN` pode ser encontrado na interface web do OpenToggl em avatar pessoal → Profile → API Token.
+O `YOUR_API_TOKEN` pode ser encontrado na interface web do OpenTickly em avatar pessoal → Profile → API Token.
 
 ## Referências
 

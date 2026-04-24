@@ -1,9 +1,9 @@
 ---
 title: 셀프호스팅
-description: OpenToggl을 자체 장비에 배포하세요 — Docker Compose 명령어 하나로 Web + API + Postgres + Redis를 띄우고 5분 안에 서비스를 시작할 수 있습니다. Toggl API와 100% 호환되므로 공식 클라이언트에서 바로 연결할 수 있습니다.
+description: OpenTickly을 자체 장비에 배포하세요 — Docker Compose 명령어 하나로 Web + API + Postgres + Redis를 띄우고 5분 안에 서비스를 시작할 수 있습니다. Toggl API와 100% 호환되므로 공식 클라이언트에서 바로 연결할 수 있습니다.
 ---
 
-OpenToggl을 자체 장비에서 운영하는 데 필요한 것은 `docker-compose.yml` 하나뿐입니다. 아래에서 처음부터 동작하는 상태까지 전 과정을 함께 따라가 봅시다.
+OpenTickly을 자체 장비에서 운영하는 데 필요한 것은 `docker-compose.yml` 하나뿐입니다. 아래에서 처음부터 동작하는 상태까지 전 과정을 함께 따라가 봅시다.
 
 ## 시스템 요구 사항
 
@@ -25,7 +25,7 @@ Docker가 설치되어 있지 않다면, 먼저 [공식 가이드](https://docs.
 mkdir -p opentoggl && cd opentoggl
 
 wget -O docker-compose.yml \
-  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+  https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
 이 compose 파일에는 컨테이너 세 개가 정의되어 있습니다.
@@ -69,13 +69,13 @@ docker compose up -d
 
 ### 모바일
 
-현재 공식 모바일 앱은 없지만, 웹 UI를 휴대폰 홈 화면에 추가해 PWA로 사용할 수 있습니다. timery 같은 서드파티 Toggl 클라이언트는 OpenToggl 지원을 위해 개발자에게 연락 중입니다.
+현재 공식 모바일 앱은 없지만, 웹 UI를 휴대폰 홈 화면에 추가해 PWA로 사용할 수 있습니다. timery 같은 서드파티 Toggl 클라이언트는 OpenTickly 지원을 위해 개발자에게 연락 중입니다.
 
 ---
 
 ## AI 에이전트 연동
 
-OpenToggl에는 시간당 30회 API 제한이 없습니다. 즉 Claude, Cursor 같은 에이전트를 마음껏 사용할 수 있다는 뜻입니다. [`toggl-cli`](/ko/docs/ai-integration)와 스킬 팩을 에이전트 환경에 설치하면, 몇 분 안에 AI가 타이머를 시작·정지하고 프로젝트를 정리하도록 만들 수 있습니다.
+OpenTickly에는 시간당 30회 API 제한이 없습니다. 즉 Claude, Cursor 같은 에이전트를 마음껏 사용할 수 있다는 뜻입니다. [`toggl-cli`](/ko/docs/ai-integration)와 스킬 팩을 에이전트 환경에 설치하면, 몇 분 안에 AI가 타이머를 시작·정지하고 프로젝트를 정리하도록 만들 수 있습니다.
 
 ## 업그레이드
 
@@ -88,13 +88,13 @@ docker compose up -d
 
 ## NAS / 홈랩에 배포
 
-OpenToggl은 Docker Compose를 지원하는 어떤 플랫폼에서도 실행할 수 있습니다. 아래 항목들은 위 과정을 각 플랫폼의 UI에 맞춰 적용한 것일 뿐, 내부적으로 실행되는 명령은 완전히 동일합니다.
+OpenTickly은 Docker Compose를 지원하는 어떤 플랫폼에서도 실행할 수 있습니다. 아래 항목들은 위 과정을 각 플랫폼의 UI에 맞춰 적용한 것일 뿐, 내부적으로 실행되는 명령은 완전히 동일합니다.
 
 ### CasaOS
 
 1. CasaOS 대시보드를 엽니다
 2. **App Store** → **커스텀 설치** → **docker-compose 가져오기** 로 이동합니다
-3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용을 붙여넣습니다
+3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml) 내용을 붙여넣습니다
 4. **Web UI** 포트를 `8080`으로 설정하고 저장합니다
 5. 대시보드에서 앱을 실행합니다
 
@@ -110,7 +110,7 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 
 1. **Container Manager** → **프로젝트** → **생성** 을 엽니다
 2. 프로젝트 이름을 예를 들어 `opentoggl`로 설정합니다
-3. **docker-compose.yml 사용** 을 선택하고 [compose 파일](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)을 붙여넣습니다
+3. **docker-compose.yml 사용** 을 선택하고 [compose 파일](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)을 붙여넣습니다
 4. 마법사의 다음 단계를 따라 끝까지 진행합니다
 
 <Callout type="info">
@@ -125,7 +125,7 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 1. fnOS 데스크톱에서 **Docker** 앱을 엽니다
 2. 왼쪽 사이드바에서 **Compose** → **새 프로젝트** 를 선택합니다
 3. 프로젝트 이름은 `opentoggl`, 저장 경로는 기본값을 유지합니다
-4. **Compose 내용** 에 [compose 파일](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)을 붙여넣습니다
+4. **Compose 내용** 에 [compose 파일](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)을 붙여넣습니다
 5. **배포** 를 클릭하고, 세 개의 컨테이너가 모두 초록색이 될 때까지 기다립니다
 
 ### 기타 플랫폼
@@ -162,5 +162,5 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 ## 다음 단계
 
 - [AI 연동](/ko/docs/ai-integration) — Claude, Cursor를 자신의 인스턴스에 연결하기
-- [GitHub 저장소](https://github.com/CorrectRoadH/opentoggl) — 소스 코드, Issues, Discussions
-- 배포 중 문제가 생겼나요? [Issues](https://github.com/CorrectRoadH/opentoggl/issues)에서 알려주세요
+- [GitHub 저장소](https://github.com/CorrectRoadH/OpenTickly) — 소스 코드, Issues, Discussions
+- 배포 중 문제가 생겼나요? [Issues](https://github.com/CorrectRoadH/OpenTickly/issues)에서 알려주세요

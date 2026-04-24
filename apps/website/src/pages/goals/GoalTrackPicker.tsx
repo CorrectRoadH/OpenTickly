@@ -1,6 +1,6 @@
 import { type ReactElement, useRef, useState } from "react";
 import { Check, ChevronLeft, X } from "lucide-react";
-import { AppInput } from "@opentoggl/web-ui";
+import { AppInput } from "@opentickly/web-ui";
 import { useTranslation } from "react-i18next";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";

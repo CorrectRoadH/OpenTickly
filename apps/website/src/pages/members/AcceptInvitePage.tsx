@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppPanel } from "@opentickly/web-ui";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";

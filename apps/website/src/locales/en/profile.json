@@ -34,7 +34,7 @@
   "reset": "Reset",
   "copied": "Copied",
   "copyApiToken": "Copy API token",
-  "openTogglNoRateLimits": "OpenToggl has no rate limits.",
+  "openTogglNoRateLimits": "OpenTickly has no rate limits.",
   "apiBaseUrls": "API Base URLs",
   "trackApiV9": "Track API (v9)",
   "reportsApiV3": "Reports API (v3)",

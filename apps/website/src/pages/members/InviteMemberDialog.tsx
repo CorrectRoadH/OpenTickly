@@ -1,7 +1,7 @@
 import { type FormEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { SelectDropdown } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentickly/web-ui";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";

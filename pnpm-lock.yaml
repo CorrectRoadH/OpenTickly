@@ -146,7 +146,7 @@ importers:
 
   apps/landing:
     dependencies:
-      '@opentoggl/web-ui':
+      '@opentickly/web-ui':
         specifier: workspace:*
         version: link:../../packages/web-ui
       '@orama/orama':
@@ -256,10 +256,10 @@ importers:
       '@hey-api/client-fetch':
         specifier: 'catalog:'
         version: 0.13.1(@hey-api/openapi-ts@0.96.1(typescript@6.0.3))
-      '@opentoggl/shared-contracts':
+      '@opentickly/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
-      '@opentoggl/web-ui':
+      '@opentickly/web-ui':
         specifier: workspace:*
         version: link:../../packages/web-ui
       '@tanstack/react-query':

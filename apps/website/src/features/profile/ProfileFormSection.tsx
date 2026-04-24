@@ -1,4 +1,4 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { AppButton, AppPanel } from "@opentickly/web-ui";
 import { type ReactElement } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";

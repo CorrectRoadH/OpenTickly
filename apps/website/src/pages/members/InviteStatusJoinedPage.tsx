@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppPanel } from "@opentickly/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 

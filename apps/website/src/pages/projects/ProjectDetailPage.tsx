@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
-import { SurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentickly/web-ui";
 import { useTranslation } from "react-i18next";
 
 import type {

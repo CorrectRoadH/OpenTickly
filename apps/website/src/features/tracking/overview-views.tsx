@@ -2,7 +2,7 @@ import { type ReactElement, useRef, useState } from "react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppButton, IconButton as AppIconButton, SelectButton } from "@opentoggl/web-ui";
+import { AppButton, IconButton as AppIconButton, SelectButton } from "@opentickly/web-ui";
 
 import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import { ChevronDownIcon } from "../../shared/ui/icons.tsx";

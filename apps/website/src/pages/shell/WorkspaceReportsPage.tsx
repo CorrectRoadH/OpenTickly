@@ -5,7 +5,7 @@ import {
   CheckboxFilterDropdown,
   PageLayout,
   pageLayoutTabClass,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import type { ReportsTab } from "../../shared/lib/workspace-routing.ts";

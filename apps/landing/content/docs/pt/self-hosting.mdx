@@ -1,9 +1,9 @@
 ---
 title: Auto-hospedagem
-description: Implante o OpenToggl na sua própria máquina — um único comando do Docker Compose sobe Web + API + Postgres + Redis e você está no ar em 5 minutos. 100% compatível com a API do Toggl; os clientes oficiais se conectam diretamente.
+description: Implante o OpenTickly na sua própria máquina — um único comando do Docker Compose sobe Web + API + Postgres + Redis e você está no ar em 5 minutos. 100% compatível com a API do Toggl; os clientes oficiais se conectam diretamente.
 ---
 
-Rodar o OpenToggl na sua própria máquina exige apenas um `docker-compose.yml`. Abaixo, um passeio completo do zero até o sistema funcionando.
+Rodar o OpenTickly na sua própria máquina exige apenas um `docker-compose.yml`. Abaixo, um passeio completo do zero até o sistema funcionando.
 
 ## Requisitos do sistema
 
@@ -25,7 +25,7 @@ Crie um novo diretório e baixe o arquivo compose oficial:
 mkdir -p opentoggl && cd opentoggl
 
 wget -O docker-compose.yml \
-  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+  https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
 Esse compose define três containers:
@@ -69,13 +69,13 @@ Abra `http://<seu IP>:8080` no navegador, registre a primeira conta e já pode c
 
 ### Mobile
 
-Por enquanto não há aplicativo móvel oficial, mas você pode adicionar a interface web à tela inicial do celular (PWA). Clientes Toggl de terceiros, como o timery, já estão em contato com os desenvolvedores para oferecer suporte ao OpenToggl.
+Por enquanto não há aplicativo móvel oficial, mas você pode adicionar a interface web à tela inicial do celular (PWA). Clientes Toggl de terceiros, como o timery, já estão em contato com os desenvolvedores para oferecer suporte ao OpenTickly.
 
 ---
 
 ## Conectar agentes de IA
 
-O OpenToggl não tem o limite de 30 chamadas de API por hora, o que significa que agentes como Claude e Cursor podem ser usados à vontade. Combine com o [`toggl-cli`](/pt/docs/ai-integration), instale o pacote de habilidades no ambiente do agente e, em poucos minutos, a IA já pode iniciar e parar temporizadores e organizar projetos por você.
+O OpenTickly não tem o limite de 30 chamadas de API por hora, o que significa que agentes como Claude e Cursor podem ser usados à vontade. Combine com o [`toggl-cli`](/pt/docs/ai-integration), instale o pacote de habilidades no ambiente do agente e, em poucos minutos, a IA já pode iniciar e parar temporizadores e organizar projetos por você.
 
 ## Atualização
 
@@ -88,13 +88,13 @@ docker compose up -d
 
 ## Implantar em NAS / Homelab
 
-O OpenToggl roda em qualquer plataforma que suporte Docker Compose. Os guias abaixo apenas encaixam o fluxo acima na interface de cada sistema — os comandos por baixo dos panos são exatamente os mesmos.
+O OpenTickly roda em qualquer plataforma que suporte Docker Compose. Os guias abaixo apenas encaixam o fluxo acima na interface de cada sistema — os comandos por baixo dos panos são exatamente os mesmos.
 
 ### CasaOS
 
 1. Abra o painel do CasaOS
 2. Vá em **App Store** → **Instalação Personalizada** → **Importar docker-compose**
-3. Cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+3. Cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 4. Ajuste a porta da **Interface Web** para `8080` e salve
 5. Inicie pelo painel
 
@@ -110,7 +110,7 @@ O Synology DSM 7.2+ suporta Docker Compose através do **Container Manager**:
 
 1. Abra **Container Manager** → **Projeto** → **Criar**
 2. Defina um nome de projeto, por exemplo `opentoggl`
-3. Escolha **Usar docker-compose.yml** e cole o [arquivo compose](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+3. Escolha **Usar docker-compose.yml** e cole o [arquivo compose](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 4. Avance pelo assistente até concluir
 
 <Callout type="info">
@@ -125,7 +125,7 @@ O [fnOS](https://www.fnnas.com) traz um painel Docker nativo:
 1. Abra o app **Docker** na área de trabalho do fnOS
 2. Na barra lateral esquerda, escolha **Compose** → **Novo projeto**
 3. Nome do projeto `opentoggl`, mantenha o caminho de armazenamento padrão
-4. Em **Conteúdo Compose**, cole o [arquivo compose](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+4. Em **Conteúdo Compose**, cole o [arquivo compose](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 5. Clique em **Implantar** e aguarde até que os três containers fiquem verdes
 
 ### Outras plataformas
@@ -162,5 +162,5 @@ Todas as outras configurações (nome do banco, usuário, tag da imagem, strings
 ## Próximos passos
 
 - [Integração com IA](/pt/docs/ai-integration) — conecte Claude, Cursor e outros à sua própria instância
-- [Repositório no GitHub](https://github.com/CorrectRoadH/opentoggl) — código-fonte, Issues, Discussions
-- Teve problemas na implantação? Relate em [Issues](https://github.com/CorrectRoadH/opentoggl/issues)
+- [Repositório no GitHub](https://github.com/CorrectRoadH/OpenTickly) — código-fonte, Issues, Discussions
+- Teve problemas na implantação? Relate em [Issues](https://github.com/CorrectRoadH/OpenTickly/issues)

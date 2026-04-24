@@ -12,9 +12,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY apps/landing ./apps/landing
 COPY packages ./packages
 
-RUN pnpm install --filter @opentoggl/landing... --no-frozen-lockfile --ignore-scripts
-RUN pnpm --filter @opentoggl/landing run postinstall
-RUN pnpm --filter @opentoggl/landing run build
+RUN pnpm install --filter @opentickly/landing... --no-frozen-lockfile --ignore-scripts
+RUN pnpm --filter @opentickly/landing run postinstall
+RUN pnpm --filter @opentickly/landing run build
 
 # ---
 

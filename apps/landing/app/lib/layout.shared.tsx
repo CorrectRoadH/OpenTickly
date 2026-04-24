@@ -4,7 +4,7 @@ import { appendSlot } from "./utm";
 
 export const gitConfig = {
   user: "CorrectRoadH",
-  repo: "opentoggl",
+  repo: "OpenTickly",
   branch: "main",
 };
 
@@ -12,7 +12,7 @@ export function baseOptions(locale?: string): BaseLayoutProps {
   const prefix = locale && locale !== i18n.defaultLanguage ? `/${locale}` : "";
   return {
     nav: {
-      title: "OpenToggl",
+      title: "OpenTickly",
       url: prefix || "/",
     },
     links: [

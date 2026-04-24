@@ -34,7 +34,7 @@
   "reset": "초기화",
   "copied": "복사됨",
   "copyApiToken": "API 토큰 복사",
-  "openTogglNoRateLimits": "OpenToggl에는 요청 제한이 없습니다.",
+  "openTogglNoRateLimits": "OpenTickly에는 요청 제한이 없습니다.",
   "apiTokenRotated": "API 토큰이 갱신되었습니다",
   "couldNotRotateApiToken": "API 토큰을 갱신할 수 없습니다",
   "profilePreferencesUpdated": "프로필 환경설정이 업데이트되었습니다",

@@ -8,7 +8,7 @@ import {
   Dropdown,
   SelectDropdown,
   useDropdownClose,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import type { ModelsSimpleWorkspaceUser } from "../../shared/api/generated/public-track/types.gen.ts";

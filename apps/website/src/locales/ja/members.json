@@ -54,7 +54,7 @@
   "couldNotCopyInviteLink": "招待リンクをコピーできませんでした",
   "acceptInviteEyebrow": "ワークスペースへの招待",
   "acceptInviteHeading": "{{workspace}}に参加",
-  "acceptInviteBlurb": "{{inviter}}が{{email}}をOpenTogglの{{organization}}に招待しました。",
+  "acceptInviteBlurb": "{{inviter}}が{{email}}をOpenTicklyの{{organization}}に招待しました。",
   "acceptInviteUnknownInviter": "誰か",
   "acceptInviteCreateAccount": "アカウントを作成",
   "acceptInviteHaveAccount": "すでにアカウントを持っています",

@@ -1,7 +1,7 @@
 {
   "subscription": "サブスクリプション",
   "selfHosted": "セルフホスト",
-  "selfHostedDescription": "OpenTogglのセルフホストインスタンスを実行しています。{{organizationName}}のすべての機能が無料で利用できます。",
+  "selfHostedDescription": "OpenTicklyのセルフホストインスタンスを実行しています。{{organizationName}}のすべての機能が無料で利用できます。",
   "workspace": "ワークスペース",
   "access": "アクセス",
   "allFeaturesIncluded": "すべての機能が含まれています",
@@ -15,7 +15,7 @@
   "reportsAndAnalytics": "レポートと分析",
   "goalsAndFavorites": "目標とお気に入り",
   "apiAccess": "APIアクセス",
-  "opentoggl": "OpenToggl",
-  "opentogglDescription": "OpenTogglはToggl Trackのオープンソース・セルフホスト型代替ツールです。タイムトラッキングデータは自社インフラに保存され、プライバシー、バックアップ、カスタマイズを完全に制御できます。サブスクリプション不要、シートごとの料金不要、利用制限なし。",
+  "opentoggl": "OpenTickly",
+  "opentogglDescription": "OpenTicklyはToggl Trackのオープンソース・セルフホスト型代替ツールです。タイムトラッキングデータは自社インフラに保存され、プライバシー、バックアップ、カスタマイズを完全に制御できます。サブスクリプション不要、シートごとの料金不要、利用制限なし。",
   "viewOnGithub": "GitHubで見る"
 }

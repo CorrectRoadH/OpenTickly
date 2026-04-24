@@ -54,7 +54,7 @@
   "couldNotCopyInviteLink": "Could not copy invite link",
   "acceptInviteEyebrow": "Workspace invite",
   "acceptInviteHeading": "Join {{workspace}}",
-  "acceptInviteBlurb": "{{inviter}} invited {{email}} to join {{organization}} on OpenToggl.",
+  "acceptInviteBlurb": "{{inviter}} invited {{email}} to join {{organization}} on OpenTickly.",
   "acceptInviteUnknownInviter": "Someone",
   "acceptInviteCreateAccount": "Create account",
   "acceptInviteHaveAccount": "I already have an account",

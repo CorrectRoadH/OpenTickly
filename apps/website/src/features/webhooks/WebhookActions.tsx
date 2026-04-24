@@ -1,4 +1,4 @@
-import { DropdownMenu, MenuItem } from "@opentoggl/web-ui";
+import { DropdownMenu, MenuItem } from "@opentickly/web-ui";
 import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 

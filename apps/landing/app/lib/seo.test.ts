@@ -21,8 +21,8 @@ describe("seo helpers", () => {
   });
 
   it("builds page titles", () => {
-    expect(buildPageTitle()).toBe("OpenToggl | Open-Source Time Tracking and Toggl Alternative");
-    expect(buildPageTitle("Self-Hosting")).toBe("Self-Hosting | OpenToggl");
+    expect(buildPageTitle()).toBe("OpenTickly | Open-Source Time Tracking and Toggl Alternative");
+    expect(buildPageTitle("Self-Hosting")).toBe("Self-Hosting | OpenTickly");
   });
 
   it("builds robots text that points at the sitemap", () => {

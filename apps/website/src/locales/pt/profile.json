@@ -34,7 +34,7 @@
   "reset": "Redefinir",
   "copied": "Copiado",
   "copyApiToken": "Copiar token da API",
-  "openTogglNoRateLimits": "O OpenToggl não tem limites de requisição.",
+  "openTogglNoRateLimits": "O OpenTickly não tem limites de requisição.",
   "apiBaseUrls": "URLs Base da API",
   "trackApiV9": "Track API (v9)",
   "reportsApiV3": "Reports API (v3)",

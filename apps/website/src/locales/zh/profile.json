@@ -34,7 +34,7 @@
   "reset": "重置",
   "copied": "已复制",
   "copyApiToken": "复制 API 令牌",
-  "openTogglNoRateLimits": "OpenToggl 没有速率限制。",
+  "openTogglNoRateLimits": "OpenTickly 没有速率限制。",
   "apiTokenRotated": "API 令牌已轮换",
   "couldNotRotateApiToken": "无法轮换 API 令牌",
   "profilePreferencesUpdated": "您的个人资料偏好设置已更新",

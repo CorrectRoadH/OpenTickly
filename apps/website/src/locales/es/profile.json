@@ -34,7 +34,7 @@
   "reset": "Restablecer",
   "copied": "Copiado",
   "copyApiToken": "Copiar token de API",
-  "openTogglNoRateLimits": "OpenToggl no tiene límites de velocidad.",
+  "openTogglNoRateLimits": "OpenTickly no tiene límites de velocidad.",
   "apiTokenRotated": "Token de API rotado",
   "couldNotRotateApiToken": "No se pudo rotar el token de API",
   "profilePreferencesUpdated": "Tus preferencias de perfil han sido actualizadas",

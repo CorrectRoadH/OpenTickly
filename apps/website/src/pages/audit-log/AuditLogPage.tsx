@@ -5,7 +5,7 @@ import {
   DirectoryTable,
   type DirectoryTableColumn,
   SelectDropdown,
-} from "@opentoggl/web-ui";
+} from "@opentickly/web-ui";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAuditLogs } from "../../shared/api/public/track/index.ts";

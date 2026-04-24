@@ -1,4 +1,4 @@
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton } from "@opentickly/web-ui";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactElement, useEffect, useState } from "react";
@@ -75,7 +75,7 @@ export function getOnboardingSteps(): OnboardingStepConfig[] {
         {
           labelKey: "onboarding:starOnGitHub",
           variant: "primary",
-          href: "https://github.com/CorrectRoadH/opentoggl",
+          href: "https://github.com/CorrectRoadH/OpenTickly",
         },
         { labelKey: "onboarding:continue", variant: "secondary", onComplete: true },
       ],
