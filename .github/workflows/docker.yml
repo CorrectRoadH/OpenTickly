@@ -12,7 +12,11 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Self-hosted x64 runner. The arm64 leg of the multi-arch build still uses
+    # QEMU because this job produces a single multi-platform manifest; a native
+    # arm64 runner can be wired in later via `buildx --append` if cross-emulation
+    # becomes a bottleneck.
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: write
       packages: write
@@ -88,7 +92,7 @@ jobs:
           body: ${{ steps.changelog.outputs.content }}
 
   build-binary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: write
     strategy:

@@ -30,7 +30,8 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-24.04-arm # 原生 arm64, 仅服务 k3s/opentoggl-saas
+    # Native arm64 on a self-hosted runner (avoids GHA minute burn + QEMU slowness).
+    runs-on: [self-hosted, linux, arm64]
     permissions:
       contents: read
       packages: write
@@ -72,21 +73,10 @@ jobs:
     # Only restart when pushing main; tag pushes are artefact-only.
     needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    # Self-hosted runner is already on the Tailnet, so the Tailscale action
+    # and ArgoCD CLI install are no longer needed (argocd is preinstalled).
+    runs-on: [self-hosted, linux, x64]
     steps:
-      - name: Connect to Tailnet
-        uses: tailscale/github-action@v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-
-      - name: Install ArgoCD CLI
-        run: |
-          curl -fsSL -o /tmp/argocd \
-            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          install -m 0755 /tmp/argocd /usr/local/bin/argocd
-
       - name: Restart opentoggl-landing deployment
         env:
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
