@@ -10,17 +10,20 @@ export function TimerElapsedDisplay({
 }): ReactElement {
   if (!runningEntry) {
     return (
-      <span className="text-[29px] font-medium tabular-nums text-white" data-testid="timer-elapsed">
+      <span className={ELAPSED_CLASS} data-testid="timer-elapsed">
         0:00:00
       </span>
     );
   }
 
   return (
-    <LiveDuration
-      className="text-[29px] font-medium tabular-nums text-white"
-      data-testid="timer-elapsed"
-      entry={runningEntry}
-    />
+    <LiveDuration className={ELAPSED_CLASS} data-testid="timer-elapsed" entry={runningEntry} />
   );
 }
+
+// Fixed 8ch slot (covers H:MM:SS up to 99:59:59) + right-aligned digits so
+// the timer climbing 0:00:01 → 1:00:00 doesn't push the start/stop button
+// or the left-side composer content sideways. tabular-nums keeps each
+// digit equal width within the slot.
+const ELAPSED_CLASS =
+  "inline-block w-[8ch] text-right text-[29px] font-medium tabular-nums text-white";
