@@ -13,6 +13,8 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docs.docker.com/compose/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
+<a href="https://hellogithub.com/repository/CorrectRoadH/OpenTickly" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=ed2a1407789746bf91a1999f785f477c&claim_uid=LlcmQNh12ZgD6sW" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+
 OpenTickly is a free, private-first, AI-friendly alternative to Toggl.
 
 Toggl is a great product, but it's expensive and your data doesn't really belong to you. On top of that, the 30 requests/hour API limit is painful — an AI agent can burn through an hour's quota in a single minute.
