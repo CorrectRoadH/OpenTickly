@@ -31,8 +31,8 @@ catalogs:
       specifier: ^9.6.1
       version: 9.6.1
     i18next:
-      specifier: ^26.0.6
-      version: 26.0.6
+      specifier: ^26.0.7
+      version: 26.0.7
     i18next-resources-to-backend:
       specifier: ^1.2.1
       version: 1.2.1
@@ -46,8 +46,8 @@ catalogs:
       specifier: ^5.0.7
       version: 5.0.7
     lucide-react:
-      specifier: ^1.8.0
-      version: 1.8.0
+      specifier: ^1.9.0
+      version: 1.9.0
     motion:
       specifier: ^12.38.0
       version: 12.38.0
@@ -133,16 +133,16 @@ importers:
         version: 1.58.2
       '@vitejs/plugin-react':
         specifier: ^5.1.0
-        version: 5.2.0(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))
+        version: 5.2.0(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))
       execa:
         specifier: 'catalog:'
         version: 9.6.1
       vite-plus:
         specifier: 'catalog:'
-        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
+        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)
       vitest:
         specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)'
+        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)'
 
   apps/landing:
     dependencies:
@@ -157,19 +157,19 @@ importers:
         version: 7.14.2(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@6.0.3)
       fumadocs-core:
         specifier: 16.8.2
-        version: 16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6)
+        version: 16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6)
       fumadocs-mdx:
         specifier: 14.3.1
-        version: 14.3.1(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react@19.2.5)
+        version: 14.3.1(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react@19.2.5)
       fumadocs-ui:
         specifier: 16.8.2
-        version: 16.8.2(@tailwindcss/oxide@4.2.4)(@types/mdx@2.0.13)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tailwindcss@4.2.4)
+        version: 16.8.2(@tailwindcss/oxide@4.2.4)(@types/mdx@2.0.13)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tailwindcss@4.2.4)
       isbot:
         specifier: ^5.1.39
         version: 5.1.39
       lucide-react:
         specifier: 'catalog:'
-        version: 1.8.0(react@19.2.5)
+        version: 1.9.0(react@19.2.5)
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -188,10 +188,10 @@ importers:
         version: 3.1.18
       '@react-router/dev':
         specifier: ^7.14.2
-        version: 7.14.2(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(terser@5.46.1)(typescript@6.0.3)(wrangler@4.84.1(@cloudflare/workers-types@4.20260423.1))(yaml@2.8.3)
+        version: 7.14.2(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(terser@5.46.2)(typescript@6.0.3)(wrangler@4.84.1(@cloudflare/workers-types@4.20260423.1))(yaml@2.8.3)
       '@tailwindcss/vite':
         specifier: ^4.2.4
-        version: 4.2.4(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))
+        version: 4.2.4(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))
       '@types/mdx':
         specifier: ^2.0.13
         version: 2.0.13
@@ -206,7 +206,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       react-router-devtools:
         specifier: ^6.2.0
-        version: 6.2.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(solid-js@1.9.11)
+        version: 6.2.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(solid-js@1.9.11)
       serve:
         specifier: ^14.2.6
         version: 14.2.6
@@ -221,7 +221,7 @@ importers:
         version: 6.0.3
       vite:
         specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+        version: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
 
   apps/update-worker:
     dependencies:
@@ -243,10 +243,10 @@ importers:
         version: 6.0.3
       vite-plus:
         specifier: 'catalog:'
-        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
+        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)
       vitest:
         specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)'
+        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)'
       wrangler:
         specifier: ^4.84.1
         version: 4.84.1(@cloudflare/workers-types@4.20260423.1)
@@ -263,8 +263,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/web-ui
       '@tanstack/react-query':
-        specifier: ^5.99.2
-        version: 5.99.2(react@19.2.5)
+        specifier: ^5.100.1
+        version: 5.100.1(react@19.2.5)
       '@tanstack/react-router':
         specifier: ^1.168.23
         version: 1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -282,7 +282,7 @@ importers:
         version: 4.1.0
       i18next:
         specifier: 'catalog:'
-        version: 26.0.6(typescript@6.0.3)
+        version: 26.0.7(typescript@6.0.3)
       i18next-resources-to-backend:
         specifier: 'catalog:'
         version: 1.2.1
@@ -297,7 +297,7 @@ importers:
         version: 5.0.7(jspdf@4.2.1)
       lucide-react:
         specifier: 'catalog:'
-        version: 1.8.0(react@19.2.5)
+        version: 1.9.0(react@19.2.5)
       motion:
         specifier: 'catalog:'
         version: 12.38.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -318,7 +318,7 @@ importers:
         version: 7.73.1(react@19.2.5)
       react-i18next:
         specifier: 'catalog:'
-        version: 17.0.4(i18next@26.0.6(typescript@6.0.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)
+        version: 17.0.4(i18next@26.0.7(typescript@6.0.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@17.0.2)(react@19.2.5)(redux@5.0.1)
@@ -343,7 +343,7 @@ importers:
         version: 1.58.2
       '@tailwindcss/vite':
         specifier: ^4.2.4
-        version: 4.2.4(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))
+        version: 4.2.4(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -361,7 +361,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^5.1.0
-        version: 5.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))
+        version: 5.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))
       babel-plugin-react-compiler:
         specifier: 'catalog:'
         version: 1.0.0
@@ -382,16 +382,16 @@ importers:
         version: 6.0.3
       vite:
         specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+        version: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
       vite-plugin-pwa:
         specifier: 'catalog:'
-        version: 1.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0)
+        version: 1.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0)
       vite-plus:
         specifier: 'catalog:'
-        version: 0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)
+        version: 0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)
       vitest:
         specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
       workbox-background-sync:
         specifier: 'catalog:'
         version: 7.4.0
@@ -421,10 +421,10 @@ importers:
         version: 6.0.3
       vite-plus:
         specifier: 'catalog:'
-        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
+        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)
       vitest:
         specifier: 'catalog:'
-        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)'
+        version: '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)'
 
   packages/web-ui:
     dependencies:
@@ -461,7 +461,7 @@ importers:
         version: 6.0.3
       vite-plus:
         specifier: 'catalog:'
-        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
+        version: 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)
 
 packages:
 
@@ -3179,8 +3179,8 @@ packages:
     resolution: {integrity: sha512-NaOGLRrddszbQj9upGat6HG/4TKvXLvu+osAIgfxPYA+eIvYKv8GKDJOrY2D3/U9MRnKfMWD7bU4jeD4xmqyIg==}
     engines: {node: '>=20.19'}
 
-  '@tanstack/query-core@5.99.2':
-    resolution: {integrity: sha512-1HunU0bXVsR1ZJMZbcOPE6VtaBJxsW809RE9xPe4Gz7MlB0GWwQvuTPhMoEmQ/hIzFKJ/DWAuttIe7BOaWx0tA==}
+  '@tanstack/query-core@5.100.1':
+    resolution: {integrity: sha512-awvQhOO/2TrSCHE5LKKsXcvvj6WSBncwEcMFCB/ez0Qs0b17iyyivoGArNV3HFfXryZwCpnb/olsaBBKrIbtSw==}
 
   '@tanstack/react-devtools@0.9.13':
     resolution: {integrity: sha512-O9YXTEe2dlnw2pPNKFZ4Wk7zC4qrDvc0SAALKfMVedeZ2Dyd0LEJUabYS6GPm+DmnrBhc7nJx6Zqc9aDjFrj4g==}
@@ -3191,8 +3191,8 @@ packages:
       react: '>=16.8'
       react-dom: '>=16.8'
 
-  '@tanstack/react-query@5.99.2':
-    resolution: {integrity: sha512-vM91UEe45QUS9ED6OklsVL15i8qKcRqNwpWzPTVWvRPRSEgDudDgHpvyTjcdlwHcrKNa80T+xXYcchT2noPnZA==}
+  '@tanstack/react-query@5.100.1':
+    resolution: {integrity: sha512-UgWRLhQKprC37SsO6y1zRabOqDmM2gsdTNPbqTT35yl7kOOhwXU4nyfOiGHXPwoEFJV1IpSk85hjIFjNFWVpzw==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -4745,8 +4745,8 @@ packages:
   i18next-resources-to-backend@1.2.1:
     resolution: {integrity: sha512-okHbVA+HZ7n1/76MsfhPqDou0fptl2dAlhRDu2ideXloRRduzHsqDOznJBef+R3DFZnbvWoBW+KxJ7fnFjd6Yw==}
 
-  i18next@26.0.6:
-    resolution: {integrity: sha512-A4U6eCXodIbrhf8EarRurB9/4ebyaurH4+fu4gig9bqxmpSt+fCAFm/GpRQDcN1Xzu/LdFCx4nYHsnM1edIIbg==}
+  i18next@26.0.7:
+    resolution: {integrity: sha512-f7tL/iw0VQsx4nC5oNxBM2RjM8alNys5KzyiQTU6A9TI5TI89py4/Ez1cKFvHiLWsvzOXvuGUES+Kk/A2WiANQ==}
     peerDependencies:
       typescript: ^5 || ^6
     peerDependenciesMeta:
@@ -5189,8 +5189,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.8.0:
-    resolution: {integrity: sha512-WuvlsjngSk7TnTBJ1hsCy3ql9V9VOdcPkd3PKcSmM34vJD8KG6molxz7m7zbYFgICwsanQWmJ13JlYs4Zp7Arw==}
+  lucide-react@1.9.0:
+    resolution: {integrity: sha512-6qVAmbgCjcJz7sAGSPSSJ++RAwjlK2XCbRrZKv63Ciko1KT8jX0//CXxgI3jg2HlJu8tADqdYlNDebmYjeoruA==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -6483,8 +6483,8 @@ packages:
     resolution: {integrity: sha512-G13vtMYPT/J8A4X2SjdtBTphZlrp1gKv6hZiOjw14RCWg6GbHuQBGtjlx75xLbYV/wEc0D7G5K4rxKP/cXk8Bw==}
     engines: {node: '>=10'}
 
-  terser@5.46.1:
-    resolution: {integrity: sha512-vzCjQO/rgUuK9sf8VJZvjqiqiHFaZLnOiimmUuOKODxWL8mm/xua7viT7aqX7dgPY60otQjUotzFMmCB4VdmqQ==}
+  terser@5.46.2:
+    resolution: {integrity: sha512-uxfo9fPcSgLDYob/w1FuL0c99MWiJDnv+5qXSQc5+Ki5NjVNsYi66INnMFBjf6uFz6OnX12piJQPF4IpjJTNTw==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -8911,7 +8911,7 @@ snapshots:
       prompts: 2.4.2
       smol-toml: 1.6.1
 
-  '@react-router/dev@7.14.2(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(terser@5.46.1)(typescript@6.0.3)(wrangler@4.84.1(@cloudflare/workers-types@4.20260423.1))(yaml@2.8.3)':
+  '@react-router/dev@7.14.2(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(jiti@2.6.1)(lightningcss@1.32.0)(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(terser@5.46.2)(typescript@6.0.3)(wrangler@4.84.1(@cloudflare/workers-types@4.20260423.1))(yaml@2.8.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -8941,8 +8941,8 @@ snapshots:
       semver: 7.7.4
       tinyglobby: 0.2.16
       valibot: 1.3.1(typescript@6.0.3)
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
-      vite-node: 3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
+      vite-node: 3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)
     optionalDependencies:
       typescript: 6.0.3
       wrangler: 4.84.1(@cloudflare/workers-types@4.20260423.1)
@@ -9072,7 +9072,7 @@ snapshots:
     dependencies:
       serialize-javascript: 7.0.5
       smob: 1.6.1
-      terser: 5.46.1
+      terser: 5.46.2
     optionalDependencies:
       rollup: 2.80.0
 
@@ -9328,12 +9328,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.2.4
       '@tailwindcss/oxide-win32-x64-msvc': 4.2.4
 
-  '@tailwindcss/vite@4.2.4(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))':
+  '@tailwindcss/vite@4.2.4(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))':
     dependencies:
       '@tailwindcss/node': 4.2.4
       '@tailwindcss/oxide': 4.2.4
       tailwindcss: 4.2.4
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
 
   '@tanstack/devtools-client@0.0.5':
     dependencies:
@@ -9368,7 +9368,7 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
-  '@tanstack/devtools-vite@0.4.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))':
+  '@tanstack/devtools-vite@0.4.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -9380,7 +9380,7 @@ snapshots:
       chalk: 5.6.2
       launch-editor: 2.13.2
       picomatch: 4.0.4
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -9404,7 +9404,7 @@ snapshots:
 
   '@tanstack/history@1.161.6': {}
 
-  '@tanstack/query-core@5.99.2': {}
+  '@tanstack/query-core@5.100.1': {}
 
   '@tanstack/react-devtools@0.9.13(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(solid-js@1.9.11)':
     dependencies:
@@ -9419,9 +9419,9 @@ snapshots:
       - solid-js
       - utf-8-validate
 
-  '@tanstack/react-query@5.99.2(react@19.2.5)':
+  '@tanstack/react-query@5.100.1(react@19.2.5)':
     dependencies:
-      '@tanstack/query-core': 5.99.2
+      '@tanstack/query-core': 5.100.1
       react: 19.2.5
 
   '@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
@@ -9619,7 +9619,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@vitejs/plugin-react@5.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))':
+  '@vitejs/plugin-react@5.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.29.0)
@@ -9627,11 +9627,11 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-rc.3
       '@types/babel__core': 7.20.5
       react-refresh: 0.18.0
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
     transitivePeerDependencies:
       - supports-color
 
-  '@vitejs/plugin-react@5.2.0(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))':
+  '@vitejs/plugin-react@5.2.0(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.29.0)
@@ -9639,11 +9639,11 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-rc.3
       '@types/babel__core': 7.20.5
       react-refresh: 0.18.0
-      vite: 8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3)
+      vite: 8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
 
-  '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)':
     dependencies:
       '@oxc-project/runtime': 0.124.0
       '@oxc-project/types': 0.124.0
@@ -9654,11 +9654,11 @@ snapshots:
       esbuild: 0.27.7
       fsevents: 2.3.3
       jiti: 2.6.1
-      terser: 5.46.1
+      terser: 5.46.2
       typescript: 6.0.3
       yaml: 2.8.3
 
-  '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)':
     dependencies:
       '@oxc-project/runtime': 0.124.0
       '@oxc-project/types': 0.124.0
@@ -9669,7 +9669,7 @@ snapshots:
       esbuild: 0.28.0
       fsevents: 2.3.3
       jiti: 2.6.1
-      terser: 5.46.1
+      terser: 5.46.2
       typescript: 6.0.3
       yaml: 2.8.3
 
@@ -9691,11 +9691,11 @@ snapshots:
   '@voidzero-dev/vite-plus-linux-x64-musl@0.1.18':
     optional: true
 
-  '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@types/chai': 5.2.3
-      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)
       es-module-lexer: 1.7.0
       obug: 2.1.1
       pixelmatch: 7.1.0
@@ -9705,7 +9705,7 @@ snapshots:
       tinybench: 2.9.0
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
       ws: 8.20.0
     optionalDependencies:
       '@types/node': 25.5.0
@@ -9731,11 +9731,11 @@ snapshots:
       - utf-8-validate
       - yaml
 
-  '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-test@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@types/chai': 5.2.3
-      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)
       es-module-lexer: 1.7.0
       obug: 2.1.1
       pixelmatch: 7.1.0
@@ -9745,7 +9745,7 @@ snapshots:
       tinybench: 2.9.0
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
-      vite: 8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3)
+      vite: 8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3)
       ws: 8.20.0
     optionalDependencies:
       '@types/node': 25.5.0
@@ -10893,7 +10893,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6):
+  fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6):
     dependencies:
       '@orama/orama': 3.1.18
       estree-util-value-to-estree: 3.5.0
@@ -10919,7 +10919,7 @@ snapshots:
       '@types/hast': 3.0.4
       '@types/mdast': 4.0.4
       '@types/react': 19.2.14
-      lucide-react: 1.8.0(react@19.2.5)
+      lucide-react: 1.9.0(react@19.2.5)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       react-router: 7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -10927,14 +10927,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-mdx@14.3.1(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react@19.2.5):
+  fumadocs-mdx@14.3.1(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react@19.2.5):
     dependencies:
       '@mdx-js/mdx': 3.1.1
       '@standard-schema/spec': 1.1.0
       chokidar: 5.0.0
       esbuild: 0.28.0
       estree-util-value-to-estree: 3.5.0
-      fumadocs-core: 16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6)
+      fumadocs-core: 16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6)
       js-yaml: 4.1.1
       mdast-util-mdx: 3.0.0
       mdast-util-to-markdown: 2.1.2
@@ -10952,11 +10952,11 @@ snapshots:
       '@types/mdx': 2.0.13
       '@types/react': 19.2.14
       react: 19.2.5
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-ui@16.8.2(@tailwindcss/oxide@4.2.4)(@types/mdx@2.0.13)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tailwindcss@4.2.4):
+  fumadocs-ui@16.8.2(@tailwindcss/oxide@4.2.4)(@types/mdx@2.0.13)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(fumadocs-core@16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tailwindcss@4.2.4):
     dependencies:
       '@fumadocs/tailwind': 0.0.5(@tailwindcss/oxide@4.2.4)(tailwindcss@4.2.4)
       '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -10970,8 +10970,8 @@ snapshots:
       '@radix-ui/react-slot': 1.2.4(@types/react@19.2.14)(react@19.2.5)
       '@radix-ui/react-tabs': 1.1.13(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       class-variance-authority: 0.7.1
-      fumadocs-core: 16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.8.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6)
-      lucide-react: 1.8.0(react@19.2.5)
+      fumadocs-core: 16.8.2(@mdx-js/mdx@3.1.1)(@tanstack/react-router@1.168.23(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(lucide-react@1.9.0(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(zod@4.3.6)
+      lucide-react: 1.9.0(react@19.2.5)
       motion: 12.38.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       next-themes: 0.4.6(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react: 19.2.5
@@ -11250,9 +11250,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.2
 
-  i18next@26.0.6(typescript@6.0.3):
-    dependencies:
-      '@babel/runtime': 7.29.2
+  i18next@26.0.7(typescript@6.0.3):
     optionalDependencies:
       typescript: 6.0.3
 
@@ -11630,7 +11628,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.8.0(react@19.2.5):
+  lucide-react@1.9.0(react@19.2.5):
     dependencies:
       react: 19.2.5
 
@@ -12620,11 +12618,11 @@ snapshots:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
 
-  react-i18next@17.0.4(i18next@26.0.6(typescript@6.0.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3):
+  react-i18next@17.0.4(i18next@26.0.7(typescript@6.0.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3):
     dependencies:
       '@babel/runtime': 7.29.2
       html-parse-stringify: 3.0.1
-      i18next: 26.0.6(typescript@6.0.3)
+      i18next: 26.0.7(typescript@6.0.3)
       react: 19.2.5
       use-sync-external-store: 1.6.0(react@19.2.5)
     optionalDependencies:
@@ -12744,7 +12742,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  react-router-devtools@6.2.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(solid-js@1.9.11):
+  react-router-devtools@6.2.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react-router@7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(solid-js@1.9.11):
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -12754,7 +12752,7 @@ snapshots:
       '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tanstack/devtools-client': 0.0.5
       '@tanstack/devtools-event-client': 0.4.3
-      '@tanstack/devtools-vite': 0.4.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))
+      '@tanstack/devtools-vite': 0.4.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))
       '@tanstack/react-devtools': 0.9.13(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(csstype@3.2.3)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(solid-js@1.9.11)
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
@@ -12768,7 +12766,7 @@ snapshots:
       react-hotkeys-hook: 5.2.4(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react-router: 7.14.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react-tooltip: 5.30.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
     optionalDependencies:
       '@biomejs/cli-darwin-arm64': 2.4.8
       '@rollup/rollup-darwin-arm64': 4.60.0
@@ -13550,7 +13548,7 @@ snapshots:
       type-fest: 0.16.0
       unique-string: 2.0.0
 
-  terser@5.46.1:
+  terser@5.46.2:
     dependencies:
       '@jridgewell/source-map': 0.3.11
       acorn: 8.16.0
@@ -13831,13 +13829,13 @@ snapshots:
     dependencies:
       '@math.gl/web-mercator': 3.6.3
 
-  vite-node@3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3):
+  vite-node@3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+      vite: 7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -13852,22 +13850,22 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-pwa@1.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0):
+  vite-plugin-pwa@1.2.0(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0):
     dependencies:
       debug: 4.4.3
       pretty-bytes: 6.1.1
       tinyglobby: 0.2.15
-      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)'
+      vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)'
       workbox-build: 7.4.0(@types/babel__core@7.20.5)
       workbox-window: 7.4.0
     transitivePeerDependencies:
       - supports-color
 
-  vite-plus@0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3):
+  vite-plus@0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3):
     dependencies:
       '@oxc-project/types': 0.124.0
-      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)
-      '@voidzero-dev/vite-plus-test': 0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-test': 0.1.18(@types/node@25.5.0)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@25.5.0)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3))(esbuild@0.28.0)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)
       oxfmt: 0.45.0
       oxlint: 1.60.0(oxlint-tsgolint@0.20.0)
       oxlint-tsgolint: 0.20.0
@@ -13910,11 +13908,11 @@ snapshots:
       - vite
       - yaml
 
-  vite-plus@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3):
+  vite-plus@0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3):
     dependencies:
       '@oxc-project/types': 0.124.0
-      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(typescript@6.0.3)(yaml@2.8.3)
-      '@voidzero-dev/vite-plus-test': 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.1)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(typescript@6.0.3)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-test': 0.1.18(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.2)(terser@5.46.2)(typescript@6.0.3)(vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3))(yaml@2.8.3)
       oxfmt: 0.45.0
       oxlint: 1.60.0(oxlint-tsgolint@0.20.0)
       oxlint-tsgolint: 0.20.0
@@ -13957,7 +13955,7 @@ snapshots:
       - vite
       - yaml
 
-  vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3):
+  vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.4)
@@ -13970,10 +13968,10 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.6.1
       lightningcss: 1.32.0
-      terser: 5.46.1
+      terser: 5.46.2
       yaml: 2.8.3
 
-  vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3):
+  vite@8.0.0(@emnapi/core@1.9.0)(@emnapi/runtime@1.9.0)(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3):
     dependencies:
       '@oxc-project/runtime': 0.115.0
       lightningcss: 1.32.0
@@ -13986,7 +13984,7 @@ snapshots:
       esbuild: 0.27.7
       fsevents: 2.3.3
       jiti: 2.6.1
-      terser: 5.46.1
+      terser: 5.46.2
       yaml: 2.8.3
     transitivePeerDependencies:
       - '@emnapi/core'
