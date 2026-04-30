@@ -78,8 +78,15 @@ jobs:
     needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      HAS_ARGOCD_RESTART_SECRETS: ${{ secrets.TS_OAUTH_CLIENT_ID != '' && secrets.TS_OAUTH_SECRET != '' && secrets.ARGOCD_AUTH_TOKEN != '' && secrets.ARGOCD_SERVER != '' }}
     steps:
+      - name: Skip ArgoCD restart when deploy secrets are absent
+        if: env.HAS_ARGOCD_RESTART_SECRETS != 'true'
+        run: echo "ArgoCD restart skipped because deploy secrets are not configured for this repository."
+
       - name: Connect to Tailnet
+        if: env.HAS_ARGOCD_RESTART_SECRETS == 'true'
         uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
@@ -87,12 +94,14 @@ jobs:
           tags: tag:ci
 
       - name: Install ArgoCD CLI
+        if: env.HAS_ARGOCD_RESTART_SECRETS == 'true'
         run: |
           curl -fsSL -o /tmp/argocd \
             https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
           install -m 0755 /tmp/argocd /usr/local/bin/argocd
 
       - name: Point landing deployment at latest image
+        if: env.HAS_ARGOCD_RESTART_SECRETS == 'true'
         env:
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
@@ -106,6 +115,7 @@ jobs:
             --patch-type json
 
       - name: Restart opentoggl-landing deployment
+        if: env.HAS_ARGOCD_RESTART_SECRETS == 'true'
         env:
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
