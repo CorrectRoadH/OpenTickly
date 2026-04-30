@@ -38,7 +38,7 @@ export const homeContentPl = {
     items: [
       {
         title: "Demo na żywo",
-        value: "track.opentoggl.com",
+        value: "Demo na żywo",
         body: "Najpierw wypróbuj, zdecyduj później.",
         cta: "Otwórz demo",
         href: "https://track.opentoggl.com",

@@ -38,7 +38,7 @@ export const homeContentKo = {
     items: [
       {
         title: "라이브 데모",
-        value: "track.opentoggl.com",
+        value: "라이브 데모",
         body: "먼저 써보고 결정하세요.",
         cta: "데모 열기",
         href: "https://track.opentoggl.com",

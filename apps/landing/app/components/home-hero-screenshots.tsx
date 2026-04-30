@@ -83,6 +83,10 @@ export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps
             width={3836}
           />
         ))}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[1.7%] top-[1.5%] h-[4.3%] w-[12%] bg-[#101114]"
+        />
       </div>
 
       {/* Dots */}

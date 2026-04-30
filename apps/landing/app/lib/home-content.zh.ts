@@ -38,7 +38,7 @@ export const homeContentZh = {
     items: [
       {
         title: "在线演示",
-        value: "track.opentoggl.com",
+        value: "在线演示",
         body: "先用起来，好不好自己判断。",
         cta: "打开演示",
         href: "https://track.opentoggl.com",

@@ -38,7 +38,7 @@ export const homeContentJa = {
     items: [
       {
         title: "ライブデモ",
-        value: "track.opentoggl.com",
+        value: "ライブデモ",
         body: "まず試して、それから決めてください。",
         cta: "デモを開く",
         href: "https://track.opentoggl.com",
