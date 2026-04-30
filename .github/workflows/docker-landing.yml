@@ -27,7 +27,7 @@ on:
 
 env:
   GHCR_REGISTRY: ghcr.io
-  GHCR_LANDING_IMAGE: correctroadh/opentoggl-landing
+  GHCR_LANDING_IMAGE: correctroadh/opentickly-landing
 
 jobs:
   build-and-push:
@@ -91,6 +91,19 @@ jobs:
           curl -fsSL -o /tmp/argocd \
             https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
           install -m 0755 /tmp/argocd /usr/local/bin/argocd
+
+      - name: Point landing deployment at latest image
+        env:
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          LANDING_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_LANDING_IMAGE }}:latest
+        run: |
+          argocd app patch-resource opentoggl-saas \
+            --grpc-web \
+            --kind Deployment \
+            --resource-name opentoggl-landing \
+            --patch "[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/image\",\"value\":\"${LANDING_IMAGE}\"}]" \
+            --patch-type json
 
       - name: Restart opentoggl-landing deployment
         env:
