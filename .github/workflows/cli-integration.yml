@@ -80,7 +80,7 @@ jobs:
         run: |
           package="${TOGGL_CLI_PACKAGE:-@correctroadh/toggl-cli}"
           npm install -g "$package"
-          toggl --version
+          toggl --help >/dev/null
 
       - name: Run CLI integration tests
         env:
