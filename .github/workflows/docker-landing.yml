@@ -27,6 +27,7 @@ on:
 
 env:
   GHCR_REGISTRY: ghcr.io
+  GHCR_LANDING_IMAGE: correctroadh/opentoggl-landing
 
 jobs:
   build-and-push:
@@ -53,7 +54,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.GHCR_REGISTRY }}/${{ secrets.GHCR_LANDING_IMAGE }}
+          images: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_LANDING_IMAGE }}
           tags: |
             type=ref,event=branch
             type=raw,value=latest,enable={{is_default_branch}}
