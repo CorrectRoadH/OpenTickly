@@ -17,8 +17,8 @@
     "@hey-api/client-fetch": "catalog:",
     "@opentickly/shared-contracts": "workspace:*",
     "@opentickly/web-ui": "workspace:*",
-    "@tanstack/react-query": "^5.100.1",
-    "@tanstack/react-router": "^1.168.23",
+    "@tanstack/react-query": "^5.100.7",
+    "@tanstack/react-router": "^1.169.1",
     "@types/react-big-calendar": "catalog:",
     "@uidotdev/usehooks": "catalog:",
     "baseui": "^16.1.1",
@@ -40,7 +40,7 @@
     "sonner": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
     "styletron-react": "^6.1.1",
-    "zod": "^4.3.6",
+    "zod": "^4.4.1",
     "zustand": "catalog:"
   },
   "devDependencies": {
