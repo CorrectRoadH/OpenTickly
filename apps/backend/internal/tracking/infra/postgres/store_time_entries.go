@@ -195,13 +195,22 @@ func (store *Store) ListTimeEntries(
 		args = append(args, filter.Before.UTC())
 		query += " and te.start_time < $" + intParam(len(args))
 	}
-	if filter.StartDate != nil {
+	if filter.StartDate != nil && filter.EndDate != nil {
 		args = append(args, filter.StartDate.UTC())
-		query += " and te.start_time >= $" + intParam(len(args))
-	}
-	if filter.EndDate != nil {
+		startParam := intParam(len(args))
 		args = append(args, filter.EndDate.UTC())
-		query += " and te.start_time <= $" + intParam(len(args))
+		endParam := intParam(len(args))
+		query += " and te.start_time <= $" + endParam
+		query += " and (te.stop_time >= $" + startParam + " or te.stop_time is null)"
+	} else {
+		if filter.StartDate != nil {
+			args = append(args, filter.StartDate.UTC())
+			query += " and te.start_time >= $" + intParam(len(args))
+		}
+		if filter.EndDate != nil {
+			args = append(args, filter.EndDate.UTC())
+			query += " and te.start_time <= $" + intParam(len(args))
+		}
 	}
 	query += " order by te.start_time, te.id"
 
@@ -271,13 +280,22 @@ func (store *Store) ListTimeEntriesForUser(
 		args = append(args, filter.Before.UTC())
 		query += " and te.start_time < $" + intParam(len(args))
 	}
-	if filter.StartDate != nil {
+	if filter.StartDate != nil && filter.EndDate != nil {
 		args = append(args, filter.StartDate.UTC())
-		query += " and te.start_time >= $" + intParam(len(args))
-	}
-	if filter.EndDate != nil {
+		startParam := intParam(len(args))
 		args = append(args, filter.EndDate.UTC())
-		query += " and te.start_time <= $" + intParam(len(args))
+		endParam := intParam(len(args))
+		query += " and te.start_time <= $" + endParam
+		query += " and (te.stop_time >= $" + startParam + " or te.stop_time is null)"
+	} else {
+		if filter.StartDate != nil {
+			args = append(args, filter.StartDate.UTC())
+			query += " and te.start_time >= $" + intParam(len(args))
+		}
+		if filter.EndDate != nil {
+			args = append(args, filter.EndDate.UTC())
+			query += " and te.start_time <= $" + intParam(len(args))
+		}
 	}
 	query += " order by te.start_time, te.id"
 
