@@ -15,12 +15,12 @@
     "zod": "^4.4.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260423.1",
+    "@cloudflare/workers-types": "^4.20260503.1",
     "@types/node": "catalog:",
     "gray-matter": "^4.0.3",
     "typescript": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:",
-    "wrangler": "^4.84.1"
+    "wrangler": "^4.87.0"
   }
 }

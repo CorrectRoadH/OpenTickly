@@ -53,7 +53,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.0",
     "babel-plugin-react-compiler": "catalog:",
-    "jsdom": "^29.0.2",
+    "jsdom": "^29.1.1",
     "react-compiler-runtime": "catalog:",
     "react-grab": "catalog:",
     "tailwindcss": "^4.2.4",
