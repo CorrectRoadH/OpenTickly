@@ -46,7 +46,7 @@ Cache: the Worker edge-caches the composed response for 60s; the inner GitHub fe
 
 ## Publishing a new release
 
-Just **publish a GitHub Release** on [CorrectRoadH/opentoggl](https://github.com/CorrectRoadH/OpenTickly/releases). That's it — the worker picks it up on the next cache miss. No redeploy needed.
+Just **publish a GitHub Release** on [CorrectRoadH/OpenTickly](https://github.com/CorrectRoadH/OpenTickly/releases). That's it — the worker picks it up on the next cache miss. No redeploy needed.
 
 ## Publishing an announcement
 
@@ -72,7 +72,7 @@ Announcements aren't in GitHub Releases — they're baked into the Worker at dep
 
 ## Env / bindings
 
-- `GITHUB_REPO` — `owner/repo` the Worker proxies releases from. Default `CorrectRoadH/opentoggl`.
+- `GITHUB_REPO` — `owner/repo` the Worker proxies releases from. Default `CorrectRoadH/OpenTickly`.
 - `GITHUB_TOKEN` (optional secret) — only needed if the 60/hr unauthenticated rate limit becomes an issue. `wrangler secret put GITHUB_TOKEN --env production`.
 - `UPDATE_REQUESTS` — Analytics Engine dataset binding for DAU. `recordUpdateRequest` is a no-op if the binding is ever removed.
 

@@ -1,9 +1,4 @@
 export const homeContentKo = {
-  notice: {
-    title: "중요 공지",
-    body: "상표 관련 이의 제기로 인해 저희 GitHub 저장소가 내려졌습니다. Toggl 에 영향을 주지 않도록 가능한 한 빨리 프로젝트 이름을 변경하겠습니다. 이것은 전적으로 제 자신의 무지 때문입니다. 저희는 Toggl 을 정말 좋아하며, 훌륭한 제품이라고 생각합니다. 혼란을 드려 죄송하며, 이해해 주셔서 감사합니다.",
-  },
-
   nameTbd: "OpenTickly",
 
   hero: {

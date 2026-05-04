@@ -1,9 +1,4 @@
 export const homeContentPl = {
-  notice: {
-    title: "Ważne ogłoszenie",
-    body: "Nasze repozytorium GitHub zostało usunięte po skardze dotyczącej znaku towarowego. Zmienimy nazwę projektu tak szybko, jak to możliwe, aby nie wpływać na Toggl. To wyłącznie moja własna niewiedza. Naprawdę lubimy Toggl — to świetny produkt, i przepraszamy za wszelkie nieporozumienia. Dziękujemy za wyrozumiałość.",
-  },
-
   nameTbd: "OpenTickly",
 
   hero: {

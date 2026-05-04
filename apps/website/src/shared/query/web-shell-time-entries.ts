@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../api/generated/public-track/types.gen.ts";
+import type { TimeEntrySearchItem } from "../api/generated/web/types.gen.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   getCurrentTimeEntry,
@@ -10,17 +11,20 @@ import {
   postWorkspaceTimeEntries,
   putWorkspaceTimeEntryHandler,
 } from "../api/public/track/index.ts";
+import { listRecentWorkspaceTimeEntrySuggestions } from "../api/web/index.ts";
 
 import { toTrackUtcString } from "./web-shell.ts";
 
 const timeEntriesQueryKey = (startDate?: string, endDate?: string, includeSharing?: boolean) =>
   ["time-entries", startDate ?? null, endDate ?? null, includeSharing ?? false] as const;
 const currentTimeEntryQueryKey = ["current-time-entry"] as const;
+const recentTimeEntrySuggestionsQueryKey = (workspaceId: number) =>
+  ["time-entry-suggestions", workspaceId] as const;
 
 export function useTimeEntriesQuery(options: {
-  endDate?: string;
+  endDate: string;
   includeSharing?: boolean;
-  startDate?: string;
+  startDate: string;
 }) {
   return useQuery({
     queryFn: () =>
@@ -44,6 +48,22 @@ export function useCurrentTimeEntryQuery() {
     queryFn: () => unwrapWebApiResult(getCurrentTimeEntry()),
     queryKey: currentTimeEntryQueryKey,
     retry: false,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useRecentTimeEntrySuggestionsQuery(workspaceId: number) {
+  return useQuery({
+    queryFn: async () => {
+      const result = await unwrapWebApiResult(
+        listRecentWorkspaceTimeEntrySuggestions({
+          path: { workspace_id: workspaceId },
+        }),
+      );
+      return result.entries.map(searchItemToTrackTimeEntry);
+    },
+    queryKey: recentTimeEntrySuggestionsQueryKey(workspaceId),
+    staleTime: 5_000,
     refetchInterval: 30_000,
   });
 }
@@ -164,6 +184,9 @@ export function useStartTimeEntryMutation(workspaceId: number) {
         },
       );
       await queryClient.invalidateQueries({ queryKey: ["time-entries"] });
+      await queryClient.invalidateQueries({
+        queryKey: recentTimeEntrySuggestionsQueryKey(workspaceId),
+      });
       await queryClient.invalidateQueries({ queryKey: currentTimeEntryQueryKey });
     },
   });
@@ -246,6 +269,9 @@ export function useCreateTimeEntryMutation(workspaceId: number) {
         queryKey: ["time-entries"],
       });
       await queryClient.invalidateQueries({
+        queryKey: recentTimeEntrySuggestionsQueryKey(workspaceId),
+      });
+      await queryClient.invalidateQueries({
         queryKey: currentTimeEntryQueryKey,
       });
     },
@@ -310,6 +336,9 @@ export function useStopTimeEntryMutation() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entry-suggestions"],
       });
       await queryClient.invalidateQueries({
         queryKey: currentTimeEntryQueryKey,
@@ -506,8 +535,33 @@ export function useDeleteTimeEntryMutation() {
         queryKey: ["time-entries"],
       });
       await queryClient.invalidateQueries({
+        queryKey: ["time-entry-suggestions"],
+      });
+      await queryClient.invalidateQueries({
         queryKey: currentTimeEntryQueryKey,
       });
     },
   });
+}
+
+function searchItemToTrackTimeEntry(
+  item: TimeEntrySearchItem,
+): GithubComTogglTogglApiInternalModelsTimeEntry {
+  return {
+    id: item.id,
+    workspace_id: item.workspace_id,
+    wid: item.workspace_id,
+    description: item.description,
+    project_id: item.project_id,
+    project_name: item.project_name,
+    project_color: item.project_color,
+    tag_ids: item.tag_ids,
+    tags: item.tags,
+    billable: item.billable,
+    start: item.start,
+    stop: item.stop,
+    duration: item.duration,
+    task_id: item.task_id,
+    task_name: item.task_name,
+  };
 }

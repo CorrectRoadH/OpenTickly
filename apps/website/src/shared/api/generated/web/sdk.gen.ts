@@ -30,6 +30,8 @@ import type {
   GetWorkspaceSettingsResponses,
   InviteWorkspaceMemberData,
   InviteWorkspaceMemberResponses,
+  ListRecentWorkspaceTimeEntrySuggestionsData,
+  ListRecentWorkspaceTimeEntrySuggestionsResponses,
   ListWorkspaceMembersData,
   ListWorkspaceMembersResponses,
   LoginWebUserData,
@@ -439,6 +441,18 @@ export const searchWorkspaceTimeEntries = <ThrowOnError extends boolean = false>
     url: "/web/v1/workspaces/{workspace_id}/time-entries/search",
     ...options,
   });
+
+/**
+ * List recent reusable time entry suggestions for a workspace
+ */
+export const listRecentWorkspaceTimeEntrySuggestions = <ThrowOnError extends boolean = false>(
+  options: Options<ListRecentWorkspaceTimeEntrySuggestionsData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    ListRecentWorkspaceTimeEntrySuggestionsResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/web/v1/workspaces/{workspace_id}/time-entries/recent-suggestions", ...options });
 
 /**
  * Reset onboarding for the current user

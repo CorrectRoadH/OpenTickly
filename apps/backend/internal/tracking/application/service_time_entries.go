@@ -169,6 +169,16 @@ func (service *Service) SearchTimeEntries(ctx context.Context, workspaceID int64
 	return service.store.SearchTimeEntries(ctx, workspaceID, userID, query)
 }
 
+func (service *Service) ListRecentTimeEntrySuggestions(ctx context.Context, workspaceID int64, userID int64, limit int) ([]TimeEntrySearchView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 8
+	}
+	return service.store.ListRecentTimeEntrySuggestions(ctx, workspaceID, userID, limit)
+}
+
 func (service *Service) GetTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (TimeEntryView, error) {
 	entry, ok, err := service.store.GetTimeEntry(ctx, workspaceID, userID, timeEntryID)
 	if err != nil {
@@ -225,4 +235,3 @@ func (service *Service) GetCurrentTimeEntry(ctx context.Context, userID int64) (
 	}
 	return entry, nil
 }
-

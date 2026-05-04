@@ -1,3 +1,6 @@
+# Stray home-dir symlinks
+Users/
+
 # Logs
 logs
 *.log

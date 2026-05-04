@@ -6,16 +6,14 @@ import {
   useCreateTagMutation,
   useCreateTimeEntryMutation,
   useFavoritesQuery,
+  useRecentTimeEntrySuggestionsQuery,
   useTasksQuery,
-  useTimeEntriesQuery,
 } from "../../shared/query/web-shell.ts";
 import { ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import { ManualModeComposer } from "./ManualModeComposer.tsx";
-import { sortTimeEntries } from "./overview-data.ts";
-import { stabilizeTimeEntryList } from "./time-entry-stability.ts";
 import { TimerElapsedDisplay } from "./TimerElapsedDisplay.tsx";
 import { TimerComposerSuggestionsDialog } from "./TimerComposerSuggestionsDialog.tsx";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
@@ -55,16 +53,8 @@ export function TimerComposerBar({
   const tasksQuery = useTasksQuery(workspaceId);
   const allTasks = tasksQuery.data?.data ?? [];
 
-  const recentTimeEntriesQuery = useTimeEntriesQuery({});
-  const recentWorkspaceEntriesRef = useRef<GithubComTogglTogglApiInternalModelsTimeEntry[]>([]);
-  const nextEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
-    (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
-  );
-  const recentWorkspaceEntries = stabilizeTimeEntryList(
-    recentWorkspaceEntriesRef.current,
-    nextEntries,
-  );
-  recentWorkspaceEntriesRef.current = recentWorkspaceEntries;
+  const recentTimeEntrySuggestionsQuery = useRecentTimeEntrySuggestionsQuery(workspaceId);
+  const recentWorkspaceEntries = recentTimeEntrySuggestionsQuery.data ?? [];
 
   // Apply initialDate if provided (e.g. from URL params)
   useEffect(() => {

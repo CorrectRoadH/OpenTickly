@@ -286,6 +286,8 @@ type TimeEntrySearchView struct {
 	Description  string
 	ProjectID    *int64
 	ProjectName  *string
+	TaskID       *int64
+	TaskName     *string
 	ProjectColor *string
 	TagIDs       []int64
 	TagNames     []string
@@ -302,6 +304,7 @@ type Store interface {
 	ListTimeEntries(context.Context, int64, ListTimeEntriesFilter) ([]TimeEntryView, error)
 	ListTimeEntriesForUser(context.Context, ListTimeEntriesFilter) ([]TimeEntryView, error)
 	SearchTimeEntries(context.Context, int64, int64, string) ([]TimeEntrySearchView, error)
+	ListRecentTimeEntrySuggestions(context.Context, int64, int64, int) ([]TimeEntrySearchView, error)
 	ListWorkspaceTimeEntries(context.Context, int64, *time.Time) ([]TimeEntryView, error)
 	GetCurrentTimeEntry(context.Context, int64) (TimeEntryView, bool, error)
 	UpdateTimeEntry(context.Context, UpdateTimeEntryRecord) (TimeEntryView, error)

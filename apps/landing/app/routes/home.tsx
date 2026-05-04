@@ -1,15 +1,6 @@
 import { AppLinkButton, SurfaceCard } from "@opentickly/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  ChevronDown,
-  FileText,
-  Play,
-  RefreshCw,
-  Server,
-  Unlock,
-} from "lucide-react";
+import { ArrowUpRight, ChevronDown, FileText, Play, RefreshCw, Server, Unlock } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 
@@ -45,7 +36,7 @@ export default function Home() {
   const siteUrl = resolveSiteUrl();
 
   const demoHref = appendUtm("https://track.opentoggl.com", {
-    source: "opentoggl_landing",
+    source: "opentickly_landing",
     medium: "hero_cta",
     campaign: "try_demo",
     content: locale,
@@ -62,7 +53,7 @@ export default function Home() {
     return {
       ...item,
       href: appendUtm(item.href, {
-        source: "opentoggl_landing",
+        source: "opentickly_landing",
         medium: "proof_card",
         campaign: "home",
         content: locale,
@@ -84,21 +75,6 @@ export default function Home() {
       />
 
       <main id="main-content" className="landing-home">
-        {/* Trademark takedown notice */}
-        <section
-          role="alert"
-          aria-label={strings.notice.title}
-          className="mx-auto w-full max-w-6xl px-4 pt-6 md:px-6"
-        >
-          <div className="flex items-start gap-3 rounded-[8px] border border-amber-300/70 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-100">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="text-[14px] font-semibold">{strings.notice.title}</p>
-              <p className="mt-1 text-[13px] leading-6">{strings.notice.body}</p>
-            </div>
-          </div>
-        </section>
-
         {/* Hero */}
         <section className="mx-auto w-full max-w-6xl px-4 py-12 md:px-6 md:py-16">
           <div className="mx-auto max-w-2xl text-center">

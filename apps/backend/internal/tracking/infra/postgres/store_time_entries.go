@@ -77,7 +77,7 @@ func (store *Store) GetTimeEntry(
 			te.updated_at,
 			c.name,
 			p.name,
-			t.name,
+			t.name as task_name,
 			p.active,
 			p.color,
 			`+tagNamesSubquery+`
@@ -328,6 +328,8 @@ func (store *Store) SearchTimeEntries(
 		te.description,
 		te.project_id,
 		p.name,
+		te.task_id,
+		t.name,
 		p.color,
 		te.tag_ids,
 		(select array_agg(t.name order by t.id) from catalog_tags t where t.id = any(te.tag_ids)),
@@ -337,6 +339,7 @@ func (store *Store) SearchTimeEntries(
 		te.duration_seconds
 	from tracking_time_entries te
 	left join catalog_projects p on p.id = te.project_id
+	left join catalog_tasks t on t.id = te.task_id
 	where te.workspace_id = $1
 	  and te.user_id = $2
 	  and te.deleted_at is null
@@ -359,6 +362,8 @@ func (store *Store) SearchTimeEntries(
 			&entry.Description,
 			&entry.ProjectID,
 			&entry.ProjectName,
+			&entry.TaskID,
+			&entry.TaskName,
 			&entry.ProjectColor,
 			&entry.TagIDs,
 			&entry.TagNames,
@@ -368,6 +373,97 @@ func (store *Store) SearchTimeEntries(
 			&entry.Duration,
 		); err != nil {
 			return nil, writeTrackingError("scan search time entry", err)
+		}
+		results = append(results, entry)
+	}
+	return results, rows.Err()
+}
+
+func (store *Store) ListRecentTimeEntrySuggestions(
+	ctx context.Context,
+	workspaceID int64,
+	userID int64,
+	limit int,
+) ([]trackingapplication.TimeEntrySearchView, error) {
+	sql := `with ranked as (
+		select
+			te.id,
+			te.workspace_id,
+			te.description,
+			te.project_id,
+			p.name as project_name,
+			te.task_id,
+			t.name as task_name,
+			p.color as project_color,
+			te.tag_ids,
+			(select array_agg(tag.name order by tag.id) from catalog_tags tag where tag.id = any(te.tag_ids)) as tag_names,
+			te.billable,
+			te.start_time,
+			te.stop_time,
+			te.duration_seconds,
+			row_number() over (
+				partition by
+					coalesce(te.description, ''),
+					te.project_id,
+					te.task_id,
+					te.tag_ids,
+					te.billable
+				order by te.start_time desc, te.id desc
+			) as rank
+		from tracking_time_entries te
+		left join catalog_projects p on p.id = te.project_id
+		left join catalog_tasks t on t.id = te.task_id
+		where te.workspace_id = $1
+		  and te.user_id = $2
+		  and te.deleted_at is null
+		  and te.stop_time is not null
+	)
+	select
+		id,
+		workspace_id,
+		description,
+		project_id,
+		project_name,
+		task_id,
+		task_name,
+		project_color,
+		tag_ids,
+		tag_names,
+		billable,
+		start_time,
+		stop_time,
+		duration_seconds
+	from ranked
+	where rank = 1
+	order by start_time desc, id desc
+	limit $3`
+
+	rows, err := store.pool.Query(ctx, sql, workspaceID, userID, limit)
+	if err != nil {
+		return nil, writeTrackingError("list recent time entry suggestions", err)
+	}
+	defer rows.Close()
+
+	results := make([]trackingapplication.TimeEntrySearchView, 0)
+	for rows.Next() {
+		var entry trackingapplication.TimeEntrySearchView
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.WorkspaceID,
+			&entry.Description,
+			&entry.ProjectID,
+			&entry.ProjectName,
+			&entry.TaskID,
+			&entry.TaskName,
+			&entry.ProjectColor,
+			&entry.TagIDs,
+			&entry.TagNames,
+			&entry.Billable,
+			&entry.Start,
+			&entry.Stop,
+			&entry.Duration,
+		); err != nil {
+			return nil, writeTrackingError("scan recent time entry suggestion", err)
 		}
 		results = append(results, entry)
 	}

@@ -108,6 +108,7 @@ export {
 export {
   useTimeEntriesQuery,
   useCurrentTimeEntryQuery,
+  useRecentTimeEntrySuggestionsQuery,
   useStartTimeEntryMutation,
   useCreateTimeEntryMutation,
   useStopTimeEntryMutation,

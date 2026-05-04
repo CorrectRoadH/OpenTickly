@@ -1,9 +1,4 @@
 export const homeContentFr = {
-  notice: {
-    title: "Avis important",
-    body: "Notre dépôt GitHub a été retiré suite à une plainte relative à une marque. Nous renommerons ce projet dès que possible afin de ne pas nuire à Toggl. C'est entièrement dû à ma propre ignorance. Nous adorons sincèrement Toggl — c'est un excellent produit, et nous sommes désolés pour la confusion. Merci de votre compréhension.",
-  },
-
   nameTbd: "OpenTickly",
 
   hero: {

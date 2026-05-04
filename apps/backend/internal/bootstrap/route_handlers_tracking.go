@@ -6,6 +6,7 @@ import (
 	"time"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
 	"github.com/labstack/echo/v4"
 )
@@ -37,6 +38,39 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
+	items := timeEntrySearchViewsToWebAPI(entries)
+
+	return ctx.JSON(http.StatusOK, webapi.TimeEntrySearchResult{Entries: items})
+}
+
+func (handlers *routeHandlers) listRecentWorkspaceTimeEntrySuggestions(ctx echo.Context) error {
+	if response, ok := handlers.authorizeSession(ctx); !ok {
+		return response
+	}
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handlers.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+	}
+
+	entries, err := handlers.trackingApp.ListRecentTimeEntrySuggestions(ctx.Request().Context(), workspaceID, user.ID, 8)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	return ctx.JSON(http.StatusOK, webapi.TimeEntrySearchResult{
+		Entries: timeEntrySearchViewsToWebAPI(entries),
+	})
+}
+
+func timeEntrySearchViewsToWebAPI(entries []trackingapplication.TimeEntrySearchView) []webapi.TimeEntrySearchItem {
 	items := make([]webapi.TimeEntrySearchItem, 0, len(entries))
 	for _, entry := range entries {
 		item := webapi.TimeEntrySearchItem{
@@ -45,6 +79,8 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 			Description:  entry.Description,
 			ProjectId:    intPointerFromInt64(entry.ProjectID),
 			ProjectName:  entry.ProjectName,
+			TaskId:       intPointerFromInt64(entry.TaskID),
+			TaskName:     entry.TaskName,
 			ProjectColor: entry.ProjectColor,
 			TagIds:       int64SliceToIntSlice(entry.TagIDs),
 			Tags:         entry.TagNames,
@@ -58,8 +94,7 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 		}
 		items = append(items, item)
 	}
-
-	return ctx.JSON(http.StatusOK, webapi.TimeEntrySearchResult{Entries: items})
+	return items
 }
 
 func intPointerFromInt64(value *int64) *int {

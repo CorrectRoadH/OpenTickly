@@ -23,7 +23,7 @@ spec:
 
     This template provisions everything you need in one click:
 
-    - **opentoggl** — single-image runtime that serves both the web UI and the API on port 8080
+    - **OpenTickly** — single-image runtime that serves both the web UI and the API on port 8080
     - **postgres** — PostgreSQL 17 for primary storage, with a persistent volume
     - **redis** — Redis 8 for cache and the background job queue
 
@@ -36,11 +36,11 @@ spec:
 
     ## Custom domain
 
-    Bind your own domain in the **Networking** tab of the `opentoggl` service after deployment. The web UI is also an installable Progressive Web App on iOS and Android.
+    Bind your own domain in the **Networking** tab of the OpenTickly service after deployment. The web UI is also an installable Progressive Web App on iOS and Android.
 
     ## Updates
 
-    To upgrade, change the image tag of the `opentoggl` service to a newer release from
+    To upgrade, change the image tag of the OpenTickly service to a newer release from
     [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) and redeploy.
 
     ## License & attribution
@@ -132,7 +132,7 @@ spec:
             expose: true
             readonly: true
 
-    - name: opentoggl
+    - name: opentickly
       icon: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/website/public/favicon.svg
       template: PREBUILT_V2
       dependencies:
@@ -147,7 +147,7 @@ spec:
             - -c
             - |
               # Zeabur's `dependencies` only controls start order, not readiness.
-              # opentoggl does a strict 3s ping of postgres+redis at startup and
+              # OpenTickly does a strict 3s ping of postgres+redis at startup and
               # exits if either is not yet accepting connections. Wrap the binary
               # in a retry loop so the first attempt does not look like an error.
               n=0
@@ -169,7 +169,7 @@ spec:
           port: web
         env:
           OPENTOGGL_SERVICE_NAME:
-            default: opentoggl
+            default: opentickly
           PORT:
             default: "8080"
           DATABASE_URL:
@@ -198,7 +198,7 @@ localization:
 
       此模板將一鍵部署所需的全部服務:
 
-      - **opentoggl** — 單一映像,在 8080 連接埠同時提供 Web UI 與 API
+      - **OpenTickly** — 單一映像,在 8080 連接埠同時提供 Web UI 與 API
       - **postgres** — PostgreSQL 17 主資料庫,附持久化儲存區
       - **redis** — Redis 8,用於快取與背景任務佇列
 
@@ -211,11 +211,11 @@ localization:
 
       ## 自訂網域
 
-      在 `opentoggl` 服務的 **Networking** 分頁中,可綁定你自己的網域。Web UI 也是可安裝的 PWA,iOS 與 Android 皆可加入主畫面。
+      在 OpenTickly 服務的 **Networking** 分頁中,可綁定你自己的網域。Web UI 也是可安裝的 PWA,iOS 與 Android 皆可加入主畫面。
 
       ## 升級
 
-      若要升級,將 `opentoggl` 服務的 image tag 換成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本後重新部署即可。
+      若要升級,將 OpenTickly 服務的 image tag 換成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本後重新部署即可。
 
       ## 授權與致謝
 
@@ -237,7 +237,7 @@ localization:
 
       此模板将一键部署所需的全部服务:
 
-      - **opentoggl** — 单一镜像,在 8080 端口同时提供 Web UI 与 API
+      - **OpenTickly** — 单一镜像,在 8080 端口同时提供 Web UI 与 API
       - **postgres** — PostgreSQL 17 主数据库,附持久化存储卷
       - **redis** — Redis 8,用于缓存与后台任务队列
 
@@ -250,11 +250,11 @@ localization:
 
       ## 自定义域名
 
-      在 `opentoggl` 服务的 **Networking** 选项卡中,可绑定你自己的域名。Web UI 同时也是可安装的 PWA,iOS 与 Android 均可添加到主屏幕。
+      在 OpenTickly 服务的 **Networking** 选项卡中,可绑定你自己的域名。Web UI 同时也是可安装的 PWA,iOS 与 Android 均可添加到主屏幕。
 
       ## 升级
 
-      升级时,将 `opentoggl` 服务的 image tag 换成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本,然后重新部署即可。
+      升级时,将 OpenTickly 服务的 image tag 换成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本,然后重新部署即可。
 
       ## 许可与致谢
 
@@ -276,7 +276,7 @@ localization:
 
       このテンプレートは必要な構成を一括でデプロイします:
 
-      - **opentoggl** — Web UI と API の両方をポート 8080 で配信する単一イメージ
+      - **OpenTickly** — Web UI と API の両方をポート 8080 で配信する単一イメージ
       - **postgres** — メインストレージとなる PostgreSQL 17(永続ボリューム付き)
       - **redis** — キャッシュとバックグラウンドジョブキュー用の Redis 8
 
@@ -289,11 +289,11 @@ localization:
 
       ## カスタムドメイン
 
-      `opentoggl` サービスの **Networking** タブから、自分のドメインをバインドできます。Web UI は iOS / Android のホーム画面に追加できる PWA でもあります。
+      OpenTickly サービスの **Networking** タブから、自分のドメインをバインドできます。Web UI は iOS / Android のホーム画面に追加できる PWA でもあります。
 
       ## アップデート
 
-      アップデートする場合は、`opentoggl` サービスの image タグを [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) の新しいリリースに変更して再デプロイしてください。
+      アップデートする場合は、OpenTickly サービスの image タグを [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) の新しいリリースに変更して再デプロイしてください。
 
       ## ライセンスとクレジット
 
@@ -315,7 +315,7 @@ localization:
 
       Esta plantilla provisiona todo lo necesario en un clic:
 
-      - **opentoggl** — imagen única que sirve la UI web y la API en el puerto 8080
+      - **OpenTickly** — imagen única que sirve la UI web y la API en el puerto 8080
       - **postgres** — PostgreSQL 17 como almacenamiento principal, con volumen persistente
       - **redis** — Redis 8 para caché y la cola de trabajos en segundo plano
 
@@ -328,11 +328,11 @@ localization:
 
       ## Dominio personalizado
 
-      Vincula tu propio dominio en la pestaña **Networking** del servicio `opentoggl`. La UI web también es una PWA instalable en iOS y Android.
+      Vincula tu propio dominio en la pestaña **Networking** del servicio OpenTickly. La UI web también es una PWA instalable en iOS y Android.
 
       ## Actualizaciones
 
-      Para actualizar, cambia el tag de imagen del servicio `opentoggl` a una versión más reciente de [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) y vuelve a desplegar.
+      Para actualizar, cambia el tag de imagen del servicio OpenTickly a una versión más reciente de [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) y vuelve a desplegar.
 
       ## Licencia y atribución
 
@@ -354,7 +354,7 @@ localization:
 
       Template ini menyediakan semua yang dibutuhkan dalam satu klik:
 
-      - **opentoggl** — image tunggal yang menyajikan UI web dan API di port 8080
+      - **OpenTickly** — image tunggal yang menyajikan UI web dan API di port 8080
       - **postgres** — PostgreSQL 17 sebagai penyimpanan utama, dengan volume persisten
       - **redis** — Redis 8 untuk cache dan antrian background job
 
@@ -367,11 +367,11 @@ localization:
 
       ## Domain kustom
 
-      Bind domain Anda sendiri di tab **Networking** pada service `opentoggl`. UI web juga merupakan PWA yang dapat dipasang di iOS dan Android.
+      Bind domain Anda sendiri di tab **Networking** pada service OpenTickly. UI web juga merupakan PWA yang dapat dipasang di iOS dan Android.
 
       ## Pembaruan
 
-      Untuk memperbarui, ubah tag image service `opentoggl` ke rilis terbaru dari [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) lalu deploy ulang.
+      Untuk memperbarui, ubah tag image service OpenTickly ke rilis terbaru dari [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) lalu deploy ulang.
 
       ## Lisensi & atribusi
 

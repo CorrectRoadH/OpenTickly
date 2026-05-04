@@ -12,6 +12,17 @@ export interface TrackQueryRange {
   endDate: string;
 }
 
+export function getRecentTimeEntryRange(days: number, now: Date = new Date()): TrackQueryRange {
+  const end = new Date(now);
+  end.setDate(end.getDate() + 1);
+  const start = new Date(now);
+  start.setDate(start.getDate() - days);
+  return {
+    endDate: formatDate(end),
+    startDate: formatDate(start),
+  };
+}
+
 export type QueryRangeMode = "week" | "rolling";
 
 export interface ResolveQueryRangeInput {
@@ -37,14 +48,7 @@ export function resolveTimeEntryQueryRange(input: ResolveQueryRangeInput): Track
   if (listDateRange) return listDateRange;
 
   if (rangeMode === "rolling" || view === "list") {
-    const end = new Date(today);
-    end.setDate(end.getDate() + 1);
-    const start = new Date(today);
-    start.setDate(start.getDate() - daysLoaded);
-    return {
-      endDate: formatDate(end),
-      startDate: formatDate(start),
-    };
+    return getRecentTimeEntryRange(daysLoaded, today);
   }
 
   return weekRange;

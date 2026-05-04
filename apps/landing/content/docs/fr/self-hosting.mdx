@@ -22,7 +22,7 @@ Si Docker n'est pas installé, suivez d'abord le [guide officiel](https://docs.d
 Créez un nouveau répertoire et récupérez le fichier compose officiel :
 
 ```bash
-mkdir -p opentoggl && cd opentoggl
+mkdir -p opentickly && cd opentickly
 
 wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
@@ -30,7 +30,7 @@ wget -O docker-compose.yml \
 
 Ce fichier compose définit trois conteneurs :
 
-- **`opentoggl`** — Web UI + API REST (expose le port `8080` vers l'extérieur)
+- **OpenTickly** — Web UI + API REST (expose le port `8080` vers l'extérieur)
 - **`postgres`** — base de données (uniquement sur le réseau interne, non exposée)
 - **`redis`** — cache et file d'arrière-plan (uniquement sur le réseau interne, non exposée)
 
@@ -109,7 +109,7 @@ ZimaOS (le système officiel des Zimablade / Zimacube) partage le même App Stor
 Synology DSM 7.2+ prend en charge Docker Compose via **Container Manager** :
 
 1. Ouvrez **Container Manager** → **Projet** → **Créer**
-2. Donnez un nom au projet, par exemple `opentoggl`
+2. Donnez un nom au projet, par exemple `opentickly`
 3. Choisissez **Utiliser docker-compose.yml** et collez le [fichier compose](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 4. Suivez l'assistant jusqu'au bout
 
@@ -124,7 +124,7 @@ Synology DSM 7.2+ prend en charge Docker Compose via **Container Manager** :
 
 1. Ouvrez l'application **Docker** depuis le bureau fnOS
 2. Dans la barre latérale gauche, sélectionnez **Compose** → **Nouveau projet**
-3. Nom du projet : `opentoggl`, laissez le chemin de stockage par défaut
+3. Nom du projet : `opentickly`, laissez le chemin de stockage par défaut
 4. Dans **Contenu Compose**, collez le [fichier compose](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 5. Cliquez sur **Déployer** et attendez que les trois conteneurs passent au vert
 

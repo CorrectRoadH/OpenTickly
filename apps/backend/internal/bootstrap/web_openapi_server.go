@@ -143,6 +143,11 @@ func (server *webOpenAPIServer) SearchWorkspaceTimeEntries(ctx echo.Context, wor
 	return server.handlers.searchWorkspaceTimeEntries(ctx)
 }
 
+func (server *webOpenAPIServer) ListRecentWorkspaceTimeEntrySuggestions(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.handlers.listRecentWorkspaceTimeEntrySuggestions(ctx)
+}
+
 func (server *webOpenAPIServer) ResetOnboarding(ctx echo.Context) error {
 	return server.handlers.resetOnboarding(ctx)
 }

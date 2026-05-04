@@ -843,6 +843,34 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/time-entries/recent-suggestions": {
+      "get": {
+        "summary": "List recent reusable time entry suggestions for a workspace",
+        "operationId": "list-recent-workspace-time-entry-suggestions",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent reusable time entry suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeEntrySearchResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/onboarding": {
       "get": {
         "summary": "Get onboarding status for the current user",
@@ -1998,6 +2026,14 @@
             "type": "string",
             "nullable": true
           },
+          "task_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "task_name": {
+            "type": "string",
+            "nullable": true
+          },
           "project_color": {
             "type": "string",
             "nullable": true
@@ -2034,6 +2070,8 @@
           "description",
           "project_id",
           "project_name",
+          "task_id",
+          "task_name",
           "project_color",
           "tag_ids",
           "tags",

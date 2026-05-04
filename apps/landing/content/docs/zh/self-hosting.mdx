@@ -22,7 +22,7 @@ description: 在自己的机器上部署 OpenTickly — Docker Compose 一条命
 新建一个目录，把官方 compose 文件拉下来：
 
 ```bash
-mkdir -p opentoggl && cd opentoggl
+mkdir -p opentickly && cd opentickly
 
 wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
@@ -30,7 +30,7 @@ wget -O docker-compose.yml \
 
 这份 compose 定义了三个容器：
 
-- **`opentoggl`** — Web UI + REST API（对外暴露 `8080`）
+- **OpenTickly** — Web UI + REST API（对外暴露 `8080`）
 - **`postgres`** — 数据库（只在内部网络，不对外暴露）
 - **`redis`** — 缓存和后台任务队列（只在内部网络，不对外暴露）
 
@@ -108,7 +108,7 @@ ZimaOS（Zimablade / Zimacube 的官方系统）和 CasaOS 共用同一套应用
 群晖 DSM 7.2+ 通过 **Container Manager** 支持 Docker Compose：
 
 1. 打开 **Container Manager** → **项目** → **新建**
-2. 项目名例如 `opentoggl`
+2. 项目名例如 `opentickly`
 3. 选 **使用 docker-compose.yml**，粘贴 [compose 文件](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 4. 一路下一步完成向导
 
@@ -122,7 +122,7 @@ ZimaOS（Zimablade / Zimacube 的官方系统）和 CasaOS 共用同一套应用
 
 1. 打开飞牛桌面的 **Docker** 应用
 2. 左侧选 **Compose** → **新建项目**
-3. 项目名 `opentoggl`，存储路径保持默认
+3. 项目名 `opentickly`，存储路径保持默认
 4. **Compose 内容**粘贴 [compose 文件](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml)
 5. 点 **部署**，等三个容器变绿
 

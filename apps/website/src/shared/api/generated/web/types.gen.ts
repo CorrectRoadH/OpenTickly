@@ -367,6 +367,8 @@ export type TimeEntrySearchItem = {
   description: string;
   project_id: number;
   project_name: string;
+  task_id: number;
+  task_name: string;
   project_color: string;
   tag_ids: Array<number>;
   tags: Array<string>;
@@ -930,6 +932,25 @@ export type SearchWorkspaceTimeEntriesResponses = {
 
 export type SearchWorkspaceTimeEntriesResponse =
   SearchWorkspaceTimeEntriesResponses[keyof SearchWorkspaceTimeEntriesResponses];
+
+export type ListRecentWorkspaceTimeEntrySuggestionsData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/time-entries/recent-suggestions";
+};
+
+export type ListRecentWorkspaceTimeEntrySuggestionsResponses = {
+  /**
+   * Recent reusable time entry suggestions
+   */
+  200: TimeEntrySearchResult;
+};
+
+export type ListRecentWorkspaceTimeEntrySuggestionsResponse =
+  ListRecentWorkspaceTimeEntrySuggestionsResponses[keyof ListRecentWorkspaceTimeEntrySuggestionsResponses];
 
 export type ResetOnboardingData = {
   body?: never;

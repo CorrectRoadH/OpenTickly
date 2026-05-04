@@ -1,9 +1,4 @@
 export const homeContentEn = {
-  notice: {
-    title: "Important notice",
-    body: "Our GitHub repository has been taken down following a trademark complaint. We'll rename this project as soon as possible to avoid any impact on Toggl. This was entirely my own ignorance. We genuinely love Toggl — it's a great product, and we're sorry for any confusion. Thank you for your patience.",
-  },
-
   nameTbd: "OpenTickly",
 
   hero: {

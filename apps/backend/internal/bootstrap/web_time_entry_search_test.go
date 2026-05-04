@@ -161,3 +161,133 @@ func TestSearchWorkspaceTimeEntries(t *testing.T) {
 		}
 	})
 }
+
+func TestRecentWorkspaceTimeEntrySuggestions(t *testing.T) {
+	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("te-suggestions")
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    uniqueEmail,
+		"fullname": "Suggestions Test User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+	authorization := basicAuthorization(uniqueEmail, "secret1")
+
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	if registerBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected current_workspace_id")
+	}
+	workspaceID := *registerBody.CurrentWorkspaceID
+
+	baseStart := time.Now().UTC().Add(-30 * 24 * time.Hour).Truncate(time.Second)
+	descriptions := []string{
+		"Duplicate reusable combo",
+		"Older candidate 1",
+		"Older candidate 2",
+		"Older candidate 3",
+		"Older candidate 4",
+		"Older candidate 5",
+		"Older candidate 6",
+		"Older candidate 7",
+		"Older candidate 8",
+		"Recent candidate",
+		"Duplicate reusable combo",
+	}
+
+	for i, desc := range descriptions {
+		start := baseStart.Add(time.Duration(i) * time.Hour)
+		stop := start.Add(30 * time.Minute)
+		create := performAuthorizedJSONRequest(t, app, http.MethodPost,
+			fmt.Sprintf("/api/v9/workspaces/%d/time_entries", workspaceID),
+			map[string]any{
+				"description":  desc,
+				"start":        start.Format(time.RFC3339),
+				"stop":         stop.Format(time.RFC3339),
+				"duration":     1800,
+				"created_with": "go-test",
+				"workspace_id": workspaceID,
+			},
+			authorization,
+		)
+		if create.Code != http.StatusOK {
+			t.Fatalf("create entry %d (%s) failed: %d body=%s", i, desc, create.Code, create.Body.String())
+		}
+	}
+
+	runningStart := baseStart.Add(48 * time.Hour)
+	running := performAuthorizedJSONRequest(t, app, http.MethodPost,
+		fmt.Sprintf("/api/v9/workspaces/%d/time_entries", workspaceID),
+		map[string]any{
+			"description":  "Running entry is not reusable yet",
+			"start":        runningStart.Format(time.RFC3339),
+			"duration":     -runningStart.Unix(),
+			"created_with": "go-test",
+			"workspace_id": workspaceID,
+		},
+		authorization,
+	)
+	if running.Code != http.StatusOK {
+		t.Fatalf("create running entry failed: %d body=%s", running.Code, running.Body.String())
+	}
+
+	suggestions := performJSONRequest(t, app, http.MethodGet,
+		fmt.Sprintf("/web/v1/workspaces/%d/time-entries/recent-suggestions", workspaceID),
+		nil,
+		sessionCookie,
+	)
+	if suggestions.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", suggestions.Code, suggestions.Body.String())
+	}
+
+	var result struct {
+		Entries []struct {
+			Description string  `json:"description"`
+			Stop        *string `json:"stop"`
+		} `json:"entries"`
+	}
+	mustDecodeJSON(t, suggestions.Body.Bytes(), &result)
+
+	if len(result.Entries) != 8 {
+		t.Fatalf("expected 8 suggestions, got %d: %+v", len(result.Entries), result.Entries)
+	}
+	if result.Entries[0].Description != "Duplicate reusable combo" {
+		t.Fatalf("expected newest distinct combo first, got %q", result.Entries[0].Description)
+	}
+	if result.Entries[1].Description != "Recent candidate" {
+		t.Fatalf("expected second-newest distinct combo second, got %q", result.Entries[1].Description)
+	}
+
+	seenDuplicate := 0
+	for _, entry := range result.Entries {
+		if entry.Stop == nil {
+			t.Fatalf("suggestions must exclude running entries: %+v", result.Entries)
+		}
+		if entry.Description == "Running entry is not reusable yet" {
+			t.Fatalf("running entry appeared in suggestions: %+v", result.Entries)
+		}
+		if entry.Description == "Duplicate reusable combo" {
+			seenDuplicate++
+		}
+	}
+	if seenDuplicate != 1 {
+		t.Fatalf("expected duplicate combo to be deduped once, saw %d", seenDuplicate)
+	}
+}

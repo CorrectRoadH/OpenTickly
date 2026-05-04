@@ -2,7 +2,10 @@ import { useRef, useState } from "react";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
+import {
+  useRecentTimeEntrySuggestionsQuery,
+  useTimeEntriesQuery,
+} from "../../shared/query/web-shell.ts";
 import {
   buildEntryGroups,
   buildTimesheetRows,
@@ -55,7 +58,7 @@ export function useTimeEntryViews(options: {
   });
 
   const timeEntriesQuery = useTimeEntriesQuery(queryRange);
-  const recentTimeEntriesQuery = useTimeEntriesQuery({});
+  const recentTimeEntrySuggestionsQuery = useRecentTimeEntrySuggestionsQuery(workspaceId);
 
   const visibleEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);
   const recentWorkspaceEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);
@@ -69,9 +72,7 @@ export function useTimeEntryViews(options: {
   const visibleEntries = stabilizeTimeEntryList(visibleEntriesRef.current, nextVisibleEntries);
   visibleEntriesRef.current = visibleEntries;
 
-  const nextRecentEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
-    (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
-  );
+  const nextRecentEntries = recentTimeEntrySuggestionsQuery.data ?? [];
   const recentWorkspaceEntries = stabilizeTimeEntryList(
     recentWorkspaceEntriesRef.current,
     nextRecentEntries,
