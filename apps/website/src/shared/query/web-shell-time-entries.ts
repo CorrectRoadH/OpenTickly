@@ -22,11 +22,13 @@ const recentTimeEntrySuggestionsQueryKey = (workspaceId: number) =>
   ["time-entry-suggestions", workspaceId] as const;
 
 export function useTimeEntriesQuery(options: {
+  enabled?: boolean;
   endDate: string;
   includeSharing?: boolean;
   startDate: string;
 }) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryFn: () =>
       unwrapWebApiResult(
         getTimeEntries({

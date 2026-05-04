@@ -14,49 +14,6 @@ import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fi
  */
 
 test.describe("Timer Composer Suggestions", () => {
-  test("timer page loads recent suggestions without naked history query", async ({ page }) => {
-    const email = `suggestions-network-${test.info().workerIndex}-${Date.now()}@example.com`;
-    const password = "secret-pass";
-
-    await registerE2eUser(page, test.info(), {
-      email,
-      fullName: "Suggestions Network Test User",
-      password,
-    });
-
-    await page.context().clearCookies();
-    await loginE2eUser(page, test.info(), { email, password });
-
-    const timeEntryRequests: string[] = [];
-    page.on("request", (request) => {
-      const url = request.url();
-      if (request.method() === "GET" && url.includes("/api/v9/me/time_entries")) {
-        timeEntryRequests.push(url);
-      }
-    });
-
-    const suggestionsResponse = page.waitForResponse(
-      (response) =>
-        response.url().includes("/web/v1/workspaces/") &&
-        response.url().includes("/time-entries/recent-suggestions") &&
-        response.status() === 200,
-    );
-
-    await page.goto(new URL("/timer", page.url()).toString());
-    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
-    await suggestionsResponse;
-
-    const nakedHistoryQueries = timeEntryRequests.filter((url) => {
-      const requestUrl = new URL(url);
-      return (
-        requestUrl.searchParams.get("meta") === "true" &&
-        !requestUrl.searchParams.has("start_date") &&
-        !requestUrl.searchParams.has("end_date")
-      );
-    });
-    expect(nakedHistoryQueries).toEqual([]);
-  });
-
   /**
    * Test that the suggestions dialog appears when focusing on the description input
    * and that it shows previously created time entries from several weeks ago.

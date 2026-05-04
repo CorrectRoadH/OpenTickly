@@ -2068,16 +2068,10 @@
           "id",
           "workspace_id",
           "description",
-          "project_id",
-          "project_name",
-          "task_id",
-          "task_name",
-          "project_color",
           "tag_ids",
           "tags",
           "billable",
           "start",
-          "stop",
           "duration"
         ]
       },

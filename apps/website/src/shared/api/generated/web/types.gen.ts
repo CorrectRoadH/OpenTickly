@@ -365,16 +365,16 @@ export type TimeEntrySearchItem = {
   id: number;
   workspace_id: number;
   description: string;
-  project_id: number;
-  project_name: string;
-  task_id: number;
-  task_name: string;
-  project_color: string;
+  project_id?: number;
+  project_name?: string;
+  task_id?: number;
+  task_name?: string;
+  project_color?: string;
   tag_ids: Array<number>;
   tags: Array<string>;
   billable: boolean;
   start: string;
-  stop: string;
+  stop?: string;
   duration: number;
 };
 

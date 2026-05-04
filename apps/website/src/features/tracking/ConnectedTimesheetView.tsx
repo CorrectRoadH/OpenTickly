@@ -1,11 +1,9 @@
 import { type ReactElement, useRef, useState } from "react";
 
-import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
-import { getTimeEntries } from "../../shared/api/public/track/index.ts";
 import {
   useCreateTimeEntryMutation,
   useDeleteTimeEntryMutation,
+  useTimeEntriesQuery,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { resolveTimeEntryProjectId, toTrackIso } from "./time-entry-ids.ts";
@@ -29,6 +27,16 @@ export function ConnectedTimesheetView({
   const { weekDays, beginningOfWeek } = useWeekNavigation();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
+  const lastWeekDate = new Date(weekDays[0]);
+  lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+  const lastWeekDays = getWeekDaysForDate(lastWeekDate, beginningOfWeek);
+  const lastWeekStart = formatTrackQueryDate(lastWeekDays[0]);
+  const lastWeekEnd = formatTrackQueryDate(lastWeekDays[6]);
+  const lastWeekEntriesQuery = useTimeEntriesQuery({
+    enabled: false,
+    endDate: lastWeekEnd,
+    startDate: lastWeekStart,
+  });
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
@@ -152,28 +160,12 @@ export function ConnectedTimesheetView({
   };
 
   const handleCopyLastWeek = async () => {
-    const lastWeekDate = new Date(weekDays[0]);
-    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-    const lastWeekDays = getWeekDaysForDate(lastWeekDate, beginningOfWeek);
-    const lastWeekStart = formatTrackQueryDate(lastWeekDays[0]);
-    const lastWeekEnd = formatTrackQueryDate(lastWeekDays[6]);
+    const { data: lastWeekEntries } = await lastWeekEntriesQuery.refetch();
 
-    const lastWeekEntries = await unwrapWebApiResult(
-      getTimeEntries({
-        query: {
-          end_date: lastWeekEnd,
-          meta: true,
-          start_date: lastWeekStart,
-        },
-      }),
-    );
-
-    const filtered = (lastWeekEntries ?? []).filter(
-      (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-        const wid = entry.workspace_id ?? entry.wid;
-        return wid === workspaceId && entry.start && entry.stop;
-      },
-    );
+    const filtered = (lastWeekEntries ?? []).filter((entry) => {
+      const wid = entry.workspace_id ?? entry.wid;
+      return wid === workspaceId && entry.start && entry.stop;
+    });
 
     for (const entry of filtered) {
       if (!entry.start || !entry.stop) continue;
