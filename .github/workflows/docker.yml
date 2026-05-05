@@ -56,7 +56,8 @@ jobs:
         with:
           images: |
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE }}
-            ${{ secrets.DOCKERHUB_IMAGE }}
+            correctroadh/opentoggl
+            correctroad/opentickly
           tags: |
             type=ref,event=branch
             type=ref,event=pr
