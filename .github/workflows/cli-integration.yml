@@ -9,6 +9,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   cli-integration:
     runs-on: ubuntu-latest
@@ -38,24 +42,51 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           submodules: true
 
+      - name: Check changed files
+        id: changes
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            cli_integration:
+              - 'apps/backend/**'
+              - 'packages/**'
+              - 'lib/**'
+              - 'openapi/**'
+              - 'tests/cli-integration/**'
+              - 'tests/python-sdk-integration/**'
+              - '.github/workflows/cli-integration.yml'
+              - 'go.mod'
+              - 'go.sum'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.env.example'
+              - '.air.toml'
+
       - uses: pnpm/action-setup@v6
+        if: steps.changes.outputs.cli_integration == 'true'
 
       - uses: actions/setup-node@v6
+        if: steps.changes.outputs.cli_integration == 'true'
         with:
           node-version: 24
           cache: "pnpm"
 
       - name: Install dependencies
+        if: steps.changes.outputs.cli_integration == 'true'
         run: pnpm install
 
       - name: Build backend
+        if: steps.changes.outputs.cli_integration == 'true'
         env:
           CGO_ENABLED: 0
         run: go build -o /tmp/opentoggl ./apps/backend
 
       - name: Start backend
+        if: steps.changes.outputs.cli_integration == 'true'
         env:
           OPENTOGGL_SERVICE_NAME: opentoggl-api
           PORT: 8080
@@ -75,28 +106,37 @@ jobs:
           done
 
       - name: Install toggl CLI
+        if: steps.changes.outputs.cli_integration == 'true'
         run: |
           npm install -g @correctroadh/toggl-cli
           toggl --help >/dev/null
 
       - name: Run CLI integration tests
+        if: steps.changes.outputs.cli_integration == 'true'
         env:
           OPENTOGGL_CLI_TEST_URL: http://127.0.0.1:8080/api/v9
           OPENTOGGL_CLI_TEST_BASE: http://127.0.0.1:8080
         run: pnpm run test:cli
 
       - name: Setup Python
+        if: steps.changes.outputs.cli_integration == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Install Python SDK test dependencies
+        if: steps.changes.outputs.cli_integration == 'true'
         working-directory: tests/python-sdk-integration/toggl-cli
         run: pip install -r requirements.txt -r test-requirements.txt
 
       - name: Run Python SDK integration tests
+        if: steps.changes.outputs.cli_integration == 'true'
         working-directory: tests/python-sdk-integration
         env:
           OPENTOGGL_CLI_TEST_URL: http://127.0.0.1:8080/api/v9
           OPENTOGGL_CLI_TEST_BASE: http://127.0.0.1:8080
         run: python -m pytest -x -v
+
+      - name: Skip CLI integration tests
+        if: steps.changes.outputs.cli_integration != 'true'
+        run: echo "Skipping CLI integration tests because this change does not touch backend, CLI tests, shared runtime, OpenAPI, dependency, or CI files."

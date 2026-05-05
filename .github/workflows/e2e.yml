@@ -50,7 +50,7 @@ jobs:
         uses: dorny/paths-filter@v4
         with:
           filters: |
-            website-e2e:
+            website_e2e:
               - 'apps/website/**'
               - 'apps/backend/**'
               - 'packages/**'
@@ -69,34 +69,34 @@ jobs:
               - '.air.toml'
 
       - uses: pnpm/action-setup@v6
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
 
       - uses: actions/setup-node@v6
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         with:
           node-version: 24
           cache: "pnpm"
 
       - name: Install dependencies
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: pnpm install
 
       - name: Build backend
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         env:
           CGO_ENABLED: 0
         run: go build -o /tmp/opentoggl ./apps/backend
 
       - name: Build frontend
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: pnpm --filter @opentickly/website run build
 
       - name: Install Playwright browsers
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Start backend
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         env:
           OPENTOGGL_SERVICE_NAME: opentoggl-api
           PORT: 8080
@@ -109,7 +109,7 @@ jobs:
           sleep 5
 
       - name: Wait for backend to be ready
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: |
           for i in {1..30}; do
             if curl -sf http://localhost:8080/readyz > /dev/null 2>&1; then
@@ -123,7 +123,7 @@ jobs:
           exit 1
 
       - name: Start frontend dev server
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         env:
           OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
         run: |
@@ -131,11 +131,11 @@ jobs:
           sleep 5
 
       - name: Run E2E tests
-        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website-e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: |
           cd apps/website
           pnpm exec playwright test
 
       - name: Skip E2E tests
-        if: github.event_name != 'workflow_dispatch' && steps.changes.outputs.website-e2e != 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.changes.outputs.website_e2e != 'true'
         run: echo "Skipping website E2E because this change does not touch website, backend, shared runtime, OpenAPI, dependency, or E2E workflow files."

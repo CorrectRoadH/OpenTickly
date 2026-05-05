@@ -9,6 +9,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
@@ -32,18 +36,45 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Check changed files
+        id: changes
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            backend_unit:
+              - 'apps/backend/**'
+              - 'packages/**'
+              - 'lib/**'
+              - 'openapi/**'
+              - '.github/workflows/ci.yml'
+              - 'go.mod'
+              - 'go.sum'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.env.example'
+              - '.air.toml'
+
       - uses: pnpm/action-setup@v6
+        if: steps.changes.outputs.backend_unit == 'true'
 
       - uses: actions/setup-node@v6
+        if: steps.changes.outputs.backend_unit == 'true'
         with:
           node-version: 24
           cache: "pnpm"
 
       - name: Install dependencies
+        if: steps.changes.outputs.backend_unit == 'true'
         run: pnpm install
 
       - name: Run backend unit tests
+        if: steps.changes.outputs.backend_unit == 'true'
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
         run: |
           go test ./apps/backend/internal/billing/... ./apps/backend/internal/catalog/... ./apps/backend/internal/governance/... ./apps/backend/internal/http/... ./apps/backend/internal/identity/... ./apps/backend/internal/importing/... ./apps/backend/internal/membership/... ./apps/backend/internal/platform/... ./apps/backend/internal/tenant/... ./apps/backend/internal/tracking/... ./apps/backend/internal/web/...
+
+      - name: Skip backend unit tests
+        if: steps.changes.outputs.backend_unit != 'true'
+        run: echo "Skipping backend unit tests because this change does not touch backend, shared runtime, OpenAPI, dependency, or CI files."
