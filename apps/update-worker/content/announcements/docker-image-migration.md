@@ -4,16 +4,19 @@ title: "Docker Image Migration Notice"
 severity: "warning"
 publishedAt: "2026-05-05"
 ---
+
 **Important**: The Docker image has been renamed to better reflect the project identity.
 
 If you're self-hosting OpenTickly, please update your Docker image reference:
 
 **Docker Hub**:
-- **Old**: `correctroadh/opentoggl:latest`
+
+- **Old**: `CorrectRoadH/OpenTickly:latest`
 - **New**: `correctroad/opentickly:latest`
 
 **GHCR**:
-- **Old**: `ghcr.io/correctroadh/opentoggl:latest`
+
+- **Old**: `ghcr.io/CorrectRoadH/OpenTickly:latest`
 - **New**: `ghcr.io/correctroadh/opentickly:latest`
 
 The old images will continue to receive updates for now, but we recommend switching

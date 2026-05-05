@@ -21,11 +21,11 @@ enabled = true
 
 [vars]
 # Public repo whose releases feed latest + changelog. "owner/repo" format.
-GITHUB_REPO = "CorrectRoadH/opentoggl"
+GITHUB_REPO = "CorrectRoadH/OpenTickly"
 
 [env.production]
 name = "opentoggl-update-worker"
-vars = { GITHUB_REPO = "CorrectRoadH/opentoggl" }
+vars = { GITHUB_REPO = "CorrectRoadH/OpenTickly" }
 
 [[env.production.analytics_engine_datasets]]
 binding = "UPDATE_REQUESTS"
@@ -33,7 +33,7 @@ dataset = "opentoggl_update_requests"
 
 [env.staging]
 name = "opentoggl-update-worker-staging"
-vars = { GITHUB_REPO = "CorrectRoadH/opentoggl" }
+vars = { GITHUB_REPO = "CorrectRoadH/OpenTickly" }
 
 [[env.staging.analytics_engine_datasets]]
 binding = "UPDATE_REQUESTS"

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	githubRepo         = "CorrectRoadH/opentoggl"
+	githubRepo         = "CorrectRoadH/OpenTickly"
 	fallbackChangelog  = "https://github.com/" + githubRepo + "/blob/main/CHANGELOG.md"
 	upstreamCheckTTL   = 3 * time.Second
 )

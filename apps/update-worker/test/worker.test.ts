@@ -6,7 +6,7 @@ import type { WorkerEnv } from "../src/types.ts";
 function makeEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
   return {
     UPDATE_REQUESTS: { writeDataPoint: vi.fn() } as unknown as AnalyticsEngineDataset,
-    GITHUB_REPO: "CorrectRoadH/opentoggl",
+    GITHUB_REPO: "CorrectRoadH/OpenTickly",
     ...overrides,
   };
 }

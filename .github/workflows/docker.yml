@@ -40,7 +40,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            correctroadh/opentoggl
+            correctroad/opentoggl
             correctroad/opentickly
           tags: |
             type=ref,event=branch
