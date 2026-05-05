@@ -36,7 +36,7 @@ export const homeContentEn = {
         value: "Live demo",
         body: "Try it first, decide later.",
         cta: "Open demo",
-        href: "https://track.opentickly.com",
+        href: "https://track.opentoggl.com",
       },
       {
         title: "Source code",

@@ -23,13 +23,13 @@ OpenTickly aims to stay aligned with Toggl, so you can move your data in and out
 
 OpenTickly works directly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so AI can help you record, manage, and review your time. Apply the Lyubishchev time management method to find the black holes in your day.
 
-Read the full docs [here](https://opentickly.com/docs/ai-integration).
+Read the full docs [here](https://opentoggl.com/docs/ai-integration).
 
 ## Self-Hosting
 
 Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synology, TrueNAS, and more.
 
-[Read the self-hosting docs](https://opentickly.com/docs/self-hosting)
+[Read the self-hosting docs](https://opentoggl.com/docs/self-hosting)
 
 [![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
 

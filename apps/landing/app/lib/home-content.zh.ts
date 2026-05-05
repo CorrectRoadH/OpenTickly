@@ -36,7 +36,7 @@ export const homeContentZh = {
         value: "在线演示",
         body: "先用起来，好不好自己判断。",
         cta: "打开演示",
-        href: "https://track.opentickly.com",
+        href: "https://track.opentoggl.com",
       },
       {
         title: "源码",

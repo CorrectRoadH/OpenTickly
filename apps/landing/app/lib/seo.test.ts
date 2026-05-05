@@ -10,7 +10,7 @@ import {
 describe("seo helpers", () => {
   it("normalizes the configured site url", () => {
     expect(resolveSiteUrl("https://opentickly.example/")).toBe("https://opentickly.example");
-    expect(resolveSiteUrl()).toBe("https://opentickly.com");
+    expect(resolveSiteUrl()).toBe("https://opentoggl.com");
   });
 
   it("builds canonical urls with stable slashes", () => {
