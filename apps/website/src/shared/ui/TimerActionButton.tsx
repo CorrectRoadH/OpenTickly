@@ -1,6 +1,9 @@
-import { type ReactElement, useRef, useState } from "react";
+import type { ReactElement } from "react";
 
 import { PlayIcon, StopIcon } from "./icons.tsx";
+
+const interactionClass =
+  "relative overflow-hidden transition-[transform,box-shadow,background-color] duration-150 before:pointer-events-none before:absolute before:inset-[3px] before:rounded-full before:bg-white/20 before:opacity-0 before:transition-opacity before:duration-75 hover:-translate-y-[3px] active:translate-y-[3px] active:before:opacity-100 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none motion-reduce:transition-none motion-reduce:before:transition-none";
 
 type TimerActionButtonProps = {
   isRunning: boolean;
@@ -19,32 +22,26 @@ export function TimerActionButton({
 }: TimerActionButtonProps): ReactElement {
   const sizeClass = size === "xs" ? "size-9" : size === "sm" ? "size-10" : "size-[42px]";
   const iconClass = size === "xs" ? "size-4" : size === "sm" ? "size-4" : "size-5";
-  // Brief local "pulse" so the user sees their tap registered even when the
-  // optimistic cache flips `isRunning` before React paints. Clears after a tick.
-  const [pulsing, setPulsing] = useState(false);
-  const pulseTimeoutRef = useRef<number | null>(null);
-
-  function handleClick() {
-    if (pulseTimeoutRef.current) window.clearTimeout(pulseTimeoutRef.current);
-    setPulsing(true);
-    pulseTimeoutRef.current = window.setTimeout(() => setPulsing(false), 240);
-    onClick();
-  }
+  const stateClass = isRunning
+    ? "bg-[var(--track-danger-text)] shadow-[var(--track-depth-destructive-shadow)] hover:shadow-[var(--track-depth-destructive-shadow-hover)] active:shadow-[0_1px_0_0_#881337]"
+    : "bg-[var(--track-accent)] shadow-[var(--track-depth-accent-shadow)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:shadow-[0_1px_0_0_var(--track-accent-strong)]";
 
   return (
     <button
       aria-label={ariaLabel ?? (isRunning ? "Stop timer" : "Start timer")}
-      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full text-white shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow] duration-[var(--duration-fast)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)] ${
-        pulsing ? "scale-90" : ""
-      } ${isRunning ? "bg-[var(--track-danger-text)]" : "bg-[var(--track-accent)]"}`}
+      className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full text-white ${interactionClass} ${stateClass}`}
       data-icon={isRunning ? "stop" : "play"}
       data-testid="timer-action-button"
       disabled={disabled}
-      onClick={handleClick}
+      onClick={onClick}
       style={{ transitionTimingFunction: "var(--ease-spring)" }}
       type="button"
     >
-      {isRunning ? <StopIcon className={iconClass} /> : <PlayIcon className={iconClass} />}
+      {isRunning ? (
+        <StopIcon className={`relative z-10 ${iconClass}`} />
+      ) : (
+        <PlayIcon className={`relative z-10 ${iconClass}`} />
+      )}
     </button>
   );
 }
