@@ -5,19 +5,15 @@ severity: "warning"
 publishedAt: "2026-05-05"
 ---
 
-**Important**: The Docker image has been renamed to better reflect the project identity.
+**Important**: The Docker image and Project has been renamed.
 
-If you're self-hosting OpenTickly, please update your Docker image reference:
+If you're self-hosting OpenToggl(old brand), please update your Docker image reference:
 
 **Docker Hub**:
 
-- **Old**: `CorrectRoadH/OpenTickly:latest`
-- **New**: `correctroad/opentickly:latest`
-
-**GHCR**:
-
-- **Old**: `ghcr.io/CorrectRoadH/OpenTickly:latest`
-- **New**: `ghcr.io/correctroadh/opentickly:latest`
+- **Old**: `correctroad/opentoggl`
+- **Old**: `ghcr.io/CorrectRoadH/OpenToggl`
+- **New**: `correctroad/opentickly`
 
 The old images will continue to receive updates for now, but we recommend switching
 to the new images to ensure you get all future releases.
