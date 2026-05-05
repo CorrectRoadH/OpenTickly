@@ -1,11 +1,11 @@
 # @opentickly/update-worker
 
-Cloudflare Worker behind [`https://update.opentoggl.com/`](https://update.opentoggl.com/). One GET endpoint. Proxies GitHub Releases + serves baked announcements.
+Cloudflare Worker behind [`https://update.opentickly.com/`](https://update.opentickly.com/). One GET endpoint. Proxies GitHub Releases + serves baked announcements.
 
 ## The endpoint
 
 ```
-GET https://update.opentoggl.com/
+GET https://update.opentickly.com/
   ?version=0.3.1             # client's current version (optional)
   &instanceId=<uuid>         # stable per-instance id (optional; enables DAU)
   &os=linux                  # optional
@@ -14,7 +14,7 @@ GET https://update.opentoggl.com/
   &locale=en-US              # optional
 ```
 
-Every param is optional. A bare `curl https://update.opentoggl.com/` returns the manifest without any client context.
+Every param is optional. A bare `curl https://update.opentickly.com/` returns the manifest without any client context.
 
 ### Response
 
@@ -61,7 +61,7 @@ Announcements aren't in GitHub Releases — they're baked into the Worker at dep
    severity: "warning" # info | warning | critical
    publishedAt: "2026-05-01"
    expiresAt: "2026-05-04" # optional
-   link: "https://status.opentoggl.com/..." # optional
+   link: "https://status.opentickly.com/..." # optional
    ---
 
    …markdown body…

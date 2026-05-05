@@ -6,9 +6,9 @@ type HomeHeroScreenshotsProps = {
 };
 
 const images = [
-  { src: "/hero/opentoggl-overview.webp", altKey: "overview" },
-  { src: "/hero/opentoggl-free.webp", altKey: "free" },
-  { src: "/hero/opentoggl-calendar-view.webp", altKey: "calendar" },
+  { src: "/hero/opentickly-overview.webp", altKey: "overview" },
+  { src: "/hero/opentickly-free.webp", altKey: "free" },
+  { src: "/hero/opentickly-calendar-view.webp", altKey: "calendar" },
 ];
 
 const altByLocale: Record<Locale, Record<string, string>> = {

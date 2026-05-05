@@ -35,7 +35,7 @@ export default function Home() {
   const strings = homeContent[locale];
   const siteUrl = resolveSiteUrl();
 
-  const demoHref = appendUtm("https://track.opentoggl.com", {
+  const demoHref = appendUtm("https://track.opentickly.com", {
     source: "opentickly_landing",
     medium: "hero_cta",
     campaign: "try_demo",
@@ -48,7 +48,7 @@ export default function Home() {
     if (item.href.includes("github.com")) {
       return { ...item, href: appendSlot(item.href, "proof_card") };
     }
-    // demo (track.opentoggl.com) keeps UTM so the future landing→demo
+    // demo (track.opentickly.com) keeps UTM so the future landing→demo
     // attribution work (GOALS.md deferred) has an initial signal to read.
     return {
       ...item,

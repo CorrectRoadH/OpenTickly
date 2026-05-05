@@ -9,14 +9,16 @@ import {
 
 describe("seo helpers", () => {
   it("normalizes the configured site url", () => {
-    expect(resolveSiteUrl("https://opentoggl.example/")).toBe("https://opentoggl.example");
-    expect(resolveSiteUrl()).toBe("https://opentoggl.com");
+    expect(resolveSiteUrl("https://opentickly.example/")).toBe("https://opentickly.example");
+    expect(resolveSiteUrl()).toBe("https://opentickly.com");
   });
 
   it("builds canonical urls with stable slashes", () => {
-    expect(buildCanonicalUrl("/", "https://opentoggl.example")).toBe("https://opentoggl.example/");
-    expect(buildCanonicalUrl("docs/self-hosting/", "https://opentoggl.example/")).toBe(
-      "https://opentoggl.example/docs/self-hosting",
+    expect(buildCanonicalUrl("/", "https://opentickly.example")).toBe(
+      "https://opentickly.example/",
+    );
+    expect(buildCanonicalUrl("docs/self-hosting/", "https://opentickly.example/")).toBe(
+      "https://opentickly.example/docs/self-hosting",
     );
   });
 
@@ -26,8 +28,8 @@ describe("seo helpers", () => {
   });
 
   it("builds robots text that points at the sitemap", () => {
-    const body = buildRobotsTxt("https://opentoggl.example");
-    expect(body).toContain("Sitemap: https://opentoggl.example/sitemap.xml");
+    const body = buildRobotsTxt("https://opentickly.example");
+    expect(body).toContain("Sitemap: https://opentickly.example/sitemap.xml");
     // The /llms.mdx/ path is intentionally crawlable for LLMs now.
     expect(body).not.toContain("Disallow: /llms.mdx/");
   });
@@ -54,11 +56,11 @@ describe("seo helpers", () => {
           priority: 0.7,
         },
       ],
-      "https://opentoggl.example",
+      "https://opentickly.example",
     );
 
-    expect(xml).toContain("<loc>https://opentoggl.example/</loc>");
-    expect(xml).toContain("<loc>https://opentoggl.example/docs/ai-integration</loc>");
+    expect(xml).toContain("<loc>https://opentickly.example/</loc>");
+    expect(xml).toContain("<loc>https://opentickly.example/docs/ai-integration</loc>");
     expect(xml).toContain("<changefreq>weekly</changefreq>");
     expect(xml).toContain("<priority>0.7</priority>");
   });

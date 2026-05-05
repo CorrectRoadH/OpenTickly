@@ -17,19 +17,19 @@ Toggl is a great product, but it's expensive and your data doesn't really belong
 
 OpenTickly aims to stay aligned with Toggl, so you can move your data in and out between the two without any loss. Keep every workflow and habit you already have. Nothing changes — it just gets better, cheaper, and more private.
 
-![Screenshot](apps/landing/public/hero/opentoggl-calendar-view.webp)
+![Screenshot](apps/landing/public/hero/opentickly-calendar-view.webp)
 
 ## AI Integration
 
 OpenTickly works directly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so AI can help you record, manage, and review your time. Apply the Lyubishchev time management method to find the black holes in your day.
 
-Read the full docs [here](https://opentoggl.com/docs/ai-integration).
+Read the full docs [here](https://opentickly.com/docs/ai-integration).
 
 ## Self-Hosting
 
 Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synology, TrueNAS, and more.
 
-[Read the self-hosting docs](https://opentoggl.com/docs/self-hosting)
+[Read the self-hosting docs](https://opentickly.com/docs/self-hosting)
 
 [![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
 

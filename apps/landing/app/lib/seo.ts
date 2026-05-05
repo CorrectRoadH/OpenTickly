@@ -1,14 +1,14 @@
 import type { Locale } from "./i18n";
 
 export const siteName = "OpenTickly";
-export const siteUrl = "https://opentoggl.com";
+export const siteUrl = "https://opentickly.com";
 export const defaultTitle = "Open-Source Time Tracking and Toggl Alternative";
 export const defaultDescription =
   "OpenTickly is a free, open-source time tracking and time management app for individuals and teams, and a practical alternative to Toggl.";
 export const defaultOgImagePath = "/og-image.png";
 
 export const repoUrl = "https://github.com/CorrectRoadH/OpenTickly";
-export const demoUrl = "https://track.opentoggl.com";
+export const demoUrl = "https://track.opentickly.com";
 
 export const localizedDescriptions: Record<Locale, string> = {
   en: "OpenTickly is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
@@ -159,7 +159,7 @@ export function buildOrganizationSchema(siteUrl: string) {
       "Toggl Webhooks API v1 compatibility",
       "One-command Docker self-hosting (docker compose up -d)",
       "Unlimited users with no seat limits",
-      "Hosted demo at track.opentoggl.com",
+      "Hosted demo at track.opentickly.com",
       "AI-agent-friendly API with no third-party rate limits",
       "Import from Toggl export files to preserve history",
       "Runs on CasaOS, Synology, fnOS, and any Docker host",
