@@ -1,6 +1,6 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
-import type { TimeEntryEditorAnchor, TimeEntryEditorTag } from "./time-entry-editor-types.ts";
+import type { TimeEntryEditorAnchor } from "./time-entry-editor-types.ts";
 
 export function toTimeInputValue(date: Date, timezone: string): string {
   const parts = getTimeZoneParts(date, timezone);
@@ -226,14 +226,6 @@ export function resolveEditorPosition(
   const top = Math.max(padding, Math.min(containerHeight - cardHeight - padding, anchor.top - 6));
 
   return { left, top };
-}
-
-export function resolveTagTriggerLabel(tags: TimeEntryEditorTag[]): string | undefined {
-  if (tags.length === 0) {
-    return undefined;
-  }
-
-  return tags.map((t) => t.name).join(", ");
 }
 
 export function colorToChipBackground(color: string): string {

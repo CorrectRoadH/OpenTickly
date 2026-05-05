@@ -9,7 +9,7 @@ import {
   useRecentTimeEntrySuggestionsQuery,
   useTasksQuery,
 } from "../../shared/query/web-shell.ts";
-import { ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
+import { ProjectsIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
@@ -17,6 +17,7 @@ import { ManualModeComposer } from "./ManualModeComposer.tsx";
 import { TimerElapsedDisplay } from "./TimerElapsedDisplay.tsx";
 import { TimerComposerSuggestionsDialog } from "./TimerComposerSuggestionsDialog.tsx";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
+import { TagPickerDropdown, TagPickerTrigger } from "./TagPickerDropdown.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useTimerComposer } from "./useTimerComposer.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
@@ -484,36 +485,16 @@ export function TimerBarTagPicker({
   runningEntry: { id?: number | null; tag_ids?: number[] | null } | null;
   tagOptions: { id: number; name: string }[];
 }): ReactElement {
-  const { t } = useTranslation("tracking");
-  const [isCreating, setIsCreating] = useState(false);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const displayTagIds = runningEntry?.id != null ? (runningEntry.tag_ids ?? []) : draftTagIds;
-  const hasTags = displayTagIds.length > 0;
   const displayTags = tagOptions.filter((tag) => displayTagIds.includes(tag.id));
-  const tagLabel = (() => {
-    if (displayTags.length === 0) return undefined;
-    if (displayTags.length === 1) return displayTags[0]?.name;
-    return `${displayTags[0]?.name ?? "Tag"} +${displayTags.length - 1}`;
-  })();
-
-  const filteredTags = search.trim()
-    ? tagOptions.filter((tag) => tag.name.toLowerCase().includes(search.toLowerCase()))
-    : tagOptions;
 
   return (
     <div className="relative" ref={containerRef}>
-      <button
-        aria-label={tagLabel ? `Tags: ${tagLabel}` : "Select tags"}
-        className={`flex items-center justify-center gap-1.5 rounded-md transition hover:bg-[var(--track-row-hover)] ${
-          hasTags
-            ? tagLabel
-              ? "h-9 max-w-[160px] px-2 text-[var(--track-accent)]"
-              : "size-9 text-[var(--track-accent)]"
-            : "size-9 text-[var(--track-text-muted)] hover:text-white"
-        }`}
+      <TagPickerTrigger
         onClick={() => {
           setOpen((prev) => !prev);
           setSearch("");
@@ -523,90 +504,26 @@ export function TimerBarTagPicker({
             setOpen(false);
           }
         }}
-        type="button"
-      >
-        <TagsIcon className="size-4 shrink-0" />
-        {tagLabel ? (
-          <span className="min-w-0 truncate text-[12px] font-medium">{tagLabel}</span>
-        ) : null}
-      </button>
+        selectedTags={displayTags}
+      />
       {open ? (
         <div
-          className="absolute left-0 top-full z-50 mt-1 w-[220px] rounded-xl border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]"
+          className="absolute left-0 top-full z-50 mt-1 w-[220px]"
           onMouseDown={(e) => {
             if ((e.target as HTMLElement).tagName !== "INPUT") {
               e.preventDefault();
             }
           }}
         >
-          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--track-text-soft)]">
-            {t("tags")}
-          </div>
-          <div className="px-3 pb-2">
-            <input
-              className="h-8 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2.5 text-[12px] text-white outline-none placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)]"
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("searchTags")}
-              type="text"
-              value={search}
-            />
-          </div>
-          {filteredTags.length === 0 && !search.trim() ? (
-            <div className="px-3 py-2 text-[12px] text-[var(--track-text-soft)]">
-              {t("noTagsAvailable")}
-            </div>
-          ) : filteredTags.length > 0 ? (
-            <div className="max-h-[200px] overflow-y-auto">
-              {filteredTags.map((tag) => {
-                const isSelected = displayTagIds.includes(tag.id);
-                return (
-                  <button
-                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] transition hover:bg-white/5 ${
-                      isSelected ? "text-[var(--track-accent)]" : "text-white"
-                    }`}
-                    key={tag.id}
-                    onClick={() => onTagToggle(tag.id)}
-                    type="button"
-                  >
-                    <span
-                      className={`flex size-4 items-center justify-center rounded border text-[11px] ${
-                        isSelected
-                          ? "border-[var(--track-accent)] bg-[var(--track-accent)] text-white"
-                          : "border-[var(--track-border)]"
-                      }`}
-                    >
-                      {isSelected ? "\u2713" : ""}
-                    </span>
-                    <span className="truncate">{tag.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-          {search.trim() &&
-          onCreateTag &&
-          !tagOptions.some((t) => t.name.toLowerCase() === search.trim().toLowerCase()) ? (
-            <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-[var(--track-accent)] transition hover:bg-white/5 disabled:opacity-60"
-              disabled={isCreating}
-              onClick={() => {
-                const trimmed = search.trim();
-                setIsCreating(true);
-                void onCreateTag(trimmed)
-                  .then((result) => {
-                    const newTag = result as { id?: number } | undefined;
-                    if (typeof newTag?.id === "number") {
-                      onTagToggle(newTag.id);
-                    }
-                    setSearch("");
-                  })
-                  .finally(() => setIsCreating(false));
-              }}
-              type="button"
-            >
-              {isCreating ? "Creating..." : `Create tag \u201c${search.trim()}\u201d`}
-            </button>
-          ) : null}
+          <TagPickerDropdown
+            createLabel={(name) => `Create tag "${name}"`}
+            onCreateTag={onCreateTag}
+            onSearchChange={setSearch}
+            onTagToggle={onTagToggle}
+            search={search}
+            selectedTagIds={displayTagIds}
+            tagOptions={tagOptions}
+          />
         </div>
       ) : null}
     </div>
