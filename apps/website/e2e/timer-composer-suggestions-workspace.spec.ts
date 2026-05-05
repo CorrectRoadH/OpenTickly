@@ -68,13 +68,10 @@ test.describe("Timer Composer Suggestions - Workspace Debug", () => {
     const suggestionsDialog = page.getByTestId("timer-composer-suggestions-dialog");
     await expect(suggestionsDialog).toBeVisible({ timeout: 5000 });
 
-    // Should show the entry
-    const content = await suggestionsDialog.textContent();
-    console.log(
-      "Suggestions contains 'Home workspace entry':",
-      content?.includes("Home workspace entry"),
-    );
-    expect(content).toContain("Home workspace entry");
+    // Should show the entry created through the API above. Use an auto-retry
+    // UI assertion because the suggestions query may still be settling when
+    // the dialog first appears.
+    await expect(suggestionsDialog).toContainText("Home workspace entry");
   });
 
   test("check workspace switching scenario", async ({ page }) => {

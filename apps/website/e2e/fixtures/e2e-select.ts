@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * Select an option from a custom SelectDropdown component (button + listbox).
@@ -16,6 +16,11 @@ export async function selectDropdownOption(
   testId: string,
   optionLabel: string,
 ): Promise<void> {
-  await page.getByTestId(testId).click();
-  await page.getByRole("option", { name: optionLabel }).click();
+  const trigger = page.getByTestId(testId);
+  await expect(trigger).toBeVisible();
+  await trigger.press("Enter");
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  const option = page.getByRole("option", { name: optionLabel });
+  await expect(option).toBeVisible();
+  await option.press("Enter");
 }

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
@@ -8,8 +8,24 @@ import {
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
-import { fetchCurrentEntry, pollCurrentRunningEntry } from "./fixtures/e2e-api.ts";
+import {
+  fetchCurrentEntry,
+  pollCurrentEntryStopped,
+  pollCurrentRunningEntry,
+} from "./fixtures/e2e-api.ts";
 import { expectedDuration } from "./fixtures/e2e-format.ts";
+
+async function activateTimerView(
+  page: Page,
+  name: "Calendar" | "List" | "Timesheet",
+  viewTestId: string,
+) {
+  const tab = page.getByRole("radio", { name });
+  await expect(tab).toBeVisible();
+  await tab.press("Enter");
+  await expect(tab).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId(viewTestId)).toBeVisible();
+}
 
 test.describe("VAL-REG-002: Workspace scoping regression", () => {
   /**
@@ -83,18 +99,13 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     await expect(page.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
 
     // Verify entries are visible in list view
-    await page.getByRole("radio", { name: "List" }).click();
-    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
+    await activateTimerView(page, "List", "timer-list-view");
     const listViewContainer = page.getByTestId("timer-list-view");
     await expect(listViewContainer).toBeVisible();
     await expect(listViewContainer.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
 
     // Verify entries are visible in timesheet view
-    await page.getByRole("radio", { name: "Timesheet" }).click();
-    await expect(page.getByRole("radio", { name: "Timesheet" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await activateTimerView(page, "Timesheet", "timer-timesheet-view");
     const timesheetViewContainer = page.getByTestId("timer-timesheet-view");
     await expect(timesheetViewContainer).toBeVisible();
     // Timesheet aggregates by project, so verify project row is visible
@@ -155,11 +166,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     await page.goto(new URL("/timer", page.url()).toString());
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     // Explicitly select calendar to test workspace scoping in a known view state
-    await page.getByRole("radio", { name: "Calendar" }).click();
-    await expect(page.getByRole("radio", { name: "Calendar" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await activateTimerView(page, "Calendar", "timer-calendar-view");
     // Scope assertions to calendar grid to ensure view-local proof
     const calendarScrollAreaB = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollAreaB).toBeVisible();
@@ -171,8 +178,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     await expect(calendarScrollAreaB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
 
     // Verify in list view - workspace A entry should be absent, workspace B entry should be present
-    await page.getByRole("radio", { name: "List" }).click();
-    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
+    await activateTimerView(page, "List", "timer-list-view");
     const listViewContainerB = page.getByTestId("timer-list-view");
     await expect(listViewContainerB).toBeVisible();
     // Workspace A entry should NOT be visible in list view
@@ -183,11 +189,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     await expect(listViewContainerB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
 
     // Verify in timesheet view - workspace A project should be absent, workspace B project should be present
-    await page.getByRole("radio", { name: "Timesheet" }).click();
-    await expect(page.getByRole("radio", { name: "Timesheet" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await activateTimerView(page, "Timesheet", "timer-timesheet-view");
     const timesheetViewContainerB = page.getByTestId("timer-timesheet-view");
     await expect(timesheetViewContainerB).toBeVisible();
     // Workspace A project should NOT be visible in timesheet
@@ -218,7 +220,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       // TimerView persistence would keep the previously selected view (e.g., timesheet) otherwise.
       await page.goto(new URL("/timer", page.url()).toString());
       await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
-      await page.getByRole("radio", { name: "Calendar" }).click();
+      await activateTimerView(page, "Calendar", "timer-calendar-view");
 
       // Verify in calendar view with scoped locator
       const calendarScrollAreaBack = page.getByTestId("timer-calendar-view");
@@ -233,7 +235,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       ).not.toBeVisible();
 
       // Verify in list view
-      await page.getByRole("radio", { name: "List" }).click();
+      await activateTimerView(page, "List", "timer-list-view");
       const listViewContainerBack = page.getByTestId("timer-list-view");
       await expect(
         listViewContainerBack.locator(`text=${workspaceAEntryDescription}`),
@@ -243,7 +245,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       ).not.toBeVisible();
 
       // Verify in timesheet view
-      await page.getByRole("radio", { name: "Timesheet" }).click();
+      await activateTimerView(page, "Timesheet", "timer-timesheet-view");
       const timesheetViewContainerBack = page.getByTestId("timer-timesheet-view");
       await expect(timesheetViewContainerBack.locator("text=Workspace A Project")).toBeVisible();
       await expect(
@@ -1386,7 +1388,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
 
     // Verify current-timer API returns null after stop
-    const afterStop = await fetchCurrentEntry(page);
+    const afterStop = await pollCurrentEntryStopped(page);
     expect(afterStop.status).toBe(200);
     expect(afterStop.body).toBeNull();
   });
@@ -1807,7 +1809,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
 
     // Verify current-timer API returns null after stop
-    const afterStop = await fetchCurrentEntry(page);
+    const afterStop = await pollCurrentEntryStopped(page);
     expect(afterStop.status).toBe(200);
     expect(afterStop.body).toBeNull();
 

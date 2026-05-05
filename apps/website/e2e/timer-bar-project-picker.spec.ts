@@ -37,6 +37,7 @@ test.describe("Story: timer bar project picker search and archived filtering", (
 
     // Navigate to timer page
     await page.goto(new URL("/timer", page.url()).toString());
+    await page.reload();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
   });
 
@@ -69,7 +70,7 @@ test.describe("Story: timer bar project picker search and archived filtering", (
 
     // Select the active project via search
     await searchInput.fill("Active");
-    await picker.getByText(ACTIVE_PROJECT).click();
+    await picker.getByRole("button", { name: ACTIVE_PROJECT }).click();
 
     // Verify the project is now shown on the timer bar
     await expect(page.getByLabel(/Add a project.*Active Design Work/)).toBeVisible();
@@ -88,11 +89,12 @@ test.describe("Story: timer bar project picker search and archived filtering", (
     await page.getByLabel("Add a project").click();
     const picker = page.getByTestId("bulk-edit-project-picker");
     await expect(picker).toBeVisible();
-    await picker.getByText(ACTIVE_PROJECT).click();
+    await picker.getByRole("button", { name: ACTIVE_PROJECT }).click();
 
-    await expect(page.getByLabel(`Add a project: ${ACTIVE_PROJECT}`)).toBeVisible();
+    const selectedProjectButton = page.getByLabel(/Add a project.*Active Design Work/);
+    await expect(selectedProjectButton).toBeVisible();
 
-    await page.getByLabel(`Add a project: ${ACTIVE_PROJECT}`).click();
+    await selectedProjectButton.dispatchEvent("click");
     await expect(picker).toBeVisible();
     await picker.getByText("No Project").click();
 

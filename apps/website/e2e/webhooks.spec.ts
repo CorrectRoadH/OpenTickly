@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 
 import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
+const PUBLIC_WEBHOOK_CALLBACK_URL = "https://example.com";
+
 // --- API helpers ---
 
 async function createWebhookViaApi(
@@ -99,10 +101,10 @@ test.describe("Webhooks API", () => {
 
     const createResult = await createWebhookViaApi(page, workspaceId, {
       description: `test-hook-${Date.now()}`,
-      urlCallback: "https://httpbin.org/get",
+      urlCallback: PUBLIC_WEBHOOK_CALLBACK_URL,
     });
 
-    expect(createResult.ok).toBe(true);
+    expect(createResult, JSON.stringify(createResult)).toMatchObject({ ok: true });
     expect(createResult.status).toBe(200);
     expect(createResult.body.subscription_id).toBeDefined();
     expect(createResult.body.secret).toBeDefined();
@@ -119,9 +121,9 @@ test.describe("Webhooks API", () => {
 
     const createResult = await createWebhookViaApi(page, workspaceId, {
       description: `delete-me-${Date.now()}`,
-      urlCallback: "https://httpbin.org/get",
+      urlCallback: PUBLIC_WEBHOOK_CALLBACK_URL,
     });
-    expect(createResult.ok).toBe(true);
+    expect(createResult, JSON.stringify(createResult)).toMatchObject({ ok: true });
     const subscriptionId = createResult.body.subscription_id as number;
 
     const deleteResult = await deleteWebhookViaApi(page, workspaceId, subscriptionId);
@@ -177,7 +179,7 @@ test.describe("Webhooks UI", () => {
 
     await createWebhookViaApi(page, workspaceId, {
       description: hookName,
-      urlCallback: "https://httpbin.org/get",
+      urlCallback: PUBLIC_WEBHOOK_CALLBACK_URL,
     });
 
     await page.goto(`/workspaces/${workspaceId}/integrations`);

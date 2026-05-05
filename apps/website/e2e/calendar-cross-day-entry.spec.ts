@@ -38,6 +38,13 @@ function sameCalendarWeek(dayA: Date, dayB: Date, weekStartsOn = 1): boolean {
   return weekStart(dayA) === weekStart(dayB);
 }
 
+function todayAtUTCHour(hour: number): Date {
+  const today = new Date();
+  return new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), hour, 0, 0, 0),
+  );
+}
+
 test.describe("Calendar: cross-day (overnight) time entries", () => {
   test("Cross-midnight entry appears as time-grid blocks, not as an all-day header event", async ({
     page,
@@ -56,12 +63,11 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     const session = await loginE2eUser(page, test.info(), { email, password });
 
     // Create an entry that spans midnight: today 23:00 → tomorrow 01:00
-    const today = new Date();
-    const start = new Date(today);
-    start.setHours(23, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(1, 0, 0, 0);
+    const today = todayAtUTCHour(12);
+    const start = todayAtUTCHour(23);
+    const tomorrow = new Date(start);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(1, 0, 0, 0);
 
     await createTimeEntryForWorkspace(page, {
       description,
@@ -122,12 +128,11 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     const session = await loginE2eUser(page, test.info(), { email, password });
 
     // 22:00 today → 02:00 tomorrow (4 hours total)
-    const today = new Date();
-    const start = new Date(today);
-    start.setHours(22, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(2, 0, 0, 0);
+    const today = todayAtUTCHour(12);
+    const start = todayAtUTCHour(22);
+    const tomorrow = new Date(start);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(2, 0, 0, 0);
 
     await createTimeEntryForWorkspace(page, {
       description,
@@ -207,12 +212,10 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     await page.context().clearCookies();
     const session = await loginE2eUser(page, test.info(), { email, password });
 
-    const today = new Date();
-    const start = new Date(today);
-    start.setHours(23, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(1, 0, 0, 0);
+    const start = todayAtUTCHour(23);
+    const tomorrow = new Date(start);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(1, 0, 0, 0);
 
     await createTimeEntryForWorkspace(page, {
       description,

@@ -8,6 +8,18 @@ import {
 } from "./fixtures/e2e-auth.ts";
 import { selectDropdownOption } from "./fixtures/e2e-select.ts";
 
+function nextMonthEndDate(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 2, 0);
+}
+
+function formatDateIso(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 test.describe("Story: manage goals end-to-end", () => {
   test("Given a new user, when they create a goal with name and hours, then it appears in the goals list", async ({
     page,
@@ -191,13 +203,20 @@ test.describe("Story: manage goals end-to-end", () => {
     await selectDropdownOption(page, "goal-recurrence-select", "every week");
 
     // Uncheck "No end date" and pick a date
+    const endDate = nextMonthEndDate();
     await dialog.getByText("No end date").click();
     const datePickerButton = dialog.getByTestId("goal-end-date-input");
     await datePickerButton.click();
     const calendarPanel = page.getByTestId("calendar-panel");
     await expect(calendarPanel).toBeVisible();
     await calendarPanel.getByRole("button", { name: "Next month" }).click();
-    await calendarPanel.getByRole("button", { name: /April 30/ }).click();
+    await calendarPanel
+      .getByRole("button", {
+        name: new RegExp(
+          `${endDate.toLocaleString("en-US", { month: "long" })} ${endDate.getDate()}`,
+        ),
+      })
+      .click();
     await expect(calendarPanel).not.toBeVisible();
 
     await dialog.getByTestId("goal-submit-button").click();
@@ -208,7 +227,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await expect(row).toContainText("less than");
     await expect(row).toContainText("5 hours");
     await expect(row).toContainText("every week");
-    await expect(row).toContainText("2026-04-30");
+    await expect(row).toContainText(formatDateIso(endDate));
   });
 
   test("Given an existing goal, when the user edits its name and target hours, then the list reflects the changes", async ({

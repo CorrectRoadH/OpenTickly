@@ -106,7 +106,27 @@ test.describe("Start and Stop Timer", () => {
     await expect(page.getByTestId("timer-action-button")).toBeVisible();
 
     // User taps the stop button to stop the timer
+    const stopResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        response.url().includes("/time_entries/") &&
+        response.url().includes("/stop"),
+    );
     await page.getByTestId("timer-action-button").click();
+    expect((await stopResponse).ok()).toBe(true);
+
+    await expect
+      .poll(async () => {
+        return page.evaluate(async () => {
+          const response = await fetch("/api/v9/me/time_entries/current", {
+            credentials: "include",
+          });
+          if (!response.ok) return "pending";
+          const body = await response.json();
+          return body == null || Object.keys(body).length === 0 ? "stopped" : "running";
+        });
+      })
+      .toBe("stopped");
 
     // Timer is stopped - composer bar returns to input mode
     await expect(composerInput).toBeVisible();

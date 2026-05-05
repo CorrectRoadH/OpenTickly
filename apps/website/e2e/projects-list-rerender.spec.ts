@@ -47,6 +47,7 @@ test.describe("Projects list re-render hygiene", () => {
     });
 
     await page.goto(new URL(`/projects/${workspaceId}/list`, page.url()).toString());
+    await page.reload();
     await expect(page.getByTestId("projects-page")).toBeVisible();
     await expect(page.getByTestId("projects-list")).toBeVisible();
 

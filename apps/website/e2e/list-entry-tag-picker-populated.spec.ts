@@ -155,8 +155,14 @@ test.describe("List entry tag picker (populated workspace)", () => {
     // button from the icon to the tag name and (b) persist to the server,
     // i.e. still be there after a full page reload.
     const pickedTag = tagNames[0]!;
+    const tagUpdateResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PUT" &&
+        response.url().includes(`/workspaces/${workspaceId}/time_entries/${entryIds[0]}`),
+    );
     await picker.getByRole("button", { name: pickedTag, exact: true }).click();
     await expect(tagButton).toContainText(pickedTag);
+    expect((await tagUpdateResponse).ok()).toBe(true);
 
     await page.reload();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();

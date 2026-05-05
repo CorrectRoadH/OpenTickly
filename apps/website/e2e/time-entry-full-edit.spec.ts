@@ -90,7 +90,7 @@ test.describe("Story: full time entry editing from calendar", () => {
   test("when the user selects a tag in the editor, the tag is saved and visible after reload", async ({
     page,
   }) => {
-    await page.getByRole("button", { name: INITIAL_DESCRIPTION }).first().click();
+    await page.getByRole("button", { name: INITIAL_DESCRIPTION }).first().dispatchEvent("click");
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
 
@@ -101,10 +101,10 @@ test.describe("Story: full time entry editing from calendar", () => {
     await dialog.getByText("urgent").click();
 
     // Tag should show in the picker button
-    await expect(dialog.getByLabel("Select tags")).toContainText("urgent");
+    await expect(dialog.getByLabel("Tags: urgent")).toContainText("urgent");
 
     // Close the tag picker so it doesn't intercept clicks on Save
-    await dialog.getByLabel("Select tags").click();
+    await dialog.getByLabel("Tags: urgent").click();
 
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();

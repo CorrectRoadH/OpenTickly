@@ -91,10 +91,9 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 		if count >= maxWebhooks {
 			return domain.Subscription{}, fmt.Errorf("user %d already reached the limit of %d enabled subscriptions for workspace %d", cmd.UserID, maxWebhooks, cmd.WorkspaceID)
 		}
-	}
-
-	if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
-		return domain.Subscription{}, err
+		if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
+			return domain.Subscription{}, err
+		}
 	}
 
 	secret, err := domain.GenerateSecret()
@@ -123,6 +122,10 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 	created, err := s.store.Create(ctx, sub)
 	if err != nil {
 		return domain.Subscription{}, err
+	}
+
+	if !cmd.Enabled {
+		return created, nil
 	}
 
 	// Auto-validate: in a self-hosted context the user owns the callback URL,
@@ -188,8 +191,10 @@ func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscription
 		}
 	}
 
-	if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
-		return domain.Subscription{}, err
+	if cmd.Enabled {
+		if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
+			return domain.Subscription{}, err
+		}
 	}
 
 	existing.Description = cmd.Description
