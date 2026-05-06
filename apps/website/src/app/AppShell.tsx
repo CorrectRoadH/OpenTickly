@@ -8,7 +8,7 @@ import { Dropdown, MenuSeparator, useDropdownClose } from "@opentickly/web-ui";
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
-import { ChevronRightIcon, FocusIcon, MenuIcon, PlanIcon, TrackIcon } from "../shared/ui/icons.tsx";
+import { ChevronRightIcon, MenuIcon } from "../shared/ui/icons.tsx";
 import { resolveEntryDurationSeconds } from "../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../shared/query/useUserPreferences.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
@@ -179,19 +179,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       {/* Desktop sidebar -- fixed, stays in place during window scroll */}
       <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
         <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
-          <div className="space-y-0.5">
-            <RailButton active icon={<TrackIcon className="size-4" />} label="track" />
-            <RailButton
-              icon={<PlanIcon className="size-4" />}
-              label="plan"
-              tooltip={t("opentogglPlanComing")}
-            />
-            <RailButton
-              icon={<FocusIcon className="size-4" />}
-              label="focus"
-              tooltip={t("opentogglFocusComing")}
-            />
-          </div>
+          <BrandRailMark />
           <div className="space-y-1">
             <ProfileMenuButton
               email={session.user.email}
@@ -385,38 +373,32 @@ function ProfileMenuAction({
   );
 }
 
-function RailButton({
-  active = false,
-  icon,
-  label,
-  tooltip,
-}: {
-  active?: boolean;
-  icon: ReactElement;
-  label: string;
-  tooltip?: string;
-}): ReactElement {
+function BrandRailMark(): ReactElement {
   return (
-    <button
-      aria-label={label}
-      className="group relative flex h-10 w-full items-center justify-center py-[7px]"
-      title={tooltip}
-      type="button"
+    <div
+      aria-label="OpenTickly"
+      className="flex w-full items-center justify-center py-[7px]"
+      role="img"
     >
-      <span
-        className={`flex size-[26px] items-center justify-center rounded-full border ${
-          active
-            ? "border-transparent bg-[var(--track-accent)] text-black"
-            : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)]"
-        }`}
+      <svg
+        aria-hidden="true"
+        className="size-[26px] drop-shadow-[0_8px_24px_rgba(224,93,38,0.35)]"
+        viewBox="0 0 32 32"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        {icon}
-      </span>
-      {tooltip ? (
-        <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded bg-[var(--track-border)] px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {tooltip}
-        </span>
-      ) : null}
-    </button>
+        <rect fill="#e05d26" height="32" rx="8" width="32" />
+        <text
+          fill="white"
+          fontFamily="Arial, sans-serif"
+          fontSize="20"
+          fontWeight="bold"
+          textAnchor="middle"
+          x="16"
+          y="23"
+        >
+          t
+        </text>
+      </svg>
+    </div>
   );
 }
