@@ -21,6 +21,21 @@ const currentTimeEntryQueryKey = ["current-time-entry"] as const;
 const recentTimeEntrySuggestionsQueryKey = (workspaceId: number) =>
   ["time-entry-suggestions", workspaceId] as const;
 
+async function invalidateProjectRollups(
+  queryClient: ReturnType<typeof useQueryClient>,
+  workspaceId: number,
+) {
+  await queryClient.invalidateQueries({
+    queryKey: ["projects", workspaceId],
+  });
+  await queryClient.invalidateQueries({
+    queryKey: ["project-detail"],
+  });
+  await queryClient.invalidateQueries({
+    queryKey: ["project-statistics"],
+  });
+}
+
 export function useTimeEntriesQuery(options: {
   enabled?: boolean;
   endDate: string;
@@ -190,6 +205,7 @@ export function useStartTimeEntryMutation(workspaceId: number) {
         queryKey: recentTimeEntrySuggestionsQueryKey(workspaceId),
       });
       await queryClient.invalidateQueries({ queryKey: currentTimeEntryQueryKey });
+      await invalidateProjectRollups(queryClient, workspaceId);
     },
   });
 }
@@ -276,6 +292,7 @@ export function useCreateTimeEntryMutation(workspaceId: number) {
       await queryClient.invalidateQueries({
         queryKey: currentTimeEntryQueryKey,
       });
+      await invalidateProjectRollups(queryClient, workspaceId);
     },
   });
 }
@@ -344,6 +361,15 @@ export function useStopTimeEntryMutation() {
       });
       await queryClient.invalidateQueries({
         queryKey: currentTimeEntryQueryKey,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["project-detail"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["project-statistics"],
       });
     },
   });
@@ -483,6 +509,15 @@ export function useUpdateTimeEntryMutation() {
         { queryKey: ["time-entries"] },
         (old) => old?.map((entry) => (entry.id === data.id ? data : entry)),
       );
+      await queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["project-detail"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["project-statistics"],
+      });
     },
   });
 }
@@ -541,6 +576,15 @@ export function useDeleteTimeEntryMutation() {
       });
       await queryClient.invalidateQueries({
         queryKey: currentTimeEntryQueryKey,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["project-detail"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["project-statistics"],
       });
     },
   });

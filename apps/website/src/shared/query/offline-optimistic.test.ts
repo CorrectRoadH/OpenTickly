@@ -475,6 +475,35 @@ describe("Offline optimistic mutations", () => {
         queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(listKey);
       expect(cached).toHaveLength(0);
     });
+
+    it("invalidates project rollups after a confirmed create", async () => {
+      mockPostCreate.mockResolvedValue({
+        data: makeTimeEntry({
+          id: 2001,
+          duration: 1800,
+          start: "2026-03-30T08:00:00Z",
+          stop: "2026-03-30T08:30:00Z",
+        }),
+      });
+      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useCreateTimeEntryMutation(WORKSPACE_ID), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await act(async () => {
+        await result.current.mutateAsync({
+          description: "Manual entry",
+          duration: 1800,
+          start: "2026-03-30T08:00:00Z",
+          stop: "2026-03-30T08:30:00Z",
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["projects", WORKSPACE_ID] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["project-detail"] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["project-statistics"] });
+    });
   });
 });
 

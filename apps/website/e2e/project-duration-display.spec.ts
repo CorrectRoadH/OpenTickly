@@ -21,6 +21,58 @@ async function changePreferenceSelect(page: Page, testId: string, optionLabel: s
 }
 
 test.describe("Story: project surfaces use one canonical duration display", () => {
+  test("project dashboard includes entries older than 90 days in the project total and table", async ({
+    page,
+  }) => {
+    const email = `project-dashboard-history-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Project Dashboard History User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = session.currentWorkspaceId;
+    const projectId = await createProjectForWorkspace(page, {
+      name: `History Project ${Date.now()}`,
+      workspaceId,
+    });
+
+    const olderStart = new Date();
+    olderStart.setUTCDate(olderStart.getUTCDate() - 120);
+    olderStart.setUTCHours(9, 0, 0, 0);
+    const olderStop = new Date(olderStart.getTime() + 60 * 60 * 1000);
+
+    const recentStart = new Date();
+    recentStart.setUTCDate(recentStart.getUTCDate() - 1);
+    recentStart.setUTCHours(14, 30, 0, 0);
+    const recentStop = new Date(recentStart.getTime() + ENTRY_DURATION_SECONDS * 1000);
+
+    await createTimeEntryForWorkspace(page, {
+      description: "Old project work",
+      projectId,
+      start: olderStart.toISOString(),
+      stop: olderStop.toISOString(),
+      workspaceId,
+    });
+    await createTimeEntryForWorkspace(page, {
+      description: "Recent project work",
+      projectId,
+      start: recentStart.toISOString(),
+      stop: recentStop.toISOString(),
+      workspaceId,
+    });
+
+    await page.goto(`/${workspaceId}/projects/${projectId}/dashboard`);
+    await expect(page.getByText("Total hours")).toBeVisible();
+    await expect(page.getByTestId("project-dashboard-total-hours")).toContainText("1:47:27");
+    await expect(page.getByText("Old project work")).toBeVisible();
+    await expect(page.getByText("Recent project work")).toBeVisible();
+  });
+
   test("project list and dashboard match the user's duration format for the same project", async ({
     page,
   }) => {

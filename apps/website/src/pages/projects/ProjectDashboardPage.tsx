@@ -18,10 +18,16 @@ type ProjectDashboardPageProps = {
   workspaceId: number;
 };
 
-function last90DaysRange() {
+function projectDashboardRange(earliestTimeEntry?: string) {
   const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 90);
+  const start = earliestTimeEntry ? new Date(earliestTimeEntry) : new Date();
+  if (Number.isNaN(start.getTime())) {
+    start.setTime(end.getTime());
+    start.setDate(start.getDate() - 90);
+  }
+  if (!earliestTimeEntry) {
+    start.setDate(start.getDate() - 90);
+  }
   return {
     endDate: end.toISOString().slice(0, 10),
     startDate: start.toISOString().slice(0, 10),
@@ -39,7 +45,7 @@ export function ProjectDashboardPage({
   const project = projectQuery.data;
   const totalSeconds = project?.actual_seconds ?? 0;
   const billableSeconds = project?.billable ? totalSeconds : 0;
-  const dateRange = last90DaysRange();
+  const dateRange = projectDashboardRange(statisticsQuery.data?.earliest_time_entry);
   const entriesQuery = useTimeEntriesQuery({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
