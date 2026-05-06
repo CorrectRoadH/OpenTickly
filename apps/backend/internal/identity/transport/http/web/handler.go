@@ -430,10 +430,13 @@ func (handler *Handler) mapError(ctx context.Context, operation string, err erro
 		return Response{StatusCode: 400, Body: "Invalid verification token."}
 	case errors.Is(err, application.ErrVerificationTokenExpired):
 		return Response{StatusCode: 400, Body: "Verification token has expired."}
-	case errors.Is(err, domain.ErrInvalidCredentials),
-		errors.Is(err, domain.ErrUserDeactivated),
+	case errors.Is(err, domain.ErrUserNotFound):
+		return Response{StatusCode: 404, Body: "User does not exist."}
+	case errors.Is(err, domain.ErrInvalidCredentials):
+		return Response{StatusCode: 403, Body: "Incorrect password."}
+	case errors.Is(err, domain.ErrUserDeactivated),
 		errors.Is(err, domain.ErrUserDeleted):
-		return Response{StatusCode: 403, Body: "User does not have access to this resource."}
+		return Response{StatusCode: 403, Body: "Account is disabled."}
 	default:
 		logger := handler.logger
 		if logger == nil {

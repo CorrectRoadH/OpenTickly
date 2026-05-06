@@ -561,6 +561,9 @@ func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 	if login.Code != http.StatusForbidden {
 		t.Fatalf("expected deactivated login status 403, got %d body=%s", login.Code, login.Body.String())
 	}
+	if login.Body.String() != "\"Account is disabled.\"\n" {
+		t.Fatalf("expected deactivated login body to explain disabled account, got %q", login.Body.String())
+	}
 
 	passwordAuthorization := basicAuthorization(uniqueEmail, "secret1")
 

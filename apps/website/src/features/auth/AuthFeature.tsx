@@ -1,6 +1,7 @@
-import { useState, type ReactElement } from "react";
+import { type ReactElement } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
 import type { RegistrationPendingVerification } from "../../shared/api/web/index.ts";
@@ -27,11 +28,8 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleSubmit(payload: LoginRequestDto | RegisterRequestDto) {
-    setErrorMessage(null);
-
     try {
       if (mode === "login") {
         await loginMutation.mutateAsync(payload as LoginRequestDto);
@@ -50,13 +48,12 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
         to: resolveHomePath(),
       });
     } catch (error) {
-      setErrorMessage(resolveAuthErrorMessage(error, t));
+      toast.error(resolveAuthErrorMessage(error, t));
     }
   }
 
   return (
     <AuthForm
-      errorMessage={errorMessage}
       isSubmitting={loginMutation.isPending || registerMutation.isPending}
       mode={mode}
       onSubmit={handleSubmit}
@@ -68,6 +65,10 @@ function resolveAuthErrorMessage(error: unknown, t: (key: string) => string): st
   if (error instanceof WebApiError) {
     if (typeof error.data === "string" && error.data.length > 0) {
       return error.data;
+    }
+
+    if (typeof error.userMessage === "string" && error.userMessage.length > 0) {
+      return error.userMessage;
     }
 
     if (

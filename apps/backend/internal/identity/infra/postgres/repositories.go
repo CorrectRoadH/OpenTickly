@@ -269,7 +269,7 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 	user, err := scanUser(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domain.ErrInvalidCredentials
+			return nil, domain.ErrUserNotFound
 		}
 		return nil, err
 	}

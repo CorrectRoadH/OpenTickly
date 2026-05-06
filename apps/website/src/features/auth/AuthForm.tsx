@@ -18,7 +18,6 @@ const registerSchema = loginSchema.extend({
 type AuthMode = "login" | "register";
 
 type AuthFormProps = {
-  errorMessage?: string | null;
   isSubmitting?: boolean;
   mode: AuthMode;
   onSubmit: (payload: LoginRequestDto | RegisterRequestDto) => Promise<void> | void;
@@ -30,12 +29,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const fieldClassName =
   "h-9 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-[var(--track-text)] shadow-[0_1px_0_0_var(--track-depth-border)] outline-none transition-[border-color,box-shadow] duration-[var(--duration-fast)] placeholder:text-[var(--track-text-soft)] focus:border-[var(--track-accent)]";
 
-export function AuthForm({
-  errorMessage,
-  isSubmitting = false,
-  mode,
-  onSubmit,
-}: AuthFormProps): ReactElement {
+export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps): ReactElement {
   const { t } = useTranslation("auth");
   const form = useForm<LoginFormValues & RegisterFormValues>({
     defaultValues: {
@@ -105,15 +99,6 @@ export function AuthForm({
       >
         {isSubmitting ? t("submitting") : mode === "login" ? t("logIn") : t("register")}
       </button>
-
-      {errorMessage ? (
-        <p
-          className="rounded-[6px] border border-[var(--track-state-error-border)] bg-[var(--track-danger-tint)] px-3 py-2 text-[14px] leading-5 text-[var(--track-accent-text)]"
-          role="alert"
-        >
-          {errorMessage}
-        </p>
-      ) : null}
 
       <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
         {mode === "login" ? t("needAnAccount") : t("alreadyHaveAnAccount")}{" "}

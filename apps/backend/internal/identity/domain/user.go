@@ -22,6 +22,7 @@ var (
 	ErrInvalidTimezone           = errors.New("value in timezone is not a valid IANA name")
 	ErrPreferencesFieldProtected = errors.New("cannot set value for ToSAcceptNeeded")
 	ErrEmailAlreadyRegistered    = errors.New("email is already registered")
+	ErrUserNotFound              = errors.New("user not found")
 	ErrUserDeactivated           = errors.New("user is deactivated")
 	ErrUserDeleted               = errors.New("user is deleted")
 	ErrUserPendingVerification   = errors.New("email verification is pending")

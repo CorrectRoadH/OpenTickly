@@ -235,7 +235,24 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 	}
 }
 
-func TestLoginMapsInvalidCredentialsToForbidden(t *testing.T) {
+func TestLoginMapsUnknownUserToNotFound(t *testing.T) {
+	handler := newTestHandler(t)
+
+	response := handler.Login(context.Background(), LoginRequest{
+		Email:    fmt.Sprintf("missing-%d@example.com", time.Now().UnixNano()),
+		Password: "secret1",
+	})
+
+	if response.StatusCode != 404 {
+		t.Fatalf("expected missing user login status 404, got %d", response.StatusCode)
+	}
+
+	if response.Body != "User does not exist." {
+		t.Fatalf("expected missing user login body, got %#v", response.Body)
+	}
+}
+
+func TestLoginMapsInvalidPasswordToForbidden(t *testing.T) {
 	handler := newTestHandler(t)
 	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 	handler.Register(context.Background(), RegisterRequest{
@@ -253,7 +270,7 @@ func TestLoginMapsInvalidCredentialsToForbidden(t *testing.T) {
 		t.Fatalf("expected invalid login status 403, got %d", response.StatusCode)
 	}
 
-	if response.Body != "User does not have access to this resource." {
+	if response.Body != "Incorrect password." {
 		t.Fatalf("expected forbidden login body, got %#v", response.Body)
 	}
 }
