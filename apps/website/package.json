@@ -36,6 +36,7 @@
     "react-dom": "^19.2.5",
     "react-hook-form": "catalog:",
     "react-i18next": "catalog:",
+    "react-markdown": "catalog:",
     "recharts": "^3.8.1",
     "sonner": "catalog:",
     "styletron-engine-atomic": "^1.6.2",

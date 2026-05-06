@@ -69,6 +69,9 @@ catalogs:
     react-i18next:
       specifier: ^17.0.6
       version: 17.0.6
+    react-markdown:
+      specifier: ^10.1.0
+      version: 10.1.0
     sharp:
       specifier: ^0.34.5
       version: 0.34.5
@@ -319,6 +322,9 @@ importers:
       react-i18next:
         specifier: 'catalog:'
         version: 17.0.6(i18next@26.0.8(typescript@6.0.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3)
+      react-markdown:
+        specifier: 'catalog:'
+        version: 10.1.0(@types/react@19.2.14)(react@19.2.5)
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@17.0.2)(react@19.2.5)(redux@5.0.1)
@@ -4747,6 +4753,9 @@ packages:
   html-parse-stringify@3.0.1:
     resolution: {integrity: sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==}
 
+  html-url-attributes@3.0.1:
+    resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
+
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
 
@@ -5895,6 +5904,12 @@ packages:
     engines: {node: '>= 4', npm: '>= 3'}
     peerDependencies:
       react: '>=16.3.0'
+
+  react-markdown@10.1.0:
+    resolution: {integrity: sha512-qKxVopLT/TyA6BX3Ue5NwabOsAzm0Q7kAPwq6L+wWDwisYs7R8vZ0nRXqq6rkueboxpkjvLGU9fWifiX/ZZFxQ==}
+    peerDependencies:
+      '@types/react': '>=18'
+      react: '>=18'
 
   react-movable@3.4.1:
     resolution: {integrity: sha512-VTrBKjRWV4yVUDGj5dIZIhf07fyoFDXzIV6xs3KNNHpgPbkPT7FNu/Vbe11ZjHmT48uOykCmRMpS66DrzRbZZg==}
@@ -11306,6 +11321,8 @@ snapshots:
     dependencies:
       void-elements: 3.1.0
 
+  html-url-attributes@3.0.1: {}
+
   html-void-elements@3.0.0: {}
 
   html2canvas@1.4.1:
@@ -12760,6 +12777,24 @@ snapshots:
       viewport-mercator-project: 7.0.4
     transitivePeerDependencies:
       - react-dom
+
+  react-markdown@10.1.0(@types/react@19.2.14)(react@19.2.5):
+    dependencies:
+      '@types/hast': 3.0.4
+      '@types/mdast': 4.0.4
+      '@types/react': 19.2.14
+      devlop: 1.1.0
+      hast-util-to-jsx-runtime: 2.3.6
+      html-url-attributes: 3.0.1
+      mdast-util-to-hast: 13.2.1
+      react: 19.2.5
+      remark-parse: 11.0.0
+      remark-rehype: 11.1.2
+      unified: 11.0.5
+      unist-util-visit: 5.1.0
+      vfile: 6.0.3
+    transitivePeerDependencies:
+      - supports-color
 
   react-movable@3.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:

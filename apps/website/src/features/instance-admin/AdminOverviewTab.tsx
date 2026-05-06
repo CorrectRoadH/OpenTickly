@@ -2,6 +2,7 @@ import { AppLinkButton, AppSurfaceState, SurfaceCard } from "@opentickly/web-ui"
 import type { ReactElement, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Info, Megaphone, Zap } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import i18n from "../../app/i18n.ts";
 import type { InstanceAnnouncement } from "../../shared/api/generated/admin/types.gen.ts";
@@ -180,7 +181,11 @@ const announcementAccentBySeverity: Record<InstanceAnnouncement["severity"], str
   critical: "border-l-red-400 bg-red-500/10",
 };
 
-function AnnouncementItem({ announcement }: { announcement: InstanceAnnouncement }): ReactElement {
+export function AnnouncementItem({
+  announcement,
+}: {
+  announcement: InstanceAnnouncement;
+}): ReactElement {
   const { t } = useTranslation();
   const accent = announcementAccentBySeverity[announcement.severity];
   const SeverityIcon = announcement.severity === "info" ? Info : AlertTriangle;
@@ -203,9 +208,30 @@ function AnnouncementItem({ announcement }: { announcement: InstanceAnnouncement
         </span>
       </div>
       {announcement.body_markdown ? (
-        <p className="whitespace-pre-line text-[13px] leading-relaxed text-[var(--track-text-soft)]">
-          {announcement.body_markdown}
-        </p>
+        <div className="text-[13px] leading-relaxed text-[var(--track-text-soft)]">
+          <ReactMarkdown
+            components={{
+              a: ({ node: _node, ...props }) => (
+                <a
+                  {...props}
+                  className="text-[var(--track-accent)] underline underline-offset-2"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                />
+              ),
+              li: ({ node: _node, ...props }) => <li {...props} className="ml-4 list-disc" />,
+              p: ({ node: _node, ...props }) => <p {...props} className="mt-0 mb-3 last:mb-0" />,
+              strong: ({ node: _node, ...props }) => (
+                <strong {...props} className="font-semibold text-white" />
+              ),
+              ul: ({ node: _node, ...props }) => (
+                <ul {...props} className="mt-0 mb-3 space-y-1 last:mb-0" />
+              ),
+            }}
+          >
+            {announcement.body_markdown}
+          </ReactMarkdown>
+        </div>
       ) : null}
       {announcement.link ? (
         <div>
