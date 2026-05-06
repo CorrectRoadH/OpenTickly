@@ -438,7 +438,7 @@ func (store *Store) CreateProject(
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 			returning *
 		)
-		select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
+		select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, 0::bigint as actual_seconds,
 			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 			p.color, p.is_private, p.billable,
 			p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate

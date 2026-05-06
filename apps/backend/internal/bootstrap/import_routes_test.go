@@ -187,7 +187,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		ActualSeconds int64  `json:"actual_seconds"`
 	}
 	mustDecodeJSON(t, projects.Body.Bytes(), &projectsBody)
-	if len(projectsBody) != 1 || projectsBody[0].ID != 218647578 || projectsBody[0].Name != "toggl CLI" || projectsBody[0].ClientID == nil || *projectsBody[0].ClientID != 57870165 || projectsBody[0].ActualSeconds != 17893 {
+	if len(projectsBody) != 1 || projectsBody[0].ID != 218647578 || projectsBody[0].Name != "toggl CLI" || projectsBody[0].ClientID == nil || *projectsBody[0].ClientID != 57870165 || projectsBody[0].ActualSeconds != 0 {
 		t.Fatalf("expected imported project in API response, got %#v", projectsBody)
 	}
 

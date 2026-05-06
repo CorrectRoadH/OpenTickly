@@ -9,6 +9,8 @@ import {
   useProjectStatisticsQuery,
   useTimeEntriesQuery,
 } from "../../shared/query/web-shell.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { ProjectDetailLayout } from "./ProjectDetailLayout.tsx";
 
 type ProjectDashboardPageProps = {
@@ -31,12 +33,12 @@ export function ProjectDashboardPage({
   workspaceId,
 }: ProjectDashboardPageProps): ReactElement {
   const { t } = useTranslation("projects");
+  const { durationFormat } = useUserPreferences();
   const projectQuery = useProjectDetailQuery(workspaceId, projectId);
   const statisticsQuery = useProjectStatisticsQuery(workspaceId, projectId);
   const project = projectQuery.data;
   const totalSeconds = project?.actual_seconds ?? 0;
   const billableSeconds = project?.billable ? totalSeconds : 0;
-
   const dateRange = last90DaysRange();
   const entriesQuery = useTimeEntriesQuery({
     startDate: dateRange.startDate,
@@ -66,17 +68,30 @@ export function ProjectDashboardPage({
       {project ? (
         <section className="pt-3">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard label={t("totalHours")} value={formatDuration(totalSeconds)} />
-            <StatCard label={t("billableHours")} value={formatDuration(billableSeconds)} />
+            <StatCard
+              label={t("totalHours")}
+              testId="project-dashboard-total-hours"
+              value={formatClockDuration(totalSeconds, durationFormat)}
+            />
+            <StatCard
+              label={t("billableHours")}
+              testId="project-dashboard-billable-hours"
+              value={formatClockDuration(billableSeconds, durationFormat)}
+            />
             <StatCard
               label={t("billablePercent")}
+              testId="project-dashboard-billable-percent"
               value={
                 totalSeconds > 0 ? `${Math.round((billableSeconds / totalSeconds) * 100)}%` : "0%"
               }
             />
           </div>
           <div className="mt-6 flex justify-center">
-            <ProjectDonut billableSeconds={billableSeconds} totalSeconds={totalSeconds} />
+            <ProjectDonut
+              billableSeconds={billableSeconds}
+              durationFormat={durationFormat}
+              totalSeconds={totalSeconds}
+            />
           </div>
           {statisticsQuery.data?.earliest_time_entry || statisticsQuery.data?.latest_time_entry ? (
             <div className="mt-6 text-[12px] text-[var(--track-text-muted)]">
@@ -96,9 +111,20 @@ export function ProjectDashboardPage({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }): ReactElement {
+function StatCard({
+  label,
+  testId,
+  value,
+}: {
+  label: string;
+  testId: string;
+  value: string;
+}): ReactElement {
   return (
-    <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 py-4">
+    <div
+      className="rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 py-4"
+      data-testid={testId}
+    >
       <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
         {label}
       </p>
@@ -109,9 +135,11 @@ function StatCard({ label, value }: { label: string; value: string }): ReactElem
 
 function ProjectDonut({
   billableSeconds,
+  durationFormat,
   totalSeconds,
 }: {
   billableSeconds: number;
+  durationFormat: "improved" | "classic" | "decimal";
   totalSeconds: number;
 }): ReactElement {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -145,7 +173,7 @@ function ProjectDonut({
           />
           <span>{data[hoveredIndex].name}</span>
           <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
-            {formatDuration(data[hoveredIndex].value)}
+            {formatClockDuration(data[hoveredIndex].value, durationFormat)}
           </span>
         </div>
       ) : null}
@@ -180,13 +208,4 @@ function ProjectDonut({
       </div>
     </div>
   );
-}
-
-function formatDuration(totalSeconds: number): string {
-  const safeSeconds = Math.max(0, totalSeconds);
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-
-  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }

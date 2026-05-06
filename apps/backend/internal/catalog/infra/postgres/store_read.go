@@ -373,12 +373,13 @@ func (store *Store) ListProjects(
 	rows, err := store.pool.Query(
 		ctx,
 		fmt.Sprintf(
-			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
+			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, project_totals.actual_seconds,
 				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 				p.color, p.is_private, p.billable,
 				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
 			from catalog_projects p
 			left join catalog_clients c on c.id = p.client_id
+			`+projectActualSecondsJoin+`
 			where %s
 			order by %s
 			limit $%d offset $%d`,
@@ -412,12 +413,13 @@ func (store *Store) GetProject(
 ) (catalogapplication.ProjectView, bool, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
+		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, project_totals.actual_seconds,
 			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 			p.color, p.is_private, p.billable,
 				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
 		from catalog_projects p
 		left join catalog_clients c on c.id = p.client_id
+		`+projectActualSecondsJoin+`
 		where p.workspace_id = $1 and p.id = $2`,
 		workspaceID,
 		projectID,

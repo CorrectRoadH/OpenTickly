@@ -1,5 +1,7 @@
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { ProjectStatusFilter } from "../../shared/url-state/projects-location.ts";
+import type { DurationFormat } from "../../features/tracking/overview-data.ts";
+import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 
 export function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
   if (Array.isArray(data)) {
@@ -17,9 +19,12 @@ export function normalizeProjects(data: unknown): GithubComTogglTogglApiInternal
   return [];
 }
 
-export function formatProjectHours(project: GithubComTogglTogglApiInternalModelsProject): string {
+export function formatProjectHours(
+  project: GithubComTogglTogglApiInternalModelsProject,
+  durationFormat: DurationFormat,
+): string {
   const seconds = project.actual_seconds ?? Math.round((project.actual_hours ?? 0) * 3600);
-  return `${Math.round((seconds / 3600) * 10) / 10 || 0} h`;
+  return formatClockDuration(seconds, durationFormat);
 }
 
 export function emptyProjectsStateTitle(statusFilter: ProjectStatusFilter): string {

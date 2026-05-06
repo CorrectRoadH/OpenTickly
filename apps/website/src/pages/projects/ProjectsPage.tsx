@@ -47,6 +47,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getWorkspaceProjectUsers } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import {
   buildProjectTeamPath,
   type ProjectStatusFilter,
@@ -98,6 +99,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const { t } = useTranslation("projects");
   const navigate = useNavigate();
   const session = useSession();
+  const { durationFormat } = useUserPreferences();
   const workspaceId = session.currentWorkspace.id;
   const [filters, filterDispatch] = useProjectFilters(statusFilter);
   const {
@@ -544,7 +546,9 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 <DirectoryTableCell>
                   {project.current_period?.start_date ?? project.start_date ?? "-"}
                 </DirectoryTableCell>
-                <DirectoryTableCell>{formatProjectHours(project)}</DirectoryTableCell>
+                <DirectoryTableCell>
+                  {formatProjectHours(project, durationFormat)}
+                </DirectoryTableCell>
                 <DirectoryTableCell>
                   {project.billable ? t("billable") : t("nonBillable")}
                 </DirectoryTableCell>

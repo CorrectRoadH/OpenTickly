@@ -16,6 +16,12 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
+const projectActualSecondsJoin = `left join lateral (
+	select coalesce(sum(te.duration_seconds), 0)::bigint as actual_seconds
+	from tracking_time_entries te
+	where te.project_id = p.id and te.deleted_at is null and te.duration_seconds >= 0
+) project_totals on true`
+
 func NewStore(pool *pgxpool.Pool) *Store {
 	return &Store{pool: pool}
 }

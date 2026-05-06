@@ -247,7 +247,6 @@ create table catalog_projects (
     active boolean not null default true,
     pinned boolean not null default false,
     template boolean not null default false,
-    actual_seconds bigint not null default 0,
     recurring boolean not null default false,
     recurring_period_start date,
     recurring_period_end date,

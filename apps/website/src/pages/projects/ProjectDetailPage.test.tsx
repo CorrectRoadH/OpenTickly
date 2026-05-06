@@ -9,6 +9,7 @@ const mockUseSession = vi.fn();
 const mockUseProjectDetailQuery = vi.fn();
 const mockUseProjectMembersQuery = vi.fn();
 const mockUseProjectStatisticsQuery = vi.fn();
+const mockUsePreferencesQuery = vi.fn();
 const mockUseWorkspaceMembersQuery = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
@@ -35,6 +36,7 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useProjectDetailQuery: (...args: unknown[]) => mockUseProjectDetailQuery(...args),
   useProjectMembersQuery: (...args: unknown[]) => mockUseProjectMembersQuery(...args),
   useProjectStatisticsQuery: (...args: unknown[]) => mockUseProjectStatisticsQuery(...args),
+  usePreferencesQuery: (...args: unknown[]) => mockUsePreferencesQuery(...args),
   useWorkspaceMembersQuery: (...args: unknown[]) => mockUseWorkspaceMembersQuery(...args),
 }));
 
@@ -76,6 +78,11 @@ describe("ProjectDetailPage", () => {
       data: {
         earliest_time_entry: "2026-03-01T02:00:00Z",
         latest_time_entry: "2026-03-06T09:36:00Z",
+      },
+    });
+    mockUsePreferencesQuery.mockReturnValue({
+      data: {
+        duration_format: "improved",
       },
     });
     mockUseWorkspaceMembersQuery.mockReturnValue({

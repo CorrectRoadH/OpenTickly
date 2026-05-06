@@ -14,6 +14,8 @@ import {
   useProjectStatisticsQuery,
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { ProjectDetailLayout } from "./ProjectDetailLayout.tsx";
 
@@ -27,6 +29,7 @@ export function ProjectDetailPage({
   workspaceId,
 }: ProjectDetailPageProps): ReactElement {
   const { t } = useTranslation("projects");
+  const { durationFormat } = useUserPreferences();
   const session = useSession();
   const projectQuery = useProjectDetailQuery(workspaceId, projectId);
   const membersQuery = useProjectMembersQuery(workspaceId, projectId);
@@ -121,10 +124,20 @@ export function ProjectDetailPage({
 
         <aside className="pt-2">
           <div className="space-y-5">
-            <StatBlock label={t("totalHours")} value={formatDuration(totalSeconds)} />
-            <StatBlock label={t("billableHours")} value={formatDuration(billableSeconds)} />
+            <StatBlock
+              label={t("totalHours")}
+              value={formatClockDuration(totalSeconds, durationFormat)}
+            />
+            <StatBlock
+              label={t("billableHours")}
+              value={formatClockDuration(billableSeconds, durationFormat)}
+            />
             <div className="flex justify-center pt-1">
-              <ProjectDonut billableSeconds={billableSeconds} totalSeconds={totalSeconds} />
+              <ProjectDonut
+                billableSeconds={billableSeconds}
+                durationFormat={durationFormat}
+                totalSeconds={totalSeconds}
+              />
             </div>
             <TimelineBlock statistics={statisticsQuery.data} />
           </div>
@@ -198,9 +211,11 @@ function TimelineBlock({
 
 function ProjectDonut({
   billableSeconds,
+  durationFormat,
   totalSeconds,
 }: {
   billableSeconds: number;
+  durationFormat: "improved" | "classic" | "decimal";
   totalSeconds: number;
 }): ReactElement {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -234,7 +249,7 @@ function ProjectDonut({
           />
           <span>{data[hoveredIndex].name}</span>
           <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
-            {formatDuration(data[hoveredIndex].value)}
+            {formatClockDuration(data[hoveredIndex].value, durationFormat)}
           </span>
         </div>
       ) : null}
@@ -277,15 +292,6 @@ function Avatar({ initials }: { initials: string }): ReactElement {
       {initials}
     </div>
   );
-}
-
-function formatDuration(totalSeconds: number): string {
-  const safeSeconds = Math.max(0, totalSeconds);
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-
-  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function formatMoney(value: number): string {

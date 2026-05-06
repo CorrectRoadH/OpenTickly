@@ -2,7 +2,7 @@ import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { formatClockDuration } from "./overview-data.ts";
+import { formatClockDuration, resolveEntryDurationSeconds } from "./overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 function formatTimeHHMM(isoString: string | undefined): string {
@@ -28,7 +28,7 @@ export function TimeEntriesTable({ entries, isPending }: TimeEntriesTableProps):
   const { t } = useTranslation("tags");
   const { durationFormat } = useUserPreferences();
 
-  const totalSeconds = entries.reduce((sum, entry) => sum + (entry.duration ?? 0), 0);
+  const totalSeconds = entries.reduce((sum, entry) => sum + resolveEntryDurationSeconds(entry), 0);
 
   if (isPending) {
     return (
@@ -62,45 +62,50 @@ export function TimeEntriesTable({ entries, isPending }: TimeEntriesTableProps):
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--track-border)]">
-            {entries.map((entry) => (
-              <tr
-                className="text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
-                key={entry.id}
-              >
-                <td className="max-w-[240px] truncate px-4 py-3">
-                  {entry.description?.trim() || (
-                    <span className="text-[var(--track-text-soft)]">{t("noDescription")}</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {entry.project_name ? (
-                    <span
-                      className="truncate"
-                      style={{ color: entry.project_color || "var(--track-text-muted)" }}
-                    >
-                      {entry.project_name}
-                    </span>
-                  ) : (
-                    <span className="text-[var(--track-text-muted)]">-</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
-                  {formatDate(entry.start)}
-                </td>
-                <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
-                  {formatTimeHHMM(entry.start)}
-                </td>
-                <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
-                  {formatTimeHHMM(entry.stop)}
-                </td>
-                <td className="px-4 py-3 text-right tabular-nums">
-                  {formatClockDuration(entry.duration ?? 0, durationFormat)}
-                </td>
-                <td className="px-4 py-3 text-center text-[var(--track-text-muted)]">
-                  {entry.billable ? "$" : "-"}
-                </td>
-              </tr>
-            ))}
+            {entries.map((entry) =>
+              (() => {
+                const resolvedDurationSeconds = resolveEntryDurationSeconds(entry);
+                return (
+                  <tr
+                    className="text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
+                    key={entry.id}
+                  >
+                    <td className="max-w-[240px] truncate px-4 py-3">
+                      {entry.description?.trim() || (
+                        <span className="text-[var(--track-text-soft)]">{t("noDescription")}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {entry.project_name ? (
+                        <span
+                          className="truncate"
+                          style={{ color: entry.project_color || "var(--track-text-muted)" }}
+                        >
+                          {entry.project_name}
+                        </span>
+                      ) : (
+                        <span className="text-[var(--track-text-muted)]">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
+                      {formatDate(entry.start)}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
+                      {formatTimeHHMM(entry.start)}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
+                      {formatTimeHHMM(entry.stop)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatClockDuration(resolvedDurationSeconds, durationFormat)}
+                    </td>
+                    <td className="px-4 py-3 text-center text-[var(--track-text-muted)]">
+                      {entry.billable ? "$" : "-"}
+                    </td>
+                  </tr>
+                );
+              })(),
+            )}
           </tbody>
           <tfoot>
             <tr className="border-t border-[var(--track-border)] bg-[var(--track-surface-muted)]">

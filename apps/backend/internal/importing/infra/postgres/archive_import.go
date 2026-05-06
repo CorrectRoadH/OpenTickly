@@ -620,13 +620,13 @@ func (importer *archiveImporter) ensureProject(
 	} else if found {
 		if _, err := importer.tx.Exec(ctx, `
 			update catalog_projects
-			set client_id = $3, name = $4, active = $5, pinned = $6, actual_seconds = $7,
-				created_by = $8, color = $9, billable = $10, is_private = $11, template = $12,
-				recurring = $13, start_date = $14, estimated_seconds = $15, fixed_fee = $16,
-				currency = $17, rate = $18
+			set client_id = $3, name = $4, active = $5, pinned = $6,
+				created_by = $7, color = $8, billable = $9, is_private = $10, template = $11,
+				recurring = $12, start_date = $13, estimated_seconds = $14, fixed_fee = $15,
+				currency = $16, rate = $17
 			where workspace_id = $1 and id = $2
 		`, importer.workspaceID, existingID, clientID, strings.TrimSpace(project.Name), project.Active,
-			project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate,
+			project.Pinned, createdBy, color, project.Billable, project.IsPrivate,
 			project.Template, project.Recurring, startDate, project.EstimatedSeconds, project.FixedFee,
 			project.Currency, project.Rate); err != nil {
 			return 0, fmt.Errorf("update project %d: %w", existingID, err)
@@ -638,11 +638,11 @@ func (importer *archiveImporter) ensureProject(
 	} else if found {
 		if _, err := importer.tx.Exec(ctx, `
 			update catalog_projects
-			set client_id = $3, active = $4, pinned = $5, actual_seconds = $6, created_by = $7,
-				color = $8, billable = $9, is_private = $10, template = $11, recurring = $12,
-				start_date = $13, estimated_seconds = $14, fixed_fee = $15, currency = $16, rate = $17
+			set client_id = $3, active = $4, pinned = $5, created_by = $6,
+				color = $7, billable = $8, is_private = $9, template = $10, recurring = $11,
+				start_date = $12, estimated_seconds = $13, fixed_fee = $14, currency = $15, rate = $16
 			where workspace_id = $1 and id = $2
-		`, importer.workspaceID, existingID, clientID, project.Active, project.Pinned, project.ActualSeconds,
+		`, importer.workspaceID, existingID, clientID, project.Active, project.Pinned,
 			createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring,
 			startDate, project.EstimatedSeconds, project.FixedFee, project.Currency, project.Rate); err != nil {
 			return 0, fmt.Errorf("update project %d by name: %w", existingID, err)
@@ -755,13 +755,13 @@ func (importer *archiveImporter) insertScopedProject(
 
 	err = importer.tx.QueryRow(ctx, `
 		insert into catalog_projects (
-			workspace_id, client_id, name, active, pinned, actual_seconds, created_by,
+			workspace_id, client_id, name, active, pinned, created_by,
 			color, billable, is_private, template, recurring,
 			start_date, estimated_seconds, fixed_fee, currency, rate
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		returning id
 	`, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned,
-		project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template,
+		createdBy, color, project.Billable, project.IsPrivate, project.Template,
 		project.Recurring, startDate, project.EstimatedSeconds, project.FixedFee, project.Currency,
 		project.Rate).Scan(&insertedID)
 	if err != nil {
@@ -781,14 +781,14 @@ func (importer *archiveImporter) insertProjectWithID(
 	var insertedID int64
 	err := importer.tx.QueryRow(ctx, `
 		insert into catalog_projects (
-			id, workspace_id, client_id, name, active, pinned, actual_seconds, created_by,
+			id, workspace_id, client_id, name, active, pinned, created_by,
 			color, billable, is_private, template, recurring,
 			start_date, estimated_seconds, fixed_fee, currency, rate
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		on conflict do nothing
 		returning id
 	`, project.ID, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active,
-		project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate,
+		project.Pinned, createdBy, color, project.Billable, project.IsPrivate,
 		project.Template, project.Recurring, startDate, project.EstimatedSeconds, project.FixedFee,
 		project.Currency, project.Rate).Scan(&insertedID)
 	if err == nil {

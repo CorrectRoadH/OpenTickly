@@ -166,7 +166,7 @@ func TestWorkspaceExportRoundTrip(t *testing.T) {
 	if exportedProjects[0].ClientID == nil || *exportedProjects[0].ClientID != 100 {
 		t.Fatalf("exported project client_id mismatch: %#v", exportedProjects[0])
 	}
-	if exportedProjects[0].ActualSeconds != 3600 {
+	if exportedProjects[0].ActualSeconds != 0 {
 		t.Fatalf("exported project actual_seconds mismatch: got %d", exportedProjects[0].ActualSeconds)
 	}
 

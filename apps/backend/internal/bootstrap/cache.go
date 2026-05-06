@@ -302,17 +302,17 @@ func timerKey(userID int64) string {
 
 type cachedCatalogProject struct {
 	Project catalogapplication.ProjectView `json:"project"`
-	Found   bool                          `json:"found"`
+	Found   bool                           `json:"found"`
 }
 
 type cachedCatalogTag struct {
 	Tag   catalogapplication.TagView `json:"tag"`
-	Found bool                      `json:"found"`
+	Found bool                       `json:"found"`
 }
 
 type cachedCatalogClient struct {
 	Client catalogapplication.ClientView `json:"client"`
-	Found  bool                         `json:"found"`
+	Found  bool                          `json:"found"`
 }
 
 type cachedCatalogStore struct {
@@ -336,12 +336,12 @@ func newCachedCatalogStore(inner catalogapplication.Store, rc *platform.RedisCli
 // invalidation rather than bringing back the ambiguous shared key.
 
 func (c *cachedCatalogStore) GetProject(ctx context.Context, workspaceID int64, projectID int64) (catalogapplication.ProjectView, bool, error) {
-	key := fmt.Sprintf("catalog:project:%d:%d", workspaceID, projectID)
-	result, err := platform.CacheAside(c.rc, ctx, key, catalogItemTTL, func() (cachedCatalogProject, error) {
-		project, ok, fetchErr := c.Store.GetProject(ctx, workspaceID, projectID)
-		return cachedCatalogProject{Project: project, Found: ok}, fetchErr
-	})
-	return result.Project, result.Found, err
+	// Project detail includes derived duration totals from time entries.
+	// Caching the whole record here makes that rollup stale after any
+	// time-entry write because those writes do not flow through catalog
+	// invalidation. Keep project detail uncached and let list/detail
+	// reads observe the same current aggregate.
+	return c.Store.GetProject(ctx, workspaceID, projectID)
 }
 
 func (c *cachedCatalogStore) GetTag(ctx context.Context, workspaceID int64, tagID int64) (catalogapplication.TagView, bool, error) {
