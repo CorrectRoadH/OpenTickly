@@ -224,6 +224,11 @@ func (user *User) Email() string {
 	return user.email
 }
 
+func (user *User) Username() string {
+	username, _, _ := strings.Cut(user.email, "@")
+	return username
+}
+
 func (user *User) FullName() string {
 	return user.fullName
 }
@@ -319,14 +324,15 @@ func (user *User) MatchesAPIToken(token string) bool {
 	return subtle.ConstantTimeCompare([]byte(user.apiToken), []byte(token)) == 1
 }
 
-// AuthenticateBasic keeps Toggl's two supported Basic Auth shapes explicit:
-// email:password for normal login and api_token:api_token for token auth.
+// AuthenticateBasic keeps Toggl's supported Basic Auth shapes explicit:
+// email-or-username:password for normal login and api_token:api_token for token auth.
 func (user *User) AuthenticateBasic(credentials BasicCredentials) error {
 	if err := user.ensureAuthenticatable(); err != nil {
 		return err
 	}
 
-	if strings.EqualFold(strings.TrimSpace(credentials.Username), user.email) &&
+	username := strings.TrimSpace(credentials.Username)
+	if (strings.EqualFold(username, user.email) || strings.EqualFold(username, user.Username())) &&
 		user.MatchesPassword(credentials.Password) {
 		return nil
 	}

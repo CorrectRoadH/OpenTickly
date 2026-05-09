@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -150,6 +151,15 @@ func (repo *sequenceTestUserRepository) ByEmail(_ context.Context, email string)
 		return nil, domain.ErrInvalidCredentials
 	}
 	return user, nil
+}
+
+func (repo *sequenceTestUserRepository) ByLoginIdentifier(_ context.Context, identifier string) (*domain.User, error) {
+	for _, user := range repo.byEmail {
+		if strings.EqualFold(identifier, user.Email()) || strings.EqualFold(identifier, user.Username()) {
+			return user, nil
+		}
+	}
+	return nil, domain.ErrInvalidCredentials
 }
 
 func (repo *sequenceTestUserRepository) ByAPIToken(_ context.Context, token string) (*domain.User, error) {

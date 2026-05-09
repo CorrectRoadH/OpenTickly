@@ -20,7 +20,7 @@ const router = createAppRouter();
 
 // Prefetch session before first render to avoid flash-of-login-screen.
 // Errors are silently ignored — the route guards will handle unauthenticated state.
-queryClient.prefetchQuery({
+void queryClient.prefetchQuery({
   queryFn: () => unwrapWebApiResult(getWebSession()),
   queryKey: sessionQueryKey,
 });

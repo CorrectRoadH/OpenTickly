@@ -7,11 +7,13 @@ import { z } from "zod";
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().min(1),
   password: z.string().min(1),
 });
 
-const registerSchema = loginSchema.extend({
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
   fullName: z.string().optional(),
 });
 
@@ -63,11 +65,11 @@ export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps
         </Field>
       ) : null}
 
-      <Field label={t("email")}>
+      <Field label={mode === "login" ? t("emailOrUsername") : t("email")}>
         <input
           className={fieldClassName}
-          placeholder={t("emailPlaceholder")}
-          type="email"
+          placeholder={mode === "login" ? t("emailOrUsernamePlaceholder") : t("emailPlaceholder")}
+          type={mode === "login" ? "text" : "email"}
           {...form.register("email")}
         />
       </Field>

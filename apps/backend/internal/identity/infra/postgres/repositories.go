@@ -276,6 +276,63 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 	return user, nil
 }
 
+func (repo *UserRepository) ByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
+	row := repo.pool.QueryRow(ctx, `
+		select
+			id,
+			email,
+			full_name,
+			password_hash,
+			api_token,
+			timezone,
+			beginning_of_week,
+			country_id,
+			default_workspace_id,
+			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
+			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
+			preferences_time_of_day_format,
+			preferences_alpha_features,
+			is_instance_admin,
+			avatar_storage_key
+		from identity_users
+		where email = lower(trim($1))
+			or (position('@' in trim($1)) = 0 and split_part(email, '@', 1) = lower(trim($1)))
+		order by case when email = lower(trim($1)) then 0 else 1 end
+		limit 1
+	`, identifier)
+
+	user, err := scanUser(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
 func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*domain.User, error) {
 	row := repo.pool.QueryRow(ctx, `
 		select

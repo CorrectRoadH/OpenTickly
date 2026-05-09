@@ -27,6 +27,9 @@ export type CurrentUserApiToken = {
 };
 
 export type LoginRequest = {
+  /**
+   * Email address or account username.
+   */
   email: string;
   password: string;
 };

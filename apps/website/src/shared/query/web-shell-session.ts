@@ -54,13 +54,15 @@ export function useRegisterMutation() {
     mutationFn: async (request: RegisterRequestDto) => {
       const result = await registerWebUser({ body: request });
       if (result.error !== undefined) {
+        const status = result.response?.status ?? 0;
+        const url = result.request?.url ?? "unknown request";
         throw new (await import("../api/web-client.ts")).WebApiError(
-          `Request failed for ${result.request.url}`,
-          result.response.status,
+          `Request failed for ${url}`,
+          status,
           result.error,
         );
       }
-      return { data: result.data, status: result.response.status };
+      return { data: result.data, status: result.response?.status ?? 0 };
     },
     onSuccess: ({ data, status }) => {
       if (status === 201) {

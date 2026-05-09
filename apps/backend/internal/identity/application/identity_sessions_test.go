@@ -152,6 +152,34 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	}
 }
 
+func TestServiceLoginBasicAcceptsEmailLocalPartUsername(t *testing.T) {
+	database := pgtest.Open(t)
+	service := newPostgresTestService(database)
+	ctx := context.Background()
+
+	username := fmt.Sprintf("username-login-%d", time.Now().UnixNano())
+	uniqueEmail := username + "@example.com"
+	registered, err := service.Register(ctx, application.RegisterInput{
+		Email:    uniqueEmail,
+		FullName: "Username Login",
+		Password: "secret1",
+	})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	usernameSession, err := service.LoginBasic(ctx, domain.BasicCredentials{
+		Username: username,
+		Password: "secret1",
+	})
+	if err != nil {
+		t.Fatalf("login with username: %v", err)
+	}
+	if usernameSession.User.ID != registered.Session.User.ID {
+		t.Fatalf("expected username login user %d, got %d", registered.Session.User.ID, usernameSession.User.ID)
+	}
+}
+
 func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testing.T) {
 	database := pgtest.Open(t)
 	deps := newPostgresTestDependencies(database)

@@ -106,6 +106,10 @@ func (c *cachedUserRepository) ByEmail(ctx context.Context, email string) (*iden
 	return c.inner.ByEmail(ctx, email)
 }
 
+func (c *cachedUserRepository) ByLoginIdentifier(ctx context.Context, identifier string) (*identitydomain.User, error) {
+	return c.inner.ByLoginIdentifier(ctx, identifier)
+}
+
 // ByAPIToken caches the token→userID mapping to avoid a full index scan on
 // identity_users.api_token per API request. The *domain.User itself is not
 // cached (unexported fields), so a cheap primary-key ByID follows the hit.

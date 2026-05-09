@@ -32,8 +32,8 @@ export class WebApiError extends Error {
 type WebApiResult<TResponse> = Promise<{
   data: TResponse | undefined;
   error: unknown;
-  request: Request;
-  response: Response;
+  request?: Request;
+  response?: Response;
 }>;
 
 export const webClient = generatedWebClient;
@@ -44,11 +44,9 @@ export async function unwrapWebApiResult<TResponse>(
   const result = await request;
 
   if (result.error !== undefined) {
-    throw new WebApiError(
-      `Request failed for ${result.request.url}`,
-      result.response.status,
-      result.error,
-    );
+    const status = result.response?.status ?? 0;
+    const url = result.request?.url ?? "unknown request";
+    throw new WebApiError(`Request failed for ${url}`, status, result.error);
   }
 
   return result.data as TResponse;

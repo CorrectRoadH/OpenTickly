@@ -16,16 +16,16 @@ import (
 )
 
 var (
-	ErrSessionNotFound             = errors.New("session not found")
-	ErrUnknownPreferencesClient    = errors.New("unknown client")
-	ErrUnknownAlphaFeature         = errors.New("invalid feature code(s)")
-	ErrRegistrationClosed          = errors.New("registration is currently closed")
-	ErrVerificationTokenExpired    = errors.New("verification token has expired")
-	ErrVerificationTokenInvalid    = errors.New("verification token is invalid")
-	ErrPasswordResetTokenInvalid   = errors.New("password reset token is invalid")
-	ErrPasswordResetTokenExpired   = errors.New("password reset token has expired")
-	ErrPasswordResetTokenConsumed  = errors.New("password reset token already used")
-	ErrVerificationResendCooldown  = errors.New("verification email resend cooldown in effect")
+	ErrSessionNotFound            = errors.New("session not found")
+	ErrUnknownPreferencesClient   = errors.New("unknown client")
+	ErrUnknownAlphaFeature        = errors.New("invalid feature code(s)")
+	ErrRegistrationClosed         = errors.New("registration is currently closed")
+	ErrVerificationTokenExpired   = errors.New("verification token has expired")
+	ErrVerificationTokenInvalid   = errors.New("verification token is invalid")
+	ErrPasswordResetTokenInvalid  = errors.New("password reset token is invalid")
+	ErrPasswordResetTokenExpired  = errors.New("password reset token has expired")
+	ErrPasswordResetTokenConsumed = errors.New("password reset token already used")
+	ErrVerificationResendCooldown = errors.New("verification email resend cooldown in effect")
 )
 
 // passwordResetTokenTTL is how long a password reset link is valid.
@@ -60,6 +60,7 @@ type UserRepository interface {
 	Save(context.Context, *domain.User) error
 	ByID(context.Context, int64) (*domain.User, error)
 	ByEmail(context.Context, string) (*domain.User, error)
+	ByLoginIdentifier(context.Context, string) (*domain.User, error)
 	ByAPIToken(context.Context, string) (*domain.User, error)
 	ByProductEmailsDisableCode(context.Context, string) (*domain.User, error)
 	ByWeeklyReportDisableCode(context.Context, string) (*domain.User, error)
@@ -993,7 +994,7 @@ func (service *Service) userForBasicCredentials(ctx context.Context, credentials
 	if credentials.Password == "api_token" {
 		return service.users.ByAPIToken(ctx, credentials.Username)
 	}
-	return service.users.ByEmail(ctx, credentials.Username)
+	return service.users.ByLoginIdentifier(ctx, credentials.Username)
 }
 
 func (service *Service) validateAlphaFeatures(preferences domain.Preferences) error {

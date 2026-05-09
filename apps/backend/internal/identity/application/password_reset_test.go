@@ -45,6 +45,10 @@ func (r *stubUserRepo) ByEmail(_ context.Context, email string) (*domain.User, e
 	return nil, domain.ErrInvalidCredentials
 }
 
+func (r *stubUserRepo) ByLoginIdentifier(_ context.Context, identifier string) (*domain.User, error) {
+	return r.ByEmail(context.Background(), identifier)
+}
+
 func (r *stubUserRepo) ByAPIToken(_ context.Context, _ string) (*domain.User, error) {
 	return nil, domain.ErrInvalidCredentials
 }
@@ -194,7 +198,7 @@ func (v *stubEmailVerifier) SendVerificationEmail(_ context.Context, _, _ string
 
 type stubSequence struct{ n int }
 
-func (s *stubSequence) NextUserID() (int64, error)    { s.n++; return int64(s.n), nil }
+func (s *stubSequence) NextUserID() (int64, error)     { s.n++; return int64(s.n), nil }
 func (s *stubSequence) NextSessionID() (string, error) { s.n++; return "sess", nil }
 func (s *stubSequence) NextAPIToken() (string, error) {
 	s.n++
