@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.1",
-    "@tailwindcss/vite": "^4.2.4",
+    "@tailwindcss/vite": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "catalog:",
@@ -57,7 +57,7 @@
     "jsdom": "^29.1.1",
     "react-compiler-runtime": "catalog:",
     "react-grab": "catalog:",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.0",
     "typescript": "~6.0.3",
     "vite": "catalog:",
     "vite-plugin-pwa": "catalog:",

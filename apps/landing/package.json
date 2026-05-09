@@ -28,8 +28,8 @@
   },
   "devDependencies": {
     "@orama/tokenizers": "^3.1.18",
-    "@react-router/dev": "^7.14.2",
-    "@tailwindcss/vite": "^4.2.4",
+    "@react-router/dev": "^7.15.0",
+    "@tailwindcss/vite": "^4.3.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "catalog:",
     "@types/react": "^19.2.14",
@@ -37,7 +37,7 @@
     "react-router-devtools": "^6.2.0",
     "serve": "^14.2.6",
     "sharp": "catalog:",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.0",
     "typescript": "catalog:",
     "vite": "catalog:"
   },
