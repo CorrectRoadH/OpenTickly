@@ -14,6 +14,7 @@ import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import {
   useDeleteTimeEntryMutation,
   useProjectsQuery,
+  useTasksQuery,
   useTagsQuery,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
@@ -32,7 +33,7 @@ export function MobileTimeEntryEditor({
   entry,
   onClose,
 }: MobileTimeEntryEditorProps): ReactElement {
-  const { t } = useTranslation("mobile");
+  const { t } = useTranslation(["mobile", "tracking"]);
   const session = useSession();
   const { durationFormat } = useUserPreferences();
   const timezone = session.user.timezone ?? "UTC";
@@ -41,10 +42,12 @@ export function MobileTimeEntryEditor({
   const updateMutation = useUpdateTimeEntryMutation();
   const deleteMutation = useDeleteTimeEntryMutation();
   const projectsQuery = useProjectsQuery(workspaceId);
+  const tasksQuery = useTasksQuery(workspaceId);
   const tagsQuery = useTagsQuery(workspaceId);
 
   const [description, setDescription] = useState(entry.description ?? "");
   const [projectId, setProjectId] = useState<number | null>(resolveTimeEntryProjectId(entry));
+  const [taskId, setTaskId] = useState<number | null>(entry.task_id ?? entry.tid ?? null);
   const [tagIds, setTagIds] = useState<number[]>(entry.tag_ids ?? []);
   const [billable, setBillable] = useState(entry.billable ?? false);
   const [startIso, setStartIso] = useState(entry.start ?? "");
@@ -59,6 +62,10 @@ export function MobileTimeEntryEditor({
   // view uses so all call sites share one source of truth.
   const projects = normalizeProjects(projectsQuery.data);
   const tags = normalizeTags(tagsQuery.data);
+  const tasks = (tasksQuery.data?.data ?? []).filter(
+    (task): task is typeof task & { id: number; name: string; project_id: number } =>
+      task.id != null && task.name != null && task.project_id != null && task.active !== false,
+  );
 
   const isRunning = !stopIso;
   const durationSeconds = (() => {
@@ -88,6 +95,7 @@ export function MobileTimeEntryEditor({
         start: startIso,
         stop: stopIso,
         tagIds,
+        taskId,
       },
       timeEntryId: entry.id,
       workspaceId,
@@ -101,6 +109,7 @@ export function MobileTimeEntryEditor({
   }
 
   const selectedProject = projects.find((p) => p.id === projectId) ?? null;
+  const selectedTask = tasks.find((task) => task.id === taskId) ?? null;
 
   const selectedTagNames = tagIds
     .map((id) => tags.find((t) => t.id === id)?.name)
@@ -133,12 +142,16 @@ export function MobileTimeEntryEditor({
       {projectPickerOpen ? (
         <MobilePickerOverlay
           onClose={() => setProjectPickerOpen(false)}
+          searchPlaceholder={t("tracking:searchByProjectTaskOrClient")}
           testId="mobile-project-picker"
           title={t("project")}
         >
           {(search) => {
             const query = search.trim().toLowerCase();
             const active = projects.filter((p) => p.active !== false);
+            const filteredTasks = query
+              ? tasks.filter((task) => task.name.toLowerCase().includes(query))
+              : [];
             const filtered = query
               ? active.filter((p) => {
                   const haystack = `${p.name} ${p.client_name ?? ""}`.toLowerCase();
@@ -170,6 +183,37 @@ export function MobileTimeEntryEditor({
                     {t("noMatches", { query: search.trim() })}
                   </p>
                 ) : null}
+                {filteredTasks.map((task) => {
+                  const taskProject = projects.find((project) => project.id === task.project_id);
+                  if (!taskProject) return null;
+                  return (
+                    <button
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4"
+                      key={`task-${task.id}`}
+                      onClick={() => {
+                        setProjectId(task.project_id);
+                        setTaskId(task.id);
+                        setProjectPickerOpen(false);
+                      }}
+                      type="button"
+                    >
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: taskProject.color ?? "var(--track-text-muted)",
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[14px] text-white">
+                          {taskProject.name}
+                        </span>
+                        <span className="block truncate text-[12px] text-[var(--track-text-muted)]">
+                          {task.name}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
                 {filtered.map((p) => (
                   <button
                     className={`flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4 ${
@@ -178,6 +222,7 @@ export function MobileTimeEntryEditor({
                     key={p.id}
                     onClick={() => {
                       setProjectId(p.id ?? null);
+                      setTaskId(null);
                       setProjectPickerOpen(false);
                     }}
                     type="button"
@@ -349,7 +394,11 @@ export function MobileTimeEntryEditor({
                   className="size-2 shrink-0 rounded-full"
                   style={{ backgroundColor: selectedProject.color ?? "var(--track-text-muted)" }}
                 />
-                <span className="truncate text-[14px] text-white">{selectedProject.name}</span>
+                <span className="min-w-0 truncate text-[14px] text-white">
+                  {selectedTask
+                    ? `${selectedProject.name} | ${selectedTask.name}`
+                    : selectedProject.name}
+                </span>
               </>
             ) : (
               <span className="text-[14px] text-[var(--track-text-muted)]">{t("noProject")}</span>

@@ -6,11 +6,13 @@ import { Search, X } from "lucide-react";
 export function MobilePickerOverlay({
   children,
   onClose,
+  searchPlaceholder,
   testId,
   title,
 }: {
   children: (search: string) => ReactElement;
   onClose: () => void;
+  searchPlaceholder?: string;
   testId: string;
   title: string;
 }): ReactElement {
@@ -39,7 +41,7 @@ export function MobilePickerOverlay({
           <input
             className="min-w-0 flex-1 bg-transparent text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none"
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("searchPlaceholder", { name: title.toLowerCase() })}
+            placeholder={searchPlaceholder ?? t("searchPlaceholder", { name: title.toLowerCase() })}
             value={search}
           />
         </div>

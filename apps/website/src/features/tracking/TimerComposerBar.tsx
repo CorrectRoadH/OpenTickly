@@ -22,6 +22,7 @@ import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useTimerComposer } from "./useTimerComposer.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
+import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 
 type StartParams = {
   description?: string;
@@ -157,6 +158,7 @@ export function TimerComposerBar({
       </div>
       <TimerBarProjectPicker
         draftProjectId={composer.draftProjectId}
+        draftTaskId={composer.draftTaskId}
         onProjectSelect={(projectId) => {
           if (composer.runningEntry?.id != null) {
             const wid = composer.runningEntry.workspace_id ?? composer.runningEntry.wid;
@@ -168,6 +170,7 @@ export function TimerComposerBar({
                   projectColor: picked?.color ?? null,
                   projectId,
                   projectName: picked?.name ?? null,
+                  taskId: null,
                 },
                 timeEntryId: composer.runningEntry.id,
                 workspaceId: wid,
@@ -178,6 +181,28 @@ export function TimerComposerBar({
             composer.setDraftTaskId(null);
           }
         }}
+        onTaskSelect={(projectId, taskId) => {
+          if (composer.runningEntry?.id != null) {
+            const wid = composer.runningEntry.workspace_id ?? composer.runningEntry.wid;
+            if (typeof wid === "number") {
+              const picked =
+                projectId == null ? null : (projectOptions.find((p) => p.id === projectId) ?? null);
+              void composer.updateTimeEntryMutation.mutateAsync({
+                request: {
+                  projectColor: picked?.color ?? null,
+                  projectId,
+                  projectName: picked?.name ?? null,
+                  taskId,
+                },
+                timeEntryId: composer.runningEntry.id,
+                workspaceId: wid,
+              });
+            }
+          } else {
+            composer.setDraftProjectId(projectId);
+            composer.setDraftTaskId(taskId);
+          }
+        }}
         projectOptions={projectOptions}
         runningEntry={composer.runningEntry}
         taskName={(() => {
@@ -185,6 +210,18 @@ export function TimerComposerBar({
           if (taskId == null) return undefined;
           return allTasks.find((t) => t.id === taskId)?.name ?? undefined;
         })()}
+        tasks={
+          allTasks
+            .filter(
+              (task): task is typeof task & { id: number; name: string; project_id: number } =>
+                task.id != null && task.name != null && task.project_id != null,
+            )
+            .map((task) => ({
+              id: task.id,
+              name: task.name,
+              projectId: task.project_id,
+            })) satisfies ProjectPickerTask[]
+        }
         workspaceName={
           session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace"
         }
@@ -368,14 +405,19 @@ function ComposerSuggestionsPortal({
 
 function TimerBarProjectPicker({
   draftProjectId,
+  draftTaskId,
   onProjectSelect,
+  onTaskSelect,
   projectOptions,
   runningEntry,
   taskName,
+  tasks,
   workspaceName,
 }: {
   draftProjectId: number | null;
+  draftTaskId: number | null;
   onProjectSelect: (id: number | null) => void;
+  onTaskSelect: (projectId: number, taskId: number) => void;
   projectOptions: {
     active?: boolean;
     client_name?: string | null;
@@ -391,6 +433,7 @@ function TimerBarProjectPicker({
     task_id?: number | null;
   } | null;
   taskName?: string;
+  tasks: ProjectPickerTask[];
   workspaceName: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
@@ -409,8 +452,9 @@ function TimerBarProjectPicker({
 
   const displayProjectId =
     runningEntry?.id != null ? resolveTimeEntryProjectId(runningEntry) : draftProjectId;
+  const displayTaskId = runningEntry?.id != null ? (runningEntry.task_id ?? null) : draftTaskId;
   const selectedProject = projects.find((p) => p.id === displayProjectId);
-  const hasProject = displayProjectId != null;
+  const hasProject = displayProjectId != null || displayTaskId != null;
 
   return (
     <div className="relative" ref={containerRef}>
@@ -462,7 +506,12 @@ function TimerBarProjectPicker({
               setOpen(false);
               onProjectSelect(projectId);
             }}
+            onTaskSelect={(projectId, taskId) => {
+              setOpen(false);
+              onTaskSelect(projectId, taskId);
+            }}
             projects={projects}
+            tasks={tasks}
             workspaceName={workspaceName}
           />
         </div>

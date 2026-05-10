@@ -70,7 +70,7 @@ test.describe("Bug fix: mobile project picker can select tasks", () => {
 
     const projectPicker = page.getByTestId("mobile-project-picker");
     await expect(projectPicker).toBeVisible();
-    const searchInput = projectPicker.getByPlaceholder("Search project");
+    const searchInput = projectPicker.getByRole("textbox");
     await searchInput.fill(taskToken);
 
     const taskButton = projectPicker.getByRole("button", {
