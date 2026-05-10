@@ -8,7 +8,7 @@ import {
 import { Link, useNavigate } from "@tanstack/react-router";
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
@@ -48,7 +48,7 @@ export function OrganizationSettingsPage({
   organizationId,
   section,
 }: OrganizationSettingsPageProps): ReactElement {
-  const { t } = useTranslation("settings");
+  const { t } = useTranslation(["settings", "common"]);
   const organizationQuery = useOrganizationSettingsQuery(organizationId);
 
   return (
@@ -226,7 +226,7 @@ function OrganizationNameSection({
           })}
           type="button"
         >
-          Save
+          {t("common:save")}
         </AppButton>
       }
       description={t("changeOrganizationName")}
@@ -270,7 +270,14 @@ function DangerSection({
           </div>
           <label className="block">
             <span className="text-sm text-[var(--track-text-muted)]">
-              Type <span className="font-mono font-semibold text-white">{orgName}</span> to confirm
+              <Trans
+                components={{
+                  strong: <span className="font-mono font-semibold text-white" />,
+                }}
+                i18nKey="typeToConfirm"
+                ns="settings"
+                values={{ name: orgName }}
+              />
             </span>
             <input
               className={`mt-2 ${fieldClassName} focus:border-red-500`}
