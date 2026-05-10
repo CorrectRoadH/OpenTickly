@@ -8,6 +8,7 @@ import {
   useWorkspaceMembersQuery,
   useWorkspaceMostActiveQuery,
 } from "../../shared/query/web-shell.ts";
+import { useSession } from "../../shared/session/session-context.tsx";
 
 function formatDurationHours(seconds: number): string {
   const h = (seconds / 3600).toFixed(1);
@@ -50,6 +51,7 @@ type SettingsActivityProps = {
 
 export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactElement {
   const { t } = useTranslation("settings");
+  const session = useSession();
   const activitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
   const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
@@ -85,6 +87,15 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
     for (const m of membersQuery.data?.members ?? []) {
       const memberUserId = m.user_id ?? m.id;
       if (memberUserId && m.name) lookup.set(memberUserId, m.name);
+    }
+    for (const m of topMembers) {
+      const userId = m.user_id ?? 0;
+      const name = m.fullname || m.email;
+      if (userId && name) lookup.set(userId, name);
+    }
+    const sessionUserName = session.user.fullName || session.user.email;
+    if (session.user.id && sessionUserName) {
+      lookup.set(session.user.id, sessionUserName);
     }
     return lookup;
   })();
