@@ -83,7 +83,8 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
   const memberNameById = (() => {
     const lookup = new Map<number, string>();
     for (const m of membersQuery.data?.members ?? []) {
-      if (m.id && m.name) lookup.set(m.id, m.name);
+      const memberUserId = m.user_id ?? m.id;
+      if (memberUserId && m.name) lookup.set(memberUserId, m.name);
     }
     return lookup;
   })();
