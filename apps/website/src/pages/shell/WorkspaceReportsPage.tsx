@@ -214,6 +214,11 @@ export function WorkspaceReportsPage({
   const projectOptions: ReportsProjectOption[] = (projectsQuery.data ?? [])
     .filter((p) => p.id != null && p.name)
     .map((p) => ({ clientName: p.client_name, color: p.color, id: p.id!, label: p.name! }));
+  const projectColorById = new Map(
+    projectOptions
+      .filter((project) => project.color)
+      .map((project) => [project.id, project.color!] as const),
+  );
 
   const tagOptions = (tagsQuery.data ?? [])
     .filter((t) => t.id != null && t.name)
@@ -374,6 +379,7 @@ export function WorkspaceReportsPage({
           <ReportsProfitabilityView
             isError={weeklyReportQuery.isError}
             isPending={weeklyReportQuery.isPending}
+            projectColorById={projectColorById}
             report={weeklyReportQuery.data}
           />
         ) : tab === "custom" ? (

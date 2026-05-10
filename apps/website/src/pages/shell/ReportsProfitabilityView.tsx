@@ -6,6 +6,7 @@ import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 
 type ProfitabilityShowMetric = "amount-cost-profit" | "amount" | "cost" | "profit";
@@ -32,6 +33,7 @@ type ProfitMemberRow = {
 type ReportsProfitabilityViewProps = {
   isError: boolean;
   isPending: boolean;
+  projectColorById: Map<number, string>;
   report: SavedWeeklyReportData | undefined;
 };
 
@@ -42,7 +44,10 @@ type DayAmounts = {
   profit: number;
 };
 
-function buildProfitRows(report: SavedWeeklyReportData | undefined): ProfitRow[] {
+function buildProfitRows(
+  report: SavedWeeklyReportData | undefined,
+  projectColorById: Map<number, string>,
+): ProfitRow[] {
   if (!report?.report?.length) return [];
 
   const projectMap = new Map<
@@ -61,7 +66,13 @@ function buildProfitRows(report: SavedWeeklyReportData | undefined): ProfitRow[]
     const memberName = row.user_name?.trim() || `User ${row.user_id ?? 0}`;
     const existing = projectMap.get(name) ?? {
       amount: 0,
-      color: row.project_hex_color ?? row.project_color ?? "#999",
+      color: resolveProjectColorValue({
+        color:
+          row.project_hex_color ??
+          row.project_color ??
+          (row.project_id ? projectColorById.get(row.project_id) : undefined),
+        name,
+      }),
       cost: 0,
       members: new Map(),
       name,
@@ -165,6 +176,7 @@ function formatCurrency(value: number): string {
 export function ReportsProfitabilityView({
   isError,
   isPending,
+  projectColorById,
   report,
 }: ReportsProfitabilityViewProps): ReactElement {
   const { t } = useTranslation("reports");
@@ -176,7 +188,7 @@ export function ReportsProfitabilityView({
   const [bottomDimension, setBottomDimension] = useState<EarningDimension>("projects");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const projectRows = buildProfitRows(report);
+  const projectRows = buildProfitRows(report, projectColorById);
   const memberRows = buildMemberRows(report);
   const dayAmounts = buildDayAmounts(report);
 
