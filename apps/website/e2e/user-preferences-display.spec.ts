@@ -107,6 +107,24 @@ test.describe("Story: user preferences control how times and durations display",
     await expect(entryRow(page)).toContainText("14:30");
   });
 
+  test("Time format 24-hour controls the Timer calendar time gutter", async ({ page }) => {
+    await loginE2eUser(page, test.info(), { email, password });
+    await page.goto(new URL("/profile", page.url()).toString());
+    await expect(page.getByTestId("profile-page")).toBeVisible();
+    await changePreferenceSelect(page, "pref-time-format", "12-hour");
+    await changePreferenceSelect(page, "pref-time-format", "24-hour");
+
+    await page.getByRole("link", { name: "Timer" }).click();
+    const calendarView = page.getByTestId("timer-calendar-view");
+    await expect(calendarView).toBeVisible();
+    await expect(
+      calendarView.locator(".rbc-time-gutter .rbc-label", { hasText: /^10:00$/ }),
+    ).toBeVisible();
+    await expect(
+      calendarView.locator(".rbc-time-gutter .rbc-label", { hasText: "10:00 AM" }),
+    ).toHaveCount(0);
+  });
+
   test("Time format 12-hour shows correct format on Timer page", async ({ page }) => {
     await loginE2eUser(page, test.info(), { email, password });
     await page.goto(new URL("/profile", page.url()).toString());
