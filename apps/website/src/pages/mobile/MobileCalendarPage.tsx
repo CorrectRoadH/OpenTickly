@@ -17,9 +17,14 @@ export function MobileCalendarPage(): ReactElement {
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
   const { workspaceId, timezone } = useWorkspaceData();
-  const { beginningOfWeek } = useWeekNavigation();
+  const { beginningOfWeek, setSelectedWeekDate } = useWeekNavigation();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries: false });
   const createMutation = useCreateTimeEntryMutation(workspaceId);
+
+  function handleSelectDate(date: Date) {
+    setSelectedDate(date);
+    setSelectedWeekDate(date);
+  }
 
   const dayEntries = (() => {
     const selectedKey = formatDateKey(selectedDate, timezone);
@@ -72,7 +77,7 @@ export function MobileCalendarPage(): ReactElement {
     <div className="flex h-full flex-col">
       <MobileDayStrip
         selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
+        onSelectDate={handleSelectDate}
         weekStartsOn={beginningOfWeek}
       />
       {views.timeEntriesQuery.isSuccess && dayEntries.length === 0 ? (

@@ -7,7 +7,22 @@ import {
 } from "../fixtures/e2e-auth.ts";
 
 // Register/login with default locale, then test calendar under zh-CN.
-test.use({ ...devices["iPhone 13"], timezoneId: "UTC" });
+test.use({ timezoneId: "UTC" });
+
+async function registerAndLoginForMobile(
+  page: import("@playwright/test").Page,
+  options: { email: string; fullName: string; password: string },
+) {
+  await registerE2eUser(page, test.info(), options);
+
+  await page.context().clearCookies();
+  const session = await loginE2eUser(page, test.info(), {
+    email: options.email,
+    password: options.password,
+  });
+  await page.setViewportSize(devices["iPhone 13"].viewport);
+  return session;
+}
 
 /**
  * Mobile calendar: time entry layout under CJK locales.
@@ -35,18 +50,50 @@ async function switchPageLanguage(page: import("@playwright/test").Page, lang: s
 }
 
 test.describe("Mobile calendar: entry positioning (CJK locale)", () => {
+  test("previous week strip does not render an extra Today pill and shows that day's entries", async ({
+    page,
+  }) => {
+    const email = `m-prev-week-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    const session = await registerAndLoginForMobile(page, {
+      email,
+      fullName: "Mobile Previous Week User",
+      password,
+    });
+
+    const previousWeek = new Date();
+    previousWeek.setUTCDate(previousWeek.getUTCDate() - 7);
+    const previousWeekDate = previousWeek.toISOString().slice(0, 10);
+    const description = `previous-week-entry-${Date.now()}`;
+
+    await createTimeEntryForWorkspace(page, {
+      description,
+      start: `${previousWeekDate}T14:00:00.000Z`,
+      stop: `${previousWeekDate}T15:00:00.000Z`,
+      workspaceId: session.currentWorkspaceId,
+    });
+
+    await page.goto(new URL("/m/calendar", page.url()).toString());
+    await expect(page.getByTestId("app-shell")).toBeVisible();
+
+    await page.getByRole("button", { name: "Previous week" }).click();
+
+    await expect(page.getByRole("button", { name: "Jump to today" })).toHaveCount(0);
+
+    const timeline = page.locator(".overflow-y-auto").first();
+    await expect(timeline.getByRole("button", { name: description })).toBeVisible();
+  });
+
   test("entry at 14:00 renders at correct vertical position under zh locale", async ({ page }) => {
     const email = `m-layout-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
-    await registerE2eUser(page, test.info(), {
+    const session = await registerAndLoginForMobile(page, {
       email,
       fullName: "Mobile Layout User",
       password,
     });
-
-    await page.context().clearCookies();
-    const session = await loginE2eUser(page, test.info(), { email, password });
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const description = `layout-test-${Date.now()}`;
@@ -80,14 +127,11 @@ test.describe("Mobile calendar: entry positioning (CJK locale)", () => {
     const email = `m-seq-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
-    await registerE2eUser(page, test.info(), {
+    const session = await registerAndLoginForMobile(page, {
       email,
       fullName: "Mobile Seq User",
       password,
     });
-
-    await page.context().clearCookies();
-    const session = await loginE2eUser(page, test.info(), { email, password });
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const descA = `seq-a-${Date.now()}`;
