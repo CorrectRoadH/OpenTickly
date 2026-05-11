@@ -13,6 +13,7 @@ import {
 import { resolveTimeEntryProjectId, toTrackIso } from "./time-entry-ids.ts";
 import { CalendarView, type CalendarContextMenuAction } from "./CalendarView.tsx";
 import { SurfaceMessage } from "./overview-views.tsx";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
@@ -41,6 +42,7 @@ export function ConnectedCalendarView({
   onDeleteWithUndo: (snapshot: DeletedEntrySnapshot) => void;
 }): ReactElement {
   const { workspaceId, timezone } = useWorkspaceData();
+  const { timeofdayFormat } = useUserPreferences();
   const { selectedWeekDate, setSelectedWeekDate, weekDays, beginningOfWeek } = useWeekNavigation();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
 
@@ -300,6 +302,7 @@ export function ConnectedCalendarView({
       runningEntry={runningEntry}
       selectedSubviewDateIso={selectedSubviewDateIso}
       subview={calendarSubview}
+      timeFormat={timeofdayFormat}
       timezone={timezone}
       weekDays={weekDays}
       weekStartsOn={beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}

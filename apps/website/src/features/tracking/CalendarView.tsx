@@ -15,6 +15,7 @@ import { CalendarDayHeader } from "./CalendarDayHeader.tsx";
 import { CalendarEventCard } from "./CalendarEventCard.tsx";
 import { CalendarZoomControls } from "./CalendarZoomControls.tsx";
 import { buildDailyTotals, buildEvents } from "./calendar-events-builder.ts";
+import { formatClockTime } from "./overview-data.ts";
 
 const withDragAndDrop =
   typeof withDragAndDropModule === "function"
@@ -49,6 +50,7 @@ export function CalendarView({
   runningEntry,
   selectedSubviewDateIso,
   subview = "week",
+  timeFormat = "h:mm A",
   timezone,
   weekDays,
   weekStartsOn = 1,
@@ -289,6 +291,9 @@ export function CalendarView({
           },
         })}
         events={events}
+        formats={{
+          timeGutterFormat: (date: Date) => formatClockTime(date, timezone, timeFormat),
+        }}
         localizer={calendarLocalizer}
         max={maxTime}
         messages={{

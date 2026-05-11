@@ -2,6 +2,7 @@ import { dateFnsLocalizer } from "react-big-calendar";
 import { mix } from "polished";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import type { TimeFormat } from "./overview-data.ts";
 import type { CalendarSubview } from "./timer-view-mode.ts";
 import { format } from "date-fns/format";
 import { getDay } from "date-fns/getDay";
@@ -54,6 +55,7 @@ export type CalendarViewProps = {
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   selectedSubviewDateIso?: string;
   subview?: CalendarSubview;
+  timeFormat?: TimeFormat;
   timezone: string;
   weekDays: Date[];
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
