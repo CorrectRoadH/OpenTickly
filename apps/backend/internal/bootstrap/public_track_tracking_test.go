@@ -556,3 +556,108 @@ func TestPublicTrackRoutesServeTrackingSurface(t *testing.T) {
 		t.Fatalf("expected deleted time entry row to remain tombstoned, got %d", deletedTimeEntryCount)
 	}
 }
+
+func TestPublicTrackTimeEntriesFiltersByStartTime(t *testing.T) {
+	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("tracking-start-filter")
+	windowStart := time.Date(2026, 5, 12, 1, 47, 0, 0, time.UTC)
+	windowEnd := time.Date(2026, 5, 12, 1, 49, 0, 0, time.UTC)
+	overlappingStart := windowStart.Add(-4 * time.Hour)
+	overlappingStop := windowEnd.Add(5 * time.Hour)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    uniqueEmail,
+		"fullname": "Tracking Start Filter",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	if registerBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected current workspace id, got %#v", registerBody)
+	}
+
+	workspaceID := *registerBody.CurrentWorkspaceID
+	authorization := basicAuthorization(uniqueEmail, "secret1")
+
+	createOutsideStart := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/time_entries",
+		map[string]any{
+			"created_with": "public-track-test",
+			"description":  "Overlapping but outside by start",
+			"duration":     int(overlappingStop.Sub(overlappingStart).Seconds()),
+			"start":        overlappingStart.Format(time.RFC3339),
+			"stop":         overlappingStop.Format(time.RFC3339),
+			"workspace_id": workspaceID,
+		},
+		authorization,
+	)
+	if createOutsideStart.Code != http.StatusOK {
+		t.Fatalf("expected outside-start entry create status 200, got %d body=%s", createOutsideStart.Code, createOutsideStart.Body.String())
+	}
+
+	createInsideStart := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/time_entries",
+		map[string]any{
+			"created_with": "public-track-test",
+			"description":  "Inside by start",
+			"duration":     60,
+			"start":        windowStart.Add(30 * time.Second).Format(time.RFC3339),
+			"stop":         windowStart.Add(90 * time.Second).Format(time.RFC3339),
+			"workspace_id": workspaceID,
+		},
+		authorization,
+	)
+	if createInsideStart.Code != http.StatusOK {
+		t.Fatalf("expected inside-start entry create status 200, got %d body=%s", createInsideStart.Code, createInsideStart.Body.String())
+	}
+
+	listTimeEntries := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/time_entries?start_date="+windowStart.Format(time.RFC3339)+"&end_date="+windowEnd.Format(time.RFC3339),
+		nil,
+		authorization,
+	)
+	if listTimeEntries.Code != http.StatusOK {
+		t.Fatalf("expected time entries list status 200, got %d body=%s", listTimeEntries.Code, listTimeEntries.Body.String())
+	}
+
+	var timeEntries []map[string]any
+	mustDecodeJSON(t, listTimeEntries.Body.Bytes(), &timeEntries)
+	if len(timeEntries) != 1 {
+		t.Fatalf("expected one time entry filtered by start time, got %#v", timeEntries)
+	}
+	if description := timeEntries[0]["description"]; description != "Inside by start" {
+		t.Fatalf("expected inside-start entry, got %#v", timeEntries)
+	}
+}
