@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/samber/lo"
@@ -41,6 +42,56 @@ func TestRegisterUserSeedsCredentialsAndDefaults(t *testing.T) {
 
 	if user.Preferences().DateFormat == "" {
 		t.Fatal("expected registration to seed preferences defaults")
+	}
+}
+
+func TestRegisterUserRejectsOversizedIdentityFields(t *testing.T) {
+	cases := []struct {
+		name   string
+		params RegisterParams
+		want   error
+	}{
+		{
+			name: "email",
+			params: RegisterParams{
+				ID:       51,
+				Email:    strings.Repeat("a", 250) + "@example.com",
+				FullName: "Test Person",
+				Password: "secret1",
+				APIToken: "token-51",
+			},
+			want: ErrInvalidEmail,
+		},
+		{
+			name: "full name",
+			params: RegisterParams{
+				ID:       52,
+				Email:    "person@example.com",
+				FullName: strings.Repeat("a", 121),
+				Password: "secret1",
+				APIToken: "token-52",
+			},
+			want: ErrInvalidFullName,
+		},
+		{
+			name: "password",
+			params: RegisterParams{
+				ID:       53,
+				Email:    "person@example.com",
+				FullName: "Test Person",
+				Password: strings.Repeat("a", 1025),
+				APIToken: "token-53",
+			},
+			want: ErrInvalidPassword,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := RegisterUser(tc.params); err != tc.want {
+				t.Fatalf("expected %v, got %v", tc.want, err)
+			}
+		})
 	}
 }
 
@@ -116,6 +167,30 @@ func TestUpdateProfileRequiresCurrentPasswordToChangePassword(t *testing.T) {
 
 	if got := user.Email(); got != "next@example.com" {
 		t.Fatalf("expected updated email, got %q", got)
+	}
+}
+
+func TestUpdateProfileRejectsOversizedIdentityFields(t *testing.T) {
+	user, err := RegisterUser(RegisterParams{
+		ID:           54,
+		Email:        "person@example.com",
+		FullName:     "Test Person",
+		Password:     "secret1",
+		PasswordHash: hashSecret("secret1"),
+		APIToken:     "token-54",
+	})
+	if err != nil {
+		t.Fatalf("expected registration params to be accepted: %v", err)
+	}
+
+	if err := user.UpdateProfile(ProfileUpdate{Email: strings.Repeat("a", 250) + "@example.com"}); err != ErrInvalidEmail {
+		t.Fatalf("expected oversized email to be rejected, got %v", err)
+	}
+	if err := user.UpdateProfile(ProfileUpdate{FullName: strings.Repeat("a", 121)}); err != ErrInvalidFullName {
+		t.Fatalf("expected oversized full name to be rejected, got %v", err)
+	}
+	if err := user.UpdateProfile(ProfileUpdate{CurrentPassword: "secret1", Password: strings.Repeat("a", 1025)}); err != ErrInvalidPassword {
+		t.Fatalf("expected oversized password to be rejected, got %v", err)
 	}
 }
 
