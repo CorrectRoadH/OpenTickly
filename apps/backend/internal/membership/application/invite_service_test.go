@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"opentoggl/backend/apps/backend/internal/log"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
-	"opentoggl/backend/apps/backend/internal/log"
 )
 
 // fakeEmailSender captures the last message sent so tests can make assertions
@@ -51,6 +51,7 @@ type inMemoryInviteStore struct {
 	members       map[int64]membershipapplication.WorkspaceMemberView
 	byToken       map[string]int64
 	inviteInfo    map[string]membershipapplication.InviteTokenInfoView
+	workspaceName string
 	acceptedCalls []membershipapplication.AcceptInviteCommand
 	acceptedResp  membershipapplication.AcceptedInviteView
 	nextID        int64
@@ -58,11 +59,12 @@ type inMemoryInviteStore struct {
 
 func newInMemoryInviteStore(manager membershipapplication.WorkspaceMemberView) *inMemoryInviteStore {
 	store := &inMemoryInviteStore{
-		manager:    manager,
-		members:    map[int64]membershipapplication.WorkspaceMemberView{manager.ID: manager},
-		byToken:    map[string]int64{},
-		inviteInfo: map[string]membershipapplication.InviteTokenInfoView{},
-		nextID:     manager.ID + 1,
+		manager:       manager,
+		members:       map[int64]membershipapplication.WorkspaceMemberView{manager.ID: manager},
+		byToken:       map[string]int64{},
+		inviteInfo:    map[string]membershipapplication.InviteTokenInfoView{},
+		workspaceName: "Test Workspace",
+		nextID:        manager.ID + 1,
 	}
 	return store
 }
@@ -112,6 +114,12 @@ func (s *inMemoryInviteStore) FindWorkspaceMemberByEmail(_ context.Context, work
 		}
 	}
 	return membershipapplication.WorkspaceMemberView{}, false, nil
+}
+func (s *inMemoryInviteStore) WorkspaceName(_ context.Context, workspaceID int64) (string, bool, error) {
+	if workspaceID != s.manager.WorkspaceID {
+		return "", false, nil
+	}
+	return s.workspaceName, true, nil
 }
 func (s *inMemoryInviteStore) ReinviteWorkspaceMember(_ context.Context, command membershipapplication.ReinviteWorkspaceMemberCommand) (membershipapplication.WorkspaceMemberView, error) {
 	view, ok := s.members[command.MemberID]
@@ -327,6 +335,39 @@ func TestInviteWorkspaceMemberGeneratesTokenAndSendsEmail(t *testing.T) {
 	}
 	if got := sender.lastSubj; got == "" || !contains(got, "OpenTickly") {
 		t.Fatalf("expected subject to mention OpenTickly, got %q", got)
+	}
+}
+
+func TestInviteWorkspaceMemberEscapesEmailHTML(t *testing.T) {
+	manager := makeManager()
+	manager.FullName = `<img src=x onerror=alert(1)>`
+	store := newInMemoryInviteStore(manager)
+	store.workspaceName = `<script>alert(1)</script>`
+	sender := newFakeEmailSender()
+
+	service, err := membershipapplication.NewService(
+		store,
+		membershipapplication.WithLogger(log.NopLogger()),
+		membershipapplication.WithEmailSender(sender),
+		membershipapplication.WithSiteURLReader(&fakeSiteURLReader{url: "https://example.test"}),
+	)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	_, err = service.InviteWorkspaceMember(context.Background(), membershipapplication.InviteWorkspaceMemberCommand{
+		WorkspaceID: manager.WorkspaceID,
+		RequestedBy: *manager.UserID,
+		Email:       "invitee@example.com",
+	})
+	if err != nil {
+		t.Fatalf("invite: %v", err)
+	}
+	if strings.Contains(sender.lastBody, "<script>") || strings.Contains(sender.lastBody, "<img") {
+		t.Fatalf("expected invite email body to escape user-controlled HTML, got:\n%s", sender.lastBody)
+	}
+	if !strings.Contains(sender.lastBody, "&lt;script&gt;alert(1)&lt;/script&gt;") {
+		t.Fatalf("expected escaped workspace name in email body, got:\n%s", sender.lastBody)
 	}
 }
 
