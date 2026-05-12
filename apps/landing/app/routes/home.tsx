@@ -78,7 +78,7 @@ export default function Home() {
         {/* Hero */}
         <section className="mx-auto w-full max-w-6xl px-4 py-12 md:px-6 md:py-16">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <p className="text-[12px] font-medium tracking-[0.08em] text-[var(--track-text-muted)]">
               {strings.nameTbd}
             </p>
             <h1 className="mt-3 text-[28px] font-semibold leading-[38px] text-[var(--track-text)] md:text-[36px] md:leading-[46px]">
