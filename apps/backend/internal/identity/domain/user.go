@@ -17,7 +17,7 @@ var (
 	ErrInvalidBeginningOfWeek    = errors.New("value in beginning_of_week is invalid")
 	ErrInvalidEmail              = errors.New("invalid email")
 	ErrInvalidFullName           = errors.New("invalid fullname")
-	ErrInvalidPassword           = errors.New("password should be at least 6 characters")
+	ErrInvalidPassword           = errors.New("password must be between 6 and 1024 characters")
 	ErrInvalidTimeOfDayFormat    = errors.New("value in timeofday_format is invalid")
 	ErrInvalidTimezone           = errors.New("value in timezone is not a valid IANA name")
 	ErrPreferencesFieldProtected = errors.New("cannot set value for ToSAcceptNeeded")
@@ -35,6 +35,12 @@ const (
 	UserStateDeactivated         UserState = "deactivated"
 	UserStateDeleted             UserState = "deleted"
 	UserStatePendingVerification UserState = "pending_verification"
+)
+
+const (
+	maxEmailLength    = 254
+	maxFullNameLength = 120
+	maxPasswordLength = 1024
 )
 
 type RegisterParams struct {
@@ -127,13 +133,13 @@ func RegisterUser(params RegisterParams) (*User, error) {
 	if params.ID <= 0 {
 		return nil, ErrInvalidCredentials
 	}
-	if !strings.Contains(params.Email, "@") {
+	if !isValidEmail(params.Email) {
 		return nil, ErrInvalidEmail
 	}
-	if strings.TrimSpace(params.FullName) == "" {
+	if !isValidFullName(params.FullName) {
 		return nil, ErrInvalidFullName
 	}
-	if len(params.Password) < 6 {
+	if !isValidPassword(params.Password) {
 		return nil, ErrInvalidPassword
 	}
 	if params.PasswordHash == "" {
@@ -356,21 +362,21 @@ func (user *User) UpdateProfile(update ProfileUpdate) error {
 		if !user.MatchesPassword(update.CurrentPassword) {
 			return ErrCurrentPasswordInvalid
 		}
-		if len(update.Password) < 6 {
+		if !isValidPassword(update.Password) {
 			return ErrInvalidPassword
 		}
 		user.passwordHash = hashSecret(update.Password)
 	}
 
 	if update.Email != "" {
-		if !strings.Contains(update.Email, "@") {
+		if !isValidEmail(update.Email) {
 			return ErrInvalidEmail
 		}
 		user.email = strings.ToLower(strings.TrimSpace(update.Email))
 	}
 
 	if update.FullName != "" {
-		if strings.TrimSpace(update.FullName) == "" {
+		if !isValidFullName(update.FullName) {
 			return ErrInvalidFullName
 		}
 		user.fullName = strings.TrimSpace(update.FullName)
@@ -498,11 +504,25 @@ func (user *User) ResetPassword(newPassword string) error {
 	if err := user.ensureMutable(); err != nil {
 		return err
 	}
-	if len(newPassword) < 6 {
+	if !isValidPassword(newPassword) {
 		return ErrInvalidPassword
 	}
 	user.passwordHash = hashSecret(newPassword)
 	return nil
+}
+
+func isValidEmail(email string) bool {
+	email = strings.TrimSpace(email)
+	return len(email) <= maxEmailLength && strings.Contains(email, "@")
+}
+
+func isValidFullName(fullName string) bool {
+	fullName = strings.TrimSpace(fullName)
+	return fullName != "" && len(fullName) <= maxFullNameLength
+}
+
+func isValidPassword(password string) bool {
+	return len(password) >= 6 && len(password) <= maxPasswordLength
 }
 
 func (user *User) RotateAPIToken(token string) error {
