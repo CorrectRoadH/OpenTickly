@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 
@@ -55,6 +56,7 @@ func NewServerWithOptions(
 	server.Use(middleware.RequestID())
 	server.Use(newRequestLogMiddleware(logger))
 	server.Use(newSecureHeadersMiddleware())
+	server.Use(newCookieOriginMiddleware())
 	server.Use(middleware.BodyLimit("16M"))
 
 	healthHandler := func(c echo.Context) error {
@@ -287,6 +289,69 @@ func newSecureHeadersMiddleware() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
+}
+
+func newCookieOriginMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			request := c.Request()
+			if !isMutatingMethod(request.Method) || !hasSessionCookie(request) || hasAuthorizationHeader(request) {
+				return next(c)
+			}
+
+			sourceHost, ok := sourceHostFromRequest(request)
+			if !ok {
+				return next(c)
+			}
+			if !sameOriginHost(sourceHost, request.Host) {
+				return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+			}
+
+			return next(c)
+		}
+	}
+}
+
+func isMutatingMethod(method string) bool {
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return true
+	default:
+		return false
+	}
+}
+
+func hasSessionCookie(request *http.Request) bool {
+	_, err := request.Cookie("opentoggl_session")
+	return err == nil
+}
+
+func hasAuthorizationHeader(request *http.Request) bool {
+	return strings.TrimSpace(request.Header.Get("Authorization")) != ""
+}
+
+func sourceHostFromRequest(request *http.Request) (string, bool) {
+	if origin := strings.TrimSpace(request.Header.Get("Origin")); origin != "" {
+		parsed, err := url.Parse(origin)
+		if err != nil || parsed.Host == "" {
+			return "", true
+		}
+		return parsed.Host, true
+	}
+	if referer := strings.TrimSpace(request.Header.Get("Referer")); referer != "" {
+		parsed, err := url.Parse(referer)
+		if err != nil || parsed.Host == "" {
+			return "", true
+		}
+		return parsed.Host, true
+	}
+	return "", false
+}
+
+func sameOriginHost(sourceHost string, requestHost string) bool {
+	sourceHost = strings.TrimSpace(strings.ToLower(sourceHost))
+	requestHost = strings.TrimSpace(strings.ToLower(requestHost))
+	return sourceHost != "" && requestHost != "" && sourceHost == requestHost
 }
 
 /*
