@@ -11,7 +11,7 @@ COPY packages ./packages
 RUN pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
 RUN pnpm --filter @opentickly/website run build
 
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.10-alpine AS builder
 
 ARG OPENTOGGL_VERSION=dev
 ARG TARGETOS
