@@ -209,6 +209,52 @@ func TestServerLogsTraceCorrelationFieldsWhenPresent(t *testing.T) {
 	}
 }
 
+func TestServerRejectsCrossOriginCookieMutations(t *testing.T) {
+	server := NewServerWithOptions(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		func(server *echo.Echo) {
+			server.POST("/web/v1/profile", func(c echo.Context) error {
+				return c.NoContent(http.StatusNoContent)
+			})
+		},
+		ServerOptions{},
+	)
+
+	request := httptest.NewRequest(http.MethodPost, "https://opentickly.example/web/v1/profile", nil)
+	request.Header.Set("Origin", "https://evil.example")
+	request.Header.Set("Cookie", "opentoggl_session=session-123")
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusForbidden {
+		t.Fatalf("expected cross-origin cookie mutation to return 403, got %d", recorder.Code)
+	}
+}
+
+func TestServerAllowsSameOriginCookieMutations(t *testing.T) {
+	server := NewServerWithOptions(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		func(server *echo.Echo) {
+			server.POST("/web/v1/profile", func(c echo.Context) error {
+				return c.NoContent(http.StatusNoContent)
+			})
+		},
+		ServerOptions{},
+	)
+
+	request := httptest.NewRequest(http.MethodPost, "https://opentickly.example/web/v1/profile", nil)
+	request.Header.Set("Origin", "https://opentickly.example")
+	request.Header.Set("Cookie", "opentoggl_session=session-123")
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("expected same-origin cookie mutation to return 204, got %d", recorder.Code)
+	}
+}
+
 func TestServerLogsHandlerErrorsWithInternalCause(t *testing.T) {
 	var logs strings.Builder
 	logger := slog.New(slog.NewJSONHandler(&logs, nil))
