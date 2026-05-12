@@ -200,8 +200,8 @@ func (store *Store) ListTimeEntries(
 		startParam := intParam(len(args))
 		args = append(args, filter.EndDate.UTC())
 		endParam := intParam(len(args))
+		query += " and te.start_time >= $" + startParam
 		query += " and te.start_time <= $" + endParam
-		query += " and (te.stop_time >= $" + startParam + " or te.stop_time is null)"
 	} else {
 		if filter.StartDate != nil {
 			args = append(args, filter.StartDate.UTC())
@@ -285,8 +285,8 @@ func (store *Store) ListTimeEntriesForUser(
 		startParam := intParam(len(args))
 		args = append(args, filter.EndDate.UTC())
 		endParam := intParam(len(args))
+		query += " and te.start_time >= $" + startParam
 		query += " and te.start_time <= $" + endParam
-		query += " and (te.stop_time >= $" + startParam + " or te.stop_time is null)"
 	} else {
 		if filter.StartDate != nil {
 			args = append(args, filter.StartDate.UTC())
