@@ -5,9 +5,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"path"
 	"strconv"
 	"strings"
+)
+
+const (
+	maxImportedArchiveEntries           = 256
+	maxImportedArchiveUncompressedBytes = 16 << 20
 )
 
 type ImportedArchive struct {
@@ -160,24 +166,45 @@ func parseImportedArchive(archive []byte) (ImportedArchive, error) {
 }
 
 func readImportedArchiveEntries(reader *zip.Reader) (importedArchiveEntries, error) {
+	if len(reader.File) > maxImportedArchiveEntries {
+		return importedArchiveEntries{}, fmt.Errorf("%w: too many archive entries", ErrImportArchiveInvalid)
+	}
+
 	entries := importedArchiveEntries{
 		Items: make([]importedArchiveEntry, 0, len(reader.File)),
 	}
+	var totalUncompressedBytes int64
 	for _, file := range reader.File {
 		if file.FileInfo().IsDir() {
 			continue
 		}
+		if file.UncompressedSize64 > maxImportedArchiveUncompressedBytes {
+			return importedArchiveEntries{}, fmt.Errorf("%w: archive entry %s is too large", ErrImportArchiveInvalid, file.Name)
+		}
+		if totalUncompressedBytes+int64(file.UncompressedSize64) > maxImportedArchiveUncompressedBytes {
+			return importedArchiveEntries{}, fmt.Errorf("%w: archive is too large", ErrImportArchiveInvalid)
+		}
+
 		fileReader, err := file.Open()
 		if err != nil {
 			return importedArchiveEntries{}, fmt.Errorf("%w: open %s", ErrImportArchiveInvalid, file.Name)
 		}
 		content := new(bytes.Buffer)
-		if _, err := content.ReadFrom(fileReader); err != nil {
+		limitedReader := &io.LimitedReader{
+			R: fileReader,
+			N: maxImportedArchiveUncompressedBytes - totalUncompressedBytes + 1,
+		}
+		bytesRead, err := content.ReadFrom(limitedReader)
+		if err != nil {
 			fileReader.Close()
 			return importedArchiveEntries{}, fmt.Errorf("%w: read %s", ErrImportArchiveInvalid, file.Name)
 		}
 		if err := fileReader.Close(); err != nil {
 			return importedArchiveEntries{}, fmt.Errorf("%w: close %s", ErrImportArchiveInvalid, file.Name)
+		}
+		totalUncompressedBytes += bytesRead
+		if totalUncompressedBytes > maxImportedArchiveUncompressedBytes {
+			return importedArchiveEntries{}, fmt.Errorf("%w: archive is too large", ErrImportArchiveInvalid)
 		}
 		entries.Items = append(entries.Items, importedArchiveEntry{
 			Content: content.Bytes(),
