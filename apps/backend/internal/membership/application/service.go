@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"html"
 	"strings"
 	"time"
 
@@ -417,10 +418,14 @@ func composeInviteEmail(inviterName, workspaceName, token, siteURL string, expir
 	if strings.TrimSpace(inviterName) != "" {
 		inviterBlurb = inviterName
 	}
+	escapedAcceptURL := html.EscapeString(acceptURL)
+	escapedInviterBlurb := html.EscapeString(inviterBlurb)
+	escapedWorkspaceName := html.EscapeString(workspaceName)
 	expiryHint := "This invite link expires in 7 days."
 	if !expiresAt.IsZero() {
 		expiryHint = fmt.Sprintf("This invite link expires on %s (UTC).", expiresAt.UTC().Format("2006-01-02 15:04"))
 	}
+	escapedExpiryHint := html.EscapeString(expiryHint)
 	body := fmt.Sprintf(`<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
 <h2 style="color: #1a1a1a;">You've been invited to %s</h2>
 <p>%s has invited you to join <strong>%s</strong> on OpenTickly.</p>
@@ -432,7 +437,7 @@ func composeInviteEmail(inviterName, workspaceName, token, siteURL string, expir
 <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
 <p style="color: #666; font-size: 14px; word-break: break-all;">%s</p>
 <p style="color: #999; font-size: 12px;">%s</p>
-</div>`, workspaceName, inviterBlurb, workspaceName, acceptURL, acceptURL, expiryHint)
+</div>`, escapedWorkspaceName, escapedInviterBlurb, escapedWorkspaceName, escapedAcceptURL, escapedAcceptURL, escapedExpiryHint)
 	return subject, body
 }
 

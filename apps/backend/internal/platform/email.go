@@ -131,6 +131,10 @@ func (s *EmailSender) SendTest(ctx context.Context, to string, siteURL string) e
 
 func buildMIMEMessage(senderName, from, to, subject, bodyHTML string) string {
 	var sb strings.Builder
+	senderName = sanitizeMIMEHeaderValue(senderName)
+	from = sanitizeMIMEHeaderValue(from)
+	to = sanitizeMIMEHeaderValue(to)
+	subject = sanitizeMIMEHeaderValue(subject)
 	if senderName != "" {
 		sb.WriteString(fmt.Sprintf("From: %s <%s>\r\n", senderName, from))
 	} else {
@@ -143,6 +147,13 @@ func buildMIMEMessage(senderName, from, to, subject, bodyHTML string) string {
 	sb.WriteString("\r\n")
 	sb.WriteString(bodyHTML)
 	return sb.String()
+}
+
+func sanitizeMIMEHeaderValue(value string) string {
+	fields := strings.FieldsFunc(value, func(r rune) bool {
+		return r == '\r' || r == '\n'
+	})
+	return strings.Join(fields, " ")
 }
 
 // ErrSMTPNotConfigured is returned when email delivery is attempted without SMTP config.
