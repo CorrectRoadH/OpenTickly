@@ -7,6 +7,12 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function addDays(date: string, days: number): string {
+  const value = new Date(`${date}T00:00:00`);
+  value.setDate(value.getDate() + days);
+  return formatDate(value);
+}
+
 export interface TrackQueryRange {
   startDate: string;
   endDate: string;
@@ -49,6 +55,13 @@ export function resolveTimeEntryQueryRange(input: ResolveQueryRangeInput): Track
 
   if (rangeMode === "rolling" || view === "list") {
     return getRecentTimeEntryRange(daysLoaded, today);
+  }
+
+  if (view === "calendar") {
+    return {
+      ...weekRange,
+      startDate: addDays(weekRange.startDate, -1),
+    };
   }
 
   return weekRange;

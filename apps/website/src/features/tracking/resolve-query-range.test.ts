@@ -5,10 +5,22 @@ import { resolveTimeEntryQueryRange } from "./resolve-query-range.ts";
 const weekRange = { startDate: "2026-04-13", endDate: "2026-04-19" }; // Mon..Sun
 
 describe("resolveTimeEntryQueryRange", () => {
-  it("returns weekRange when rangeMode=week and view=calendar", () => {
+  it("extends calendar weekRange backward one day for cross-boundary entries", () => {
     const range = resolveTimeEntryQueryRange({
       rangeMode: "week",
       view: "calendar",
+      listDateRange: null,
+      weekRange,
+      daysLoaded: 9,
+      today: new Date("2026-04-13T10:00:00Z"),
+    });
+    expect(range).toEqual({ startDate: "2026-04-12", endDate: "2026-04-19" });
+  });
+
+  it("returns weekRange when rangeMode=week and view=timesheet", () => {
+    const range = resolveTimeEntryQueryRange({
+      rangeMode: "week",
+      view: "timesheet",
       listDateRange: null,
       weekRange,
       daysLoaded: 9,
