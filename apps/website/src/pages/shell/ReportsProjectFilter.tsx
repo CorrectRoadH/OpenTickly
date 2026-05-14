@@ -1,8 +1,9 @@
-import { type ChangeEvent, type ReactElement, useRef, useState } from "react";
+import { type ChangeEvent, type ReactElement, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AppCheckbox, AppInput, useDismiss } from "@opentickly/web-ui";
+import { AppCheckbox, AppInput } from "@opentickly/web-ui";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 export type ReportsProjectOption = {
   clientName?: string;
@@ -28,6 +29,7 @@ export function ReportsProjectFilter({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownId = useId();
 
   const close = () => {
     setOpen(false);
@@ -49,6 +51,9 @@ export function ReportsProjectFilter({
   return (
     <div className="relative" ref={containerRef}>
       <button
+        aria-controls={open ? dropdownId : undefined}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         className={`flex h-9 items-center gap-1 rounded-[8px] border px-3 text-[12px] font-medium ${
           activeCount > 0
             ? "border-[var(--track-accent)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)]"
@@ -61,7 +66,10 @@ export function ReportsProjectFilter({
         {buttonLabel}
       </button>
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[260px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
+        <div
+          className="absolute left-0 top-full z-50 mt-1 min-w-[260px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg"
+          id={dropdownId}
+        >
           <AppInput
             className="mb-2"
             inputClassName="text-[12px]"

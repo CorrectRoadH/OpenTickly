@@ -201,15 +201,6 @@ await expect(page.getByText("My Entry")).toBeVisible(); // wait for data
 
 Set `actionTimeout: 5_000` so a stuck `.click()` fails in 5s with a precise locator error, instead of burning the full 30s test timeout with an unhelpful "test timeout exceeded" message. This makes tests **faster to fail**, not slower to pass.
 
-### Flaky Test Tracking
-
-Playwright config has `retries: 1` and a JSON reporter. 每次跑完测试后执行：
-
-```bash
-vp run website#test:e2e:stats
-```
-
-失败记录累积在 `e2e-failure-stats.json`（gitignored），按失败次数降序。用它定位长期不稳定的测试。
 # 开发流程（2026-04-25 起强制）
 
 由 @Tiger 全员落地，违反由 @Rally 在 review 时拦。

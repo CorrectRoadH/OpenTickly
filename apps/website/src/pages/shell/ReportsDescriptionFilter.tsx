@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
@@ -21,6 +21,7 @@ export function ReportsDescriptionFilter({
   const [draft, setDraft] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownId = useId();
 
   useEffect(() => {
     setDraft(value);
@@ -44,6 +45,9 @@ export function ReportsDescriptionFilter({
   return (
     <div className="relative" ref={containerRef}>
       <button
+        aria-controls={open ? dropdownId : undefined}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         className={`h-9 max-w-[200px] truncate rounded-[8px] border px-3 text-[12px] font-medium ${
           hasValue
             ? "border-[var(--track-accent)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)]"
@@ -59,6 +63,7 @@ export function ReportsDescriptionFilter({
         <div
           className="absolute left-0 top-full z-50 mt-1 min-w-[260px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-3 shadow-lg"
           data-testid="reports-filter-description-dropdown"
+          id={dropdownId}
         >
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             {t("filterByDescription")}
