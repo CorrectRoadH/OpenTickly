@@ -9,6 +9,7 @@ import {
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import type { ReportsTab } from "../../shared/lib/workspace-routing.ts";
+import { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { buildWorkspaceReportsPath } from "../../shared/lib/workspace-routing.ts";
 import {
   useProjectsQuery,
@@ -188,9 +189,11 @@ export function WorkspaceReportsPage({
 
   const handleShareReport = () => {
     const url = window.location.href;
-    void navigator.clipboard.writeText(url).then(() => {
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 3000);
+    void copyToClipboard(url).then((copied) => {
+      if (copied) {
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 3000);
+      }
     });
   };
 

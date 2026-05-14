@@ -1,4 +1,5 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+export { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import type { TimeEntryEditorAnchor } from "./time-entry-editor-types.ts";
 
@@ -181,14 +182,6 @@ export function buildSuggestionKey(entry: GithubComTogglTogglApiInternalModelsTi
     resolveTimeEntryProjectId(entry) ?? "",
     (entry.tag_ids ?? []).join(","),
   ].join("::");
-}
-
-export async function copyToClipboard(value: string): Promise<void> {
-  if (!value || typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-    return;
-  }
-
-  await navigator.clipboard.writeText(value);
 }
 
 export function resolveEditorPosition(

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { DropdownMenu, MenuItem, MenuLink, MenuSeparator } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 
@@ -54,7 +55,7 @@ export function ListRowMoreActions({
         </MenuLink>
       ) : null}
       <MenuItem onClick={() => onFavorite?.(entry)}>{t("pinAsFavorite")}</MenuItem>
-      <MenuItem onClick={() => void navigator.clipboard.writeText(entry.description?.trim() ?? "")}>
+      <MenuItem onClick={() => void copyToClipboard(entry.description?.trim() ?? "")}>
         {t("copyDescription")}
       </MenuItem>
       <MenuItem
@@ -66,9 +67,7 @@ export function ListRowMoreActions({
           if (projectId != null) params.set("project_id", String(projectId));
           if (entry.tag_ids?.length) params.set("tag_ids", entry.tag_ids.join(","));
           if (entry.billable) params.set("billable", "true");
-          void navigator.clipboard.writeText(
-            `${window.location.origin}/timer?${params.toString()}`,
-          );
+          void copyToClipboard(`${window.location.origin}/timer?${params.toString()}`);
         }}
       >
         {t("copyStartLink")}

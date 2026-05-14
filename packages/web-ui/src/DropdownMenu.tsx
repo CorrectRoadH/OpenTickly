@@ -82,6 +82,8 @@ type FloatingStyle = {
   top?: number;
 };
 
+const VIEWPORT_PADDING = 8;
+
 function computeFloatingStyle(
   triggerRect: DOMRect,
   panelEl: HTMLElement | null,
@@ -92,26 +94,29 @@ function computeFloatingStyle(
   const panelWidth = panelEl?.offsetWidth ?? 0;
   const vh = window.innerHeight;
   const vw = window.innerWidth;
+  const availableWidth = Math.max(0, vw - VIEWPORT_PADDING * 2);
+  const effectivePanelWidth = Math.min(panelWidth, availableWidth);
+  const maxLeft = Math.max(VIEWPORT_PADDING, vw - effectivePanelWidth - VIEWPORT_PADDING);
+  const clampLeft = (left: number) => Math.min(Math.max(VIEWPORT_PADDING, left), maxLeft);
+  const clampRight = (right: number) => Math.min(Math.max(VIEWPORT_PADDING, right), maxLeft);
 
   switch (placement) {
     case "bottom-left": {
       const fitsBelow = triggerRect.bottom + gap + panelHeight <= vh;
       const top = fitsBelow ? triggerRect.bottom + gap : triggerRect.top - gap - panelHeight;
-      const left = Math.min(triggerRect.left, vw - panelWidth);
-      return { left: Math.max(0, left), top: Math.max(0, top) };
+      return { left: clampLeft(triggerRect.left), top: Math.max(VIEWPORT_PADDING, top) };
     }
     case "bottom-right": {
       const fitsBelow = triggerRect.bottom + gap + panelHeight <= vh;
       const top = fitsBelow ? triggerRect.bottom + gap : triggerRect.top - gap - panelHeight;
-      const right = Math.min(vw - triggerRect.right, vw - panelWidth);
-      return { right: Math.max(0, right), top: Math.max(0, top) };
+      return { right: clampRight(vw - triggerRect.right), top: Math.max(VIEWPORT_PADDING, top) };
     }
     case "right-bottom": {
       const fitsRight = triggerRect.right + gap + panelWidth <= vw;
       const left = fitsRight ? triggerRect.right + gap : triggerRect.left - gap - panelWidth;
       return {
-        left: Math.max(0, left),
-        bottom: Math.max(0, vh - triggerRect.bottom),
+        left: clampLeft(left),
+        bottom: Math.max(VIEWPORT_PADDING, vh - triggerRect.bottom),
       };
     }
   }
@@ -227,7 +232,11 @@ export function DropdownMenu({
               data-testid={testId}
               ref={panelRef}
               role="menu"
-              style={{ ...style, minWidth }}
+              style={{
+                ...style,
+                maxWidth: `calc(100vw - ${VIEWPORT_PADDING * 2}px)`,
+                minWidth: `min(${minWidth}, calc(100vw - ${VIEWPORT_PADDING * 2}px))`,
+              }}
             >
               <DropdownCloseContext.Provider value={close}>
                 {children}
@@ -282,6 +291,10 @@ export function Dropdown({
 
   const style = useFloatingPosition(triggerRef, panelRef, open, resolved, 4);
   const triggerWidth = triggerRef.current?.getBoundingClientRect().width;
+  const panelMinWidth =
+    triggerWidth == null
+      ? undefined
+      : Math.min(triggerWidth, window.innerWidth - VIEWPORT_PADDING * 2);
 
   return (
     <div className={className} ref={triggerRef}>
@@ -294,7 +307,11 @@ export function Dropdown({
               className={`fixed z-50 ${panelClassName}`}
               data-testid={testId}
               ref={panelRef}
-              style={{ ...style, minWidth: triggerWidth }}
+              style={{
+                ...style,
+                maxWidth: `calc(100vw - ${VIEWPORT_PADDING * 2}px)`,
+                minWidth: panelMinWidth,
+              }}
             >
               <DropdownCloseContext.Provider value={close}>
                 {children}

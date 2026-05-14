@@ -21,6 +21,7 @@ import {
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { InviteMemberDialog } from "./InviteMemberDialog.tsx";
 import { MemberRowActions } from "./MemberRowActions.tsx";
 
@@ -287,8 +288,7 @@ export default WorkspaceMembersPage;
 
 async function copyInviteLink(token: string): Promise<void> {
   const url = `${window.location.origin}/accept-invite?token=${encodeURIComponent(token)}`;
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(url);
+  if (await copyToClipboard(url)) {
     return;
   }
   throw new Error("clipboard_unavailable");

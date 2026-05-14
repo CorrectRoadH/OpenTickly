@@ -3,6 +3,7 @@ import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
+import { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { CheckIcon, CopyIcon } from "../../shared/ui/icons.tsx";
 import {
   dateFormatOptions,
@@ -268,8 +269,10 @@ function ApiTokenCopyButton(props: { token: string }): ReactElement {
   }, [copied]);
 
   const handleCopy = () => {
-    void navigator.clipboard.writeText(props.token).then(() => {
-      setCopied(true);
+    void copyToClipboard(props.token).then((copied) => {
+      if (copied) {
+        setCopied(true);
+      }
     });
   };
 

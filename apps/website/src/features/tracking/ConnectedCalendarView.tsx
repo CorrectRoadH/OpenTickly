@@ -10,6 +10,7 @@ import {
   useStopTimeEntryMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
+import { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { resolveTimeEntryProjectId, toTrackIso } from "./time-entry-ids.ts";
 import { CalendarView, type CalendarContextMenuAction } from "./CalendarView.tsx";
 import { SurfaceMessage } from "./overview-views.tsx";
@@ -380,7 +381,7 @@ function handleCalendarContextMenuAction(
     case "copy-description": {
       const description = (entry.description ?? "").trim();
       if (description) {
-        void navigator.clipboard.writeText(description);
+        void copyToClipboard(description);
       }
       break;
     }
@@ -396,7 +397,7 @@ function handleCalendarContextMenuAction(
       }
       if (entry.billable) params.set("billable", "true");
       const link = `${window.location.origin}/timer?${params.toString()}`;
-      void navigator.clipboard.writeText(link);
+      void copyToClipboard(link);
       break;
     }
     case "favorite": {
