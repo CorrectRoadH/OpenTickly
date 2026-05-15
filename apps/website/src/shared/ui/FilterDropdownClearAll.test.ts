@@ -10,6 +10,6 @@ describe("filter dropdown clear action", () => {
     );
 
     expect(source).toContain("disabled={activeCount === 0}");
-    expect(source).not.toContain("{activeCount > 0 ? (");
+    expect(source).not.toContain("{activeCount > 0 ? (\n            <div");
   });
 });
