@@ -293,7 +293,10 @@ export function WorkspaceTimerPage({
       <div className="flex min-h-0">
         <div className="min-w-0 flex-1">
           {view === "list" ? (
-            <div className="h-[calc(100vh-var(--timer-header-height,0px))] overflow-y-scroll [scrollbar-gutter:stable]">
+            <div
+              className="timer-list-scrollarea h-[calc(100vh_-_var(--timer-header-height,0px))] overflow-y-scroll [scrollbar-gutter:stable]"
+              data-testid="timer-list-scrollarea"
+            >
               <ConnectedListView
                 showAllEntries={showAllEntries}
                 onDeleteWithUndo={showDeleteToast}
