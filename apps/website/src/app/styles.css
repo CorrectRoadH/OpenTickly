@@ -12,6 +12,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -71,24 +76,6 @@ a {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--track-border) transparent;
-}
-
-.timer-list-scrollarea {
-  scrollbar-color: var(--track-control-border) var(--track-surface-muted);
-}
-
-.timer-list-scrollarea::-webkit-scrollbar {
-  width: 8px;
-}
-
-.timer-list-scrollarea::-webkit-scrollbar-track {
-  background: var(--track-surface-muted);
-}
-
-.timer-list-scrollarea::-webkit-scrollbar-thumb {
-  background: var(--track-control-border);
-  border: 2px solid var(--track-surface-muted);
-  border-radius: 999px;
 }
 
 /* Disable all CSS animations and transitions when user opts out via profile settings. */
