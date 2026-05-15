@@ -16,7 +16,7 @@
     "@hey-api/client-fetch": "catalog:",
     "@opentickly/shared-contracts": "workspace:*",
     "@opentickly/web-ui": "workspace:*",
-    "@tanstack/react-query": "^5.100.9",
+    "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-router": "^1.169.2",
     "@types/react-big-calendar": "catalog:",
     "@uidotdev/usehooks": "catalog:",
