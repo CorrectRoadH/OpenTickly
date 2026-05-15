@@ -110,9 +110,6 @@ export function CalendarView({
     }
     return date;
   })();
-  const step = 30;
-  const timeslots = 2;
-
   const scrollToTime = (() => {
     const n = new Date();
     n.setMinutes(0, 0, 0);
@@ -347,8 +344,8 @@ export function CalendarView({
         scrollToTime={scrollToTime}
         selectable
         startAccessor={(event) => event.start}
-        step={step}
-        timeslots={timeslots}
+        step={30}
+        timeslots={2}
         toolbar={false}
         onView={() => undefined}
         view={currentView}
