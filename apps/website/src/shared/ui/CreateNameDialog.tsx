@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement, useState } from "react";
+import { AppButton, AppInput } from "@opentickly/web-ui";
 
 import { ColorSwatchPicker } from "./ColorSwatchPicker.tsx";
 import { ModalDialog } from "./ModalDialog.tsx";
@@ -50,21 +51,17 @@ export function CreateNameDialog({
     <ModalDialog
       footer={
         <>
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={onClose}
-            type="button"
-          >
+          <AppButton onClick={onClose} size="sm" type="button" variant="secondary">
             Cancel
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+          </AppButton>
+          <AppButton
             disabled={isPending || !trimmedName}
             form="create-name-form"
+            size="sm"
             type="submit"
           >
             {submitLabel}
-          </button>
+          </AppButton>
         </>
       }
       onClose={onClose}
@@ -76,9 +73,9 @@ export function CreateNameDialog({
         <div className="space-y-4">
           <label className="block">
             <span className="sr-only">{nameLabel}</span>
-            <input
+            <AppInput
               aria-label={nameLabel}
-              className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-surface-error)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-11 rounded-[8px]"
               onChange={(event) => setName(event.target.value)}
               placeholder={namePlaceholder}
               value={name}
@@ -90,7 +87,7 @@ export function CreateNameDialog({
               <p className="mb-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Color
               </p>
-              <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">
+              <div className="rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] p-3 shadow-[var(--track-depth-shadow-rest)]">
                 <ColorSwatchPicker
                   colors={colorOptions!}
                   onSelect={(next) => setColor(next)}

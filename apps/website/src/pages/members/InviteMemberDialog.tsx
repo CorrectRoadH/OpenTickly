@@ -1,7 +1,7 @@
 import { type FormEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { SelectDropdown } from "@opentickly/web-ui";
+import { AppButton, AppInput, SelectDropdown } from "@opentickly/web-ui";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
@@ -44,21 +44,17 @@ export function InviteMemberDialog({ onClose }: InviteMemberDialogProps): ReactE
     <ModalDialog
       footer={
         <>
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={onClose}
-            type="button"
-          >
+          <AppButton onClick={onClose} size="sm" type="button" variant="secondary">
             {t("cancel")}
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+          </AppButton>
+          <AppButton
             disabled={mutation.isPending || !trimmedEmail}
             form="invite-member-form"
+            size="sm"
             type="submit"
           >
             {t("sendInvite")}
-          </button>
+          </AppButton>
         </>
       }
       onClose={onClose}
@@ -71,9 +67,9 @@ export function InviteMemberDialog({ onClose }: InviteMemberDialogProps): ReactE
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               {t("emailAddress")}
             </span>
-            <input
+            <AppInput
               aria-label={t("emailAddress")}
-              className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-11 rounded-[8px]"
               onChange={(event) => setEmail(event.target.value)}
               placeholder="colleague@company.com"
               type="email"
