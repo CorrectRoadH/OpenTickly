@@ -38,7 +38,12 @@ export {
   type DirectoryTableColumn,
 } from "./DirectoryTable.tsx";
 export { IconButton } from "./IconButton.tsx";
-export { SelectButton, SelectDropdown, type SelectOption } from "./SelectButton.tsx";
+export {
+  SelectButton,
+  SelectDropdown,
+  type SelectButtonVariant,
+  type SelectOption,
+} from "./SelectButton.tsx";
 export {
   PageLayout,
   PageLayoutTabIndicator,

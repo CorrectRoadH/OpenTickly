@@ -555,6 +555,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 <DirectoryTableCell>
                   <SelectDropdown
                     aria-label={`${t("team")} ${project.name}`}
+                    className="w-[132px]"
                     onChange={(value) => void handleTeamChange(project, value)}
                     options={teamOptions}
                     value={(() => {
@@ -563,6 +564,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                       if (pg) return `group:${pg.groupId}`;
                       return project.is_private ? "private" : "everyone";
                     })()}
+                    variant="secondary"
                   />
                 </DirectoryTableCell>
                 <div className="flex items-center">
