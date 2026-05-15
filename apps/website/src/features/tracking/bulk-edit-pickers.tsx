@@ -83,227 +83,249 @@ export function ProjectPickerDropdown({
   })();
 
   return (
-    <PickerDropdown
-      header={
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />
-            <span className="truncate text-[12px] font-semibold text-white">{workspaceName}</span>
-          </div>
-          {hasWorkspaces ? (
-            <button
-              className="text-[12px] font-medium text-white"
-              onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-              type="button"
-            >
-              {t("change")} ›
-            </button>
-          ) : null}
-        </div>
-      }
-      search={{
-        onChange: setSearch,
-        placeholder: t("searchByProjectTaskOrClient"),
-        value: search,
-      }}
-      testId="bulk-edit-project-picker"
-      footer={
-        onCreateProject != null ? (
-          composerOpen ? (
-            <ProjectComposerForm
-              colorPickerOpen={colorPickerOpen}
-              createError={createError}
-              draftColor={draftColor}
-              draftName={draftName}
-              isCreating={isCreatingProject === true}
-              onColorChange={setDraftColor}
-              onColorPickerToggle={() => setColorPickerOpen((prev) => !prev)}
-              onNameChange={(name) => {
-                setDraftName(name);
-                setCreateError(null);
-              }}
-              onSubmit={async () => {
-                const trimmed = draftName.trim();
-                if (!trimmed || isCreatingProject) return;
-                setCreateError(null);
-                try {
-                  await onCreateProject(trimmed, draftColor);
-                  setDraftName("");
-                  setDraftColor(DEFAULT_PROJECT_COLOR);
-                  setColorPickerOpen(false);
-                  setComposerOpen(false);
-                  setSearch("");
-                } catch (err) {
-                  const message =
-                    err instanceof WebApiError ? err.userMessage : t("projectNameAlreadyExists");
-                  setCreateError(
-                    message.toLowerCase().includes("name")
-                      ? message
-                      : t("projectNameAlreadyExists"),
-                  );
-                }
-              }}
-            />
-          ) : (
-            <button
-              className="flex items-center gap-3 text-[12px] font-medium text-[var(--track-overlay-text-accent)]"
-              onClick={() => {
-                setDraftName(search.trim());
-                setComposerOpen(true);
-              }}
-              type="button"
-            >
-              <span className="text-[18px] leading-none">+</span>
-              <span>{t("createNewProject")}</span>
-            </button>
-          )
-        ) : undefined
-      }
-    >
-      {/* Workspace switcher */}
-      {hasWorkspaces && workspaceMenuOpen ? (
-        <div className="px-4 pb-2">
-          <div className="rounded-lg border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-2 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
-            {workspaces.map((workspace) => (
+    <>
+      <PickerDropdown
+        header={
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />
+              <span className="truncate text-[12px] font-semibold text-white">{workspaceName}</span>
+            </div>
+            {hasWorkspaces ? (
               <button
-                className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[12px] transition hover:bg-white/4 ${
-                  workspace.id === currentWorkspaceId
-                    ? "text-white"
-                    : "text-[var(--track-overlay-text-muted)]"
-                }`}
-                key={workspace.id}
+                className="text-[12px] font-medium text-white"
+                onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+                type="button"
+              >
+                {t("change")} ›
+              </button>
+            ) : null}
+          </div>
+        }
+        search={{
+          onChange: setSearch,
+          placeholder: t("searchByProjectTaskOrClient"),
+          value: search,
+        }}
+        testId="bulk-edit-project-picker"
+        footer={
+          onCreateProject != null ? (
+            composerOpen ? (
+              <ProjectComposerForm
+                colorPickerOpen={colorPickerOpen}
+                createError={createError}
+                draftColor={draftColor}
+                draftName={draftName}
+                isCreating={isCreatingProject === true}
+                onColorChange={setDraftColor}
+                onColorPickerToggle={() => setColorPickerOpen((prev) => !prev)}
+                onNameChange={(name) => {
+                  setDraftName(name);
+                  setCreateError(null);
+                }}
+                onSubmit={async () => {
+                  const trimmed = draftName.trim();
+                  if (!trimmed || isCreatingProject) return;
+                  setCreateError(null);
+                  try {
+                    await onCreateProject(trimmed, draftColor);
+                    setDraftName("");
+                    setDraftColor(DEFAULT_PROJECT_COLOR);
+                    setColorPickerOpen(false);
+                    setComposerOpen(false);
+                    setSearch("");
+                  } catch (err) {
+                    const message =
+                      err instanceof WebApiError ? err.userMessage : t("projectNameAlreadyExists");
+                    setCreateError(
+                      message.toLowerCase().includes("name")
+                        ? message
+                        : t("projectNameAlreadyExists"),
+                    );
+                  }
+                }}
+              />
+            ) : (
+              <button
+                className="flex items-center gap-3 text-[12px] font-medium text-[var(--track-overlay-text-accent)]"
                 onClick={() => {
-                  onWorkspaceSelect!(workspace.id);
-                  setWorkspaceMenuOpen(false);
+                  setDraftName(search.trim());
+                  setComposerOpen(true);
                 }}
                 type="button"
               >
-                <span className="truncate">{workspace.name}</span>
-                {workspace.id === currentWorkspaceId ? (
-                  <span className="text-[11px] text-[var(--track-accent-text)]">
-                    {t("current")}
-                  </span>
-                ) : null}
+                <span className="text-[18px] leading-none">+</span>
+                <span>{t("createNewProject")}</span>
               </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* No Project option */}
-      <button
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
-        onClick={() => onSelect(null)}
-        type="button"
+            )
+          ) : undefined
+        }
       >
-        <span className="flex size-2.5 shrink-0 items-center justify-center">
-          <ProjectsIcon className="size-4 text-[var(--track-overlay-icon-muted)]" />
-        </span>
-        <span className="text-[12px] font-medium text-[var(--track-overlay-text)]">
-          {t("noProject")}
-        </span>
-      </button>
+        {/* No Project option */}
+        <button
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
+          onClick={() => onSelect(null)}
+          type="button"
+        >
+          <span className="flex size-2.5 shrink-0 items-center justify-center">
+            <ProjectsIcon className="size-4 text-[var(--track-overlay-icon-muted)]" />
+          </span>
+          <span className="text-[12px] font-medium text-[var(--track-overlay-text)]">
+            {t("noProject")}
+          </span>
+        </button>
 
-      {/* Search: flat task results */}
-      {isSearching && filteredTasks.length > 0
-        ? filteredTasks.map((task) => {
-            const project = projects.find((p) => p.id === task.projectId);
-            return (
-              <button
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
-                key={`task-${task.id}`}
-                onClick={() => onTaskSelect?.(task.projectId, task.id)}
-                type="button"
-              >
-                <ProjectsIcon
-                  className="size-3.5 shrink-0"
-                  style={{ color: project?.color ?? "var(--track-text-muted)" }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div
-                    className="truncate text-[12px] font-medium"
-                    style={{ color: project?.color ?? "white" }}
-                  >
-                    {project?.name ?? ""} | {task.name}
-                  </div>
-                </div>
-              </button>
-            );
-          })
-        : null}
-
-      {/* Project list */}
-      {filteredProjects.map((project) => {
-        const projectTasks = tasksByProject.get(project.id) ?? [];
-        const hasTasks = projectTasks.length > 0 && onTaskSelect != null;
-        const isExpanded = expandedProjectId === project.id;
-
-        return (
-          <div key={project.id}>
-            <div className="flex w-full items-center gap-0">
-              <button
-                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
-                onClick={() => onSelect(project.id)}
-                type="button"
-              >
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: project.color }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[12px] font-medium text-white">{project.name}</div>
-                  {project.clientName ? (
-                    <div className="truncate text-[11px] text-[var(--track-control-placeholder-muted)]">
-                      {project.clientName}
-                    </div>
-                  ) : null}
-                </div>
-                {project.pinned ? (
-                  <span
-                    data-testid="pin-icon"
-                    className="flex shrink-0 items-center text-[var(--track-text-muted)]"
-                  >
-                    <PinIcon className="size-3.5" />
-                  </span>
-                ) : null}
-              </button>
-              {hasTasks ? (
+        {/* Search: flat task results */}
+        {isSearching && filteredTasks.length > 0
+          ? filteredTasks.map((task) => {
+              const project = projects.find((p) => p.id === task.projectId);
+              return (
                 <button
-                  aria-label={isExpanded ? "Collapse tasks" : "Expand tasks"}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/4 hover:text-white"
-                  onClick={() => setExpandedProjectId(isExpanded ? null : project.id)}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
+                  key={`task-${task.id}`}
+                  onClick={() => onTaskSelect?.(task.projectId, task.id)}
                   type="button"
                 >
-                  <ChevronRightIcon
-                    className={`size-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                  <ProjectsIcon
+                    className="size-3.5 shrink-0"
+                    style={{ color: project?.color ?? "var(--track-text-muted)" }}
                   />
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className="truncate text-[12px] font-medium"
+                      style={{ color: project?.color ?? "white" }}
+                    >
+                      {project?.name ?? ""} | {task.name}
+                    </div>
+                  </div>
                 </button>
-              ) : null}
-            </div>
-            {hasTasks && isExpanded ? (
-              <div className="pl-6">
-                {projectTasks.map((task) => (
+              );
+            })
+          : null}
+
+        {/* Project list */}
+        {filteredProjects.map((project) => {
+          const projectTasks = tasksByProject.get(project.id) ?? [];
+          const hasTasks = projectTasks.length > 0 && onTaskSelect != null;
+          const isExpanded = expandedProjectId === project.id;
+
+          return (
+            <div key={project.id}>
+              <div className="flex w-full items-center gap-0">
+                <button
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
+                  onClick={() => onSelect(project.id)}
+                  type="button"
+                >
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: project.color }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[12px] font-medium text-white">
+                      {project.name}
+                    </div>
+                    {project.clientName ? (
+                      <div className="truncate text-[11px] text-[var(--track-control-placeholder-muted)]">
+                        {project.clientName}
+                      </div>
+                    ) : null}
+                  </div>
+                  {project.pinned ? (
+                    <span
+                      data-testid="pin-icon"
+                      className="flex shrink-0 items-center text-[var(--track-text-muted)]"
+                    >
+                      <PinIcon className="size-3.5" />
+                    </span>
+                  ) : null}
+                </button>
+                {hasTasks ? (
                   <button
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-white/4"
-                    key={task.id}
-                    onClick={() => onTaskSelect!(project.id, task.id)}
+                    aria-label={isExpanded ? "Collapse tasks" : "Expand tasks"}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/4 hover:text-white"
+                    onClick={() => setExpandedProjectId(isExpanded ? null : project.id)}
                     type="button"
                   >
-                    <span
-                      className="size-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: project.color }}
+                    <ChevronRightIcon
+                      className={`size-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
                     />
-                    <span className="truncate text-[12px] font-medium text-[var(--track-overlay-text)]">
-                      {task.name}
-                    </span>
                   </button>
-                ))}
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        );
-      })}
-    </PickerDropdown>
+              {hasTasks && isExpanded ? (
+                <div className="pl-6">
+                  {projectTasks.map((task) => (
+                    <button
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-white/4"
+                      key={task.id}
+                      onClick={() => onTaskSelect!(project.id, task.id)}
+                      type="button"
+                    >
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className="truncate text-[12px] font-medium text-[var(--track-overlay-text)]">
+                        {task.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </PickerDropdown>
+
+      {hasWorkspaces && workspaceMenuOpen ? (
+        <WorkspacePickerDropdown
+          currentWorkspaceId={currentWorkspaceId}
+          onSelect={(workspaceId) => {
+            onWorkspaceSelect!(workspaceId);
+            setWorkspaceMenuOpen(false);
+          }}
+          workspaces={workspaces}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function WorkspacePickerDropdown({
+  currentWorkspaceId,
+  onSelect,
+  workspaces,
+}: {
+  currentWorkspaceId?: number;
+  onSelect: (workspaceId: number) => void;
+  workspaces: ProjectPickerWorkspace[];
+}): ReactElement {
+  const { t } = useTranslation("tracking");
+
+  return (
+    <div
+      className="absolute left-[calc(100%+12px)] top-[calc(100%+4px)] z-30 w-[280px] rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]"
+      data-testid="bulk-edit-workspace-picker"
+    >
+      {workspaces.map((workspace) => (
+        <button
+          className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-[12px] transition hover:bg-white/4 ${
+            workspace.id === currentWorkspaceId
+              ? "text-white"
+              : "text-[var(--track-overlay-text-muted)]"
+          }`}
+          key={workspace.id}
+          onClick={() => onSelect(workspace.id)}
+          type="button"
+        >
+          <span className="truncate">{workspace.name}</span>
+          {workspace.id === currentWorkspaceId ? (
+            <span className="text-[11px] text-[var(--track-accent-text)]">{t("current")}</span>
+          ) : null}
+        </button>
+      ))}
+    </div>
   );
 }
 
