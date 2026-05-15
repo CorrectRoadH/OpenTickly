@@ -403,7 +403,7 @@ test.describe("Time entry DnD Move", () => {
 
     expect(previewBox).not.toBeNull();
     // Pixel-level guard against r-b-c's isZeroDuration stretch. The day
-    // column is ~1440px (1 px per minute at default zoom); if `end` gets
+    // column is ~1440px (1 px per minute at the default calendar scale); if `end` gets
     // extended by a full day, the preview balloons to >1000px tall. A
     // healthy short entry's preview stays within a few slots.
     expect(

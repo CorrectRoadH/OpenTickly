@@ -20,7 +20,6 @@ interface TimerViewState {
   view: TimerViewMode;
   calendarSubview: CalendarSubview;
   timerInputMode: TimerInputMode;
-  calendarZoom: number;
   selectedWeekDate: Date;
   listDateRange: DateRange | null;
 
@@ -45,7 +44,6 @@ interface TimerViewActions {
   setView: (next: TimerViewMode) => void;
   setCalendarSubview: (next: CalendarSubview) => void;
   setTimerInputMode: (next: TimerInputMode) => void;
-  setCalendarZoom: (zoom: number) => void;
   setSelectedWeekDate: (date: Date) => void;
   setListDateRange: (range: DateRange | null) => void;
 
@@ -68,7 +66,6 @@ interface TimerViewActions {
   clearDraft: () => void;
 }
 
-// Only view preferences are persisted; calendarZoom is transient.
 type PersistedViewState = Pick<TimerViewState, "view" | "calendarSubview" | "timerInputMode">;
 
 // ---------------------------------------------------------------------------
@@ -153,7 +150,6 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       view: DEFAULTS.view,
       calendarSubview: DEFAULTS.calendarSubview,
       timerInputMode: DEFAULTS.timerInputMode,
-      calendarZoom: 0,
       selectedWeekDate: new Date(),
       listDateRange: null,
 
@@ -190,11 +186,6 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       setTimerInputMode: (next) =>
         set((state) => {
           state.timerInputMode = next;
-        }),
-
-      setCalendarZoom: (zoom) =>
-        set((state) => {
-          state.calendarZoom = Math.max(-1, Math.min(1, zoom));
         }),
 
       setSelectedWeekDate: (date) =>

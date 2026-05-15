@@ -97,8 +97,6 @@
   "startTime": "시작 시간",
   "stopTime": "종료 시간",
   "continueTimeEntryAria": "시간 항목 계속하기",
-  "decreaseZoom": "축소",
-  "increaseZoom": "확대",
   "addASpecificProject": "프로젝트 추가{{projectName}}",
   "untitledProjectFallback": "제목 없는 프로젝트",
   "splitTimeEntry": "시간 항목 분할",

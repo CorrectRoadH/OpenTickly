@@ -103,18 +103,29 @@ export function TimerComposerSuggestionsDialog({
           </p>
           <div className="relative">
             <button
-              className="flex items-center gap-1 rounded-[7px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] px-2 py-1 text-[11px] font-semibold text-[var(--track-text-muted)] transition hover:text-white"
+              aria-expanded={workspaceMenuOpen}
+              aria-haspopup="listbox"
+              aria-label={t("change")}
+              className={`flex items-center gap-1.5 rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] px-2.5 py-1.5 text-[12px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:text-white hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
+                workspaceMenuOpen ? "text-white" : "text-[var(--track-text-muted)]"
+              }`}
               onClick={() => setWorkspaceMenuOpen((current) => !current)}
+              style={{ transitionTimingFunction: "var(--ease-press)" }}
               type="button"
             >
               <span>{t("change")}</span>
-              <ChevronDownIcon />
+              <ChevronDownIcon expanded={workspaceMenuOpen} />
             </button>
             {workspaceMenuOpen ? (
-              <div className="absolute right-0 top-8 z-10 min-w-[220px] rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
+              <div
+                aria-label={t("workspaceFallback")}
+                className="absolute right-0 top-full z-30 mt-2 max-h-[220px] w-[280px] max-w-[calc(100vw-48px)] overflow-y-auto rounded-[12px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-subtle)]"
+                role="listbox"
+              >
                 {workspaces.map((workspace) => (
                   <button
-                    className={`flex w-full items-center justify-between rounded-[8px] px-2.5 py-2 text-left text-[12px] transition hover:bg-white/4 ${
+                    aria-selected={workspace.id === currentWorkspaceId}
+                    className={`flex w-full items-center justify-between gap-3 rounded-[8px] px-2.5 py-2 text-left text-[13px] transition hover:bg-white/4 ${
                       workspace.id === currentWorkspaceId
                         ? "text-white"
                         : "text-[var(--track-overlay-text-muted)]"
@@ -125,6 +136,7 @@ export function TimerComposerSuggestionsDialog({
                       setWorkspaceMenuOpen(false);
                     }}
                     type="button"
+                    role="option"
                   >
                     <span className="truncate">{workspace.name}</span>
                     {workspace.id === currentWorkspaceId ? (
@@ -287,11 +299,13 @@ function WsBriefcaseIcon(): ReactElement {
   );
 }
 
-function ChevronDownIcon(): ReactElement {
+function ChevronDownIcon({ expanded }: { expanded: boolean }): ReactElement {
   return (
     <ChevronDown
       aria-hidden="true"
-      className="text-[var(--track-text-muted)]"
+      className={`text-[var(--track-text-muted)] transition-transform duration-[var(--duration-press)] ${
+        expanded ? "rotate-180" : ""
+      }`}
       size={10}
       strokeWidth={2}
     />

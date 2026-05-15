@@ -98,8 +98,6 @@
   "startTime": "Start time",
   "stopTime": "Stop time",
   "continueTimeEntryAria": "Continue time entry",
-  "decreaseZoom": "Decrease zoom",
-  "increaseZoom": "Increase zoom",
   "addASpecificProject": "Add a project{{projectName}}",
   "untitledProjectFallback": "Untitled project",
   "splitTimeEntry": "Split Time Entry",

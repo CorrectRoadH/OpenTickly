@@ -98,8 +98,6 @@
   "startTime": "Hora de início",
   "stopTime": "Hora de término",
   "continueTimeEntryAria": "Continuar registro de tempo",
-  "decreaseZoom": "Diminuir zoom",
-  "increaseZoom": "Aumentar zoom",
   "addASpecificProject": "Adicionar um projeto{{projectName}}",
   "untitledProjectFallback": "Projeto sem título",
   "splitTimeEntry": "Dividir Registro de Tempo",

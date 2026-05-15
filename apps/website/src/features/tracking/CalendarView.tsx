@@ -13,7 +13,6 @@ export type { CalendarContextMenuAction } from "./calendar-types.ts";
 import { CalendarDayColumnWrapper } from "./CalendarDayColumnWrapper.tsx";
 import { CalendarDayHeader } from "./CalendarDayHeader.tsx";
 import { CalendarEventCard } from "./CalendarEventCard.tsx";
-import { CalendarZoomControls } from "./CalendarZoomControls.tsx";
 import { buildDailyTotals, buildEvents } from "./calendar-events-builder.ts";
 import { formatClockTime } from "./overview-data.ts";
 
@@ -45,8 +44,6 @@ export function CalendarView({
   onSelectSlot,
   onSelectSubviewDate,
   onStartEntry,
-  onZoomIn,
-  onZoomOut,
   runningEntry,
   selectedSubviewDateIso,
   subview = "week",
@@ -54,7 +51,6 @@ export function CalendarView({
   timezone,
   weekDays,
   weekStartsOn = 1,
-  zoom = 0,
 }: CalendarViewProps): ReactElement {
   // Two independent ticks, co-scheduled on one setInterval to keep re-render
   // cadence predictable:
@@ -114,8 +110,8 @@ export function CalendarView({
     }
     return date;
   })();
-  const step = zoom > 0 ? 15 : 30;
-  const timeslots = zoom > 0 ? 4 : 2;
+  const step = 30;
+  const timeslots = 2;
 
   const scrollToTime = (() => {
     const n = new Date();
@@ -234,9 +230,6 @@ export function CalendarView({
     ),
     header: ({ date }: { date: Date }) => (
       <CalendarDayHeader date={date} dailyTotals={dailyTotals} timezone={timezone} today={today} />
-    ),
-    timeGutterHeader: () => (
-      <CalendarZoomControls zoom={zoom} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
     ),
     dayColumnWrapper: React.forwardRef<HTMLDivElement, Record<string, unknown>>(
       function DayColumnWrapperBridge(props, ref) {

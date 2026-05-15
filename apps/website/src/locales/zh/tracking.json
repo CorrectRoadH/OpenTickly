@@ -98,8 +98,6 @@
   "startTime": "开始时间",
   "stopTime": "结束时间",
   "continueTimeEntryAria": "继续时间条目",
-  "decreaseZoom": "缩小",
-  "increaseZoom": "放大",
   "addASpecificProject": "添加项目{{projectName}}",
   "untitledProjectFallback": "无标题项目",
   "splitTimeEntry": "分割时间条目",

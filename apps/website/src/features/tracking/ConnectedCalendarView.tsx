@@ -53,7 +53,6 @@ export function ConnectedCalendarView({
   const runningEntry = currentTimeEntryQuery.data ?? null;
 
   const calendarSubview = useTimerViewStore((s) => s.calendarSubview);
-  const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
   const calendarDraftEntry = useTimerViewStore((s) => s.calendarDraftEntry);
 
   const selectedSubviewDateIso =
@@ -270,14 +269,6 @@ export function ConnectedCalendarView({
     });
   };
 
-  const onZoomIn = () => {
-    useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom + 1);
-  };
-
-  const onZoomOut = () => {
-    useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom - 1);
-  };
-
   if (views.timeEntriesQuery.isPending) {
     return <SurfaceMessage message="Loading time entries..." />;
   }
@@ -298,8 +289,6 @@ export function ConnectedCalendarView({
       onSelectSlot={handleCalendarSlotCreate}
       onSelectSubviewDate={onSelectSubviewDate}
       onStartEntry={onStartEntry}
-      onZoomIn={onZoomIn}
-      onZoomOut={onZoomOut}
       runningEntry={runningEntry}
       selectedSubviewDateIso={selectedSubviewDateIso}
       subview={calendarSubview}
@@ -307,7 +296,6 @@ export function ConnectedCalendarView({
       timezone={timezone}
       weekDays={weekDays}
       weekStartsOn={beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-      zoom={calendarZoom}
     />
   );
 }

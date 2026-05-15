@@ -50,8 +50,6 @@ export type CalendarViewProps = {
   onSelectSlot?: (slot: { end: Date; start: Date }) => void;
   onSelectSubviewDate?: (dateIso: string) => void;
   onStartEntry?: () => void;
-  onZoomIn?: () => void;
-  onZoomOut?: () => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   selectedSubviewDateIso?: string;
   subview?: CalendarSubview;
@@ -59,7 +57,6 @@ export type CalendarViewProps = {
   timezone: string;
   weekDays: Date[];
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  zoom?: number;
 };
 
 /**

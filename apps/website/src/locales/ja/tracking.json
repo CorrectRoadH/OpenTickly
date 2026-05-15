@@ -97,8 +97,6 @@
   "startTime": "開始時刻",
   "stopTime": "終了時刻",
   "continueTimeEntryAria": "タイムエントリを続ける",
-  "decreaseZoom": "ズームを縮小",
-  "increaseZoom": "ズームを拡大",
   "addASpecificProject": "プロジェクトを追加{{projectName}}",
   "untitledProjectFallback": "無題のプロジェクト",
   "splitTimeEntry": "タイムエントリを分割",
