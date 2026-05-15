@@ -252,6 +252,7 @@ func writeMembershipError(err error) error {
 		errors.Is(err, membershipapplication.ErrInviteEmailMismatch):
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberExists),
+		errors.Is(err, membershipapplication.ErrWorkspaceMemberSelfDisable),
 		errors.Is(err, membershipapplication.ErrWorkspaceMemberEmailBlank),
 		errors.Is(err, membershipdomain.ErrInvalidWorkspaceRole),
 		errors.Is(err, membershipdomain.ErrInvalidWorkspaceMemberState),

@@ -88,7 +88,9 @@ export function WorkspaceMembersPage(): ReactElement {
   const invitedCount = members.filter((m) => m.status === "invited").length;
 
   function renderMemberRow(member: (typeof members)[number]): ReactNode {
-    const canDisable = member.status === "joined" || member.status === "restored";
+    const isSelfMember = member.user_id === session.user.id;
+    const canDisable =
+      !isSelfMember && (member.status === "joined" || member.status === "restored");
     const canRestore = member.status === "disabled";
     const isInvited = member.status === "invited";
     const inviteToken = member.invite_token;

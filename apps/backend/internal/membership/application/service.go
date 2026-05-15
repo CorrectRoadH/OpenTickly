@@ -26,6 +26,7 @@ var (
 	ErrWorkspaceMemberNotFound       = errors.New("workspace member not found")
 	ErrWorkspaceManagerRequired      = errors.New("workspace manager role is required")
 	ErrWorkspaceMemberExists         = errors.New("workspace member already exists")
+	ErrWorkspaceMemberSelfDisable    = errors.New("workspace member cannot disable themselves")
 	ErrWorkspaceMemberEmailBlank     = errors.New("workspace member email is required")
 	ErrInvitationNotFound            = errors.New("organization invitation not found")
 	ErrInvitationEmailsRequired      = errors.New("organization invitation emails are required")
@@ -447,6 +448,12 @@ func (service *Service) DisableWorkspaceMember(
 	memberID int64,
 	requestedBy int64,
 ) (WorkspaceMemberView, error) {
+	if requester, ok, err := service.store.FindWorkspaceMemberByUserID(ctx, workspaceID, requestedBy); err != nil {
+		return WorkspaceMemberView{}, err
+	} else if ok && requester.ID == memberID {
+		return WorkspaceMemberView{}, ErrWorkspaceMemberSelfDisable
+	}
+
 	return service.transitionWorkspaceMember(
 		ctx,
 		workspaceID,

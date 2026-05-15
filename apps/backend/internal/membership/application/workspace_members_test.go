@@ -11,13 +11,13 @@ import (
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
-	"opentoggl/backend/apps/backend/internal/log"
 
 	"github.com/samber/lo"
 )
@@ -146,6 +146,10 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 	}
 	if updated.HourlyRate == nil || *updated.HourlyRate != 120 {
 		t.Fatalf("expected hourly rate 120, got %#v", updated.HourlyRate)
+	}
+
+	if _, err := service.DisableWorkspaceMember(ctx, int64(tenantResult.WorkspaceID), ownerOne.ID, *ownerOne.UserID); err != membershipapplication.ErrWorkspaceMemberSelfDisable {
+		t.Fatalf("expected self-disable to be rejected, got %v", err)
 	}
 
 	disabled, err := service.DisableWorkspaceMember(ctx, int64(tenantResult.WorkspaceID), ownerTwo.ID, *ownerOne.UserID)
