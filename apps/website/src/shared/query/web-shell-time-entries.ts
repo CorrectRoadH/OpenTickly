@@ -17,7 +17,7 @@ import { toTrackUtcString } from "./web-shell.ts";
 
 const timeEntriesQueryKey = (startDate?: string, endDate?: string, includeSharing?: boolean) =>
   ["time-entries", startDate ?? null, endDate ?? null, includeSharing ?? false] as const;
-const currentTimeEntryQueryKey = ["current-time-entry"] as const;
+export const currentTimeEntryQueryKey = ["current-time-entry"] as const;
 const recentTimeEntrySuggestionsQueryKey = (workspaceId: number) =>
   ["time-entry-suggestions", workspaceId] as const;
 
