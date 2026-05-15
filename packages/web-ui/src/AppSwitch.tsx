@@ -47,23 +47,26 @@ export function AppSwitch({
   const [innerChecked, setInnerChecked] = useState(defaultChecked);
   const isControlled = checked !== undefined;
   const isChecked = isControlled ? checked : innerChecked;
+  const isDisabled = disabled || loading;
 
   const handleClick = useCallback(() => {
-    if (disabled || loading) return;
+    if (isDisabled) return;
     const next = !isChecked;
     if (!isControlled) setInnerChecked(next);
     onChange?.(next);
-  }, [disabled, loading, isChecked, isControlled, onChange]);
+  }, [isDisabled, isChecked, isControlled, onChange]);
+
+  const trackClass = isDisabled
+    ? "border-[var(--track-control-border)] bg-[var(--track-control-disabled-strong)]"
+    : isChecked
+      ? "border-[var(--track-accent-strong)] bg-[var(--track-accent)] hover:border-[var(--track-accent-fill-hover)] hover:bg-[var(--track-accent-fill-hover)]"
+      : "border-[var(--track-control-border)] bg-[var(--track-control-disabled-strong)] hover:border-[var(--track-control-border-hover)]";
 
   return (
     <button
       aria-checked={isChecked}
       aria-label={ariaLabel}
-      className={`relative inline-flex shrink-0 items-center rounded-full border-[2.5px] p-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.22)] outline-none transition-all duration-[var(--duration-press)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] disabled:cursor-not-allowed disabled:opacity-50 ${
-        isChecked
-          ? "border-[var(--track-accent-strong)] bg-[var(--track-accent)] hover:border-[var(--track-accent-fill-hover)] hover:bg-[var(--track-accent-fill-hover)]"
-          : "border-[var(--track-control-border)] bg-[var(--track-control-disabled-strong)] hover:border-[var(--track-control-border-hover)]"
-      } ${sizeClass[size]} ${className}`.trim()}
+      className={`relative inline-flex shrink-0 items-center rounded-full border-[2.5px] p-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.22)] outline-none transition-all duration-[var(--duration-press)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] disabled:cursor-not-allowed ${trackClass} ${sizeClass[size]} ${className}`.trim()}
       data-testid={testId}
       disabled={disabled}
       onClick={handleClick}
@@ -72,8 +75,9 @@ export function AppSwitch({
       type="button"
     >
       <span
-        className={`absolute flex items-center justify-center rounded-full border-[var(--track-control-border)] bg-[var(--track-state-neutral-surface)] transition-all duration-[var(--duration-press)] data-[checked=true]:border-[var(--track-accent-strong)] ${handleClass[size]}`}
+        className={`absolute flex items-center justify-center rounded-full border-[var(--track-control-border)] bg-[var(--track-state-neutral-surface)] transition-all duration-[var(--duration-press)] data-[checked=true]:border-[var(--track-accent-strong)] data-[disabled=true]:border-[var(--track-control-border)] data-[disabled=true]:shadow-[0_3px_0_0_var(--track-control-border)] ${handleClass[size]}`}
         data-checked={isChecked}
+        data-disabled={isDisabled}
         style={{ transitionTimingFunction: "var(--ease-press)" }}
       >
         {loading ? (

@@ -26,7 +26,7 @@ type AppLinkButtonProps = AppButtonStyleProps &
   };
 
 const base =
-  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] border-2 font-semibold leading-none select-none outline-none transition-all duration-[var(--duration-press)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none";
+  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] border-2 font-semibold leading-none select-none outline-none transition-all duration-[var(--duration-press)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:border-[var(--track-control-border)] disabled:bg-[var(--track-control-disabled-strong)] disabled:text-[var(--track-text-muted)] disabled:shadow-none disabled:hover:translate-y-0 disabled:hover:border-[var(--track-control-border)] disabled:hover:bg-[var(--track-control-disabled-strong)] disabled:hover:text-[var(--track-text-muted)] disabled:active:translate-y-0 disabled:active:shadow-none";
 
 const normal =
   "border-[var(--track-button)] bg-[var(--track-button)] text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] hover:-translate-y-px hover:bg-[var(--track-accent-fill-hover)] hover:border-[var(--track-accent-fill-hover)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-0.5 active:bg-[var(--track-accent)] active:border-[var(--track-accent)] active:shadow-[var(--track-depth-accent-shadow-active)]";
