@@ -423,7 +423,7 @@ function ReportsFilterBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 py-3" data-testid="reports-filter-bar">
+    <div className="flex flex-wrap items-center gap-2" data-testid="reports-filter-bar">
       <ReportsRangePicker
         label={liveModel.rangeLabel}
         onSelectDate={handleSelectDate}
@@ -551,10 +551,10 @@ function ReportsDateShortcuts({
         return (
           <button
             aria-pressed={isActive}
-            className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
+            className={`w-full rounded-[8px] border-2 px-3 py-2 text-left text-[14px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
               isActive
-                ? "bg-[var(--track-accent-strong)] text-white"
-                : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+                ? "border-[var(--track-accent-strong)] bg-[var(--track-accent)] text-white"
+                : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-overlay-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
             }`}
             key={shortcut.id}
             onClick={() => {
@@ -564,6 +564,7 @@ function ReportsDateShortcuts({
               );
               close();
             }}
+            style={{ transitionTimingFunction: "var(--ease-press)" }}
             type="button"
           >
             {t(shortcut.label)}

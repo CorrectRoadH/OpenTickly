@@ -1,6 +1,8 @@
 import { type ReactElement, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppButton, AppInput } from "@opentickly/web-ui";
+
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 type ReportsDescriptionFilterProps = {
@@ -48,28 +50,29 @@ export function ReportsDescriptionFilter({
         aria-controls={open ? dropdownId : undefined}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className={`h-9 max-w-[200px] truncate rounded-[8px] border px-3 text-[12px] font-medium ${
+        className={`h-10 max-w-[220px] truncate rounded-[8px] border-2 px-3 text-[12px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
           hasValue
             ? "border-[var(--track-accent)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)]"
-            : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+            : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
         }`}
         data-testid="reports-filter-description"
         onClick={() => setOpen(!open)}
+        style={{ transitionTimingFunction: "var(--ease-press)" }}
         type="button"
       >
         {buttonLabel}
       </button>
       {open ? (
         <div
-          className="absolute left-0 top-full z-50 mt-1 min-w-[260px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-3 shadow-lg"
+          className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[260px] rounded-[8px] border-2 border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] p-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]"
           data-testid="reports-filter-description-dropdown"
           id={dropdownId}
         >
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             {t("filterByDescription")}
           </p>
-          <input
-            className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+          <AppInput
+            className="h-9 rounded-[8px]"
             data-testid="reports-filter-description-input"
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -77,29 +80,31 @@ export function ReportsDescriptionFilter({
             }}
             placeholder={t("containsPlaceholder")}
             ref={inputRef}
+            size="sm"
             value={draft}
           />
           <div className="mt-2 flex items-center gap-2">
-            <button
-              className="h-7 rounded-[6px] bg-[var(--track-button)] px-3 text-[11px] font-semibold text-black"
+            <AppButton
               data-testid="reports-filter-description-apply"
               onClick={applyFilter}
+              size="sm"
               type="button"
             >
               {t("apply")}
-            </button>
+            </AppButton>
             {hasValue ? (
-              <button
-                className="h-7 rounded-[6px] px-3 text-[11px] font-medium text-[var(--track-accent-text)] hover:bg-[var(--track-surface-muted)]"
+              <AppButton
                 onClick={() => {
                   setDraft("");
                   onChange("");
                   setOpen(false);
                 }}
+                size="sm"
                 type="button"
+                variant="secondary"
               >
                 {t("clear")}
-              </button>
+              </AppButton>
             ) : null}
           </div>
         </div>

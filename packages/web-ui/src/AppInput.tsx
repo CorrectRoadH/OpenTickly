@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
 
 export type AppInputSize = "default" | "sm";
 
@@ -22,13 +22,10 @@ const inputSizeClass: Record<AppInputSize, string> = {
   sm: "text-[12px]",
 };
 
-export function AppInput({
-  className = "",
-  inputClassName = "",
-  leadingIcon,
-  size = "default",
-  ...props
-}: AppInputProps) {
+export const AppInput = forwardRef<HTMLInputElement, AppInputProps>(function AppInput(
+  { className = "", inputClassName = "", leadingIcon, size = "default", ...props },
+  ref,
+) {
   return (
     <label className={`${wrapperBase} ${wrapperSizeClass[size]} ${className}`.trim()}>
       {leadingIcon ? (
@@ -37,7 +34,8 @@ export function AppInput({
       <input
         {...props}
         className={`w-full min-w-0 bg-transparent text-white outline-none placeholder:text-[var(--track-control-placeholder)] ${inputSizeClass[size]} ${inputClassName}`.trim()}
+        ref={ref}
       />
     </label>
   );
-}
+});

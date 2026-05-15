@@ -54,20 +54,21 @@ export function ReportsProjectFilter({
         aria-controls={open ? dropdownId : undefined}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className={`flex h-9 items-center gap-1 rounded-[8px] border px-3 text-[12px] font-medium ${
+        className={`flex h-10 items-center gap-1.5 rounded-[8px] border-2 px-3 text-[12px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
           activeCount > 0
             ? "border-[var(--track-accent)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)]"
-            : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+            : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
         }`}
         data-testid="reports-filter-project"
         onClick={() => setOpen(!open)}
+        style={{ transitionTimingFunction: "var(--ease-press)" }}
         type="button"
       >
         {buttonLabel}
       </button>
       {open ? (
         <div
-          className="absolute left-0 top-full z-50 mt-1 min-w-[260px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg"
+          className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[260px] rounded-[8px] border-2 border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] p-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]"
           id={dropdownId}
         >
           <AppInput
@@ -87,7 +88,7 @@ export function ReportsProjectFilter({
               <>
                 {activeCount > 0 ? (
                   <button
-                    className="mb-1 w-full rounded px-2 py-1.5 text-left text-[12px] font-medium text-[var(--track-accent-text)] hover:bg-[var(--track-surface-muted)]"
+                    className="mb-1 w-full rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium text-[var(--track-accent-text)] transition hover:bg-white/4"
                     onClick={onClear}
                     type="button"
                   >
@@ -96,7 +97,7 @@ export function ReportsProjectFilter({
                 ) : null}
                 {filtered.map((project) => (
                   <label
-                    className="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
+                    className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[12px] text-white transition hover:bg-white/4"
                     key={project.id}
                   >
                     <AppCheckbox
