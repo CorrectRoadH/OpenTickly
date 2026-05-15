@@ -250,6 +250,62 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(dialog).toBeVisible();
   });
 
+  test("when the user changes workspace from the project picker, the workspace choices open in an external dropdown", async ({
+    page,
+  }) => {
+    const secondWorkspaceName = `Editor External Workspace ${Date.now()}`;
+    const editorEntryDescription = `Entry in external workspace ${Date.now()}`;
+    const secondWorkspaceId = await page.evaluate(async (workspaceName) => {
+      const response = await fetch("/api/v9/organizations", {
+        body: JSON.stringify({
+          name: workspaceName,
+          workspace_name: workspaceName,
+        }),
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Create organization failed with ${response.status}`);
+      }
+
+      const payload = await response.json();
+      return payload.workspace_id ?? 0;
+    }, secondWorkspaceName);
+
+    const today = todayISO();
+    await createStoppedTimeEntry(page, {
+      description: editorEntryDescription,
+      start: `${today}T11:00:00Z`,
+      stop: `${today}T11:30:00Z`,
+      workspaceId: secondWorkspaceId,
+    });
+
+    await page.reload();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await expect(page.getByRole("button", { name: editorEntryDescription }).first()).toBeVisible();
+    await page.getByRole("button", { name: editorEntryDescription }).first().click();
+
+    const dialog = page.getByTestId("time-entry-editor-dialog");
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole("button", { name: "Select project" }).click();
+    const projectPicker = page.getByTestId("bulk-edit-project-picker");
+    await expect(projectPicker).toBeVisible();
+
+    await projectPicker.getByRole("button", { name: /change/i }).click();
+
+    const workspacePicker = page.getByTestId("bulk-edit-workspace-picker");
+    await expect(workspacePicker).toBeVisible();
+    await expect(workspacePicker).toContainText(secondWorkspaceName);
+    await expect(projectPicker.locator('[data-testid="bulk-edit-workspace-picker"]')).toHaveCount(
+      0,
+    );
+  });
+
   test("when the user clicks a calendar entry, the editor dialog shows its start and stop times", async ({
     page,
   }) => {
