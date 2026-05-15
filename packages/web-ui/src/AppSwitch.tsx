@@ -17,13 +17,13 @@ type AppSwitchProps = {
 };
 
 const sizeClass: Record<AppSwitchSize, string> = {
-  md: "h-7 min-w-[52px]",
-  sm: "h-5 min-w-[38px]",
+  md: "h-7 w-[52px]",
+  sm: "h-5 w-[38px]",
 };
 
 const handleClass: Record<AppSwitchSize, string> = {
-  md: "left-0.5 top-0.5 size-[21px] border-[2.5px] shadow-[0_3px_0_0_var(--track-control-border)] data-[checked=true]:left-[calc(100%-24px)] data-[checked=true]:shadow-[0_3px_0_0_var(--track-accent-strong)]",
-  sm: "left-px top-px size-3.5 border-[2.5px] shadow-[0_2px_0_0_var(--track-control-border)] data-[checked=true]:left-[calc(100%-16px)] data-[checked=true]:shadow-[0_2px_0_0_var(--track-accent-strong)]",
+  md: "left-[3px] top-1/2 size-[22px] -translate-y-1/2 border-[2.5px] shadow-[0_3px_0_0_var(--track-control-border)] data-[checked=true]:translate-x-[24px] data-[checked=true]:shadow-[0_3px_0_0_var(--track-accent-strong)]",
+  sm: "left-[2px] top-1/2 size-4 -translate-y-1/2 border-2 shadow-[0_2px_0_0_var(--track-control-border)] data-[checked=true]:translate-x-[18px] data-[checked=true]:shadow-[0_2px_0_0_var(--track-accent-strong)]",
 };
 
 const innerClass: Record<AppSwitchSize, string> = {
@@ -59,7 +59,7 @@ export function AppSwitch({
     <button
       aria-checked={isChecked}
       aria-label={ariaLabel}
-      className={`relative inline-flex items-center rounded-full border-[2.5px] p-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.22)] outline-none transition-all duration-[var(--duration-press)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] disabled:cursor-not-allowed disabled:opacity-50 ${
+      className={`relative inline-flex shrink-0 items-center rounded-full border-[2.5px] p-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.22)] outline-none transition-all duration-[var(--duration-press)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] disabled:cursor-not-allowed disabled:opacity-50 ${
         isChecked
           ? "border-[var(--track-accent-strong)] bg-[var(--track-accent)] hover:border-[var(--track-accent-fill-hover)] hover:bg-[var(--track-accent-fill-hover)]"
           : "border-[var(--track-control-border)] bg-[var(--track-control-disabled-strong)] hover:border-[var(--track-control-border-hover)]"
@@ -72,7 +72,7 @@ export function AppSwitch({
       type="button"
     >
       <span
-        className={`absolute flex translate-y-[-2px] items-center justify-center rounded-full border-[var(--track-control-border)] bg-[var(--track-state-neutral-surface)] transition-all duration-[var(--duration-press)] data-[checked=true]:border-[var(--track-accent-strong)] ${handleClass[size]}`}
+        className={`absolute flex items-center justify-center rounded-full border-[var(--track-control-border)] bg-[var(--track-state-neutral-surface)] transition-all duration-[var(--duration-press)] data-[checked=true]:border-[var(--track-accent-strong)] ${handleClass[size]}`}
         data-checked={isChecked}
         style={{ transitionTimingFunction: "var(--ease-press)" }}
       >
