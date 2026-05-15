@@ -15,6 +15,8 @@
   "pinned": "ピン留め済み",
   "newProject": "新規プロジェクト",
   "searchProjects": "プロジェクトを検索...",
+  "searchMembers": "メンバーを検索...",
+  "searchClients": "クライアントを検索...",
   "projectCreated": "プロジェクトを作成しました",
   "projectUpdated": "プロジェクトを更新しました",
   "projectArchived": "プロジェクトをアーカイブしました",

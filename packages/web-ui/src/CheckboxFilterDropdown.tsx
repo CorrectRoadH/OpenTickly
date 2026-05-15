@@ -1,11 +1,21 @@
-import { type ReactElement, useCallback, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 
 import { AppCheckbox } from "./AppCheckbox.tsx";
+import { AppInput } from "./AppInput.tsx";
 import { useDismiss } from "./useDismiss.ts";
 
 type CheckboxFilterOption<T extends string | number> = {
   key: T;
   label: string;
+  meta?: string;
+  swatchColor?: string;
 };
 
 type CheckboxFilterDropdownProps<T extends string | number> = {
@@ -15,6 +25,9 @@ type CheckboxFilterDropdownProps<T extends string | number> = {
   onClear: () => void;
   onToggle: (key: T) => void;
   options: CheckboxFilterOption<T>[];
+  searchIcon?: ReactNode;
+  searchLabel?: string;
+  searchPlaceholder?: string;
   selected: Set<T>;
   testId?: string;
 };
@@ -26,18 +39,31 @@ export function CheckboxFilterDropdown<T extends string | number>({
   onClear,
   onToggle,
   options,
+  searchIcon,
+  searchLabel,
+  searchPlaceholder,
   selected,
   testId,
 }: CheckboxFilterDropdownProps<T>): ReactElement {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => {
+    setOpen(false);
+    setSearch("");
+  }, []);
   useDismiss(containerRef, open, close);
 
   const activeCount = selected.size;
   const selectedLabels =
     activeCount > 0 ? options.filter((o) => selected.has(o.key)).map((o) => o.label) : [];
+  const query = search.trim().toLowerCase();
+  const filteredOptions = query
+    ? options.filter((option) =>
+        `${option.label} ${option.meta ?? ""}`.toLowerCase().includes(query),
+      )
+    : options;
 
   return (
     <div className="relative" ref={containerRef}>
@@ -78,10 +104,21 @@ export function CheckboxFilterDropdown<T extends string | number>({
         ) : null}
       </button>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[220px] max-w-[360px] rounded-[8px] border-2 border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
-          <div className="border-b border-white/6 px-2 pb-2">
+        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[260px] max-w-[420px] rounded-[8px] border-2 border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] p-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
+          {searchPlaceholder ? (
+            <AppInput
+              aria-label={searchLabel ?? searchPlaceholder}
+              className="mb-2"
+              inputClassName="text-[12px]"
+              leadingIcon={searchIcon}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
+              placeholder={searchPlaceholder}
+              value={search}
+            />
+          ) : null}
+          <div className="pb-2">
             <button
-              className="inline-flex h-7 items-center rounded-[6px] border border-[var(--track-accent-soft)] px-2.5 text-left text-[11px] font-semibold text-[var(--track-accent-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:border-[var(--track-border)] disabled:text-[var(--track-text-disabled)] disabled:hover:bg-transparent"
+              className="w-full rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium text-[var(--track-accent-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:text-[var(--track-text-disabled)] disabled:hover:bg-transparent"
               disabled={activeCount === 0}
               onClick={onClear}
               type="button"
@@ -89,19 +126,17 @@ export function CheckboxFilterDropdown<T extends string | number>({
               {clearLabel}
             </button>
           </div>
-          <div className="max-h-[240px] overflow-y-auto px-2 py-1">
-            {options.length === 0 ? (
-              <p className="px-3 py-3 text-[12px] text-[var(--track-text-muted)]">{emptyMessage}</p>
+          <div className="max-h-[280px] overflow-y-auto">
+            {filteredOptions.length === 0 ? (
+              <p className="px-2 py-3 text-[12px] text-[var(--track-text-muted)]">{emptyMessage}</p>
             ) : (
-              options.map((option) => {
+              filteredOptions.map((option) => {
                 const checked = selected.has(option.key);
                 return (
                   <button
                     aria-checked={checked}
-                    className={`my-1 flex w-full min-w-0 items-center gap-2.5 rounded-[7px] border-2 px-2.5 py-2 text-left text-[12px] transition-all duration-[var(--duration-fast)] ${
-                      checked
-                        ? "border-[var(--track-accent-soft)] bg-[var(--track-accent)]/8 text-white shadow-[inset_3px_0_0_var(--track-accent)]"
-                        : "border-transparent text-[var(--track-overlay-text)] hover:border-[var(--track-control-border)] hover:bg-white/4"
+                    className={`flex w-full min-w-0 items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-left text-[12px] transition ${
+                      checked ? "text-white" : "text-[var(--track-overlay-text)] hover:bg-white/4"
                     }`}
                     key={option.key}
                     onClick={() => onToggle(option.key)}
@@ -110,7 +145,18 @@ export function CheckboxFilterDropdown<T extends string | number>({
                     type="button"
                   >
                     <AppCheckbox checked={checked} className="pointer-events-none" tabIndex={-1} />
+                    {option.swatchColor ? (
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: option.swatchColor }}
+                      />
+                    ) : null}
                     <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                    {option.meta ? (
+                      <span className="shrink-0 text-[11px] text-[var(--track-text-muted)]">
+                        {option.meta}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })

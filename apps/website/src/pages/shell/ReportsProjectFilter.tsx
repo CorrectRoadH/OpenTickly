@@ -86,15 +86,14 @@ export function ReportsProjectFilter({
               </p>
             ) : (
               <>
-                {activeCount > 0 ? (
-                  <button
-                    className="mb-1 w-full rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium text-[var(--track-accent-text)] transition hover:bg-white/4"
-                    onClick={onClear}
-                    type="button"
-                  >
-                    {t("clearAll")}
-                  </button>
-                ) : null}
+                <button
+                  className="mb-1 w-full rounded-[6px] px-2 py-1.5 text-left text-[12px] font-medium text-[var(--track-accent-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:text-[var(--track-text-disabled)] disabled:hover:bg-transparent"
+                  disabled={activeCount === 0}
+                  onClick={onClear}
+                  type="button"
+                >
+                  {t("clearAll")}
+                </button>
                 {filtered.map((project) => (
                   <label
                     className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[12px] text-white transition hover:bg-white/4"

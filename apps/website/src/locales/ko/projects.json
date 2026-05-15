@@ -15,6 +15,8 @@
   "pinned": "고정됨",
   "newProject": "새 프로젝트",
   "searchProjects": "프로젝트 검색...",
+  "searchMembers": "멤버 검색...",
+  "searchClients": "클라이언트 검색...",
   "projectCreated": "프로젝트가 생성되었습니다",
   "projectUpdated": "프로젝트가 업데이트되었습니다",
   "projectArchived": "프로젝트가 보관되었습니다",

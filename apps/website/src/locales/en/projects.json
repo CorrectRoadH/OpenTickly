@@ -15,6 +15,8 @@
   "pinned": "Pinned",
   "newProject": "New project",
   "searchProjects": "Search projects...",
+  "searchMembers": "Search members...",
+  "searchClients": "Search clients...",
   "projectCreated": "Project created",
   "projectUpdated": "Project updated",
   "projectArchived": "Project archived",

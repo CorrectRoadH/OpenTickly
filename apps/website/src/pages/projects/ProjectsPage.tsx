@@ -24,6 +24,7 @@ import {
   PinIcon,
   PlusIcon,
   ProjectsIcon,
+  SearchIcon,
   TrashIcon,
 } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -341,6 +342,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           onClear={() => filterDispatch({ type: "CLEAR_CLIENT_IDS" })}
           onToggle={(id: number) => filterDispatch({ type: "TOGGLE_CLIENT_ID", id })}
           options={clientsList.map((c) => ({ key: c.id, label: c.name }))}
+          searchIcon={<SearchIcon className="size-4" />}
+          searchPlaceholder={t("searchClients")}
           selected={filterClientIds}
           testId="projects-filter-client"
         />
@@ -351,6 +354,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           onClear={() => filterDispatch({ type: "CLEAR_MEMBER_IDS" })}
           onToggle={(id: number) => filterDispatch({ type: "TOGGLE_MEMBER_ID", id })}
           options={workspaceMembers.map((m) => ({ key: m.id, label: m.name }))}
+          searchIcon={<SearchIcon className="size-4" />}
+          searchPlaceholder={t("searchMembers")}
           selected={filterMemberIds}
           testId="projects-filter-member"
         />

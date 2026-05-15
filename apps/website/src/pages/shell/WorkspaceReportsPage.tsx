@@ -47,6 +47,7 @@ import { useReportsPageState } from "./useReportsPageState.ts";
 import { type DurationFormat, formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";
+import { SearchIcon } from "../../shared/ui/icons.tsx";
 import { ReportsProjectFilter, type ReportsProjectOption } from "./ReportsProjectFilter.tsx";
 
 /** Round seconds up to the nearest 15-minute block (900 seconds). */
@@ -444,6 +445,8 @@ function ReportsFilterBar({
           )
         }
         options={memberOptions.map((m) => ({ key: m, label: m }))}
+        searchIcon={<SearchIcon className="size-4" />}
+        searchPlaceholder={t("searchMembers")}
         selected={new Set(state.memberFilter)}
         testId="reports-filter-member"
       />
@@ -460,6 +463,8 @@ function ReportsFilterBar({
           )
         }
         options={clientOptions.map((c) => ({ key: c, label: c }))}
+        searchIcon={<SearchIcon className="size-4" />}
+        searchPlaceholder={t("searchClients")}
         selected={new Set(state.clientFilter)}
         testId="reports-filter-client"
       />
@@ -488,6 +493,8 @@ function ReportsFilterBar({
           })
         }
         options={tagOptions.map((t) => ({ key: t.id, label: t.label }))}
+        searchIcon={<SearchIcon className="size-4" />}
+        searchPlaceholder={t("searchTags")}
         selected={new Set(state.filters.tagIds)}
         testId="reports-filter-tag"
       />
