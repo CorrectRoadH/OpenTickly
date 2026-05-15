@@ -1941,4 +1941,59 @@ test.describe("Date range picker in list view", () => {
     await expect(listView.locator("text=Today entry")).toBeVisible();
     await expect(listView.locator("text=Old entry one week ago")).toBeVisible();
   });
+
+  test("list view uses a forced viewport scrollbar below the timer header", async ({ page }) => {
+    const email = `timer-list-scrollbar-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Timer List Scrollbar User",
+      password,
+    });
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+
+    await createTimeEntryForWorkspace(page, {
+      description: "Scrollbar regression entry",
+      start: new Date("2026-05-15T09:00:00.000Z").toISOString(),
+      stop: new Date("2026-05-15T10:00:00.000Z").toISOString(),
+      workspaceId: session.currentWorkspaceId,
+    });
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    await activateTimerView(page, "List", "timer-list-view");
+    const listView = page.getByTestId("timer-list-view");
+    await expect(listView.locator("text=Scrollbar regression entry")).toBeVisible();
+
+    const scroller = page.getByTestId("timer-list-scrollarea");
+    await expect(scroller).toBeVisible();
+
+    const scrollMetrics = await scroller.evaluate((node) => {
+      const header = document.querySelector<HTMLElement>(
+        '[data-testid="tracking-timer-page"] > header',
+      );
+      if (!header) {
+        throw new Error("Missing list scroller or timer header");
+      }
+
+      const style = window.getComputedStyle(node);
+      const trackStyle = window.getComputedStyle(node, "::-webkit-scrollbar-track");
+      return {
+        expectedHeight: window.innerHeight - header.getBoundingClientRect().height,
+        height: node.getBoundingClientRect().height,
+        overflowY: style.overflowY,
+        scrollbarGutter: style.scrollbarGutter,
+        scrollbarTrackBackground: trackStyle.backgroundColor,
+      };
+    });
+
+    expect(scrollMetrics.overflowY).toBe("scroll");
+    expect(scrollMetrics.scrollbarGutter).toContain("stable");
+    expect(scrollMetrics.scrollbarTrackBackground).not.toBe("rgba(0, 0, 0, 0)");
+    expect(scrollMetrics.scrollbarTrackBackground).not.toBe("transparent");
+    expect(Math.abs(scrollMetrics.height - scrollMetrics.expectedHeight)).toBeLessThanOrEqual(2);
+  });
 });
