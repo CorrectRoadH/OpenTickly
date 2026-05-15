@@ -74,11 +74,11 @@ export function CheckboxFilterDropdown<T extends string | number>({
         ) : null}
       </button>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[220px] rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
+        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[220px] max-w-[360px] rounded-[8px] border-2 border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
           {activeCount > 0 ? (
-            <div className="border-b border-white/6 px-1 pb-2">
+            <div className="border-b border-white/6 px-2 pb-2">
               <button
-                className="flex w-full items-center rounded-lg px-3 py-2 text-left text-[12px] font-medium text-[var(--track-accent-text)] transition hover:bg-white/4"
+                className="inline-flex h-7 items-center rounded-[6px] border border-[var(--track-accent-soft)] px-2.5 text-left text-[11px] font-semibold text-[var(--track-accent-text)] transition hover:bg-white/4"
                 onClick={onClear}
                 type="button"
               >
@@ -86,7 +86,7 @@ export function CheckboxFilterDropdown<T extends string | number>({
               </button>
             </div>
           ) : null}
-          <div className="max-h-[240px] overflow-y-auto px-1 py-1">
+          <div className="max-h-[240px] overflow-y-auto px-2 py-1">
             {options.length === 0 ? (
               <p className="px-3 py-3 text-[12px] text-[var(--track-text-muted)]">
                 No {label.toLowerCase()}s found
@@ -97,18 +97,19 @@ export function CheckboxFilterDropdown<T extends string | number>({
                 return (
                   <button
                     aria-checked={checked}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[12px] transition ${
+                    className={`my-1 flex w-full min-w-0 items-center gap-2.5 rounded-[7px] border-2 px-2.5 py-2 text-left text-[12px] transition-all duration-[var(--duration-fast)] ${
                       checked
-                        ? "bg-[var(--track-accent-soft)] text-white"
-                        : "text-[var(--track-overlay-text)] hover:bg-white/4"
+                        ? "border-[var(--track-accent-soft)] bg-[var(--track-accent)]/8 text-white shadow-[inset_3px_0_0_var(--track-accent)]"
+                        : "border-transparent text-[var(--track-overlay-text)] hover:border-[var(--track-control-border)] hover:bg-white/4"
                     }`}
                     key={option.key}
                     onClick={() => onToggle(option.key)}
+                    style={{ transitionTimingFunction: "var(--ease-press)" }}
                     role="checkbox"
                     type="button"
                   >
                     <AppCheckbox checked={checked} className="pointer-events-none" tabIndex={-1} />
-                    <span className="truncate">{option.label}</span>
+                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
                   </button>
                 );
               })
