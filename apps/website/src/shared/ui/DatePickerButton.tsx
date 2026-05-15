@@ -20,7 +20,7 @@ type DatePickerButtonProps = {
  */
 export function DatePickerButton({
   ariaLabel,
-  className = "h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] text-white",
+  className = "h-10 w-full rounded-[8px] border-2 border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] font-semibold text-white shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]",
   onChange,
   placeholder = "Select date",
   testId,
@@ -41,6 +41,7 @@ export function DatePickerButton({
         className={className}
         data-testid={testId}
         onClick={() => setOpen((v) => !v)}
+        style={{ transitionTimingFunction: "var(--ease-press)" }}
         type="button"
       >
         {displayLabel}

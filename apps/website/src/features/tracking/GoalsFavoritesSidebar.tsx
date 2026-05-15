@@ -30,7 +30,7 @@ export function GoalsFavoritesSidebar({
 
   return (
     <div
-      className="sticky top-[var(--timer-header-height,0px)] flex h-fit max-h-[calc(100vh-var(--timer-header-height,0px))] w-[220px] shrink-0 flex-col overflow-y-auto border-l border-[var(--track-border)] bg-[var(--track-surface)]"
+      className="flex h-[calc(100vh-var(--timer-header-height,0px))] w-[220px] shrink-0 flex-col overflow-y-auto border-l border-[var(--track-border)] bg-[var(--track-surface)] [scrollbar-gutter:stable]"
       data-testid="goals-favorites-sidebar"
     >
       {showGoals ? (

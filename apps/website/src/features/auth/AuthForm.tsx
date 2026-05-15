@@ -95,8 +95,9 @@ export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps
       ) : null}
 
       <button
-        className="flex h-9 w-full items-center justify-center rounded-[6px] border border-[var(--track-accent)] bg-[var(--track-accent)] px-3 text-[14px] font-semibold text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow,background] duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-px hover:bg-[var(--track-accent-fill-hover)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+        className="flex h-10 w-full items-center justify-center rounded-[8px] border-2 border-[var(--track-accent)] bg-[var(--track-accent)] px-3 text-[14px] font-semibold text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-accent-fill-hover)] hover:bg-[var(--track-accent-fill-hover)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-accent-shadow-active)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         disabled={isSubmitting}
+        style={{ transitionTimingFunction: "var(--ease-press)" }}
         type="submit"
       >
         {isSubmitting ? t("submitting") : mode === "login" ? t("logIn") : t("register")}

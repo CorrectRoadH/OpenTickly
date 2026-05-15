@@ -56,16 +56,14 @@ export function SurfaceCard({
   clickable?: boolean;
 }) {
   const clickableClasses = clickable
-    ? "transition-[transform,box-shadow] duration-[160ms] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(0,0,0,0.25)] active:translate-y-0 active:shadow-[0_2px_0_0_rgba(0,0,0,0.15)]"
+    ? "cursor-pointer transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]"
     : "";
 
   return (
     <div
       {...rest}
       className={getSurfaceClassName("default", `${clickableClasses} ${className}`.trim())}
-      style={
-        clickable ? { transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" } : undefined
-      }
+      style={clickable ? { transitionTimingFunction: "var(--ease-press)" } : undefined}
     >
       {children}
     </div>

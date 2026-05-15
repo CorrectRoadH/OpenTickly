@@ -104,16 +104,16 @@ const VIEW_TAB_LABELS: Record<TimerViewMode, string> = {
   timesheet: "Timesheet",
 };
 const VIEW_TAB_RADIUS_CLASS: Record<TimerViewMode, string> = {
-  calendar: "rounded-l-[6px]",
-  list: "rounded-none",
-  timesheet: "rounded-r-[6px]",
+  calendar: "rounded-[8px]",
+  list: "rounded-[8px]",
+  timesheet: "rounded-[8px]",
 };
 
 const viewTabGroupClass =
-  "inline-flex items-center overflow-hidden rounded-[8px] bg-[var(--track-surface-muted)] p-[2px] shadow-[var(--track-depth-shadow-rest)]";
+  "inline-flex items-center gap-1 rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface-muted)] p-1 shadow-[var(--track-depth-shadow-rest)]";
 
 const viewTabClass =
-  "inline-flex h-8 min-w-[96px] items-center justify-center px-4 text-[14px] font-semibold transition-[transform,box-shadow,background-color,color] duration-[var(--duration-fast)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[var(--track-accent-outline)]";
+  "inline-flex h-8 min-w-[96px] items-center justify-center border-2 px-4 text-[14px] font-semibold transition-all duration-[var(--duration-press)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent-outline)] hover:-translate-y-px active:translate-y-0.5";
 
 export function CalendarSubviewSelect({
   onChange,
@@ -227,13 +227,14 @@ export function ViewTab({
       aria-checked={isSelected}
       className={`${viewTabClass} ${VIEW_TAB_RADIUS_CLASS[targetView]} ${
         isSelected
-          ? "bg-[var(--track-surface)] text-white shadow-[var(--track-depth-shadow-rest)]"
-          : "text-[var(--track-text-soft)] hover:text-white"
+          ? "border-[var(--track-border)] bg-[var(--track-surface)] text-white shadow-[var(--track-depth-shadow-rest)] hover:shadow-[var(--track-depth-shadow-hover)] active:shadow-[var(--track-depth-shadow-active)]"
+          : "border-transparent bg-transparent text-[var(--track-text-soft)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white hover:shadow-[var(--track-depth-shadow-hover)] active:shadow-[var(--track-depth-shadow-active)]"
       }`}
       data-testid={`view-tab-${targetView}`}
       onClick={() => onSelect(targetView)}
       role="radio"
       tabIndex={isSelected ? 0 : -1}
+      style={{ transitionTimingFunction: "var(--ease-press)" }}
       type="button"
     >
       {VIEW_TAB_LABELS[targetView]}

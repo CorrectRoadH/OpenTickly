@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppCheckbox } from "@opentickly/web-ui";
+import { AppCheckbox, AppInput, AppSwitch } from "@opentickly/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 
@@ -30,34 +30,6 @@ type ProjectEditorAdvancedProps = {
   startDate: string;
   template: boolean;
 };
-
-function ToggleSwitch({
-  label,
-  onChange,
-  value,
-}: {
-  label: string;
-  onChange: (value: boolean) => void;
-  value: boolean;
-}): ReactElement {
-  return (
-    <button
-      aria-label={label}
-      aria-pressed={value}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
-        value ? "bg-[var(--track-accent-soft)]" : "bg-[var(--track-control-disabled-strong)]"
-      }`}
-      onClick={() => onChange(!value)}
-      type="button"
-    >
-      <span
-        className={`inline-block size-5 rounded-full bg-white transition ${
-          value ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-}
 
 export function ProjectEditorAdvanced({
   billable,
@@ -104,8 +76,9 @@ export function ProjectEditorAdvanced({
         <div className="relative">
           <button
             aria-label={t("selectOrCreateClient")}
-            className="flex h-11 w-full items-center rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[14px] text-white"
+            className="flex h-10 w-full items-center rounded-[8px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-left text-[14px] font-semibold text-white shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]"
             onClick={() => setClientPickerOpen((prev) => !prev)}
+            style={{ transitionTimingFunction: "var(--ease-press)" }}
             type="button"
           >
             <span
@@ -182,7 +155,7 @@ export function ProjectEditorAdvanced({
         <div className="flex items-center gap-2">
           <DatePickerButton
             ariaLabel={t("startDate")}
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[12px] text-white"
+            className="h-9 flex-1 rounded-[8px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-left text-[12px] font-semibold text-white shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]"
             onChange={onStartDateChange}
             placeholder={t("startDate")}
             value={startDate}
@@ -190,7 +163,7 @@ export function ProjectEditorAdvanced({
           <span className="text-[12px] text-[var(--track-text-muted)]">-</span>
           <DatePickerButton
             ariaLabel={t("endDate")}
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[12px] text-white"
+            className="h-9 flex-1 rounded-[8px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-left text-[12px] font-semibold text-white shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]"
             onChange={onEndDateChange}
             placeholder={t("noEndDate")}
             value={endDate}
@@ -199,31 +172,32 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Recurring */}
-      <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
+      <div className="flex items-center justify-between rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 shadow-[var(--track-depth-shadow-rest)]">
         <span className="text-[14px] text-white">{t("recurring")}</span>
-        <ToggleSwitch label={t("recurring")} onChange={onRecurringChange} value={recurring} />
+        <AppSwitch aria-label={t("recurring")} checked={recurring} onChange={onRecurringChange} />
       </div>
 
       {/* Time estimate */}
-      <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
+      <div className="rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 shadow-[var(--track-depth-shadow-rest)]">
         <div className="flex items-center justify-between">
           <span className="text-[14px] text-white">{t("timeEstimate")}</span>
-          <ToggleSwitch
-            label={t("timeEstimate")}
+          <AppSwitch
+            aria-label={t("timeEstimate")}
+            checked={showEstimatedInput}
             onChange={(on) => {
               if (on && estimatedHours === 0) onEstimatedHoursChange(1);
               if (!on) onEstimatedHoursChange(0);
             }}
-            value={showEstimatedInput}
           />
         </div>
         {showEstimatedInput ? (
           <div className="mt-3 flex items-center gap-2">
-            <input
+            <AppInput
               aria-label={t("estimatedHours")}
-              className="h-9 w-24 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-24 rounded-[8px]"
               min={0}
               onChange={(event) => onEstimatedHoursChange(Number(event.target.value) || 0)}
+              size="sm"
               type="number"
               value={estimatedHours || ""}
             />
@@ -233,31 +207,32 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Billable */}
-      <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
+      <div className="flex items-center justify-between rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 shadow-[var(--track-depth-shadow-rest)]">
         <span className="text-[14px] text-white">{t("billable")}</span>
-        <ToggleSwitch label={t("billable")} onChange={onBillableChange} value={billable} />
+        <AppSwitch aria-label={t("billable")} checked={billable} onChange={onBillableChange} />
       </div>
 
       {/* Fixed fee */}
-      <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
+      <div className="rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 shadow-[var(--track-depth-shadow-rest)]">
         <div className="flex items-center justify-between">
           <span className="text-[14px] text-white">{t("fixedFee")}</span>
-          <ToggleSwitch
-            label={t("fixedFee")}
+          <AppSwitch
+            aria-label={t("fixedFee")}
+            checked={showFixedFeeInput}
             onChange={(on) => {
               if (on && fixedFee === 0) onFixedFeeChange(1);
               if (!on) onFixedFeeChange(0);
             }}
-            value={showFixedFeeInput}
           />
         </div>
         {showFixedFeeInput ? (
           <div className="mt-3 flex items-center gap-2">
-            <input
+            <AppInput
               aria-label={t("fixedFeeAmount")}
-              className="h-9 w-28 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-28 rounded-[8px]"
               min={0}
               onChange={(event) => onFixedFeeChange(Number(event.target.value) || 0)}
+              size="sm"
               step="0.01"
               type="number"
               value={fixedFee || ""}
@@ -268,7 +243,7 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Template */}
-      <label className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
+      <label className="flex items-center justify-between rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 shadow-[var(--track-depth-shadow-rest)]">
         <span className="text-[14px] text-white">{t("useAsTemplate")}</span>
         <AppCheckbox
           aria-label={t("useAsTemplate")}

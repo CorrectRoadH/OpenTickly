@@ -8,6 +8,7 @@ export { AnimatedActiveIndicator } from "./AnimatedActiveIndicator.tsx";
 export { AppInput, type AppInputSize } from "./AppInput.tsx";
 export { AppInlineNotice } from "./AppInlineNotice.tsx";
 export { AppPanel } from "./AppPanel.tsx";
+export { AppSwitch, type AppSwitchSize } from "./AppSwitch.tsx";
 export { AppSurfaceState } from "./AppSurfaceState.tsx";
 export type { AppSurfaceTone } from "./surfaceStyles.ts";
 export { DirectoryStatusFilter } from "./DirectoryStatusFilter.tsx";

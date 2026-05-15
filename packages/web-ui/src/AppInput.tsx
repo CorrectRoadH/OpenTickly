@@ -10,11 +10,11 @@ type AppInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
 };
 
 const wrapperBase =
-  "flex items-center gap-2 rounded-[8px] border border-[var(--track-border-input)] bg-[var(--track-input-bg)] shadow-[0_1px_0_0_var(--track-depth-border)] transition-[border-color,background-color,box-shadow] duration-[var(--duration-fast)] focus-within:border-[var(--track-accent-border)] focus-within:ring-1 focus-within:ring-[var(--track-accent-outline)]";
+  "flex items-center gap-2 rounded-[18px] border-2 border-[var(--track-border-input)] bg-[var(--track-input-bg)] shadow-[var(--track-depth-shadow-rest)] transition-[border-color,background-color,box-shadow,transform] duration-[var(--duration-normal)] focus-within:-translate-y-px focus-within:border-[var(--track-accent-border)] focus-within:ring-1 focus-within:ring-[var(--track-accent-outline)] focus-within:shadow-[var(--track-depth-shadow-hover)]";
 
 const wrapperSizeClass: Record<AppInputSize, string> = {
-  default: "h-9 px-3",
-  sm: "h-8 px-2.5",
+  default: "h-10 px-4",
+  sm: "h-8 px-3",
 };
 
 const inputSizeClass: Record<AppInputSize, string> = {

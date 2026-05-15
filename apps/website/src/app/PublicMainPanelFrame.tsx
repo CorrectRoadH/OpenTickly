@@ -15,7 +15,7 @@ export function PublicMainPanelFrame({
 }: PublicMainPanelFrameProps): ReactElement {
   return (
     <div className="min-h-dvh bg-[var(--track-surface)] px-5 py-5 text-[var(--track-text)]">
-      <div className="mx-auto flex min-h-[calc(100dvh-40px)] w-full max-w-[1440px] items-center justify-center overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+      <div className="mx-auto flex min-h-[calc(100dvh-40px)] w-full max-w-[1440px] items-center justify-center overflow-hidden rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]">
         <main className="flex min-w-0 flex-1 flex-col items-center justify-center p-5 sm:p-8">
           <div className="mb-8 flex items-center gap-3">
             <svg
@@ -40,7 +40,7 @@ export function PublicMainPanelFrame({
             <span className="text-[20px] font-semibold text-[var(--track-text)]">OpenTickly</span>
           </div>
 
-          <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-depth-shadow-rest)]">
+          <section className="w-full max-w-[440px] rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-depth-shadow-rest)]">
             <div className="mb-6 space-y-2">
               <p className="text-[11px] font-semibold uppercase text-[var(--track-text-muted)]">
                 {badge}

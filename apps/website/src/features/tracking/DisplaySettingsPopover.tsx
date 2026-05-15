@@ -1,6 +1,8 @@
 import { type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppButton, AppSwitch } from "@opentickly/web-ui";
+
 import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
@@ -80,21 +82,12 @@ export function DisplaySettingsPopover({
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             {t("showAllTimeEntries")}
           </span>
-          <button
-            aria-checked={showAllEntries}
-            className={`relative h-5 w-9 rounded-full transition ${
-              showAllEntries ? "bg-[var(--track-accent)]" : "bg-[var(--track-control-disabled)]"
-            }`}
-            onClick={onToggleShowAllEntries}
-            role="switch"
-            type="button"
-          >
-            <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                showAllEntries ? "translate-x-4" : "translate-x-0.5"
-              }`}
-            />
-          </button>
+          <AppSwitch
+            aria-label={t("showAllTimeEntries")}
+            checked={showAllEntries}
+            onChange={onToggleShowAllEntries}
+            size="sm"
+          />
         </div>
 
         <SettingsDropdown
@@ -148,20 +141,12 @@ export function DisplaySettingsPopover({
       </div>
 
       <div className="flex gap-3 border-t border-[var(--track-border)] px-5 py-4">
-        <button
-          className="flex-1 rounded-lg border border-[var(--track-border)] bg-transparent px-4 py-2.5 text-[12px] font-medium text-white transition hover:bg-[var(--track-row-hover)]"
-          onClick={onClose}
-          type="button"
-        >
+        <AppButton className="flex-1" onClick={onClose} size="sm" type="button" variant="secondary">
           {t("cancel")}
-        </button>
-        <button
-          className="flex-1 rounded-lg bg-[var(--track-accent)] px-4 py-2.5 text-[12px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
-          onClick={handleSave}
-          type="button"
-        >
+        </AppButton>
+        <AppButton className="flex-1" onClick={handleSave} size="sm" type="button">
           {t("save")}
-        </button>
+        </AppButton>
       </div>
     </div>
   );

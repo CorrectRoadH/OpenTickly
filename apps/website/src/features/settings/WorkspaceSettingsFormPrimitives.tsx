@@ -3,7 +3,7 @@ import { type InputHTMLAttributes, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
-import { AppCheckbox } from "@opentickly/web-ui";
+import { AppCheckbox, AppSwitch } from "@opentickly/web-ui";
 
 import { deleteWorkspaceLogo, client } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
@@ -16,8 +16,8 @@ export function SettingsCard(props: {
   title: string;
 }): ReactElement {
   return (
-    <section className="overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0px_1px_3px_0px_var(--track-shadow-subtle)]">
-      <header className="border-b border-[var(--track-border)] px-5 py-[18px]">
+    <section className="overflow-hidden rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]">
+      <header className="border-b border-[var(--track-border)] px-4 py-4">
         <h2 className="text-[14px] font-semibold leading-[22.96px] text-[var(--track-text)]">
           {props.title}
         </h2>
@@ -25,7 +25,7 @@ export function SettingsCard(props: {
           {props.description}
         </p>
       </header>
-      <div className="px-5">{props.children}</div>
+      <div className="px-4">{props.children}</div>
     </section>
   );
 }
@@ -107,7 +107,7 @@ export function FieldLabel({ label }: { label: string }): ReactElement {
   return (
     <label className="mb-[10px] flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-[var(--track-text)]">
       <span>{label}</span>
-      <span className="flex size-4 items-center justify-center rounded-full border border-[var(--track-control-disabled)] text-[10px] text-[var(--track-text-soft)]">
+      <span className="flex size-4 items-center justify-center rounded-full border-2 border-[var(--track-control-disabled)] text-[10px] text-[var(--track-text-soft)]">
         i
       </span>
     </label>
@@ -139,9 +139,9 @@ export function RadioOption(props: {
   return (
     <label className="flex cursor-pointer items-center gap-[10px] text-[14px] font-medium leading-[14px] text-[var(--track-text)]">
       <input checked={props.checked} className="sr-only" onChange={props.onChange} type="radio" />
-      <span className="flex size-[14px] items-center justify-center rounded-full border border-[var(--track-text-disabled)]">
+      <span className="flex size-[18px] items-center justify-center rounded-full border-2 border-[var(--track-control-border)] bg-[var(--track-state-neutral-surface)] shadow-[var(--track-depth-shadow-active)] transition-all duration-[var(--duration-press)]">
         {props.checked ? (
-          <span className="size-[6px] rounded-full bg-[var(--track-accent-secondary)]" />
+          <span className="size-[8px] rounded-full bg-[var(--track-accent)]" />
         ) : null}
       </span>
       <span>{props.label}</span>
@@ -175,29 +175,15 @@ export function ToggleSection(props: {
   onChange: (checked: boolean) => void;
 }): ReactElement {
   return (
-    <div className="border-b border-[var(--track-surface-muted)] py-5 last:border-b-0">
-      <label className="flex cursor-pointer items-start gap-5">
-        <input
+    <div className="border-b border-[var(--track-surface-muted)] py-4 last:border-b-0">
+      <label className="flex cursor-pointer items-start gap-4">
+        <AppSwitch
+          aria-label={props.title}
           checked={props.checked}
-          className="sr-only"
-          onChange={(event) => {
-            props.onChange(event.target.checked);
-          }}
-          type="checkbox"
+          className="mt-[3px]"
+          onChange={props.onChange}
+          size="sm"
         />
-        <span
-          className={`mt-[5px] flex h-[16px] w-[28px] shrink-0 items-center rounded-full px-[2px] transition-colors ${
-            props.checked ? "bg-[var(--track-accent-secondary)]" : "bg-[var(--track-panel)]"
-          }`}
-        >
-          <span
-            className={`size-[12px] rounded-full transition-transform ${
-              props.checked
-                ? "translate-x-[12px] bg-[var(--track-surface)]"
-                : "translate-x-0 bg-[var(--track-border)]"
-            }`}
-          />
-        </span>
         <span className="block">
           <span className="block text-[14px] font-semibold leading-[22.96px] text-[var(--track-text-soft)]">
             {props.title}
@@ -217,4 +203,4 @@ export function HiddenField(props: InputHTMLAttributes<HTMLInputElement>): React
 }
 
 export const textInputClassName =
-  "w-full rounded-[8px] border border-[var(--track-text-disabled)] bg-[var(--track-surface)] px-3 py-[8.5px] text-[14px] font-medium text-[var(--track-text)] outline-none transition focus:border-[var(--track-accent-secondary)]";
+  "w-full rounded-[8px] border-2 border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-3 py-[8.5px] text-[14px] font-medium text-[var(--track-text)] shadow-[var(--track-depth-shadow-rest)] outline-none transition-all duration-[var(--duration-press)] focus:-translate-y-px focus:border-[var(--track-accent-border)] focus:shadow-[var(--track-depth-shadow-hover)]";

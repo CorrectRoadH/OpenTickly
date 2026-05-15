@@ -2,6 +2,8 @@ import { type FormEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { AppButton, AppInput, AppSwitch } from "@opentickly/web-ui";
+
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useClientsQuery,
@@ -123,21 +125,17 @@ export function ProjectEditorDialog({
     <ModalDialog
       footer={
         <>
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={onClose}
-            type="button"
-          >
+          <AppButton onClick={onClose} size="sm" type="button" variant="secondary">
             {t("cancel")}
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+          </AppButton>
+          <AppButton
             disabled={isPending || !trimmedName}
             form="project-editor-form"
+            size="sm"
             type="submit"
           >
             {submitLabel}
-          </button>
+          </AppButton>
         </>
       }
       onClose={onClose}
@@ -157,8 +155,9 @@ export function ProjectEditorDialog({
               <div className="relative">
                 <button
                   aria-label={t("projectColor")}
-                  className="flex size-11 items-center justify-center rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)]"
+                  className="flex size-11 items-center justify-center rounded-[8px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]"
                   onClick={() => setColorPickerOpen((c) => !c)}
+                  style={{ transitionTimingFunction: "var(--ease-press)" }}
                   type="button"
                 >
                   <span
@@ -179,9 +178,9 @@ export function ProjectEditorDialog({
                   </div>
                 ) : null}
               </div>
-              <input
+              <AppInput
                 aria-label={t("projectName")}
-                className="h-11 min-w-0 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+                className="h-11 min-w-0 flex-1 rounded-[8px]"
                 onChange={(event) => dispatch({ type: "SET_NAME", value: event.target.value })}
                 placeholder={t("projectName")}
                 value={name}
@@ -195,7 +194,7 @@ export function ProjectEditorDialog({
           </div>
 
           {/* Privacy toggle */}
-          <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">
+          <section className="rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] p-3 shadow-[var(--track-depth-shadow-rest)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
@@ -205,32 +204,21 @@ export function ProjectEditorDialog({
                   {isPrivate ? t("privacyPrivate") : t("privacyPublic")}
                 </p>
               </div>
-              <button
+              <AppSwitch
                 aria-label={isPrivate ? t("privacyPrivate") : t("privacyPublic")}
-                aria-pressed={isPrivate}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-                  isPrivate
-                    ? "bg-[var(--track-accent-soft)]"
-                    : "bg-[var(--track-control-disabled-strong)]"
-                }`}
-                onClick={() => dispatch({ type: "SET_PRIVATE", value: !isPrivate })}
-                type="button"
-              >
-                <span
-                  className={`inline-block size-5 rounded-full bg-white transition ${
-                    isPrivate ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+                checked={isPrivate}
+                onChange={(value) => dispatch({ type: "SET_PRIVATE", value })}
+              />
             </div>
           </section>
 
           {/* Advanced options */}
-          <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)]">
+          <section className="rounded-[10px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]">
             <button
               aria-expanded={advancedOpen}
-              className="flex w-full items-center justify-between px-3 py-2.5 text-left"
+              className="flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-left transition-all duration-[var(--duration-press)] hover:bg-[var(--track-row-hover)]"
               onClick={() => setAdvancedOpen((c) => !c)}
+              style={{ transitionTimingFunction: "var(--ease-press)" }}
               type="button"
             >
               <span className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">

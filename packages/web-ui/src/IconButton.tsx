@@ -12,9 +12,9 @@ type IconButtonProps = {
 };
 
 const sizeClass = {
-  sm: "size-6",
-  md: "size-7",
-  lg: "size-8",
+  sm: "size-7",
+  md: "size-8",
+  lg: "size-9",
 } as const;
 
 export function IconButton({
@@ -30,11 +30,11 @@ export function IconButton({
   return (
     <button
       aria-label={ariaLabel}
-      className={`inline-flex items-center justify-center rounded-md text-[var(--track-text-muted)] transition-[transform,background-color,color] duration-[120ms] hover:bg-[var(--track-row-hover)] hover:text-white active:translate-y-px disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed ${sizeClass[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full border-2 border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] shadow-[var(--track-depth-shadow-rest)] transition-[transform,box-shadow,border-color,background-color,color] duration-[var(--duration-normal)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none disabled:cursor-not-allowed ${sizeClass[size]} ${className}`}
       data-testid={testId}
       disabled={disabled}
       onClick={onClick}
-      style={{ transitionTimingFunction: "var(--ease-spring)" }}
+      style={{ transitionTimingFunction: "var(--ease-out)" }}
       type={type}
     >
       {children}

@@ -30,7 +30,7 @@ export function MarketingCard({
   title,
 }: MarketingCardProps): ReactElement {
   return (
-    <div className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[0_2px_0_0_rgba(0,0,0,0.15)]">
+    <div className="rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[var(--track-depth-shadow-rest)]">
       {eyebrow ? <MarketingEyebrow>{eyebrow}</MarketingEyebrow> : null}
       <h3 className="text-[14px] font-semibold text-white">{title}</h3>
       <p className="mt-2 text-[13px] leading-[1.6] text-[var(--track-text-muted)]">{description}</p>

@@ -293,7 +293,12 @@ export function WorkspaceTimerPage({
       <div className="flex min-h-0">
         <div className="min-w-0 flex-1">
           {view === "list" ? (
-            <ConnectedListView showAllEntries={showAllEntries} onDeleteWithUndo={showDeleteToast} />
+            <div className="h-[calc(100vh-var(--timer-header-height,0px))] overflow-y-scroll [scrollbar-gutter:stable]">
+              <ConnectedListView
+                showAllEntries={showAllEntries}
+                onDeleteWithUndo={showDeleteToast}
+              />
+            </div>
           ) : null}
           {view === "calendar" ? (
             <ConnectedCalendarView
@@ -525,16 +530,17 @@ function TimerDateShortcuts({
         return (
           <button
             aria-pressed={isActive}
-            className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
+            className={`w-full rounded-[8px] border-2 px-3 py-2 text-left text-[14px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
               isActive
-                ? "bg-[var(--track-accent-strong)] text-white"
-                : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+                ? "border-[var(--track-accent-strong)] bg-[var(--track-accent-strong)] text-white shadow-[var(--track-depth-accent-shadow)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:shadow-[var(--track-depth-accent-shadow-active)]"
+                : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-overlay-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
             }`}
             key={shortcut.id}
             onClick={() => {
               onShortcut(shortcut.id, shortcutDate);
               close();
             }}
+            style={{ transitionTimingFunction: "var(--ease-press)" }}
             type="button"
           >
             {t(shortcut.label)}

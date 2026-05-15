@@ -4,7 +4,7 @@ import { Dropdown, useDropdownClose } from "./DropdownMenu.tsx";
 
 /* Shared visual — matches CalendarSubviewSelect trigger style */
 const selectBase =
-  "h-9 rounded-[8px] border border-[var(--track-border)] bg-transparent px-3 pr-8 text-[12px] font-medium text-white shadow-[var(--track-depth-shadow-rest)] transition-[transform,box-shadow,border-color,background-color] duration-[var(--duration-fast)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]";
+  "h-10 rounded-full border-2 border-[var(--track-border)] bg-[var(--track-surface)] px-4 pr-9 text-[12px] font-semibold leading-none text-white shadow-[var(--track-depth-shadow-rest)] outline-none transition-[transform,box-shadow,border-color,background-color] duration-[var(--duration-normal)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--track-accent)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)]";
 
 function Chevron({ className = "" }: { className?: string }) {
   return (
@@ -85,11 +85,11 @@ export function SelectDropdown({
 
   return (
     <Dropdown
+      className={className}
       trigger={
         <SelectButton
           aria-haspopup="listbox"
           aria-label={ariaLabel}
-          className={className}
           data-testid={testId}
           disabled={disabled}
           id={id}

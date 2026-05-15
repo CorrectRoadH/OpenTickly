@@ -67,7 +67,7 @@ export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+      <div className="relative overflow-hidden rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]">
         {images.map((image, index) => (
           <img
             key={image.src}

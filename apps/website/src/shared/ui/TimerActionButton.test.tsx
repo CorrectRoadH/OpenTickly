@@ -15,30 +15,25 @@ describe("TimerActionButton", () => {
 
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(button.className).not.toMatch(/(?:^|\s)scale-/);
-    expect(button.firstElementChild?.className).not.toMatch(/(?:^|\s)scale-/);
+    expect(button.querySelector("svg")?.className.baseVal).not.toMatch(/(?:^|\s)scale-/);
   });
 
   test("keeps a compressed shadow while active", () => {
     render(<TimerActionButton isRunning={false} onClick={vi.fn()} />);
 
     const button = screen.getByRole("button", { name: "Start timer" });
-    const face = button.firstElementChild;
 
-    expect(face?.className).toContain("group-active:shadow-[0_1px_0_0_var(--track-accent-strong)]");
-    expect(face?.className).not.toContain("group-active:shadow-[var(--track-depth-shadow-active)]");
+    expect(button.className).toContain("active:shadow-[var(--track-depth-accent-shadow-active)]");
+    expect(button.className).not.toContain("active:shadow-[var(--track-depth-shadow-active)]");
   });
 
-  test("raises the button face on hover without moving the hit target", () => {
+  test("uses the same one-piece hover and press mechanics as app buttons", () => {
     render(<TimerActionButton isRunning={false} onClick={vi.fn()} />);
 
     const button = screen.getByRole("button", { name: "Start timer" });
-    const face = button.firstElementChild;
 
-    expect(button.className).not.toMatch(/hover:-?translate-y/);
-    expect(face?.className).toContain("group-hover:-translate-y-[3px]");
-    expect(face?.className).toContain("group-active:translate-y-[3px]");
-    expect(face?.className).toContain("before:transition-opacity");
-    expect(face?.className).toContain("group-active:before:opacity-100");
-    expect(face?.className).toContain("motion-reduce:transition-none");
+    expect(button.className).toContain("hover:-translate-y-px");
+    expect(button.className).toContain("active:translate-y-0.5");
+    expect(button.className).toContain("hover:shadow-[var(--track-depth-accent-shadow-hover)]");
   });
 });

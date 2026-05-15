@@ -35,13 +35,14 @@ export function RadioFilterDropdown<T extends string>({
   return (
     <div className="relative" ref={containerRef}>
       <button
-        className={`flex h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[12px] font-medium transition ${
+        className={`flex h-10 items-center gap-1.5 rounded-[8px] border-2 px-3 text-[12px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
           isActive
-            ? "border-transparent bg-[var(--track-accent)]/10 text-[var(--track-accent-text)] hover:bg-[var(--track-accent)]/20"
-            : "border-dashed border-[var(--track-border)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:text-white"
+            ? "border-[var(--track-accent-soft)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)] hover:bg-[var(--track-accent)]/20"
+            : "border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
         }`}
         data-testid={testId ?? `filter-${label.toLowerCase()}`}
         onClick={() => setOpen(!open)}
+        style={{ transitionTimingFunction: "var(--ease-press)" }}
         type="button"
       >
         <span>{isActive ? selectedLabel : label}</span>

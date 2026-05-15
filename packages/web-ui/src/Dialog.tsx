@@ -1,5 +1,7 @@
 import { type ReactElement, type ReactNode, useEffect } from "react";
 
+import { IconButton } from "./IconButton.tsx";
+
 // ---------------------------------------------------------------------------
 // Dialog — full-screen backdrop + centered card
 // ---------------------------------------------------------------------------
@@ -49,7 +51,7 @@ export function Dialog({
     >
       <div
         aria-modal="true"
-        className={`w-full ${width} max-h-[calc(100vh-80px)] overflow-y-auto rounded-[8px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] px-5 pb-5 pt-4 shadow-[0_18px_40px_var(--track-shadow-modal)]`}
+        className={`w-full ${width} max-h-[calc(100vh-80px)] overflow-y-auto rounded-[18px] border-2 border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] px-5 pb-5 pt-4 shadow-[var(--track-depth-shadow-rest)]`}
         data-testid={testId}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
@@ -75,14 +77,9 @@ export function DialogHeader({ navigation, onClose, title }: DialogHeaderProps):
     <>
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-[14px] font-semibold text-white">{title}</h2>
-        <button
-          aria-label="Close dialog"
-          className="text-[20px] leading-none text-[var(--track-text-muted)] transition hover:text-white"
-          onClick={onClose}
-          type="button"
-        >
+        <IconButton aria-label="Close dialog" onClick={onClose} size="sm">
           ×
-        </button>
+        </IconButton>
       </div>
       {navigation && <div className="mt-3">{navigation}</div>}
     </>

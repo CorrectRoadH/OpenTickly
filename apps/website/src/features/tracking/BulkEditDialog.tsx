@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AppCheckbox } from "@opentickly/web-ui";
+import { AppCheckbox, AppSwitch } from "@opentickly/web-ui";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
@@ -196,26 +196,16 @@ export function BulkEditDialog({
 
         <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5">
           <span className="text-[12px] text-white">{t("billable")}</span>
-          <button
+          <AppSwitch
             aria-label={billable ? t("disableBillable") : t("enableBillable")}
-            className={`relative h-5 w-9 rounded-full transition ${
-              billable ? "bg-[var(--track-accent)]" : "bg-[var(--track-control-disabled)]"
-            }`}
+            checked={billable}
             data-testid="bulk-edit-billable-toggle"
-            onClick={() => {
+            onChange={() => {
               setBillable((prev) => !prev);
               setBillableTouched(true);
             }}
-            role="switch"
-            aria-checked={billable}
-            type="button"
-          >
-            <span
-              className={`absolute top-0.5 size-4 rounded-full bg-white transition-transform ${
-                billable ? "translate-x-[18px]" : "translate-x-0.5"
-              }`}
-            />
-          </button>
+            size="sm"
+          />
         </div>
       </div>
     </ModalDialog>

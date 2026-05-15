@@ -142,7 +142,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       data-testid="app-shell"
     >
       {/* Mobile top bar -- sticky at viewport top, visible below lg */}
-      <div className="sticky top-0 z-40 flex h-[56px] items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 lg:hidden">
+      <div className="sticky top-0 z-40 flex h-[56px] items-center gap-3 border-b-2 border-[var(--track-border)] bg-[var(--track-panel)] px-4 shadow-[0_5px_0_0_var(--track-depth-border)] lg:hidden">
         <button
           aria-label={t("toggleMenu")}
           className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/6 hover:text-white"
@@ -167,7 +167,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             role="button"
             tabIndex={-1}
           />
-          <aside className="relative z-10 flex h-full w-[226px] flex-col overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)]">
+          <aside className="relative z-10 flex h-full w-[226px] flex-col overflow-hidden bg-[var(--track-panel)] shadow-[5px_0_0_0_var(--track-depth-border)]">
             <div className="shrink-0 overflow-x-clip px-[6px] pb-[5px] pt-2">
               <WorkspaceSwitcher {...workspaceSwitcherProps} />
             </div>
@@ -177,8 +177,8 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       ) : null}
 
       {/* Desktop sidebar -- fixed, stays in place during window scroll */}
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
-        <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[5px_0_0_0_var(--track-depth-border)] lg:flex">
+        <div className="flex w-[47px] flex-col items-center justify-between border-r-2 border-[var(--track-border)] bg-black py-2">
           <BrandRailMark />
           <div className="space-y-1">
             <ProfileMenuButton
@@ -230,7 +230,7 @@ function ProfileMenuButton({
     <>
       <Dropdown
         placement="right-bottom"
-        panelClassName="w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
+        panelClassName="w-[300px] rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]"
         trigger={
           <button
             aria-label={t("profileMenu")}
