@@ -1942,7 +1942,7 @@ test.describe("Date range picker in list view", () => {
     await expect(listView.locator("text=Old entry one week ago")).toBeVisible();
   });
 
-  test("list view uses a forced viewport scrollbar below the timer header", async ({ page }) => {
+  test("timer views use the page scrollbar without an internal list scroller", async ({ page }) => {
     const email = `timer-list-scrollbar-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -1968,32 +1968,22 @@ test.describe("Date range picker in list view", () => {
     const listView = page.getByTestId("timer-list-view");
     await expect(listView.locator("text=Scrollbar regression entry")).toBeVisible();
 
-    const scroller = page.getByTestId("timer-list-scrollarea");
-    await expect(scroller).toBeVisible();
+    await expect(page.getByTestId("timer-list-scrollarea")).toHaveCount(0);
 
-    const scrollMetrics = await scroller.evaluate((node) => {
-      const header = document.querySelector<HTMLElement>(
-        '[data-testid="tracking-timer-page"] > header',
-      );
-      if (!header) {
-        throw new Error("Missing list scroller or timer header");
-      }
-
-      const style = window.getComputedStyle(node);
-      const trackStyle = window.getComputedStyle(node, "::-webkit-scrollbar-track");
+    const listMetrics = await page.evaluate(() => {
+      const style = window.getComputedStyle(document.documentElement);
       return {
-        expectedHeight: window.innerHeight - header.getBoundingClientRect().height,
-        height: node.getBoundingClientRect().height,
-        overflowY: style.overflowY,
         scrollbarGutter: style.scrollbarGutter,
-        scrollbarTrackBackground: trackStyle.backgroundColor,
+        viewportWidth: document.documentElement.clientWidth,
       };
     });
 
-    expect(scrollMetrics.overflowY).toBe("scroll");
-    expect(scrollMetrics.scrollbarGutter).toContain("stable");
-    expect(scrollMetrics.scrollbarTrackBackground).not.toBe("rgba(0, 0, 0, 0)");
-    expect(scrollMetrics.scrollbarTrackBackground).not.toBe("transparent");
-    expect(Math.abs(scrollMetrics.height - scrollMetrics.expectedHeight)).toBeLessThanOrEqual(2);
+    await activateTimerView(page, "Timesheet", "timer-timesheet-view");
+    const timesheetMetrics = await page.evaluate(() => ({
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+
+    expect(listMetrics.scrollbarGutter).toContain("stable");
+    expect(timesheetMetrics.viewportWidth).toBe(listMetrics.viewportWidth);
   });
 });
