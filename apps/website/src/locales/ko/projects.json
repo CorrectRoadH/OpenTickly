@@ -52,6 +52,8 @@
   "removeTemplate": "템플릿 해제",
   "cancel": "취소",
   "noProjectsMatchFilters": "필터와 일치하는 프로젝트가 없습니다.",
+  "noClientsFound": "클라이언트를 찾을 수 없습니다.",
+  "clearAll": "전체 지우기",
   "member": "멤버",
   "billable": "청구 가능",
   "nonBillable": "청구 불가",

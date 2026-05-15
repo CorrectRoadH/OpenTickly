@@ -51,6 +51,8 @@
   "removeTemplate": "取消模板",
   "cancel": "取消",
   "noProjectsMatchFilters": "没有项目符合您的筛选条件。",
+  "noClientsFound": "未找到客户。",
+  "clearAll": "全部清除",
   "member": "成员",
   "billable": "可计费",
   "nonBillable": "不可计费",

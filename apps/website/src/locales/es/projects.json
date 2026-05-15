@@ -52,6 +52,8 @@
   "removeTemplate": "Eliminar plantilla",
   "cancel": "Cancelar",
   "noProjectsMatchFilters": "Ningún proyecto coincide con tus filtros.",
+  "noClientsFound": "No se encontraron clientes.",
+  "clearAll": "Limpiar todo",
   "member": "Miembro",
   "billable": "Facturable",
   "nonBillable": "No facturable",

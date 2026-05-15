@@ -432,6 +432,8 @@ function ReportsFilterBar({
         weekStartsOn={weekStartsOn}
       />
       <CheckboxFilterDropdown
+        clearLabel={t("clearAll")}
+        emptyMessage={t("noMembersFound")}
         label={t("member")}
         onClear={() => state.setMemberFilter([])}
         onToggle={(key: string) =>
@@ -446,6 +448,8 @@ function ReportsFilterBar({
         testId="reports-filter-member"
       />
       <CheckboxFilterDropdown
+        clearLabel={t("clearAll")}
+        emptyMessage={t("noClientsFound")}
         label={t("client")}
         onClear={() => state.setClientFilter([])}
         onToggle={(key: string) =>
@@ -472,6 +476,8 @@ function ReportsFilterBar({
         selected={new Set(state.filters.projectIds)}
       />
       <CheckboxFilterDropdown
+        clearLabel={t("clearAll")}
+        emptyMessage={t("noTagsFound")}
         label={t("tag")}
         onClear={() => state.updateFilters({ tagIds: [] })}
         onToggle={(key: number) =>

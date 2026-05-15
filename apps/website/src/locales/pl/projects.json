@@ -52,6 +52,8 @@
   "removeTemplate": "Usuń szablon",
   "cancel": "Anuluj",
   "noProjectsMatchFilters": "Żaden projekt nie pasuje do filtrów.",
+  "noClientsFound": "Nie znaleziono klientów.",
+  "clearAll": "Wyczyść wszystko",
   "member": "Członek",
   "billable": "Płatne",
   "nonBillable": "Niepłatne",

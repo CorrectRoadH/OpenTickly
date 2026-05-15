@@ -52,6 +52,8 @@
   "removeTemplate": "Retirer le modèle",
   "cancel": "Annuler",
   "noProjectsMatchFilters": "Aucun projet ne correspond à vos filtres.",
+  "noClientsFound": "Aucun client trouvé.",
+  "clearAll": "Tout effacer",
   "member": "Membre",
   "billable": "Facturable",
   "nonBillable": "Non facturable",

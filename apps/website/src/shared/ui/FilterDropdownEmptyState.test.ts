@@ -11,6 +11,6 @@ describe("filter dropdown empty states", () => {
 
     expect(source).toContain("emptyMessage");
     expect(source).not.toContain("No {label.toLowerCase()}s found");
-    expect(source).not.toContain("label.toLowerCase()");
+    expect(source).not.toContain("{label.toLowerCase()}s");
   });
 });

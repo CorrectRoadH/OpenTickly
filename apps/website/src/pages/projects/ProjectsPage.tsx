@@ -335,6 +335,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
         <span>{t("filters")}</span>
         <CheckboxFilterDropdown
+          clearLabel={t("clearAll")}
+          emptyMessage={t("noClientsFound")}
           label={t("client")}
           onClear={() => filterDispatch({ type: "CLEAR_CLIENT_IDS" })}
           onToggle={(id: number) => filterDispatch({ type: "TOGGLE_CLIENT_ID", id })}
@@ -343,6 +345,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           testId="projects-filter-client"
         />
         <CheckboxFilterDropdown
+          clearLabel={t("clearAll")}
+          emptyMessage={t("noMatchingWorkspaceMembers")}
           label={t("member")}
           onClear={() => filterDispatch({ type: "CLEAR_MEMBER_IDS" })}
           onToggle={(id: number) => filterDispatch({ type: "TOGGLE_MEMBER_ID", id })}

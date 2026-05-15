@@ -9,6 +9,8 @@ type CheckboxFilterOption<T extends string | number> = {
 };
 
 type CheckboxFilterDropdownProps<T extends string | number> = {
+  clearLabel: string;
+  emptyMessage: string;
   label: string;
   onClear: () => void;
   onToggle: (key: T) => void;
@@ -18,6 +20,8 @@ type CheckboxFilterDropdownProps<T extends string | number> = {
 };
 
 export function CheckboxFilterDropdown<T extends string | number>({
+  clearLabel,
+  emptyMessage,
   label,
   onClear,
   onToggle,
@@ -82,15 +86,13 @@ export function CheckboxFilterDropdown<T extends string | number>({
                 onClick={onClear}
                 type="button"
               >
-                Clear all
+                {clearLabel}
               </button>
             </div>
           ) : null}
           <div className="max-h-[240px] overflow-y-auto px-2 py-1">
             {options.length === 0 ? (
-              <p className="px-3 py-3 text-[12px] text-[var(--track-text-muted)]">
-                No {label.toLowerCase()}s found
-              </p>
+              <p className="px-3 py-3 text-[12px] text-[var(--track-text-muted)]">{emptyMessage}</p>
             ) : (
               options.map((option) => {
                 const checked = selected.has(option.key);

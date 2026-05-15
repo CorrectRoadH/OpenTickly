@@ -52,6 +52,8 @@
   "removeTemplate": "Remove template",
   "cancel": "Cancel",
   "noProjectsMatchFilters": "No projects match your filters.",
+  "noClientsFound": "No clients found.",
+  "clearAll": "Clear all",
   "member": "Member",
   "billable": "Billable",
   "nonBillable": "Non-billable",
