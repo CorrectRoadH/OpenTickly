@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
+import { IconButton } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { LiveDuration } from "../../features/tracking/LiveDuration.tsx";
@@ -36,14 +37,13 @@ export function MobileTimeEntryRow({
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 transition active:bg-white/[0.03]">
-      <button
+      <IconButton
         aria-label={t("continueTimeEntry", { description })}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:border-[var(--track-accent)] hover:text-[var(--track-accent)] active:scale-90 active:border-[var(--track-accent)] active:text-[var(--track-accent)]"
         onClick={() => onContinue(entry)}
-        type="button"
+        size="lg"
       >
         <PlayIcon className="size-3.5" />
-      </button>
+      </IconButton>
       <button
         aria-label={t("editTimeEntry", { description })}
         className="min-w-0 flex-1 text-left"

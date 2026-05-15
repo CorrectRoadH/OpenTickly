@@ -7,6 +7,7 @@ type AppInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
   inputClassName?: string;
   leadingIcon?: ReactNode;
   size?: AppInputSize;
+  trailingSlot?: ReactNode;
 };
 
 const wrapperBase =
@@ -23,7 +24,7 @@ const inputSizeClass: Record<AppInputSize, string> = {
 };
 
 export const AppInput = forwardRef<HTMLInputElement, AppInputProps>(function AppInput(
-  { className = "", inputClassName = "", leadingIcon, size = "default", ...props },
+  { className = "", inputClassName = "", leadingIcon, size = "default", trailingSlot, ...props },
   ref,
 ) {
   return (
@@ -36,6 +37,7 @@ export const AppInput = forwardRef<HTMLInputElement, AppInputProps>(function App
         className={`w-full min-w-0 bg-transparent text-white outline-none placeholder:text-[var(--track-control-placeholder)] ${inputSizeClass[size]} ${inputClassName}`.trim()}
         ref={ref}
       />
+      {trailingSlot ? <span className="shrink-0">{trailingSlot}</span> : null}
     </label>
   );
 });

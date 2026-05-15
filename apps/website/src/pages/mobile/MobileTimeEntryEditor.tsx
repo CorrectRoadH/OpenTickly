@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useState } from "react";
+import { AppButton, AppInput, AppSwitch } from "@opentickly/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -19,8 +20,8 @@ import {
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { Check, ChevronRight } from "lucide-react";
-import { PinIcon, TrashIcon } from "../../shared/ui/icons.tsx";
+import { Check } from "lucide-react";
+import { ChevronRightIcon, PinIcon, TrashIcon } from "../../shared/ui/icons.tsx";
 import { MobilePickerOverlay } from "./MobilePickerOverlay.tsx";
 import { MobileTimePicker } from "./MobileTimePicker.tsx";
 
@@ -332,14 +333,15 @@ export function MobileTimeEntryEditor({
 
       {/* Header */}
       <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--track-border)] px-2">
-        <button
+        <AppButton
           aria-label={t("cancelEditing")}
-          className="flex h-11 items-center rounded-full px-3 text-[14px] text-[var(--track-text-muted)] transition active:bg-white/5"
+          className="h-9 px-3"
           onClick={onClose}
-          type="button"
+          size="sm"
+          variant="ghost"
         >
           {t("cancel")}
-        </button>
+        </AppButton>
         <div className="flex items-center gap-2">
           <span className="text-[14px] font-semibold text-white">{t("editEntry")}</span>
           {isRunning ? (
@@ -349,25 +351,27 @@ export function MobileTimeEntryEditor({
             </span>
           ) : null}
         </div>
-        <button
+        <AppButton
           aria-label={t("saveChanges")}
-          className="flex h-11 items-center rounded-full px-3 text-[14px] font-semibold text-[var(--track-accent)] transition active:bg-white/5 disabled:opacity-60"
+          className="h-9 px-3"
           disabled={updateMutation.isPending || invalidRange}
           onClick={() => handleSave()}
-          type="button"
+          size="sm"
+          variant="primary"
         >
           {updateMutation.isPending ? t("saving") : t("save")}
-        </button>
+        </AppButton>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Description */}
         <div className="border-b border-[var(--track-border)] px-4 py-3">
-          <input
+          <AppInput
             aria-label={t("timeEntryDescription")}
-            className="w-full bg-transparent text-[15px] text-white placeholder-[var(--track-text-muted)] outline-none"
+            className="border-transparent bg-transparent shadow-none focus-within:translate-y-0 focus-within:shadow-none"
             enterKeyHint="done"
+            inputClassName="text-[15px]"
             onChange={(e) => setDescription(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -403,7 +407,7 @@ export function MobileTimeEntryEditor({
             ) : (
               <span className="text-[14px] text-[var(--track-text-muted)]">{t("noProject")}</span>
             )}
-            <ChevronRight className="size-4 shrink-0 text-[var(--track-text-muted)]" />
+            <ChevronRightIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" />
           </button>
         </FieldRow>
 
@@ -418,28 +422,18 @@ export function MobileTimeEntryEditor({
             <span className="truncate text-[14px] text-white">
               {selectedTagNames || t("noTags")}
             </span>
-            <ChevronRight className="size-4 shrink-0 text-[var(--track-text-muted)]" />
+            <ChevronRightIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" />
           </button>
         </FieldRow>
 
         {/* Billable */}
         <FieldRow label={t("billable")}>
-          <button
-            aria-checked={billable}
+          <AppSwitch
             aria-label={t("billable")}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-              billable ? "bg-[var(--track-accent)]" : "bg-[var(--track-border)]"
-            }`}
-            onClick={() => setBillable((v) => !v)}
-            role="switch"
-            type="button"
-          >
-            <span
-              className={`absolute top-[2px] block size-5 rounded-full bg-white shadow transition-transform ${
-                billable ? "translate-x-[22px]" : "translate-x-[2px]"
-              }`}
-            />
-          </button>
+            checked={billable}
+            onChange={setBillable}
+            size="sm"
+          />
         </FieldRow>
 
         {/* Time range */}
@@ -490,16 +484,17 @@ export function MobileTimeEntryEditor({
 
         {/* Delete */}
         <div className="px-4 py-4">
-          <button
+          <AppButton
             aria-label={t("deleteThisTimeEntry")}
-            className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-[var(--track-danger-border-muted)] py-3 text-[14px] text-[var(--track-danger-text)] transition hover:bg-[var(--track-danger-surface-muted)] active:scale-[0.98] active:bg-[var(--track-danger-surface-muted)]"
+            className="h-11 w-full"
+            danger
             disabled={deleteMutation.isPending}
             onClick={() => handleDelete()}
-            type="button"
+            variant="secondary"
           >
             <TrashIcon className="size-4" />
             {deleteMutation.isPending ? t("deletingEntry") : t("deleteEntry")}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>

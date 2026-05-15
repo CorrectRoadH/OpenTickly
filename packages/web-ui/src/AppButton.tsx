@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 export type AppButtonSize = "default" | "sm";
 export type AppButtonVariant = "ghost" | "primary" | "secondary";
@@ -10,14 +10,15 @@ type AppButtonStyleProps = {
   variant?: AppButtonVariant;
 };
 
-type AppButtonProps = AppButtonStyleProps & {
-  children?: ReactNode;
-  "data-testid"?: string;
-  disabled?: boolean;
-  form?: string;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  type?: "button" | "submit";
-};
+type AppButtonProps = AppButtonStyleProps &
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "type"> & {
+    children?: ReactNode;
+    "data-testid"?: string;
+    disabled?: boolean;
+    form?: string;
+    onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    type?: "button" | "submit";
+  };
 
 type AppLinkButtonProps = AppButtonStyleProps &
   AnchorHTMLAttributes<HTMLAnchorElement> & {
@@ -71,17 +72,20 @@ export function AppButton({
   form,
   onClick,
   size = "default",
+  style,
   type = "button",
   variant = "primary",
+  ...props
 }: AppButtonProps) {
   return (
     <button
+      {...props}
       className={getAppButtonClassName({ className, danger, size, variant })}
       data-testid={testId}
       disabled={disabled}
       form={form}
       onClick={onClick}
-      style={{ transitionTimingFunction: "var(--ease-press)" }}
+      style={{ ...style, transitionTimingFunction: "var(--ease-press)" }}
       type={type}
     >
       {children}

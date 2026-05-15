@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useEffect, useState } from "react";
+import { IconButton } from "@opentickly/web-ui";
 import { X } from "lucide-react";
 
 const DISMISSED_KEY = "pwa-install-banner-dismissed";
@@ -46,14 +47,14 @@ export function PwaInstallBanner(): ReactElement | null {
       <div className="min-w-0 flex-1 text-[13px] leading-snug text-[var(--track-text)]">
         {platform === "ios" ? <p>{t("pwaIos")}</p> : <p>{t("pwaAndroid")}</p>}
       </div>
-      <button
+      <IconButton
         aria-label={t("closeBanner")}
-        className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition active:bg-white/5"
+        className="-my-1 border-0 bg-transparent shadow-none hover:shadow-none active:shadow-none"
         onClick={dismiss}
-        type="button"
+        size="lg"
       >
         <X className="size-4" />
-      </button>
+      </IconButton>
     </div>
   );
 }

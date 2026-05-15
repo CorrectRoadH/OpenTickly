@@ -1,5 +1,6 @@
 import { type ReactElement, useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { IconButton } from "@opentickly/web-ui";
 
 import { X } from "lucide-react";
 
@@ -53,14 +54,14 @@ export function MobileTimePicker({
 
         {/* Header */}
         <div className="flex h-[52px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] px-2">
-          <button
+          <IconButton
             aria-label={t("closePickerLabel", { name: title.toLowerCase() })}
-            className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition active:bg-white/5"
+            className="size-11"
             onClick={onClose}
-            type="button"
+            size="lg"
           >
             <X className="size-5" />
-          </button>
+          </IconButton>
           <span className="flex-1 text-[14px] font-semibold text-white">{title}</span>
         </div>
 

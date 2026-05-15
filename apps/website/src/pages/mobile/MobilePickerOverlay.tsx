@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AppInput, IconButton } from "@opentickly/web-ui";
 
 import { Search, X } from "lucide-react";
 
@@ -25,26 +26,24 @@ export function MobilePickerOverlay({
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="flex h-[52px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] px-2">
-        <button
+        <IconButton
           aria-label={t("closePickerLabel", { name: title.toLowerCase() })}
-          className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition active:bg-white/5"
+          className="size-11"
           onClick={onClose}
-          type="button"
+          size="lg"
         >
           <X className="size-5" />
-        </button>
+        </IconButton>
         <span className="flex-1 text-[14px] font-semibold text-white">{title}</span>
       </div>
       <div className="border-b border-[var(--track-border)] px-4 py-2">
-        <div className="flex items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2">
-          <Search className="size-4 shrink-0 text-[var(--track-text-muted)]" />
-          <input
-            className="min-w-0 flex-1 bg-transparent text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none"
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={searchPlaceholder ?? t("searchPlaceholder", { name: title.toLowerCase() })}
-            value={search}
-          />
-        </div>
+        <AppInput
+          className="rounded-[8px] border"
+          leadingIcon={<Search className="size-4" />}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={searchPlaceholder ?? t("searchPlaceholder", { name: title.toLowerCase() })}
+          value={search}
+        />
       </div>
       <div className="flex-1 overflow-y-auto">{children(search)}</div>
     </div>

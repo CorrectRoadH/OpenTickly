@@ -1,5 +1,6 @@
 /* @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -9,6 +10,7 @@ const mockUseSession = vi.fn();
 const mockUseUpdateTimeEntryMutation = vi.fn();
 const mockUseDeleteTimeEntryMutation = vi.fn();
 const mockUseProjectsQuery = vi.fn();
+const mockUseTasksQuery = vi.fn();
 const mockUseTagsQuery = vi.fn();
 
 vi.mock("react-i18next", () => ({
@@ -25,6 +27,51 @@ vi.mock("../../app/i18n.ts", () => ({
   },
 }));
 
+vi.mock("@opentickly/web-ui", () => ({
+  AppButton: ({
+    children,
+    danger: _danger,
+    size: _size,
+    variant: _variant,
+    ...props
+  }: ButtonHTMLAttributes<HTMLButtonElement> & {
+    danger?: boolean;
+    size?: string;
+    variant?: string;
+  }) => <button {...props}>{children}</button>,
+  AppInput: ({
+    inputClassName: _inputClassName,
+    leadingIcon: _leadingIcon,
+    trailingSlot,
+    ...props
+  }: InputHTMLAttributes<HTMLInputElement> & {
+    inputClassName?: string;
+    leadingIcon?: ReactNode;
+    trailingSlot?: ReactNode;
+  }) => (
+    <label>
+      <input {...props} />
+      {trailingSlot}
+    </label>
+  ),
+  AppSwitch: ({
+    checked,
+    onChange,
+    ...props
+  }: ButtonHTMLAttributes<HTMLButtonElement> & {
+    checked?: boolean;
+    onChange?: (checked: boolean) => void;
+  }) => (
+    <button
+      {...props}
+      aria-checked={checked}
+      onClick={() => onChange?.(!checked)}
+      role="switch"
+      type="button"
+    />
+  ),
+}));
+
 vi.mock("../../shared/session/session-context.tsx", () => ({
   useSession: () => mockUseSession(),
 }));
@@ -33,6 +80,7 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useUpdateTimeEntryMutation: () => mockUseUpdateTimeEntryMutation(),
   useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
   useProjectsQuery: (...args: unknown[]) => mockUseProjectsQuery(...args),
+  useTasksQuery: (...args: unknown[]) => mockUseTasksQuery(...args),
   useTagsQuery: (...args: unknown[]) => mockUseTagsQuery(...args),
 }));
 
@@ -69,6 +117,7 @@ describe("MobileTimeEntryEditor — modal closes instantly, mutation runs in bac
       user: { timezone: "UTC" },
     });
     mockUseProjectsQuery.mockReturnValue({ data: [] });
+    mockUseTasksQuery.mockReturnValue({ data: { data: [] } });
     mockUseTagsQuery.mockReturnValue({ data: [] });
   });
 
