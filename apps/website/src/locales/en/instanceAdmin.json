@@ -86,6 +86,8 @@
   "changelog": "Changelog",
   "announcements": "Announcements",
   "announcementLearnMore": "Learn more",
+  "warningAnnouncementToastDescription": "A new warning announcement is available.",
+  "criticalAnnouncementToastDescription": "A new critical announcement is available.",
   "releasedOn": "Released {{date}}",
   "welcomeToOpenTickly": "Welcome to OpenTickly",
   "welcomeDescription": "OpenTickly is an open-source, self-hosted time tracking platform compatible with Toggl Track. If you find it useful, consider starring us on GitHub — it helps others discover the project.",
