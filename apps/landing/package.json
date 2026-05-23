@@ -32,7 +32,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "catalog:",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "react-router-devtools": "^6.2.0",
     "serve": "^14.2.6",
