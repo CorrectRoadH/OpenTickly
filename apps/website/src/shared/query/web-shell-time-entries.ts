@@ -15,8 +15,19 @@ import { listRecentWorkspaceTimeEntrySuggestions } from "../api/web/index.ts";
 
 import { toTrackUtcString } from "./web-shell.ts";
 
-const timeEntriesQueryKey = (startDate?: string, endDate?: string, includeSharing?: boolean) =>
-  ["time-entries", startDate ?? null, endDate ?? null, includeSharing ?? false] as const;
+export const timeEntriesQueryKey = (
+  workspaceId: number,
+  startDate?: string,
+  endDate?: string,
+  includeSharing?: boolean,
+) =>
+  [
+    "time-entries",
+    workspaceId,
+    startDate ?? null,
+    endDate ?? null,
+    includeSharing ?? false,
+  ] as const;
 const currentTimeEntryQueryKey = ["current-time-entry"] as const;
 const recentTimeEntrySuggestionsQueryKey = (workspaceId: number) =>
   ["time-entry-suggestions", workspaceId] as const;
@@ -41,6 +52,7 @@ export function useTimeEntriesQuery(options: {
   endDate: string;
   includeSharing?: boolean;
   startDate: string;
+  workspaceId: number;
 }) {
   return useQuery({
     enabled: options.enabled ?? true,
@@ -55,7 +67,12 @@ export function useTimeEntriesQuery(options: {
           },
         }),
       ),
-    queryKey: timeEntriesQueryKey(options?.startDate, options?.endDate, options?.includeSharing),
+    queryKey: timeEntriesQueryKey(
+      options.workspaceId,
+      options.startDate,
+      options.endDate,
+      options.includeSharing,
+    ),
     refetchInterval: 30_000,
   });
 }

@@ -371,6 +371,7 @@ export function WorkspaceReportsPage({
             dateRange={state.dateRange}
             filters={state.filters}
             memberFilter={state.memberFilter}
+            workspaceId={workspaceId}
           />
         ) : tab === "workload" ? (
           <ReportsWorkloadView

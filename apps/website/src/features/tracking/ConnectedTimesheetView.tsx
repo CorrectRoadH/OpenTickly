@@ -36,6 +36,7 @@ export function ConnectedTimesheetView({
     enabled: false,
     endDate: lastWeekEnd,
     startDate: lastWeekStart,
+    workspaceId,
   });
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);

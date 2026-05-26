@@ -57,7 +57,7 @@ export function useTimeEntryViews(options: {
     today: new Date(),
   });
 
-  const timeEntriesQuery = useTimeEntriesQuery(queryRange);
+  const timeEntriesQuery = useTimeEntriesQuery({ ...queryRange, workspaceId });
   const recentTimeEntrySuggestionsQuery = useRecentTimeEntrySuggestionsQuery(workspaceId);
 
   const visibleEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);

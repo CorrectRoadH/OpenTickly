@@ -51,7 +51,10 @@ export function MobileShell(): ReactElement {
     start.setDate(start.getDate() - 7);
     return { startDate: start.toISOString(), endDate: end.toISOString() };
   })();
-  const recentEntriesQuery = useTimeEntriesQuery(recentEntriesDateRange);
+  const recentEntriesQuery = useTimeEntriesQuery({
+    ...recentEntriesDateRange,
+    workspaceId: session.currentWorkspace.id,
+  });
   const recentStoppedEntries = (() => {
     const entries = recentEntriesQuery.data ?? [];
     // Deduplicate by description+project, keep most recent, exclude running

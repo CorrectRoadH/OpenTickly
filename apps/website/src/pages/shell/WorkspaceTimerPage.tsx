@@ -40,6 +40,7 @@ import {
   useProjectsQuery,
   useStartTimeEntryMutation,
   useTagsQuery,
+  timeEntriesQueryKey,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { useTimerViewStore } from "../../features/tracking/store/timer-view-store.ts";
@@ -363,7 +364,7 @@ function EditorPortal({
     .sort((a, b) => Number(b.pinned) - Number(a.pinned));
   const tagsQuery = useTagsQuery(editorWorkspaceId);
   const editorTags = normalizeTags(tagsQuery.data);
-  const editorRecentEntries = queryClient.getQueryData(["time-entries", null, null, false]);
+  const editorRecentEntries = queryClient.getQueryData(timeEntriesQueryKey(editorWorkspaceId));
 
   if (!selectedEntry || !selectedEntryAnchor) return null;
 

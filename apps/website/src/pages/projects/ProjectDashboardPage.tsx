@@ -49,6 +49,7 @@ export function ProjectDashboardPage({
   const entriesQuery = useTimeEntriesQuery({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
+    workspaceId,
   });
 
   const filteredEntries = (() => {

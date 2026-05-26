@@ -8,6 +8,7 @@ import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 
 type ReportsDetailedViewProps = {
+  workspaceId: number;
   dateRange: {
     endDate: string;
     startDate: string;
@@ -64,12 +65,14 @@ export function ReportsDetailedView({
   dateRange,
   filters,
   memberFilter,
+  workspaceId,
 }: ReportsDetailedViewProps): ReactElement {
   const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const entriesQuery = useTimeEntriesQuery({
     endDate: dateRange.endDate,
     startDate: dateRange.startDate,
+    workspaceId,
   });
 
   const filteredEntries = (() => {

@@ -48,6 +48,7 @@ vi.mock("../api/public/web/index.ts", () => ({
 
 // Import after mocks
 const {
+  timeEntriesQueryKey,
   useStopTimeEntryMutation,
   useUpdateTimeEntryMutation,
   useStartTimeEntryMutation,
@@ -348,7 +349,7 @@ describe("Offline optimistic mutations", () => {
     const entry2 = makeTimeEntry({ id: 1002, description: "Entry 2", duration: 1800 });
 
     it("optimistically removes entry from time-entries list", async () => {
-      const listKey = ["time-entries", null, null, false];
+      const listKey = timeEntriesQueryKey(WORKSPACE_ID);
       queryClient.setQueryData(listKey, [entry1, entry2]);
       queryClient.setQueryData(["current-time-entry"], null);
 
@@ -392,7 +393,7 @@ describe("Offline optimistic mutations", () => {
     });
 
     it("rolls back on error when online", async () => {
-      const listKey = ["time-entries", null, null, false];
+      const listKey = timeEntriesQueryKey(WORKSPACE_ID);
       queryClient.setQueryData(listKey, [entry1, entry2]);
       queryClient.setQueryData(["current-time-entry"], null);
 
@@ -422,7 +423,7 @@ describe("Offline optimistic mutations", () => {
   describe("useCreateTimeEntryMutation", () => {
     it("optimistically adds entry to time-entries list", async () => {
       const existing = makeTimeEntry({ id: 1001, duration: 3600 });
-      const listKey = ["time-entries", null, null, false];
+      const listKey = timeEntriesQueryKey(WORKSPACE_ID);
       queryClient.setQueryData(listKey, [existing]);
       queryClient.setQueryData(["current-time-entry"], null);
 
@@ -448,7 +449,7 @@ describe("Offline optimistic mutations", () => {
     });
 
     it("rolls back on error when online", async () => {
-      const listKey = ["time-entries", null, null, false];
+      const listKey = timeEntriesQueryKey(WORKSPACE_ID);
       queryClient.setQueryData(listKey, []);
       queryClient.setQueryData(["current-time-entry"], null);
 
@@ -583,7 +584,7 @@ describe("Optimistic writes must land in the same synchronous tick", () => {
 
   it("Create prepends the optimistic entry to the list before mutate() returns", () => {
     const existing = makeTimeEntry({ id: 1001, duration: 3600 });
-    const listKey = ["time-entries", null, null, false];
+    const listKey = timeEntriesQueryKey(WORKSPACE_ID);
     queryClient.setQueryData(listKey, [existing]);
     const { result } = renderHook(() => useCreateTimeEntryMutation(WORKSPACE_ID), {
       wrapper: createWrapper(queryClient),
@@ -605,7 +606,7 @@ describe("Optimistic writes must land in the same synchronous tick", () => {
   it("Delete removes the entry from the list before mutate() returns", () => {
     const entry1 = makeTimeEntry({ id: 1001, description: "Entry 1" });
     const entry2 = makeTimeEntry({ id: 1002, description: "Entry 2" });
-    const listKey = ["time-entries", null, null, false];
+    const listKey = timeEntriesQueryKey(WORKSPACE_ID);
     queryClient.setQueryData(listKey, [entry1, entry2]);
     queryClient.setQueryData(["current-time-entry"], null);
     const { result } = renderHook(() => useDeleteTimeEntryMutation(), {

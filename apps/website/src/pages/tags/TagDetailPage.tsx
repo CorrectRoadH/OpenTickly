@@ -29,6 +29,7 @@ export function TagDetailPage({ tagId, workspaceId }: TagDetailPageProps): React
   const entriesQuery = useTimeEntriesQuery({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
+    workspaceId,
   });
 
   const tag = (tagsQuery.data as Array<{ id?: number; name?: string }> | undefined)?.find(

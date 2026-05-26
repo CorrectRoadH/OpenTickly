@@ -244,6 +244,8 @@ type ExportFormat = "csv" | "pdf";
 
 export function SettingsDataExport(): ReactElement {
   const { t } = useTranslation("settings");
+  const session = useSession();
+  const workspaceId = session.currentWorkspace.id;
   const [startDate, setStartDate] = useState(thirtyDaysAgoIso);
   const [endDate, setEndDate] = useState(todayIso);
   const [format, setFormat] = useState<ExportFormat>("csv");
@@ -252,6 +254,7 @@ export function SettingsDataExport(): ReactElement {
   const entriesQuery = useTimeEntriesQuery({
     endDate,
     startDate,
+    workspaceId,
   });
 
   const entryCount = (() => {

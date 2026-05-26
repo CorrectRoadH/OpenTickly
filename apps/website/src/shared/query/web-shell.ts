@@ -106,6 +106,7 @@ export {
 } from "./web-shell-profile.ts";
 
 export {
+  timeEntriesQueryKey,
   useTimeEntriesQuery,
   useCurrentTimeEntryQuery,
   useRecentTimeEntrySuggestionsQuery,
