@@ -349,8 +349,7 @@ func (c *cachedCatalogStore) GetProject(ctx context.Context, workspaceID int64, 
 }
 
 func (c *cachedCatalogStore) GetTag(ctx context.Context, workspaceID int64, tagID int64) (catalogapplication.TagView, bool, error) {
-	key := fmt.Sprintf("catalog:tag:%d:%d", workspaceID, tagID)
-	result, err := platform.CacheAside(c.rc, ctx, key, catalogItemTTL, func() (cachedCatalogTag, error) {
+	result, err := platform.CacheAside(c.rc, ctx, catalogTagKey(workspaceID, tagID), catalogItemTTL, func() (cachedCatalogTag, error) {
 		tag, ok, fetchErr := c.Store.GetTag(ctx, workspaceID, tagID)
 		return cachedCatalogTag{Tag: tag, Found: ok}, fetchErr
 	})
@@ -358,8 +357,7 @@ func (c *cachedCatalogStore) GetTag(ctx context.Context, workspaceID int64, tagI
 }
 
 func (c *cachedCatalogStore) GetClient(ctx context.Context, workspaceID int64, clientID int64) (catalogapplication.ClientView, bool, error) {
-	key := fmt.Sprintf("catalog:client:%d:%d", workspaceID, clientID)
-	result, err := platform.CacheAside(c.rc, ctx, key, catalogItemTTL, func() (cachedCatalogClient, error) {
+	result, err := platform.CacheAside(c.rc, ctx, catalogClientKey(workspaceID, clientID), catalogItemTTL, func() (cachedCatalogClient, error) {
 		client, ok, fetchErr := c.Store.GetClient(ctx, workspaceID, clientID)
 		return cachedCatalogClient{Client: client, Found: ok}, fetchErr
 	})
@@ -374,6 +372,32 @@ func (c *cachedCatalogStore) GetClient(ctx context.Context, workspaceID int64, c
 func (c *cachedCatalogStore) catalogInvalidateWorkspace(ctx context.Context, workspaceID int64) {
 	_ = workspaceID
 	_ = ctx
+}
+
+func catalogTagKey(workspaceID int64, tagID int64) string {
+	return fmt.Sprintf("catalog:tag:%d:%d", workspaceID, tagID)
+}
+
+func catalogClientKey(workspaceID int64, clientID int64) string {
+	return fmt.Sprintf("catalog:client:%d:%d", workspaceID, clientID)
+}
+
+func (c *cachedCatalogStore) invalidateCatalogTags(ctx context.Context, workspaceID int64, tagIDs []int64) {
+	keys := make([]string, 0, len(tagIDs)+1)
+	keys = append(keys, fmt.Sprintf("catalog:tags:%d", workspaceID))
+	for _, tagID := range tagIDs {
+		keys = append(keys, catalogTagKey(workspaceID, tagID))
+	}
+	_ = c.rc.Del(ctx, keys...)
+}
+
+func (c *cachedCatalogStore) invalidateCatalogClients(ctx context.Context, workspaceID int64, clientIDs []int64) {
+	keys := make([]string, 0, len(clientIDs)+1)
+	keys = append(keys, fmt.Sprintf("catalog:clients:%d", workspaceID))
+	for _, clientID := range clientIDs {
+		keys = append(keys, catalogClientKey(workspaceID, clientID))
+	}
+	_ = c.rc.Del(ctx, keys...)
 }
 
 func (c *cachedCatalogStore) CreateProject(ctx context.Context, cmd catalogapplication.CreateProjectCommand) (catalogapplication.ProjectView, error) {
@@ -409,7 +433,7 @@ func (c *cachedCatalogStore) CreateTag(ctx context.Context, cmd catalogapplicati
 func (c *cachedCatalogStore) UpdateTag(ctx context.Context, tag catalogapplication.TagView) error {
 	err := c.Store.UpdateTag(ctx, tag)
 	if err == nil {
-		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", tag.WorkspaceID), fmt.Sprintf("catalog:tag:%d:%d", tag.WorkspaceID, tag.ID))
+		c.invalidateCatalogTags(ctx, tag.WorkspaceID, []int64{tag.ID})
 	}
 	return err
 }
@@ -417,7 +441,7 @@ func (c *cachedCatalogStore) UpdateTag(ctx context.Context, tag catalogapplicati
 func (c *cachedCatalogStore) DeleteTag(ctx context.Context, workspaceID int64, tagID int64) error {
 	err := c.Store.DeleteTag(ctx, workspaceID, tagID)
 	if err == nil {
-		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", workspaceID), fmt.Sprintf("catalog:tag:%d:%d", workspaceID, tagID))
+		c.invalidateCatalogTags(ctx, workspaceID, []int64{tagID})
 	}
 	return err
 }
@@ -425,7 +449,7 @@ func (c *cachedCatalogStore) DeleteTag(ctx context.Context, workspaceID int64, t
 func (c *cachedCatalogStore) DeleteTags(ctx context.Context, workspaceID int64, tagIDs []int64) error {
 	err := c.Store.DeleteTags(ctx, workspaceID, tagIDs)
 	if err == nil {
-		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", workspaceID))
+		c.invalidateCatalogTags(ctx, workspaceID, tagIDs)
 	}
 	return err
 }
@@ -433,7 +457,7 @@ func (c *cachedCatalogStore) DeleteTags(ctx context.Context, workspaceID int64, 
 func (c *cachedCatalogStore) CreateClient(ctx context.Context, cmd catalogapplication.CreateClientCommand) (catalogapplication.ClientView, error) {
 	v, err := c.Store.CreateClient(ctx, cmd)
 	if err == nil {
-		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:clients:%d", cmd.WorkspaceID))
+		c.invalidateCatalogClients(ctx, cmd.WorkspaceID, nil)
 	}
 	return v, err
 }
@@ -441,7 +465,7 @@ func (c *cachedCatalogStore) CreateClient(ctx context.Context, cmd catalogapplic
 func (c *cachedCatalogStore) UpdateClient(ctx context.Context, client catalogapplication.ClientView) error {
 	err := c.Store.UpdateClient(ctx, client)
 	if err == nil {
-		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:clients:%d", client.WorkspaceID), fmt.Sprintf("catalog:client:%d:%d", client.WorkspaceID, client.ID))
+		c.invalidateCatalogClients(ctx, client.WorkspaceID, []int64{client.ID})
 	}
 	return err
 }
@@ -449,7 +473,7 @@ func (c *cachedCatalogStore) UpdateClient(ctx context.Context, client catalogapp
 func (c *cachedCatalogStore) DeleteClients(ctx context.Context, workspaceID int64, clientIDs []int64) error {
 	err := c.Store.DeleteClients(ctx, workspaceID, clientIDs)
 	if err == nil {
-		c.catalogInvalidateWorkspace(ctx, workspaceID)
+		c.invalidateCatalogClients(ctx, workspaceID, clientIDs)
 	}
 	return err
 }
@@ -473,7 +497,7 @@ func (c *cachedCatalogStore) SetProjectPinned(ctx context.Context, workspaceID i
 func (c *cachedCatalogStore) ArchiveClientAndProjects(ctx context.Context, workspaceID int64, clientID int64) ([]int64, error) {
 	ids, err := c.Store.ArchiveClientAndProjects(ctx, workspaceID, clientID)
 	if err == nil {
-		c.catalogInvalidateWorkspace(ctx, workspaceID)
+		c.invalidateCatalogClients(ctx, workspaceID, []int64{clientID})
 	}
 	return ids, err
 }
@@ -481,7 +505,7 @@ func (c *cachedCatalogStore) ArchiveClientAndProjects(ctx context.Context, works
 func (c *cachedCatalogStore) RestoreClientAndProjects(ctx context.Context, workspaceID int64, clientID int64, projectIDs []int64, restoreAll bool) error {
 	err := c.Store.RestoreClientAndProjects(ctx, workspaceID, clientID, projectIDs, restoreAll)
 	if err == nil {
-		c.catalogInvalidateWorkspace(ctx, workspaceID)
+		c.invalidateCatalogClients(ctx, workspaceID, []int64{clientID})
 	}
 	return err
 }
