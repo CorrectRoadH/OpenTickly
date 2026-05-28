@@ -31,6 +31,12 @@ dist-ssr
 example
 .agent
 .agents
+!.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/harness-lint/
+!.agents/skills/harness-lint/SKILL.md
 .claude
 .codex
 
@@ -53,3 +59,4 @@ research
 
 .playwright-mcp
 .mcp.json
+.harness/

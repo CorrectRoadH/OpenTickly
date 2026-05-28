@@ -1,0 +1,20 @@
+[packs.go]
+id = "go"
+source = "git"
+spec = "CorrectRoadH/harness-lint#packs/go"
+version = "11e82dc6f4be03bb3c3b6ebcbb033afe5af1891b"
+local_path = ".harness/packs/go/packs/go"
+
+[packs.python]
+id = "python"
+source = "git"
+spec = "CorrectRoadH/harness-lint#packs/python"
+version = "11e82dc6f4be03bb3c3b6ebcbb033afe5af1891b"
+local_path = ".harness/packs/python/packs/python"
+
+[packs.typescript]
+id = "typescript"
+source = "git"
+spec = "CorrectRoadH/harness-lint#packs/typescript"
+version = "11e82dc6f4be03bb3c3b6ebcbb033afe5af1891b"
+local_path = ".harness/packs/typescript/packs/typescript"
