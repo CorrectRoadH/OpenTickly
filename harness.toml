@@ -24,6 +24,7 @@ paths = [
     "apps/backend/internal/http/generated/**",
     "apps/update-worker/src/content.generated.ts",
     "packages/shared-contracts/src/generated/**",
+    "tests/python-sdk-integration/**",
 ]
 
 [registry]
