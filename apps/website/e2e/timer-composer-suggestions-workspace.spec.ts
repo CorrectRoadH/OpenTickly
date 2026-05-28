@@ -1,27 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createTimeEntryForWorkspace,
-  loginE2eUser,
-  pollSessionBootstrap,
-  registerE2eUser,
-} from "./fixtures/e2e-auth.ts";
+import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
-/**
- * Debug test to understand workspace scoping for suggestions.
- *
- * Problem: /me/time_entries returns entries from HOME workspace only,
- * but user might be on a different current workspace.
- */
-
-test.describe("Timer Composer Suggestions - Workspace Debug", () => {
+test.describe("Timer composer suggestions workspace scope", () => {
   test("home workspace entry should appear in suggestions", async ({ page }) => {
-    const email = `debug-home-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const email = `suggestions-home-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
     await registerE2eUser(page, test.info(), {
       email,
-      fullName: "Debug Home Workspace",
+      fullName: "Suggestions Home Workspace",
       password,
     });
 
@@ -44,16 +32,6 @@ test.describe("Timer Composer Suggestions - Workspace Debug", () => {
       workspaceId,
     });
 
-    // Get session info
-    const bootstrap = await pollSessionBootstrap(page);
-    console.log("=== HOME WORKSPACE TEST ===");
-    console.log("Current workspace ID from session:", bootstrap?.current_workspace_id);
-    console.log("Login returned workspaceId:", workspaceId);
-    console.log(
-      "Available workspaces:",
-      JSON.stringify(bootstrap?.workspaces?.map((w) => ({ id: w.id, name: w.name }))),
-    );
-
     // Navigate to timer page — reload ensures React Query fetches fresh data
     // including the entry created via API above
     await page.goto(new URL("/timer", page.url()).toString());
@@ -72,34 +50,5 @@ test.describe("Timer Composer Suggestions - Workspace Debug", () => {
     // UI assertion because the suggestions query may still be settling when
     // the dialog first appears.
     await expect(suggestionsDialog).toContainText("Home workspace entry");
-  });
-
-  test("check workspace switching scenario", async ({ page }) => {
-    const email = `debug-switch-${test.info().workerIndex}-${Date.now()}@example.com`;
-    const password = "secret-pass";
-
-    await registerE2eUser(page, test.info(), {
-      email,
-      fullName: "Debug Switch Workspace",
-      password,
-    });
-
-    await page.context().clearCookies();
-    const session = await loginE2eUser(page, test.info(), { email, password });
-    const workspaceId = session.currentWorkspaceId;
-
-    // Check how many workspaces this user has
-    const bootstrap = await pollSessionBootstrap(page);
-    console.log("=== WORKSPACE SWITCH TEST ===");
-    console.log("User's workspaces:", JSON.stringify(bootstrap?.workspaces));
-    console.log("Current (home) workspace:", workspaceId);
-
-    // If user only has 1 workspace, this test won't reproduce the issue
-    const workspaceCount = bootstrap?.workspaces?.length ?? 0;
-    console.log("Number of workspaces:", workspaceCount);
-
-    if (workspaceCount < 2) {
-      console.log("User only has 1 workspace - cannot test workspace switching issue");
-    }
   });
 });

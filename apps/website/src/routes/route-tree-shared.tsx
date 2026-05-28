@@ -1,6 +1,6 @@
 import { Navigate, useRouterState } from "@tanstack/react-router";
 import { LoaderCircle } from "lucide-react";
-import { lazy, useEffect, type ComponentType } from "react";
+import { lazy, useEffect, type ComponentType, type LazyExoticComponent } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -13,10 +13,10 @@ export const pageSpinner = (
   </div>
 );
 
-export function lazyNamed<T extends Record<string, ComponentType<any>>, K extends keyof T & string>(
-  factory: () => Promise<T>,
+export function lazyNamed<P extends object, K extends string>(
+  factory: () => Promise<Record<K, ComponentType<P>>>,
   name: K,
-) {
+): LazyExoticComponent<ComponentType<P>> {
   return lazy(() => factory().then((m) => ({ default: m[name] })));
 }
 

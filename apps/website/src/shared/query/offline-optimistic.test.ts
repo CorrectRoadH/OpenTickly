@@ -28,8 +28,12 @@ vi.mock("../api/public/track/index.ts", () => ({
 }));
 
 vi.mock("../api/web-client.ts", () => ({
-  unwrapWebApiResult: (p: Promise<unknown>) => p.then((r: any) => r?.data ?? r),
+  unwrapWebApiResult: (p: Promise<unknown>) => p.then((r) => (isResultData(r) ? r.data : r)),
 }));
+
+function isResultData(value: unknown): value is { data: unknown } {
+  return typeof value === "object" && value !== null && "data" in value;
+}
 
 vi.mock("../api/web-contract.ts", () => ({}));
 vi.mock("../api/generated/public-reports/types.gen.ts", () => ({}));

@@ -24,14 +24,29 @@ type StyledEvent = {
   };
 };
 
+type DayLayoutArgs = unknown;
+type DayLayoutFunction = (args: DayLayoutArgs) => StyledEvent[];
+
 // Vite's CJS interop may double-wrap the default export — resolve it
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function resolveDefault(mod: any): (args: any) => StyledEvent[] {
-  if (typeof mod === "function") return mod;
-  if (typeof mod?.default === "function") return mod.default;
+function resolveDefault(mod: unknown): DayLayoutFunction {
+  if (isDayLayoutFunction(mod)) return mod;
+  if (hasDefaultFunction(mod)) return mod.default;
   throw new Error("react-big-calendar overlap layout module could not be resolved");
 }
 const getDefaultOverlapLayout = resolveDefault(overlapModule);
+
+function isDayLayoutFunction(value: unknown): value is DayLayoutFunction {
+  return typeof value === "function";
+}
+
+function hasDefaultFunction(value: unknown): value is { default: DayLayoutFunction } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "default" in value &&
+    typeof value.default === "function"
+  );
+}
 
 /** Strict overlap: value is strictly inside (0, rangeEnd). */
 function strictlyInside(value: number, rangeEnd: number): boolean {
@@ -51,8 +66,7 @@ function maxFriendDepth(event: StyledEvent, depth: number, visited: StyledEvent[
   return max;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function calendarDayLayout(args: any): StyledEvent[] {
+export function calendarDayLayout(args: DayLayoutArgs): StyledEvent[] {
   // Step 1: run RBC's default overlap algorithm for initial top/height
   const items: StyledEvent[] = getDefaultOverlapLayout(args);
 
