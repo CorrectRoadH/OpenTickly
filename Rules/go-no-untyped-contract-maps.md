@@ -1,15 +1,15 @@
 ---
 id: local.go-no-untyped-contract-maps
-title: Avoid untyped Go contract maps
+title: Avoid untyped Go contract maps in API code and tests
 language: go
 level: warn
 status: warn
 tags: [local, go, typing, openapi]
 ---
 
-# Avoid untyped Go contract maps
+# Avoid untyped Go contract maps in API code and tests
 
-Production Go code should prefer OpenAPI-generated structs or explicit local structs over handwritten `map[string]any`, `map[any]any`, or `map[string]interface{}`. Keep dynamic maps at narrow adapter boundaries only when the external payload is inherently dictionary-shaped.
+Go API code and tests should prefer OpenAPI-generated structs or explicit local structs over handwritten `map[string]any`, `map[any]any`, or `map[string]interface{}`. Keep dynamic maps at narrow adapter boundaries only when the external payload is inherently dictionary-shaped.
 
 ```grit
 language go
