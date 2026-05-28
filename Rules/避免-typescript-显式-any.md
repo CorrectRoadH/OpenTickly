@@ -1,17 +1,17 @@
 ---
 id: typescript.no-explicit-any
-title: Avoid explicit any
+title: 避免 TypeScript 显式 any
 language: typescript
 level: warn
 status: warn
 tags: [typescript, typing]
 ---
 
-# Avoid explicit any
+# 避免 TypeScript 显式 any
 
-Prefer `unknown`, generics, discriminated unions, or domain types over `any`.
+优先使用 `unknown`、泛型、可辨识联合类型或领域类型，不要直接使用 `any`。
 
-This local override keeps the rule scoped to TypeScript type syntax. The upstream pack's bare-token pattern also matched Go's predeclared `any` alias.
+这个本地覆盖规则把检查范围收窄到 TypeScript 类型语法。上游 pack 的裸 token pattern 会同时匹配 Go 的预声明 `any` alias。
 
 ```grit
 language js

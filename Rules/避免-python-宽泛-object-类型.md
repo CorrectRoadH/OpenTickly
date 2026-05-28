@@ -1,17 +1,17 @@
 ---
 id: python.no-broad-object-type
-title: Avoid broad object types
+title: 避免 Python 宽泛 object 类型
 language: python
 level: warn
 status: warn
 tags: [python, typing]
 ---
 
-# Avoid broad object types
+# 避免 Python 宽泛 object 类型
 
-Prefer concrete models, explicit unions, protocols, or typed boundary objects. Use `object` only for true opaque interop boundaries.
+优先使用具体模型、显式联合类型、协议或类型化边界对象。只有真正不透明的互操作边界才使用 `object`。
 
-This local override keeps the rule scoped to Python annotation syntax. The upstream pack's bare-token pattern also matched TypeScript's `object` type.
+这个本地覆盖规则把检查范围收窄到 Python annotation 语法。上游 pack 的裸 token pattern 会同时匹配 TypeScript 的 `object` 类型。
 
 ```grit
 language python
