@@ -20,7 +20,7 @@
     "styletron-react": "^6.1.1"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
