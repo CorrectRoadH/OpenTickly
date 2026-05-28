@@ -3,14 +3,17 @@ package bootstrap
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
 
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 
-	"context"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/samber/lo"
 )
 
 func TestWorkspaceExportRoundTrip(t *testing.T) {
@@ -29,10 +32,10 @@ func TestWorkspaceExportRoundTrip(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 	t.Cleanup(func() { _ = app.Platform.Cache.FlushDB(context.Background()) })
 
-	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    uniqueEmail,
-		"fullname": "Export User",
-		"password": "secret1",
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", webapi.RegisterRequest{
+		Email:    openapi_types.Email(uniqueEmail),
+		Fullname: lo.ToPtr("Export User"),
+		Password: "secret1",
 	}, "")
 	if register.Code != http.StatusCreated {
 		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())

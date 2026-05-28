@@ -8,8 +8,16 @@ import (
 	"strconv"
 	"testing"
 
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+
+	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/samber/lo"
 )
+
+type createNamedObjectRequest struct {
+	Name string `json:"name"`
+}
 
 func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 	// This test uses hardcoded import data IDs that can conflict with existing data
@@ -35,10 +43,10 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 	t.Cleanup(func() { _ = app.Platform.Cache.FlushDB(context.Background()) })
 
-	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    uniqueEmail,
-		"fullname": "Import User",
-		"password": "secret1",
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", webapi.RegisterRequest{
+		Email:    openapi_types.Email(uniqueEmail),
+		Fullname: lo.ToPtr("Import User"),
+		Password: "secret1",
 	}, "")
 	if register.Code != http.StatusCreated {
 		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
@@ -271,10 +279,10 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 	t.Cleanup(func() { _ = app.Platform.Cache.FlushDB(context.Background()) })
 
-	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    uniqueEmail,
-		"fullname": "CSV Importer",
-		"password": "secret1",
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", webapi.RegisterRequest{
+		Email:    openapi_types.Email(uniqueEmail),
+		Fullname: lo.ToPtr("CSV Importer"),
+		Password: "secret1",
 	}, "")
 	if register.Code != http.StatusCreated {
 		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
@@ -295,7 +303,7 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/tags",
-		map[string]any{"name": "2 象限"},
+		createNamedObjectRequest{Name: "2 象限"},
 		authorization,
 	)
 	if createTag.Code != http.StatusOK {
@@ -307,7 +315,7 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/projects",
-		map[string]any{"name": "opentoggl"},
+		createNamedObjectRequest{Name: "opentoggl"},
 		authorization,
 	)
 	if createProject.Code != http.StatusOK {
