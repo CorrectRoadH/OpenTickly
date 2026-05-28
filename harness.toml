@@ -23,6 +23,7 @@ rules = ["typescript.no-var"]
 paths = [
     "apps/backend/internal/http/generated/**",
     "apps/update-worker/src/content.generated.ts",
+    "apps/website/src/shared/api/generated/**",
     "packages/shared-contracts/src/generated/**",
     "tests/python-sdk-integration/**",
 ]
