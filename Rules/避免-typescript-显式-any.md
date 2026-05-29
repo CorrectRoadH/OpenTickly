@@ -26,7 +26,7 @@ or {
 }
 ```
 
-## Bad
+## 反例
 
 ```ts
 function serialize(value: any) {
@@ -34,7 +34,7 @@ function serialize(value: any) {
 }
 ```
 
-## Good
+## 正例
 
 ```ts
 function serialize(value: UserEvent) {

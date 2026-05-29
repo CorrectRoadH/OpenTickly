@@ -23,14 +23,14 @@ or {
 }
 ```
 
-## Bad
+## 反例
 
 ```python
 def serialize(value: object) -> dict[str, object]:
     return {"value": value}
 ```
 
-## Good
+## 正例
 
 ```python
 def serialize(value: UserEvent) -> SerializedEvent:

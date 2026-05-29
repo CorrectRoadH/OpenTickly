@@ -1,28 +1,28 @@
 ---
 id: local.playwright-page-ready-gate
-title: Wait for page ready gate after navigation
+title: Playwright 导航后等待页面就绪门
 language: typescript
 level: warn
 status: draft
 tags: [local, typescript, playwright, e2e]
 ---
 
-# Wait for page ready gate after navigation
+# Playwright 导航后等待页面就绪门
 
-After `page.goto()` or `page.reload()`, wait for the page-level container `data-testid` before interacting with links, buttons, or route content. This protects tests from Suspense and loading overlays.
+在 `page.goto()` 或 `page.reload()` 之后，与链接、按钮或路由内容交互前，应先等待页面级容器的 `data-testid`。这可以避免测试受到 Suspense 和加载遮罩影响。
 
 ```grit
-// TODO: Add GritQL when multi-statement ordering checks are supported well enough to avoid false positives.
+// TODO: 等多语句顺序检查足够可靠、可以避免误报后，再补充 GritQL。
 ```
 
-## Bad
+## 反例
 
 ```ts
 await page.goto("/overview");
 await page.getByRole("link", { name: "Timer" }).click();
 ```
 
-## Good
+## 正例
 
 ```ts
 await page.goto("/overview");

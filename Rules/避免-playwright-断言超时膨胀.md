@@ -1,15 +1,15 @@
 ---
 id: local.playwright-no-inflated-assertion-timeouts
-title: Avoid inflated Playwright assertion timeouts
+title: 避免 Playwright 断言超时膨胀
 language: typescript
 level: warn
 status: warn
 tags: [local, typescript, playwright, e2e]
 ---
 
-# Avoid inflated Playwright assertion timeouts
+# 避免 Playwright 断言超时膨胀
 
-If Playwright's default 5s assertion timeout is not enough, fix the app readiness signal instead of raising locator assertion timeouts.
+如果 Playwright 默认 5 秒断言超时不够，应修复应用就绪信号，而不是提高 locator 断言超时时间。
 
 ```grit
 language js
@@ -21,13 +21,13 @@ or {
 }
 ```
 
-## Bad
+## 反例
 
 ```ts
 await expect(page.getByText("Loaded")).toBeVisible({ timeout: 10_000 });
 ```
 
-## Good
+## 正例
 
 ```ts
 await expect(page.getByTestId("workspace-overview-page")).toBeVisible();
