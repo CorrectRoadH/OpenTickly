@@ -5,27 +5,27 @@ packages:
 
 catalog:
   "@hey-api/client-fetch": ^0.13.1
-  "@hey-api/openapi-ts": 0.97.2
+  "@hey-api/openapi-ts": 0.97.3
   "@orama/tokenizers": ^3.1.18
   "@types/node": ^25
   "@types/react-big-calendar": ^1.16.3
   "@uidotdev/usehooks": ^2.4.1
   babel-plugin-react-compiler: ^1.0.0
-  date-fns: ^4.2.1
+  date-fns: ^4.3.0
   execa: ^9.6.1
-  i18next: ^26.2.0
+  i18next: ^26.3.0
   i18next-resources-to-backend: ^1.2.1
   immer: ^11.1.8
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.8
-  lucide-react: ^1.16.0
+  lucide-react: ^1.17.0
   motion: ^12.40.0
   polished: ^4.3.1
   react: ^18.3.1
   react-big-calendar: ^1.19.4
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.1.37
-  react-hook-form: ^7.76.0
+  react-hook-form: ^7.76.1
   react-i18next: ^17.0.8
   react-markdown: ^10.1.0
   sharp: ^0.34.5
@@ -41,7 +41,7 @@ catalog:
   workbox-precaching: ^7.4.1
   workbox-routing: ^7.4.1
   workbox-strategies: ^7.4.1
-  zustand: ^5.0.13
+  zustand: ^5.0.14
 
 catalogMode: prefer
 overrides:
