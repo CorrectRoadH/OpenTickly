@@ -11,6 +11,7 @@ local = ["Rules"]
 
 [packs]
 go = "github:CorrectRoadH/harness-lint@main#packs/go"
+go-concurrency = "github:CorrectRoadH/harness-lint@main#packs/go-concurrency"
 python = "github:CorrectRoadH/harness-lint@main#packs/python"
 typescript = "github:CorrectRoadH/harness-lint@main#packs/typescript"
 
