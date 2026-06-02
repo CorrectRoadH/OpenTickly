@@ -73,6 +73,25 @@ func TestArchivedClientDetailInvalidatesCachedClient(t *testing.T) {
 		t.Fatalf("expected client id, got %#v", clientBody)
 	}
 
+	warmClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(clientBody.ID),
+		nil,
+		authorization,
+	)
+	if warmClient.Code != http.StatusOK {
+		t.Fatalf("expected warm client detail status 200, got %d body=%s", warmClient.Code, warmClient.Body.String())
+	}
+	var activeClient struct {
+		Archived bool `json:"archived"`
+	}
+	mustDecodeJSON(t, warmClient.Body.Bytes(), &activeClient)
+	if activeClient.Archived {
+		t.Fatalf("expected pre-archive client detail to show archived=false, got body=%s", warmClient.Body.String())
+	}
+
 	archiveClient := performAuthorizedJSONRequest(
 		t,
 		app,
