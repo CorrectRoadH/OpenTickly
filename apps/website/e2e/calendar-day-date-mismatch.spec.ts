@@ -77,7 +77,7 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     // Switch to Calendar view
     await page.getByRole("radio", { name: "Calendar" }).click();
     const calendarView = page.getByTestId("timer-calendar-view");
-    await expect(calendarView).toBeVisible({ timeout: 10_000 });
+    await expect(calendarView).toBeVisible();
 
     // Switch to Day view
     await page.getByTestId("calendar-subview-select").click();
@@ -88,7 +88,7 @@ test.describe("Calendar: selected date matches displayed entries", () => {
       .locator(".rbc-time-content")
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: todayDesc });
-    await expect(todayEntry).toBeVisible({ timeout: 10_000 });
+    await expect(todayEntry).toBeVisible();
 
     // Navigate forward one day (tomorrow)
     // In day mode, the aria-label for the previous/next buttons uses the
@@ -111,7 +111,7 @@ test.describe("Calendar: selected date matches displayed entries", () => {
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: todayDesc });
 
-    await expect(tomorrowEntry).toBeVisible({ timeout: 10_000 });
+    await expect(tomorrowEntry).toBeVisible();
     await expect(todayEntryAfterNav).toHaveCount(0);
   });
 
@@ -168,14 +168,14 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     // Switch to Calendar view
     await page.getByRole("radio", { name: "Calendar" }).click();
     const calendarView = page.getByTestId("timer-calendar-view");
-    await expect(calendarView).toBeVisible({ timeout: 10_000 });
+    await expect(calendarView).toBeVisible();
 
     // Monday entry should be visible in week view (default)
     const monEntry = calendarView
       .locator(".rbc-time-content")
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: monDesc });
-    await expect(monEntry).toBeVisible({ timeout: 10_000 });
+    await expect(monEntry).toBeVisible();
 
     // Switch to 5-day view — both entries are Mon & Tue, always within Mon-Fri
     await page.getByTestId("calendar-subview-select").click();
@@ -203,8 +203,8 @@ test.describe("Calendar: selected date matches displayed entries", () => {
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: tueDesc });
 
-    await expect(monEntryAfterNav).toHaveCount(0, { timeout: 10_000 });
-    await expect(tueEntryAfterNav).toHaveCount(0, { timeout: 10_000 });
+    await expect(monEntryAfterNav).toHaveCount(0);
+    await expect(tueEntryAfterNav).toHaveCount(0);
   });
 
   test("Day view: calendar date header matches the navigated date", async ({ page }) => {
@@ -225,7 +225,7 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     // Switch to Calendar > Day view
     await page.getByRole("radio", { name: "Calendar" }).click();
     const calendarView = page.getByTestId("timer-calendar-view");
-    await expect(calendarView).toBeVisible({ timeout: 10_000 });
+    await expect(calendarView).toBeVisible();
 
     // Switch to day view — data may already be cached, so no waitForResponse.
     await page.getByTestId("calendar-subview-select").click();

@@ -64,7 +64,7 @@ test.describe("Split time entry", () => {
 
     // Click the entry to open the editor
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await entry.scrollIntoViewIfNeeded();
@@ -87,7 +87,7 @@ test.describe("Split time entry", () => {
     await page.getByTestId("split-confirm-button").click();
 
     // Wait for dialog to close
-    await expect(splitDialog).not.toBeVisible({ timeout: 10_000 });
+    await expect(splitDialog).not.toBeVisible();
 
     // Verify via API that two entries now exist with this description
     await expect
@@ -115,7 +115,7 @@ test.describe("Split time entry", () => {
     const entryLocator = page
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: description });
-    await expect(entryLocator).toBeVisible({ timeout: 10_000 });
+    await expect(entryLocator).toBeVisible();
 
     // Scroll to top and wait for the entry to be stable before interacting
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
@@ -148,7 +148,7 @@ test.describe("Split time entry", () => {
     await setupUserWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Split");
 
@@ -158,7 +158,7 @@ test.describe("Split time entry", () => {
 
     // Confirm split
     await page.getByTestId("split-confirm-button").click();
-    await expect(splitDialog).not.toBeVisible({ timeout: 10_000 });
+    await expect(splitDialog).not.toBeVisible();
 
     // Verify via API that two entries now exist with this description
     await expect

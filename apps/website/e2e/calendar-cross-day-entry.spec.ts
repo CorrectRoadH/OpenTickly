@@ -81,7 +81,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     await page.getByRole("radio", { name: "Calendar" }).click();
 
     const calendarView = page.getByTestId("timer-calendar-view");
-    await expect(calendarView).toBeVisible({ timeout: 10_000 });
+    await expect(calendarView).toBeVisible();
 
     const allDayEntry = calendarView
       .locator(".rbc-allday-cell")
@@ -106,7 +106,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       // Week boundary: only the Day 1 segment (start date) is in this week.
       // The API filters by start_time, so Day 2's segment won't appear in a
       // different week's fetch. Verify we at least see the Day 1 block.
-      await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
+      await expect(timeGridEntries).toHaveCount(1);
       await expect(timeGridEntries.first()).toBeVisible();
     }
   });
@@ -146,7 +146,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     await page.getByRole("radio", { name: "Calendar" }).click();
 
     const calendarView = page.getByTestId("timer-calendar-view");
-    await expect(calendarView).toBeVisible({ timeout: 10_000 });
+    await expect(calendarView).toBeVisible();
 
     const timeGridEntries = calendarView
       .locator(".rbc-time-content")
@@ -180,7 +180,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     } else {
       // Week boundary: only one segment visible (Day 1 block). Verify it is
       // in the last column of the week grid (today is the last day of the week).
-      await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
+      await expect(timeGridEntries).toHaveCount(1);
 
       await page.evaluate(
         () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
@@ -229,7 +229,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
     await page.getByRole("radio", { name: "Calendar" }).click();
 
     const calendarView = page.getByTestId("timer-calendar-view");
-    await expect(calendarView).toBeVisible({ timeout: 10_000 });
+    await expect(calendarView).toBeVisible();
 
     const timeGridEntries = calendarView
       .locator(".rbc-time-content")
@@ -237,7 +237,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       .filter({ hasText: description });
 
     // Wait for at least one segment to appear
-    await expect(timeGridEntries.first()).toBeVisible({ timeout: 10_000 });
+    await expect(timeGridEntries.first()).toBeVisible();
 
     // Click whichever segment is available. When both are visible (same week),
     // prefer the last one (Day 2, 00:00→01:00) — near the top, reliably visible.

@@ -51,14 +51,13 @@ test.describe("Mobile calendar: current-time indicator position", () => {
       if (!i18n?.changeLanguage) throw new Error("__i18n not exposed — need DEV build");
       await i18n.changeLanguage("zh");
     });
-    await page.waitForTimeout(200);
 
     // Navigate to /m/calendar via SPA (history.pushState).
     await page.evaluate(() => history.pushState({}, "", "/m/calendar"));
     await page.evaluate(() => window.dispatchEvent(new PopStateEvent("popstate")));
 
     const timeline = page.locator(".overflow-y-auto").first();
-    await expect(timeline).toBeVisible({ timeout: 10_000 });
+    await expect(timeline).toBeVisible();
 
     // Sanity — the component must have mounted with zh as the active language.
     const lang = await page.evaluate(

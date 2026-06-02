@@ -84,8 +84,8 @@ test.describe("Calendar layout: sequential vs parallel entries", () => {
     const entryA = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: descA });
     const entryB = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: descB });
 
-    await expect(entryA).toBeVisible({ timeout: 10_000 });
-    await expect(entryB).toBeVisible({ timeout: 10_000 });
+    await expect(entryA).toBeVisible();
+    await expect(entryB).toBeVisible();
 
     // Sequential entries should each occupy full column width
     const widthA = await getEventWidthPercent(entryA);
@@ -108,8 +108,8 @@ test.describe("Calendar layout: sequential vs parallel entries", () => {
     const entryA = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: descA });
     const entryB = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: descB });
 
-    await expect(entryA).toBeVisible({ timeout: 10_000 });
-    await expect(entryB).toBeVisible({ timeout: 10_000 });
+    await expect(entryA).toBeVisible();
+    await expect(entryB).toBeVisible();
 
     // Overlapping entries should be narrower (roughly 50% each)
     const widthA = await getEventWidthPercent(entryA);

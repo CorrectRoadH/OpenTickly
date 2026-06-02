@@ -40,7 +40,7 @@ test.describe("Timer start link", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // Timer should be running with the given description
-    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
@@ -57,7 +57,7 @@ test.describe("Timer start link", () => {
     await page.goto(`/timer?description=${encodeURIComponent(desc)}&billable=true`);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
@@ -72,7 +72,7 @@ test.describe("Timer start link", () => {
     await page.goto(`/timer/start?desc=${encodeURIComponent(desc)}`);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
@@ -85,7 +85,7 @@ test.describe("Timer start link", () => {
     const desc = `url-strip-${Date.now()}`;
     await page.goto(`/timer?description=${encodeURIComponent(desc)}&billable=true`);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     // URL should no longer contain the start params
     await expect
@@ -130,7 +130,7 @@ test.describe("Timer start link", () => {
     await page.goto(`/timer?${params.toString()}`);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
@@ -203,7 +203,7 @@ test.describe("Timer start link", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     await page.getByLabel("Time entry description").fill("already-running");
     await page.getByRole("button", { name: "Start timer" }).click();
-    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     // Wait for the server to confirm the running entry before navigating,
     // otherwise page.goto resets React Query cache and the guard may see stale data.

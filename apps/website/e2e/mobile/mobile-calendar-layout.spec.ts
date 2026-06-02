@@ -109,7 +109,7 @@ test.describe("Mobile calendar: entry positioning (CJK locale)", () => {
 
     const timeline = page.locator(".overflow-y-auto").first();
     const entry = timeline.getByRole("button", { name: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     // Switch to Chinese — this is the locale that triggered the bug.
     await switchPageLanguage(page, "zh");
@@ -155,8 +155,8 @@ test.describe("Mobile calendar: entry positioning (CJK locale)", () => {
     const timeline = page.locator(".overflow-y-auto").first();
     const entryA = timeline.getByRole("button", { name: descA });
     const entryB = timeline.getByRole("button", { name: descB });
-    await expect(entryA).toBeVisible({ timeout: 10_000 });
-    await expect(entryB).toBeVisible({ timeout: 10_000 });
+    await expect(entryA).toBeVisible();
+    await expect(entryB).toBeVisible();
 
     // Switch to Chinese locale.
     await switchPageLanguage(page, "zh");

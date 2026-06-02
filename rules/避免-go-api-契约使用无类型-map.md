@@ -3,7 +3,6 @@ id: local.go-no-untyped-contract-maps
 title: 避免 Go API 契约使用无类型 map
 language: go
 level: warn
-status: warn
 tags: [local, go, typing, openapi]
 ---
 
@@ -17,6 +16,10 @@ or {
   `map[string]any`,
   `map[any]any`,
   `map[string]interface{}`
+} where {
+  $filename <: r".*apps/backend/internal/(domain|application|infra|bootstrap|transport)/.*\.go",
+  !$filename <: r".*_test\.go",
+  !$filename <: r".*/testsupport/.*"
 }
 ```
 

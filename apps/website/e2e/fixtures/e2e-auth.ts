@@ -134,26 +134,14 @@ export async function readSessionBootstrap(page: Page): Promise<WebSessionBootst
  * Use this in poll() callbacks. For direct calls where you need the session data,
  * use readSessionBootstrap() instead.
  */
-export async function pollSessionBootstrap(
-  page: Page,
-  maxRetries = 3,
-  delayMs = 300,
-): Promise<WebSessionBootstrapDto | null> {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const result = await readSessionBootstrap(page);
-      return result;
-    } catch {
-      // Session read failed (e.g., 500 during workspace switch).
-      // Return null to signal "not ready yet" so poll continues retrying.
-      if (attempt < maxRetries - 1) {
-        await page.waitForTimeout(delayMs);
-      }
-    }
+export async function pollSessionBootstrap(page: Page): Promise<WebSessionBootstrapDto | null> {
+  try {
+    return await readSessionBootstrap(page);
+  } catch {
+    // Session read failed (e.g., 500 during workspace switch).
+    // Return null to signal "not ready yet" so poll continues retrying.
+    return null;
   }
-  // All retries exhausted - return null so poll times out naturally
-  // instead of failing with an unhandled error.
-  return null;
 }
 
 export async function createTimeEntryForWorkspace(
