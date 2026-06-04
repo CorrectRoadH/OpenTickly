@@ -1,6 +1,8 @@
 import os from "node:os";
 import { defineConfig } from "@playwright/test";
 
+const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
+
 export default defineConfig({
   testDir: "./e2e",
   retries: 1,
@@ -9,6 +11,7 @@ export default defineConfig({
   use: {
     actionTimeout: 5_000,
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
+    channel: browserChannel === undefined || browserChannel === "" ? undefined : browserChannel,
     headless: true,
     locale: "en-US",
     // Pin browser timezone so tests that assert literal time strings stay

@@ -91,10 +91,10 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: pnpm --filter @opentickly/website run build
 
-      - name: Install Playwright browsers
+      - name: Install Playwright dependencies
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         timeout-minutes: 10
-        run: pnpm exec vp exec playwright install --with-deps --only-shell chromium
+        run: pnpm exec vp exec playwright install-deps chromium
 
       - name: Start backend
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
@@ -133,6 +133,8 @@ jobs:
 
       - name: Run E2E tests
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
+        env:
+          PLAYWRIGHT_BROWSER_CHANNEL: chrome
         run: |
           cd apps/website
           pnpm exec vp exec playwright test
