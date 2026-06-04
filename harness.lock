@@ -18,15 +18,15 @@ checksum = "d43df05acf2d7cc923c7662310d271a38b8b0973"
 local_path = ".harness/packs/go-concurrency/packs/go-concurrency"
 pack_path = "packs/go-concurrency"
 
-[packs.python]
-id = "python"
+[packs.go-effective-go]
+id = "go-effective-go"
 source = "git"
-spec = "CorrectRoadH/harness-lint#packs/python"
+spec = "CorrectRoadH/harness-lint#packs/go-effective-go"
 requested_ref = "main"
-version = "59a1802331d25aca322d4c7f0144fe8514b3e457"
-checksum = "f902a76279fc1be2303fb2a2878d4ae0bb3103be"
-local_path = ".harness/packs/python/packs/python"
-pack_path = "packs/python"
+version = "d6fd4e9c899273314c706c17ea871b8773879d13"
+checksum = "d9bab494461df48d2d07735237bc3520f9de322f"
+local_path = ".harness/packs/go-effective-go"
+pack_path = "packs/go-effective-go"
 
 [packs.typescript]
 id = "typescript"
@@ -37,3 +37,13 @@ version = "59a1802331d25aca322d4c7f0144fe8514b3e457"
 checksum = "9f34de4c1a38ea8853348b88e3970503dbba3951"
 local_path = ".harness/packs/typescript/packs/typescript"
 pack_path = "packs/typescript"
+
+[packs.typescript-react]
+id = "typescript-react"
+source = "git"
+spec = "CorrectRoadH/harness-lint#packs/typescript-react"
+requested_ref = "main"
+version = "d6fd4e9c899273314c706c17ea871b8773879d13"
+checksum = "2947400790b4122aff62ea3e95e167fb6f88bb0d"
+local_path = ".harness/packs/typescript-react"
+pack_path = "packs/typescript-react"

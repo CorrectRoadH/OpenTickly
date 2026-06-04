@@ -249,9 +249,9 @@ export function OnboardingDialog(): ReactElement | null {
     <ModalDialogWithNav
       footer={
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {currentStep.actions.map((action, index) => (
+          {currentStep.actions.map((action) => (
             <AppButton
-              key={index}
+              key={action.labelKey}
               disabled={action.onComplete ? completeOnboardingMutation.isPending : false}
               onClick={() => {
                 if (action.href) {

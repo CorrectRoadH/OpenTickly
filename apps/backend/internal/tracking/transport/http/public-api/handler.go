@@ -135,7 +135,7 @@ func intValueOrZero(value *int) int {
 	return *value
 }
 
-func interfaceValue(value *interface{}) any {
+func interfaceValue(value *any) any {
 	if value == nil {
 		return nil
 	}

@@ -12,8 +12,9 @@ local = ["rules"]
 [packs]
 go = "github:CorrectRoadH/harness-lint@main#packs/go"
 go-concurrency = "github:CorrectRoadH/harness-lint@main#packs/go-concurrency"
-python = "github:CorrectRoadH/harness-lint@main#packs/python"
+go-effective-go = "github:CorrectRoadH/harness-lint@main#packs/go-effective-go"
 typescript = "github:CorrectRoadH/harness-lint@main#packs/typescript"
+typescript-react = "github:CorrectRoadH/harness-lint@main#packs/typescript-react"
 
 [overrides]
 
@@ -26,8 +27,14 @@ rules = [
   "go-concurrency.no-background-context-flow",
   "go-concurrency.no-time-after-loop",
   "go-concurrency.no-untracked-goroutine",
+  "go-effective-go.no-blank-placeholder-assignment",
+  "go-effective-go.no-ignored-error-blank",
+  "go-effective-go.no-nil-nil-return",
+  "go-effective-go.no-panic-flow",
   "go.no-panic-flow",
   "go.no-process-exit-flow",
+  "typescript-react.no-clone-element",
+  "typescript-react.no-dangerous-html",
   "typescript.no-console-log",
 ]
 

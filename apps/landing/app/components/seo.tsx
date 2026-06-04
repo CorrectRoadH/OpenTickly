@@ -21,6 +21,10 @@ type SeoProps = {
   type?: "article" | "website";
 };
 
+function schemaScriptKey(entry: Record<string, unknown>): string {
+  return JSON.stringify(entry);
+}
+
 const ogLocaleMap: Record<string, string> = {
   en: "en_US",
   zh: "zh_CN",
@@ -123,9 +127,9 @@ export default function Seo({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={imageUrl} />
       {schema
-        ? (Array.isArray(schema) ? schema : [schema]).map((entry, index) => (
+        ? (Array.isArray(schema) ? schema : [schema]).map((entry) => (
             <script
-              key={index}
+              key={schemaScriptKey(entry)}
               type="application/ld+json"
               dangerouslySetInnerHTML={{ __html: JSON.stringify(entry) }}
             />
