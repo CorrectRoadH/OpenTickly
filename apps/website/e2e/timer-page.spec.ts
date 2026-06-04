@@ -1954,10 +1954,15 @@ test.describe("Date range picker in list view", () => {
     await page.context().clearCookies();
     const session = await loginE2eUser(page, test.info(), { email, password });
 
+    const todayStart = new Date();
+    todayStart.setUTCHours(9, 0, 0, 0);
+    const todayStop = new Date(todayStart);
+    todayStop.setUTCHours(10, 0, 0, 0);
+
     await createTimeEntryForWorkspace(page, {
       description: "Scrollbar regression entry",
-      start: new Date("2026-05-15T09:00:00.000Z").toISOString(),
-      stop: new Date("2026-05-15T10:00:00.000Z").toISOString(),
+      start: todayStart.toISOString(),
+      stop: todayStop.toISOString(),
       workspaceId: session.currentWorkspaceId,
     });
 
