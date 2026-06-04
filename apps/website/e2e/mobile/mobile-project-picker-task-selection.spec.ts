@@ -1,4 +1,4 @@
-import { devices, expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
@@ -7,8 +7,9 @@ import {
   loginE2eUser,
   registerE2eUser,
 } from "../fixtures/e2e-auth.ts";
+import { mobileChromeDevice } from "../fixtures/mobile-device.ts";
 
-test.use({ ...devices["iPhone 13"] });
+test.use({ ...mobileChromeDevice });
 
 test.describe("Bug fix: mobile project picker can select tasks", () => {
   test("when the user searches by task in the mobile project picker, selecting it saves both project and task", async ({

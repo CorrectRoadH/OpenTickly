@@ -1,4 +1,4 @@
-import { devices, expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
@@ -8,6 +8,7 @@ import {
   registerE2eUser,
 } from "../fixtures/e2e-auth.ts";
 import { pollCurrentRunningEntry } from "../fixtures/e2e-api.ts";
+import { mobileChromeDevice } from "../fixtures/mobile-device.ts";
 
 /**
  * Drives the `MobileTimePicker` bottom-sheet wheel picker.
@@ -57,7 +58,7 @@ async function setMobileTimeWheel(
   await expect(editor.getByTestId(triggerTestId)).toHaveText(expected);
 }
 
-test.use({ ...devices["iPhone 13"] });
+test.use({ ...mobileChromeDevice });
 
 /**
  * Mobile User Story E2E Tests

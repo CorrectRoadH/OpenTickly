@@ -2,16 +2,25 @@ import os from "node:os";
 import { defineConfig } from "@playwright/test";
 
 const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
+const browserProjects =
+  browserChannel === undefined || browserChannel === ""
+    ? undefined
+    : [
+        {
+          name: `chromium-${browserChannel}`,
+          use: { browserName: "chromium" as const, channel: browserChannel },
+        },
+      ];
 
 export default defineConfig({
   testDir: "./e2e",
   retries: 1,
   workers: Math.min(os.cpus().length, 10),
   reporter: [["list"], ["json", { outputFile: "test-results/results.json" }]],
+  ...(browserProjects === undefined ? {} : { projects: browserProjects }),
   use: {
     actionTimeout: 5_000,
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
-    channel: browserChannel === undefined || browserChannel === "" ? undefined : browserChannel,
     headless: true,
     locale: "en-US",
     // Pin browser timezone so tests that assert literal time strings stay

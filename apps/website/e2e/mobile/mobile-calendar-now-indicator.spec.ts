@@ -1,6 +1,7 @@
-import { devices, expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { loginE2eUser, registerE2eUser } from "../fixtures/e2e-auth.ts";
+import { mobileChromeDevice } from "../fixtures/mobile-device.ts";
 
 /**
  * Mobile calendar: current-time indicator line position under CJK locales.
@@ -17,7 +18,7 @@ import { loginE2eUser, registerE2eUser } from "../fixtures/e2e-auth.ts";
  * (b022ca67). The current-time indicator was overlooked there.
  */
 
-test.use({ ...devices["iPhone 13"], timezoneId: "UTC" });
+test.use({ ...mobileChromeDevice, timezoneId: "UTC" });
 
 test.describe("Mobile calendar: current-time indicator position", () => {
   test("indicator is at the correct hour row under zh locale", async ({ page }) => {
