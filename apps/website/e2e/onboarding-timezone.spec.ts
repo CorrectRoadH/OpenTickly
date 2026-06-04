@@ -23,7 +23,7 @@ test.describe("Story: onboarding confirms the detected timezone", () => {
     await expect(page.getByTestId("app-shell")).toBeVisible();
 
     const dialog = page.getByTestId("onboarding-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await expect(dialog).toBeVisible();
 
     // Detected tz row is visible and shows the browser's zone.
     const detectedRow = dialog.getByTestId("onboarding-detected-timezone");
@@ -69,7 +69,7 @@ test.describe("Story: onboarding confirms the detected timezone", () => {
 
     await page.waitForURL(/\/timer(?:\?.*)?$/);
     const dialog = page.getByTestId("onboarding-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await expect(dialog).toBeVisible();
 
     // Skip straight through all four steps.
     await dialog.getByRole("button", { name: "Continue" }).click();

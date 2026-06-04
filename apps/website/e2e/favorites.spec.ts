@@ -63,7 +63,7 @@ test.describe("Favorites", () => {
     await page.getByRole("radio", { name: "Calendar" }).click();
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Pin as favorite");
 
@@ -92,7 +92,7 @@ test.describe("Favorites", () => {
     await page.getByRole("radio", { name: "Calendar" }).click();
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await entry.scrollIntoViewIfNeeded();
@@ -129,7 +129,7 @@ test.describe("Favorites", () => {
     await page.getByRole("radio", { name: "Calendar" }).click();
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     // Pin it first
     await rightClickAndSelectMenuItem(page, entry, "Pin as favorite");

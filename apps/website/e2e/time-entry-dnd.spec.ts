@@ -151,14 +151,14 @@ test.describe("Time entry Duplicate", () => {
     await setupCalendarWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Duplicate");
 
     const allCalendarEntries = page
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: description });
-    await expect(allCalendarEntries).toHaveCount(2, { timeout: 10_000 });
+    await expect(allCalendarEntries).toHaveCount(2);
   });
 });
 
@@ -174,7 +174,7 @@ test.describe("Time entry DnD Move", () => {
     );
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
     await scrollPageToTop(page);
     await entry.scrollIntoViewIfNeeded();
 
@@ -278,7 +278,7 @@ test.describe("Time entry DnD Move", () => {
     await setupCalendarWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
     await scrollPageToTop(page);
     await entry.scrollIntoViewIfNeeded();
 
@@ -348,7 +348,7 @@ test.describe("Time entry DnD Move", () => {
     expect(Math.floor(persisted!.start / 60_000)).toBe(Math.floor(persisted!.stop! / 60_000));
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
     await scrollPageToTop(page);
     await entry.scrollIntoViewIfNeeded();
 
@@ -428,7 +428,7 @@ test.describe("Time entry DnD Resize", () => {
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: description })
       .first();
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
     await scrollPageToTop(page);
     await entry.scrollIntoViewIfNeeded();
 
@@ -483,7 +483,7 @@ test.describe("Time entry DnD Resize", () => {
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: description })
       .first();
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
     await scrollPageToTop(page);
     await entry.scrollIntoViewIfNeeded();
 

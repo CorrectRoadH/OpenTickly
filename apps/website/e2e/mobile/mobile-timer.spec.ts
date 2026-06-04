@@ -549,7 +549,7 @@ test.describe("Assign Tags to Time Entry", () => {
     await saveButton.click();
 
     // Wait for save to complete and editor to close
-    await expect(editor).not.toBeVisible({ timeout: 10000 });
+    await expect(editor).not.toBeVisible();
   });
 });
 
@@ -704,7 +704,7 @@ test.describe("Empty State for New User", () => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
     // The page should show a friendly empty state, not a blank void
-    await expect(page.getByTestId("mobile-timer-empty-state")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("mobile-timer-empty-state")).toBeVisible();
   });
 
   test("No API errors on time_entries endpoint when page loads", async ({ page }) => {
@@ -776,7 +776,7 @@ test.describe("Continue Suggestion Pills", () => {
     const pill = page.locator("button.rounded-full", {
       hasText: ENTRY_DESCRIPTION,
     });
-    await expect(pill).toBeVisible({ timeout: 10_000 });
+    await expect(pill).toBeVisible();
   });
 
   test("Tapping a continue pill starts a new timer with that description", async ({ page }) => {
@@ -788,7 +788,7 @@ test.describe("Continue Suggestion Pills", () => {
     const pill = page.locator("button.rounded-full", {
       hasText: ENTRY_DESCRIPTION,
     });
-    await expect(pill).toBeVisible({ timeout: 10_000 });
+    await expect(pill).toBeVisible();
 
     // Tap the pill
     await pill.click();

@@ -3,7 +3,6 @@ id: local.playwright-no-wait-for-timeout
 title: 避免 Playwright waitForTimeout
 language: typescript
 level: warn
-status: warn
 tags: [local, typescript, playwright, e2e]
 ---
 

@@ -11,6 +11,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/samber/lo"
 )
 
 // TestEmailVerificationToggleOffActivatesPendingUsers covers the rollback
@@ -25,7 +26,7 @@ func TestEmailVerificationToggleOffActivatesPendingUsers(t *testing.T) {
 
 	// Turn verification on so the rollback path has something to clean up.
 	if _, err := store.UpdateConfig(ctx, application.InstanceConfigUpdate{
-		EmailVerificationRequired: boolPtr(true),
+		EmailVerificationRequired: lo.ToPtr(true),
 	}); err != nil {
 		t.Fatalf("enable verification: %v", err)
 	}
@@ -44,7 +45,7 @@ func TestEmailVerificationToggleOffActivatesPendingUsers(t *testing.T) {
 	}
 
 	if _, err := store.UpdateConfig(ctx, application.InstanceConfigUpdate{
-		EmailVerificationRequired: boolPtr(false),
+		EmailVerificationRequired: lo.ToPtr(false),
 	}); err != nil {
 		t.Fatalf("disable verification: %v", err)
 	}
@@ -74,14 +75,14 @@ func TestEmailVerificationToggleUnrelatedUpdateLeavesPendingAlone(t *testing.T) 
 	base := time.Now().UnixNano() % 100000000000
 
 	if _, err := store.UpdateConfig(ctx, application.InstanceConfigUpdate{
-		EmailVerificationRequired: boolPtr(true),
+		EmailVerificationRequired: lo.ToPtr(true),
 	}); err != nil {
 		t.Fatalf("enable verification: %v", err)
 	}
 	pendingID := insertUser(t, ctx, database.Pool, base+10, "stays-pending", "pending_verification")
 
 	if _, err := store.UpdateConfig(ctx, application.InstanceConfigUpdate{
-		SiteURL: strPtr("https://example.test"),
+		SiteURL: lo.ToPtr("https://example.test"),
 	}); err != nil {
 		t.Fatalf("unrelated update: %v", err)
 	}
@@ -117,6 +118,3 @@ func assertUserState(t *testing.T, ctx context.Context, pool *pgxpool.Pool, user
 		t.Fatalf("user %d: expected state %q, got %q", userID, want, state)
 	}
 }
-
-func boolPtr(v bool) *bool    { return &v }
-func strPtr(v string) *string { return &v }

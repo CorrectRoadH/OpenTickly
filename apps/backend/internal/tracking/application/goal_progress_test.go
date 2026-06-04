@@ -13,6 +13,8 @@ import (
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+
+	"github.com/samber/lo"
 )
 
 // TestGoalProgressReflectsTrackedTimeEntries verifies that ListGoals and GetGoal
@@ -85,7 +87,7 @@ func TestGoalProgressReflectsTrackedTimeEntries(t *testing.T) {
 		UserID:      userID,
 		Description: "Working on other project",
 		Start:       today.Add(11 * time.Hour),
-		Stop:        timePtr(today.Add(12 * time.Hour)),
+		Stop:        lo.ToPtr(today.Add(12 * time.Hour)),
 		ProjectID:   &otherProject.ID,
 		CreatedWith: "goal-progress-test",
 	})
@@ -150,7 +152,7 @@ func TestGoalProgressWithNoFiltersTracksAllEntries(t *testing.T) {
 		UserID:      userID,
 		Description: "Entry 1",
 		Start:       today.Add(8 * time.Hour),
-		Stop:        timePtr(today.Add(8*time.Hour + 30*time.Minute)),
+		Stop:        lo.ToPtr(today.Add(8*time.Hour + 30*time.Minute)),
 		CreatedWith: "goal-progress-test",
 	})
 	if err != nil {
@@ -161,7 +163,7 @@ func TestGoalProgressWithNoFiltersTracksAllEntries(t *testing.T) {
 		UserID:      userID,
 		Description: "Entry 2",
 		Start:       today.Add(10 * time.Hour),
-		Stop:        timePtr(today.Add(10*time.Hour + 45*time.Minute)),
+		Stop:        lo.ToPtr(today.Add(10*time.Hour + 45*time.Minute)),
 		CreatedWith: "goal-progress-test",
 	})
 	if err != nil {
@@ -183,8 +185,6 @@ func TestGoalProgressWithNoFiltersTracksAllEntries(t *testing.T) {
 		t.Fatalf("expected 4500 tracked seconds, got %d", goals[0].CurrentRecurrenceTrackedSeconds)
 	}
 }
-
-func timePtr(t time.Time) *time.Time { return &t }
 
 func seedGoalProgressWorkspace(t *testing.T, ctx context.Context, database *pgtest.Database, prefix string) (int64, int64) {
 	t.Helper()

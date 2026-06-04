@@ -93,7 +93,8 @@ jobs:
 
       - name: Install Playwright browsers
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
-        run: pnpm exec playwright install --with-deps chromium webkit
+        timeout-minutes: 10
+        run: pnpm exec vp exec playwright install --with-deps --only-shell chromium
 
       - name: Start backend
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
@@ -134,7 +135,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         run: |
           cd apps/website
-          pnpm exec playwright test
+          pnpm exec vp exec playwright test
 
       - name: Skip E2E tests
         if: github.event_name != 'workflow_dispatch' && steps.changes.outputs.website_e2e != 'true'

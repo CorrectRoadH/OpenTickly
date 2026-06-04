@@ -12,8 +12,9 @@ import {
   putWorkspaceTimeEntryHandler,
 } from "../api/public/track/index.ts";
 import { listRecentWorkspaceTimeEntrySuggestions } from "../api/web/index.ts";
+import { updateWebSession } from "../api/web/index.ts";
 
-import { toTrackUtcString } from "./web-shell.ts";
+import { sessionQueryKey, toTrackUtcString } from "./web-shell.ts";
 
 export const timeEntriesQueryKey = (
   workspaceId: number,
@@ -31,6 +32,23 @@ export const timeEntriesQueryKey = (
 const currentTimeEntryQueryKey = ["current-time-entry"] as const;
 const recentTimeEntrySuggestionsQueryKey = (workspaceId: number) =>
   ["time-entry-suggestions", workspaceId] as const;
+
+async function ensureTimeEntriesWorkspaceScope(
+  queryClient: ReturnType<typeof useQueryClient>,
+  workspaceId: number,
+) {
+  const session = queryClient.getQueryData<{ current_workspace_id?: number }>(sessionQueryKey);
+  if (session?.current_workspace_id === workspaceId) return;
+
+  const updated = await unwrapWebApiResult(
+    updateWebSession({
+      body: {
+        workspace_id: workspaceId,
+      },
+    }),
+  );
+  queryClient.setQueryData(sessionQueryKey, updated);
+}
 
 async function invalidateProjectRollups(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -54,10 +72,13 @@ export function useTimeEntriesQuery(options: {
   startDate: string;
   workspaceId: number;
 }) {
+  const queryClient = useQueryClient();
+
   return useQuery({
     enabled: options.enabled ?? true,
-    queryFn: () =>
-      unwrapWebApiResult(
+    queryFn: async () => {
+      await ensureTimeEntriesWorkspaceScope(queryClient, options.workspaceId);
+      return unwrapWebApiResult(
         getTimeEntries({
           query: {
             end_date: options?.endDate,
@@ -66,7 +87,8 @@ export function useTimeEntriesQuery(options: {
             start_date: options?.startDate,
           },
         }),
-      ),
+      );
+    },
     queryKey: timeEntriesQueryKey(
       options.workspaceId,
       options.startDate,

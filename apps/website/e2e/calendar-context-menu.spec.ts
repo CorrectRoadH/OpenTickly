@@ -79,7 +79,7 @@ test.describe("Calendar entry context menu actions", () => {
     await setupCalendarWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Duplicate");
 
@@ -87,7 +87,7 @@ test.describe("Calendar entry context menu actions", () => {
     const allCalendarEntries = page
       .locator(`[data-testid^="calendar-entry-"]`)
       .filter({ hasText: description });
-    await expect(allCalendarEntries).toHaveCount(2, { timeout: 10_000 });
+    await expect(allCalendarEntries).toHaveCount(2);
   });
 
   test("Delete removes the time entry", async ({ page }) => {
@@ -95,12 +95,12 @@ test.describe("Calendar entry context menu actions", () => {
     await setupCalendarWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Delete");
 
     // The entry should disappear from the calendar
-    await expect(entry).not.toBeVisible({ timeout: 10_000 });
+    await expect(entry).not.toBeVisible();
   });
 
   test("Copy description writes entry description to clipboard", async ({ page, context }) => {
@@ -109,7 +109,7 @@ test.describe("Calendar entry context menu actions", () => {
     await setupCalendarWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Copy description");
 
@@ -126,7 +126,7 @@ test.describe("Calendar entry context menu actions", () => {
     await setupCalendarWithEntry(page, test.info(), description);
 
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await expect(entry).toBeVisible();
 
     await rightClickAndSelectMenuItem(page, entry, "Copy start link");
 

@@ -7,25 +7,37 @@ changed_base = "origin/main"
 cache = true
 
 [rules]
-local = ["Rules"]
+local = ["rules"]
 
 [packs]
 go = "github:CorrectRoadH/harness-lint@main#packs/go"
+go-concurrency = "github:CorrectRoadH/harness-lint@main#packs/go-concurrency"
 python = "github:CorrectRoadH/harness-lint@main#packs/python"
 typescript = "github:CorrectRoadH/harness-lint@main#packs/typescript"
 
 [overrides]
 
 [disabled]
-rules = ["typescript.no-var"]
+rules = [
+  "typescript.no-var",
+  # Generic pack rules below are not calibrated to this repository's current
+  # full-scan baseline. Keep them inactive until their existing debt is fixed
+  # or replaced with path-scoped local rules.
+  "go-concurrency.no-background-context-flow",
+  "go-concurrency.no-time-after-loop",
+  "go-concurrency.no-untracked-goroutine",
+  "go.no-panic-flow",
+  "go.no-process-exit-flow",
+  "typescript.no-console-log",
+]
 
 [ignore]
 paths = [
-    "apps/backend/internal/http/generated/**",
-    "apps/update-worker/src/content.generated.ts",
-    "apps/website/src/shared/api/generated/**",
-    "packages/shared-contracts/src/generated/**",
-    "tests/python-sdk-integration/**",
+  "apps/backend/internal/http/generated/**",
+  "apps/update-worker/src/content.generated.ts",
+  "apps/website/src/shared/api/generated/**",
+  "packages/shared-contracts/src/generated/**",
+  "tests/python-sdk-integration/**",
 ]
 
 [registry]

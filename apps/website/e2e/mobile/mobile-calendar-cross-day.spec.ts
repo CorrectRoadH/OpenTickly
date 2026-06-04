@@ -73,13 +73,13 @@ test.describe("Mobile calendar: cross-day entries", () => {
 
     // Navigate to mobile calendar — today is selected by default.
     await page.goto(new URL("/m/calendar", page.url()).toString());
-    await expect(page.getByText("22:00")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("22:00")).toBeVisible();
 
     // Today's column should show the entry (22:00 → midnight segment).
     // Scope to the calendar timeline to avoid matching the "Continue" pill in the composer bar.
     const timeline = page.locator(".overflow-y-auto").first();
     const entryLocator = timeline.getByRole("button", { name: description });
-    await expect(entryLocator).toBeVisible({ timeout: 10_000 });
+    await expect(entryLocator).toBeVisible();
 
     // When both days are in the same calendar week, navigate to tomorrow and
     // verify the entry appears there starting at ~00:00. When they cross a
@@ -100,7 +100,7 @@ test.describe("Mobile calendar: cross-day entries", () => {
 
       // Entry should also be visible on tomorrow
       const nextDayEntry = timeline.getByRole("button", { name: description });
-      await expect(nextDayEntry).toBeVisible({ timeout: 10_000 });
+      await expect(nextDayEntry).toBeVisible();
 
       // On the next day, the entry should start at 00:00 (CSS top ≈ 0px),
       // not at 22:00 (top ≈ 1320px).
