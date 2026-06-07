@@ -41,6 +41,15 @@ function readLocalEnvironment() {
   return values;
 }
 
+function isNodePackage(id: string, packageName: string) {
+  const normalizedId = id.split(path.sep).join("/");
+  const encodedName = packageName.replace("/", "+");
+  return (
+    normalizedId.includes(`/node_modules/${packageName}/`) ||
+    normalizedId.includes(`/node_modules/.pnpm/${encodedName}@`)
+  );
+}
+
 export default defineConfig(() => {
   const localEnv = readLocalEnvironment();
   const webProxyTarget =
@@ -55,7 +64,7 @@ export default defineConfig(() => {
     plugins: [
       react({
         babel: {
-          plugins: [["babel-plugin-react-compiler", { target: "18" }]],
+          plugins: [["babel-plugin-react-compiler", { target: "19" }]],
         },
       }),
       tailwindcss(),
@@ -108,12 +117,26 @@ export default defineConfig(() => {
         output: {
           manualChunks(id) {
             if (id.includes("node_modules")) {
-              if (id.includes("react") && !id.includes("react-router")) return "vendor-react";
-              if (id.includes("@tanstack/react-query")) return "vendor-query";
-              if (id.includes("@tanstack/react-router")) return "vendor-router";
-              if (id.includes("react-hook-form") || id.includes("zod")) return "vendor-forms";
-              if (id.includes("baseui") || id.includes("styletron")) return "vendor-baseui";
-              if (id.includes("i18next") || id.includes("react-i18next")) return "vendor-i18n";
+              if (isNodePackage(id, "@tanstack/react-query")) return "vendor-query";
+              if (isNodePackage(id, "@tanstack/react-router")) return "vendor-router";
+              if (isNodePackage(id, "react-hook-form") || isNodePackage(id, "zod"))
+                return "vendor-forms";
+              if (
+                isNodePackage(id, "baseui") ||
+                isNodePackage(id, "styletron-react") ||
+                isNodePackage(id, "styletron-engine-atomic")
+              ) {
+                return "vendor-baseui";
+              }
+              if (isNodePackage(id, "i18next") || isNodePackage(id, "react-i18next"))
+                return "vendor-i18n";
+              if (
+                isNodePackage(id, "react") ||
+                isNodePackage(id, "react-dom") ||
+                isNodePackage(id, "scheduler")
+              ) {
+                return "vendor-react";
+              }
             }
           },
         },

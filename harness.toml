@@ -21,9 +21,9 @@ typescript-react = "github:CorrectRoadH/harness-lint@main#packs/typescript-react
 [disabled]
 rules = [
   "typescript.no-var",
-  # Generic pack rules below are not calibrated to this repository's current
-  # full-scan baseline. Keep them inactive until their existing debt is fixed
-  # or replaced with path-scoped local rules.
+  # Generic pack rules below are not adopted as repository policy yet. Keep
+  # them disabled instead of hiding whole production directories with path
+  # ignores; replace them with narrower local rules before enabling.
   "go-concurrency.no-background-context-flow",
   "go-concurrency.no-time-after-loop",
   "go-concurrency.no-untracked-goroutine",
@@ -49,11 +49,3 @@ paths = [
 
 [registry]
 url = "https://registry.harness-lint.dev"
-
-[obsidian]
-markdown_links = false
-orphan_files = false
-note_roots = []
-content_roots = []
-content_extensions = []
-require_capitalized_dirs = false

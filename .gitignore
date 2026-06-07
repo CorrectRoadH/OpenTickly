@@ -37,6 +37,10 @@ example
 .agents/skills/*
 !.agents/skills/harness-lint/
 !.agents/skills/harness-lint/SKILL.md
+!.agents/skills/opentoggl-migration/
+!.agents/skills/opentoggl-migration/SKILL.md
+!.agents/skills/vite-plus/
+!.agents/skills/vite-plus/SKILL.md
 .claude
 .codex
 

@@ -11,6 +11,14 @@ function makeEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
   };
 }
 
+function makeEnvWithAnalyticsMock() {
+  const writeDataPoint = vi.fn();
+  const env = makeEnv({
+    UPDATE_REQUESTS: { writeDataPoint } as unknown as AnalyticsEngineDataset,
+  });
+  return { env, writeDataPoint };
+}
+
 function makeCtx(): ExecutionContext {
   return {
     waitUntil: vi.fn(),
@@ -101,7 +109,7 @@ describe("worker.fetch", () => {
   });
 
   it("writes analytics when instanceId + version are present", async () => {
-    const env = makeEnv();
+    const { env, writeDataPoint } = makeEnvWithAnalyticsMock();
     await worker.fetch(
       new Request(
         "https://update.test/?version=0.1.0&instanceId=8b9a2f0e-1c4d-4b5a-9f8e-9d2a7c3b1a2e&os=linux",
@@ -109,13 +117,13 @@ describe("worker.fetch", () => {
       env,
       makeCtx(),
     );
-    expect(env.UPDATE_REQUESTS?.writeDataPoint).toHaveBeenCalledTimes(1);
+    expect(writeDataPoint).toHaveBeenCalledTimes(1);
   });
 
   it("does not write analytics when instanceId is missing", async () => {
-    const env = makeEnv();
+    const { env, writeDataPoint } = makeEnvWithAnalyticsMock();
     await worker.fetch(new Request("https://update.test/?version=0.1.0"), env, makeCtx());
-    expect(env.UPDATE_REQUESTS?.writeDataPoint).not.toHaveBeenCalled();
+    expect(writeDataPoint).not.toHaveBeenCalled();
   });
 
   it("degrades gracefully when GitHub is down (still serves announcements)", async () => {

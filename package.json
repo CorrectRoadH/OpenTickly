@@ -14,12 +14,12 @@
     "dev:website": "vp run website#dev",
     "dev:landing": "vp run landing#dev",
     "generate:website-api": "vp run generate:website-api:web && vp run generate:website-api:admin && vp run generate:website-api:import && vp run generate:website-api:public-track && vp run generate:website-api:public-reports && vp run generate:website-api:public-webhooks && vp fmt apps/website/src/shared/api/generated",
-    "generate:website-api:web": "vp exec openapi-ts -f openapi/configs/openapi-ts.web.config.ts -c @hey-api/client-fetch",
-    "generate:website-api:admin": "vp exec openapi-ts -f openapi/configs/openapi-ts.admin.config.ts -c @hey-api/client-fetch",
-    "generate:website-api:import": "vp exec openapi-ts -f openapi/configs/openapi-ts.import.config.ts -c @hey-api/client-fetch",
-    "generate:website-api:public-track": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-track.config.ts -c @hey-api/client-fetch",
-    "generate:website-api:public-reports": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-reports.config.ts -c @hey-api/client-fetch",
-    "generate:website-api:public-webhooks": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-webhooks.config.ts -c @hey-api/client-fetch",
+    "generate:website-api:web": "vp exec openapi-ts -f openapi/configs/openapi-ts.web.config.ts",
+    "generate:website-api:admin": "vp exec openapi-ts -f openapi/configs/openapi-ts.admin.config.ts",
+    "generate:website-api:import": "vp exec openapi-ts -f openapi/configs/openapi-ts.import.config.ts",
+    "generate:website-api:public-track": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-track.config.ts",
+    "generate:website-api:public-reports": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-reports.config.ts",
+    "generate:website-api:public-webhooks": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-webhooks.config.ts",
     "prepare": "vp config"
   },
   "devDependencies": {

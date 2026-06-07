@@ -1,6 +1,6 @@
 ---
 name: harness-lint
-description: Use when working in this repository after receiving recurring coding feedback, adding or reviewing durable lint guardrails from AGENTS.md, updating Rules/*.md, or finishing changes that should be checked by harness-lint.
+description: Use when working in this repository after receiving recurring coding feedback, adding or reviewing durable lint guardrails from AGENTS.md, updating rules/*.md, or finishing changes that should be checked by harness-lint.
 ---
 
 # Harness Lint
@@ -10,12 +10,12 @@ Use harness-lint to turn recurring repository feedback into executable or review
 ## Workflow
 
 1. Run commands from the repository root.
-2. Use `harness-lint` if it is on `PATH`; otherwise use `/Users/ctrdh/Code/harness-lint/target/debug/harness-lint` on this machine.
-3. When the user gives a recurring coding preference, create or update a rule under `Rules/` instead of only changing the current code.
+2. Use `harness-lint` from `PATH`. If it is missing on this machine and `/Users/ctrdh/Code/harness-lint/target/debug/harness-lint` exists, that local debug binary is an acceptable fallback.
+3. When the user gives a recurring coding preference, create or update a rule under `rules/` instead of only changing the current code.
 4. Rules must use GritQL for executable checks. If the preference needs cross-file state, changed-file path ownership, human review, or richer semantics than a stable GritQL pattern can provide, keep it as `status: draft`.
 5. Do not delete, disable, or weaken rules to make a task pass unless the user explicitly asks for that.
 6. Before finishing code changes, run `harness-lint check --changed` and report any diagnostics.
-7. Use `harness-lint rule list` after changing rule configuration.
+7. Use `harness-lint rule list` after changing rule configuration. It prints Markdown tables; do not pass `--json` to `rule list`.
 
 ## Project Sources
 
