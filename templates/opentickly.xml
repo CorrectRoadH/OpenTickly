@@ -1,0 +1,22 @@
+<Container version="2">
+  <Name>OpenTickly</Name>
+  <Repository>correctroad/opentickly:latest</Repository>
+  <Registry>https://hub.docker.com/r/correctroad/opentickly</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/CorrectRoadH/OpenTickly/issues</Support>
+  <Project>https://github.com/CorrectRoadH/OpenTickly</Project>
+  <ReadMe>https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/README.md</ReadMe>
+  <Icon>https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/icon.svg</Icon>
+  <Overview>OpenTickly is a free, private-first, self-hosted alternative to Toggl Track.</Overview>
+  <Description>OpenTickly serves the web UI and Toggl-compatible API from one container. It requires external PostgreSQL and Redis services; install or configure those first, then fill in DATABASE_URL and REDIS_URL below. The app listens on container port 8080 and stores durable application data in PostgreSQL.</Description>
+  <Category>Tools:Utilities Productivity:</Category>
+  <Requires>PostgreSQL and Redis must be reachable from this container. Create the opentickly PostgreSQL database before starting the app, then set DATABASE_URL and REDIS_URL in this template.</Requires>
+  <WebUI>http://[IP]:[PORT:8080]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/templates/opentickly.xml</TemplateURL>
+  <Config Name="Web UI Port" Target="8080" Default="8080" Mode="tcp" Description="Port for the OpenTickly web UI and API." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Database URL" Target="DATABASE_URL" Default="" Description="PostgreSQL connection string, for example postgres://postgres:password@host:5432/opentickly?sslmode=disable." Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="Redis URL" Target="REDIS_URL" Default="" Description="Redis connection string, for example redis://:password@host:6379/0." Type="Variable" Display="always" Required="true" Mask="true"/>
+</Container>
