@@ -48,4 +48,4 @@ paths = [
 ]
 
 [registry]
-url = "https://registry.harness-lint.dev"
+url = "https://raw.githubusercontent.com/CorrectRoadH/harness-lint/main/site/catalog.json"
