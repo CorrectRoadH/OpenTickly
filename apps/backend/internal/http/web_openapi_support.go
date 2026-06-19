@@ -4,12 +4,11 @@ import (
 	"strings"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/oapi-codegen/echo-middleware"
 )
-
-const sessionCookieName = "opentoggl_session"
 
 type ListProjectsRequest struct {
 	WorkspaceID *int64  `json:"workspace_id"`
@@ -36,7 +35,7 @@ func NewGeneratedWebRouteRegistrar(handler webapi.ServerInterface, middlewares .
 }
 
 func sessionID(context echo.Context) string {
-	cookie, err := context.Cookie(sessionCookieName)
+	cookie, err := context.Cookie(websession.CookieName)
 	if err == nil {
 		return cookie.Value
 	}
@@ -48,8 +47,8 @@ func sessionID(context echo.Context) string {
 	parts := strings.Split(raw, ";")
 	for _, part := range parts {
 		p := strings.TrimSpace(part)
-		if strings.HasPrefix(p, sessionCookieName+"=") {
-			return strings.TrimPrefix(p, sessionCookieName+"=")
+		if strings.HasPrefix(p, websession.CookieName+"=") {
+			return strings.TrimPrefix(p, websession.CookieName+"=")
 		}
 	}
 	return ""

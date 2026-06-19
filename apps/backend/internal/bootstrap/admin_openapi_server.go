@@ -14,6 +14,7 @@ import (
 	instanceadminpostgres "opentoggl/backend/apps/backend/internal/instance-admin/infra/postgres"
 	instanceadmintransport "opentoggl/backend/apps/backend/internal/instance-admin/transport/http/admin"
 	"opentoggl/backend/apps/backend/internal/platform"
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 
 	"github.com/labstack/echo/v4"
 )
@@ -47,7 +48,7 @@ func newAdminRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
 	server := &adminOpenAPIServer{handler: handler}
 
 	middleware := instanceadmintransport.AdminAuthMiddleware(instanceadmintransport.AdminAuthConfig{
-		SessionCookieName: "opentoggl_session",
+		SessionCookieName: websession.CookieName,
 		SessionResolver: &adminSessionResolverAdapter{
 			identityApp: handlers.identityApp,
 		},

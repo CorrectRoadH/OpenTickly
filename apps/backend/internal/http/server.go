@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 	"opentoggl/backend/apps/backend/internal/web"
 
 	"github.com/labstack/echo/v4"
@@ -322,7 +323,7 @@ func isMutatingMethod(method string) bool {
 }
 
 func hasSessionCookie(request *http.Request) bool {
-	_, err := request.Cookie("opentoggl_session")
+	_, err := request.Cookie(websession.CookieName)
 	return err == nil
 }
 

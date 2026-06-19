@@ -26,6 +26,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/platform"
 	"opentoggl/backend/apps/backend/internal/platform/filestore"
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
@@ -44,7 +45,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const sessionCookieName = "opentoggl_session"
 const currentSessionHomeContextKey = "current_session_home"
 
 func newWebRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
@@ -232,7 +232,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 // --- Shared helpers ---
 
 func sessionID(ctx echo.Context) string {
-	cookie, err := ctx.Cookie(sessionCookieName)
+	cookie, err := ctx.Cookie(websession.CookieName)
 	if err == nil {
 		return cookie.Value
 	}
@@ -244,8 +244,8 @@ func sessionID(ctx echo.Context) string {
 	parts := strings.Split(raw, ";")
 	for _, part := range parts {
 		token := strings.TrimSpace(part)
-		if strings.HasPrefix(token, sessionCookieName+"=") {
-			return strings.TrimPrefix(token, sessionCookieName+"=")
+		if strings.HasPrefix(token, websession.CookieName+"=") {
+			return strings.TrimPrefix(token, websession.CookieName+"=")
 		}
 	}
 	return ""
@@ -289,7 +289,7 @@ func writeTenantResponse(ctx echo.Context, response tenantweb.Response) error {
 
 func setSessionCookie(ctx echo.Context, sessionID string) {
 	ctx.SetCookie(&http.Cookie{
-		Name:     sessionCookieName,
+		Name:     websession.CookieName,
 		Value:    sessionID,
 		HttpOnly: true,
 		Secure:   resolveCookieSecure(ctx),
@@ -351,7 +351,7 @@ func (handlers *routeHandlers) currentSessionHome(ctx echo.Context) (sessionHome
 
 func clearSessionCookie(ctx echo.Context) {
 	ctx.SetCookie(&http.Cookie{
-		Name:     sessionCookieName,
+		Name:     websession.CookieName,
 		Value:    "",
 		HttpOnly: true,
 		Secure:   ctx.Scheme() == "https",

@@ -178,7 +178,8 @@ has teeth. None are required to merge PR #26.
    **Fixed** — updated to `correctroad/opentickly` across all 8 locales.
 7. ~~**Rebrand note coverage was uneven.**~~ **Fixed** — "OpenTickly was previously named
    OpenToggl" now appears in all locale `index.mdx` (added to `ko/es/ja/fr/pl/pt`).
-8. **Duplicate `sessionCookieName` constant** is defined in both
-   `web_openapi_support.go` and `route_handlers.go` (value `opentoggl_session` is correct, but
-   consolidate to one canonical const). _Not a naming bug — code‑dedup follow‑up; left as‑is to
-   avoid an unrelated cross‑package refactor._
+8. ~~**Duplicate `sessionCookieName` constant.**~~ **Fixed** — the literal `"opentoggl_session"`
+   now lives in exactly one place, `internal/platform/websession.CookieName` (a const‑only leaf
+   package, so no import cycle). The two local consts and three inline literals (`bootstrap`,
+   `httpapp`, `publicapi`) all reference it. Value stays `opentoggl_session` (renaming it would
+   log out every existing session).

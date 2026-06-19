@@ -17,6 +17,7 @@ import (
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
 	"opentoggl/backend/apps/backend/internal/platform/filestore"
 	"opentoggl/backend/apps/backend/internal/platform/imageupload"
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -438,7 +439,7 @@ func avatarResponse(storageKey string) publictrackapi.ModelsAvatar {
 }
 
 func sessionIDFromTrackContext(ctx echo.Context) string {
-	cookie, err := ctx.Cookie("opentoggl_session")
+	cookie, err := ctx.Cookie(websession.CookieName)
 	if err == nil {
 		return cookie.Value
 	}
