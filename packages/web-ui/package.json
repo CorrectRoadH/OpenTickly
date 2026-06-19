@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@uidotdev/usehooks": "catalog:",
-    "baseui": "^16.1.1",
+    "baseui": "^18.1.0",
     "react-compiler-runtime": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
     "styletron-react": "^6.1.1"

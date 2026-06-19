@@ -5,7 +5,7 @@ packages:
 
 catalog:
   "@hey-api/client-fetch": ^0.13.1
-  "@hey-api/openapi-ts": 0.98.1
+  "@hey-api/openapi-ts": 0.98.2
   "@orama/tokenizers": ^3.1.18
   "@types/node": ^25
   "@types/react-big-calendar": ^1.16.3
@@ -25,10 +25,10 @@ catalog:
   react-big-calendar: ^1.20.0
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.1.44
-  react-hook-form: ^7.77.0
+  react-hook-form: ^7.78.0
   react-i18next: ^17.0.8
   react-markdown: ^10.1.0
-  sharp: ^0.34.5
+  sharp: ^0.35.1
   sonner: ^2.0.7
   typescript: ^6
   vite: npm:@voidzero-dev/vite-plus-core@0.1.18
