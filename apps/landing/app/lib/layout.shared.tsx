@@ -11,6 +11,9 @@ export const gitConfig = {
 export function baseOptions(locale?: string): BaseLayoutProps {
   const prefix = locale && locale !== i18n.defaultLanguage ? `/${locale}` : "";
   return {
+    // Dark-only design: the `--track-*` tokens have no light variant, so the
+    // theme toggle would render an unreadable light/dark mix. Keep it hidden.
+    themeSwitch: { enabled: false },
     nav: {
       title: "OpenTickly",
       url: prefix || "/",

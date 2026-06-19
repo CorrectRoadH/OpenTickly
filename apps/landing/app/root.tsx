@@ -41,7 +41,7 @@ export const links: Route.LinksFunction = () => [
 export function Layout({ children }: { children: React.ReactNode }) {
   const locale = useLocaleFromPath();
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className="dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -104,7 +104,7 @@ export default function App() {
   );
 
   return (
-    <RootProvider search={{ SearchDialog }} i18n={i18nConfig}>
+    <RootProvider search={{ SearchDialog }} i18n={i18nConfig} theme={{ enabled: false }}>
       <Outlet />
     </RootProvider>
   );
