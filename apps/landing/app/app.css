@@ -7,21 +7,29 @@
 :root,
 .dark {
   color-scheme: dark;
-  --fd-color-primary: var(--track-accent);
-  --fd-color-primary-foreground: var(--track-button-text);
-  --fd-background: var(--track-canvas);
-  --fd-foreground: var(--track-text);
-  --fd-muted: var(--track-surface-muted);
-  --fd-muted-foreground: var(--track-text-muted);
-  --fd-card: var(--track-surface);
-  --fd-card-foreground: var(--track-text);
-  --fd-popover: var(--track-overlay-surface);
-  --fd-popover-foreground: var(--track-overlay-text);
-  --fd-secondary: var(--track-surface-muted);
-  --fd-secondary-foreground: var(--track-text);
-  --fd-accent: var(--track-accent-soft);
-  --fd-accent-foreground: var(--track-accent-text);
-  --fd-border: var(--track-border);
+  /*
+   * Dark-only landing: map Fumadocs v16 color tokens (`--color-fd-*`) onto our
+   * `--track-*` palette at `:root` so the nav/chrome stays dark even when the
+   * `.dark` class is absent. React Router's SPA prerender drops `class="dark"`
+   * from `<html>`, so relying on Fumadocs' own `.dark` palette renders the nav
+   * light in production.
+   */
+  --color-fd-primary: var(--track-accent);
+  --color-fd-primary-foreground: var(--track-button-text);
+  --color-fd-background: var(--track-canvas);
+  --color-fd-foreground: var(--track-text);
+  --color-fd-muted: var(--track-surface-muted);
+  --color-fd-muted-foreground: var(--track-text-muted);
+  --color-fd-card: var(--track-surface);
+  --color-fd-card-foreground: var(--track-text);
+  --color-fd-popover: var(--track-overlay-surface);
+  --color-fd-popover-foreground: var(--track-overlay-text);
+  --color-fd-secondary: var(--track-surface-muted);
+  --color-fd-secondary-foreground: var(--track-text);
+  --color-fd-accent: var(--track-accent-soft);
+  --color-fd-accent-foreground: var(--track-accent-text);
+  --color-fd-border: var(--track-border);
+  --color-fd-ring: var(--track-accent);
   color: var(--track-text);
   background: var(--track-canvas);
   font-family:
@@ -96,12 +104,4 @@ a {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--track-border) transparent;
-}
-
-/* Force Fumadocs nav to use our dark surface */
-header.fd-nav,
-nav.fd-nav,
-[class*="fd-nav"] {
-  background: var(--track-panel) !important;
-  border-bottom-color: var(--track-border) !important;
 }
