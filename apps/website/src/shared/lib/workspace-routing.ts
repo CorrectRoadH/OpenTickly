@@ -95,7 +95,7 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
   }
 
   if (/^\/workspaces\/\d+\/import$/.test(pathname)) {
-    return `/import${section}`;
+    return `/workspaces/${workspaceId}/import${section}`;
   }
 
   if (/^\/projects\/\d+\/list$/.test(pathname)) {

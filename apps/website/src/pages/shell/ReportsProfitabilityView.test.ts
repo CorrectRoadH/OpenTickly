@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const source = readFileSync(new URL("./ReportsProfitabilityView.tsx", import.meta.url), "utf8");
+const source = readFileSync(resolve(import.meta.dirname, "./ReportsProfitabilityView.tsx"), "utf8");
 
 describe("ReportsProfitabilityView project colors", () => {
   it("supports resolving project colors from project_id lookups when report rows omit color fields", () => {

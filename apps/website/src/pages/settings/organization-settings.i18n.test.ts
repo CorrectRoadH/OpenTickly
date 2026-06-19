@@ -1,10 +1,14 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const pageSource = readFileSync(new URL("./OrganizationSettingsPage.tsx", import.meta.url), "utf8");
+const pageSource = readFileSync(
+  resolve(import.meta.dirname, "./OrganizationSettingsPage.tsx"),
+  "utf8",
+);
 const zhSettings = JSON.parse(
-  readFileSync(new URL("../../locales/zh/settings.json", import.meta.url), "utf8"),
+  readFileSync(resolve(import.meta.dirname, "../../locales/zh/settings.json"), "utf8"),
 ) as Record<string, string>;
 
 describe("organization settings i18n", () => {

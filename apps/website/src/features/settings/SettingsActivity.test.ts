@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const source = readFileSync(new URL("./SettingsActivity.tsx", import.meta.url), "utf8");
+const source = readFileSync(resolve(import.meta.dirname, "./SettingsActivity.tsx"), "utf8");
 
 describe("SettingsActivity user name mapping", () => {
   it("maps activity user ids through workspace members, most-active users, and session fallback before placeholder text", () => {
