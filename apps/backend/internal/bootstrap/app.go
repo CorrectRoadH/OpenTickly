@@ -5,7 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/buildinfo"
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
@@ -99,13 +104,34 @@ func newTelemetryPinger(cfg Config, p *platform.Handles) *telemetry.Pinger {
 }
 
 func (app *App) Start() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	if days := app.Config.Governance.AuditLogRetentionDays; days > 0 && app.governanceApp != nil {
-		governanceapplication.StartAuditLogCleanupWorker(context.Background(), app.governanceApp, days)
+		governanceapplication.StartAuditLogCleanupWorker(ctx, app.governanceApp, days)
 	}
 	if app.telemetryPinger != nil {
-		telemetry.StartWorker(context.Background(), app.telemetryPinger)
+		telemetry.StartWorker(ctx, app.telemetryPinger)
 	}
-	return app.HTTP.Start(app.Config.Server.ListenAddress)
+
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := app.HTTP.Start(app.Config.Server.ListenAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+			return
+		}
+		serverErr <- nil
+	}()
+
+	select {
+	case err := <-serverErr:
+		return err
+	case <-ctx.Done():
+		stop()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		return app.HTTP.Shutdown(shutdownCtx)
+	}
 }
 
 /**
