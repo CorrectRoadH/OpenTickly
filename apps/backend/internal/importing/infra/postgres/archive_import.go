@@ -13,41 +13,26 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type importedIDBinding struct {
-	SourceID int64
-	TargetID int64
-}
-
 type importedIDBindings struct {
-	Items []importedIDBinding
+	bySource map[int64]int64
 }
 
 func (bindings *importedIDBindings) Add(sourceID int64, targetID int64) {
 	if sourceID <= 0 || targetID <= 0 {
 		return
 	}
-	for index := range bindings.Items {
-		if bindings.Items[index].SourceID == sourceID {
-			bindings.Items[index].TargetID = targetID
-			return
-		}
+	if bindings.bySource == nil {
+		bindings.bySource = make(map[int64]int64)
 	}
-	bindings.Items = append(bindings.Items, importedIDBinding{
-		SourceID: sourceID,
-		TargetID: targetID,
-	})
+	bindings.bySource[sourceID] = targetID
 }
 
 func (bindings importedIDBindings) Resolve(sourceID int64) (int64, bool) {
 	if sourceID <= 0 {
 		return 0, false
 	}
-	for _, binding := range bindings.Items {
-		if binding.SourceID == sourceID {
-			return binding.TargetID, true
-		}
-	}
-	return 0, false
+	targetID, ok := bindings.bySource[sourceID]
+	return targetID, ok
 }
 
 type archiveImporter struct {
