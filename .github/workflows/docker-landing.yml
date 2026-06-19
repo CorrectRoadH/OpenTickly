@@ -65,6 +65,14 @@ jobs:
           file: ./Dockerfile.landing
           platforms: linux/arm64
           push: true
+          # Push a plain single-arch image manifest, not an OCI index with a
+          # provenance/SBOM attestation. argocd-image-updater's `newest-build`
+          # strategy reads the config `created` timestamp to pick the latest
+          # image; it cannot traverse an attestation-bearing index, so with
+          # attestations on it never detects new sha-* tags and the landing
+          # deploy silently goes stale. Keep these off so GitOps auto-updates.
+          provenance: false
+          sbom: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=landing
