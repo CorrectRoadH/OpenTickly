@@ -391,7 +391,7 @@ create table tracking_time_entries (
     updated_at timestamptz not null default now()
 );
 
-create index tracking_time_entries_workspace_id_idx on tracking_time_entries (workspace_id);
+create index tracking_time_entries_workspace_user_start_idx on tracking_time_entries (workspace_id, user_id, start_time);
 create index tracking_time_entries_user_id_idx on tracking_time_entries (user_id);
 create index tracking_time_entries_project_id_idx on tracking_time_entries (project_id);
 create index tracking_time_entries_task_id_idx on tracking_time_entries (task_id);
