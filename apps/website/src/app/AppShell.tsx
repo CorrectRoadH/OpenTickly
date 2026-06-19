@@ -151,7 +151,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         >
           <MenuIcon className="size-5" />
         </button>
-        <span className="text-[14px] font-semibold text-white">opentoggl</span>
+        <span className="text-[14px] font-semibold text-white">OpenTickly</span>
       </div>
 
       {/* Mobile sidebar overlay */}

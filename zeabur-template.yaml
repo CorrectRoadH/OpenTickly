@@ -7,7 +7,7 @@ spec:
   description: |
     A free, private-first, AI-friendly self-hosted alternative to Toggl Track. Compatible with Toggl Track v9 and Reports v3 APIs so you can move data in and out without any loss.
   icon: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/website/public/favicon.svg
-  coverImage: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/landing/public/hero/opentoggl-calendar-view.webp
+  coverImage: https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/landing/public/hero/opentickly-calendar-view.webp
   tags:
     - Productivity
     - Tool

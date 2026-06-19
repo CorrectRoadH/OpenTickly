@@ -159,18 +159,15 @@ the new `icon.svg`.
 These are pre‑existing inconsistencies, independent of PR #26, recorded here so the rule above
 has teeth. None are required to merge PR #26.
 
-1. **App header wordmark still says `opentoggl`.** `apps/website/src/app/AppShell.tsx:154`
-   renders the lowercase old brand in the mobile header, while the tab title, `aria-label`,
-   and `PublicMainPanelFrame.tsx:40` all say `OpenTickly`. → user‑facing bug, migrate to
-   `OpenTickly`.
+1. ~~**App header wordmark still says `opentoggl`.**~~ **Fixed** — `apps/website/src/app/AppShell.tsx:154`
+   now renders `OpenTickly`, matching the tab title, `aria-label`, and `PublicMainPanelFrame.tsx:40`.
 2. **Email From‑name column default is still `OpenToggl`.** `apps/backend/db/schema/latest.sql:609`
    and the baseline migration default `sender_name` to `'OpenToggl'` (the Go seed at
    `instance-admin/infra/postgres/store.go:204,216` already uses `OpenTickly`). Fix via a
    **new goose migration** updating the singleton row + `latest.sql`; do **not** edit the
    immutable `00001_baseline.sql`. Avoid overwriting admins who customized the value.
-3. **Zeabur `coverImage` is a 404.** `zeabur-template.yaml:10` references
-   `hero/opentoggl-calendar-view.webp`, but the asset was renamed to
-   `opentickly-calendar-view.webp`. → broken link, update it.
+3. ~~**Zeabur `coverImage` is a 404.**~~ **Fixed** — `zeabur-template.yaml:10` now points at
+   `hero/opentickly-calendar-view.webp` (the renamed asset).
 4. **Zeabur GHCR upgrade link** uses `…/OpenTickly/pkgs/container/opentoggl` — verify that
    package name resolves, or point it at the `opentickly` package.
 5. **`docker-compose.yml` / `zeabur-template.yaml` still pull `correctroad/opentoggl`** while
