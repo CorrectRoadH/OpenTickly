@@ -33,6 +33,29 @@ Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synolo
 
 [![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
 
+### Unraid Community Apps
+
+This repository includes Community Apps metadata for an Unraid Docker template:
+
+- Repository profile: `ca_profile.xml`
+- Docker template: `templates/opentickly.xml`
+- App icon: the canonical product icon `apps/website/public/favicon.svg` (referenced by raw URL; no separate copy)
+
+Before submitting or updating the app in Community Apps:
+
+1. Keep `TemplateURL` pointed at the raw GitHub URL for `templates/opentickly.xml`.
+2. Keep `ca_profile.xml` in the repository root with a non-empty `Profile`.
+3. Confirm the template image matches the published Docker image.
+4. Run XML validation locally:
+
+   ```sh
+   xmllint --noout ca_profile.xml templates/opentickly.xml apps/website/public/favicon.svg
+   ```
+
+5. Run **Validate** and **Scan** in the Unraid Community Apps submit flow.
+
+The Unraid template expects PostgreSQL and Redis to be reachable from the OpenTickly container. Create those services first, then set `DATABASE_URL` and `REDIS_URL` in the template.
+
 ## Mobile PWA Support
 
 The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Android) you can add it to your home screen and use it like a native app.

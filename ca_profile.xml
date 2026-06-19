@@ -1,0 +1,8 @@
+<CommunityApplications>
+  <Profile>
+    OpenTickly is a free, private-first, self-hosted alternative to Toggl Track. This repository publishes the Unraid Community Apps template for running the OpenTickly web UI and API on your own server.
+  </Profile>
+  <Icon>https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/apps/website/public/favicon.svg</Icon>
+  <WebPage>https://github.com/CorrectRoadH/OpenTickly</WebPage>
+  <Forum>https://github.com/CorrectRoadH/OpenTickly/issues</Forum>
+</CommunityApplications>
