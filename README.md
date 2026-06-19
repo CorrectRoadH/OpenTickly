@@ -38,8 +38,8 @@ Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synolo
 This repository includes Community Apps metadata for an Unraid Docker template:
 
 - Repository profile: `ca_profile.xml`
-- Repository icon: `icon.svg`
 - Docker template: `templates/opentickly.xml`
+- App icon: the canonical product icon `apps/website/public/favicon.svg` (referenced by raw URL; no separate copy)
 
 Before submitting or updating the app in Community Apps:
 
@@ -49,7 +49,7 @@ Before submitting or updating the app in Community Apps:
 4. Run XML validation locally:
 
    ```sh
-   xmllint --noout ca_profile.xml templates/opentickly.xml icon.svg
+   xmllint --noout ca_profile.xml templates/opentickly.xml apps/website/public/favicon.svg
    ```
 
 5. Run **Validate** and **Scan** in the Unraid Community Apps submit flow.
