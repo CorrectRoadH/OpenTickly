@@ -48,19 +48,57 @@ function parseProjectsParam(raw: string | undefined): InvoiceItemFormData[] {
 }
 
 export function InvoiceEditorPage(): ReactElement {
-  const { t } = useTranslation("invoices");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const search = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const initialItems = (() => {
-    const fromProjects = parseProjectsParam(search.projects);
-    return fromProjects.length > 0
+  const fromProjects = parseProjectsParam(search.projects);
+  const initialItems =
+    fromProjects.length > 0
       ? fromProjects
       : [{ amount: 0, description: "", id: crypto.randomUUID(), quantity: 1 }];
-  })();
+
+  const invoicesPath = `/workspaces/${workspaceId}/invoices`;
+
+  const createMutation = useMutation({
+    mutationFn: (body: ModelsUserInvoice) =>
+      unwrapWebApiResult(postWorkspaceUserInvoice({ body, path: { workspace_id: workspaceId } })),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["workspaces", workspaceId, "invoices"],
+      });
+    },
+  });
+
+  async function handleSubmit(body: ModelsUserInvoice) {
+    await createMutation.mutateAsync(body);
+    void navigate({ to: invoicesPath });
+  }
+
+  return (
+    <InvoiceEditorForm
+      initialItems={initialItems}
+      isSaving={createMutation.isPending}
+      onCancel={() => void navigate({ to: invoicesPath })}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+function InvoiceEditorForm({
+  initialItems,
+  isSaving,
+  onCancel,
+  onSubmit,
+}: {
+  initialItems: InvoiceItemFormData[];
+  isSaving: boolean;
+  onCancel: () => void;
+  onSubmit: (body: ModelsUserInvoice) => Promise<void>;
+}): ReactElement {
+  const { t } = useTranslation("invoices");
 
   const [documentId, setDocumentId] = useState(() => generateInvoiceId());
   const [date, setDate] = useState(() => todayISO());
@@ -73,16 +111,6 @@ export function InvoiceEditorPage(): ReactElement {
   const [items, setItems] = useState<InvoiceItemFormData[]>(initialItems);
   const [taxes, setTaxes] = useState<InvoiceTaxFormData[]>([]);
   const [message, setMessage] = useState("");
-
-  const createMutation = useMutation({
-    mutationFn: (body: ModelsUserInvoice) =>
-      unwrapWebApiResult(postWorkspaceUserInvoice({ body, path: { workspace_id: workspaceId } })),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["workspaces", workspaceId, "invoices"],
-      });
-    },
-  });
 
   function addItem() {
     setItems((prev) => [
@@ -127,14 +155,12 @@ export function InvoiceEditorPage(): ReactElement {
       message,
       payment_terms: paymentTerms || undefined,
       purchase_number: purchaseOrder || undefined,
-      taxes: taxes.length > 0 ? taxes.map((t) => ({ amount: t.amount, name: t.name })) : undefined,
+      taxes:
+        taxes.length > 0 ? taxes.map((tax) => ({ amount: tax.amount, name: tax.name })) : undefined,
       workspace_address: workspaceAddress || undefined,
     };
-    await createMutation.mutateAsync(body);
-    void navigate({ to: `/workspaces/${workspaceId}/invoices` });
+    await onSubmit(body);
   }
-
-  const invoicesPath = `/workspaces/${workspaceId}/invoices`;
 
   return (
     <div
@@ -145,7 +171,7 @@ export function InvoiceEditorPage(): ReactElement {
         <nav className="flex items-center gap-2 text-[12px]">
           <button
             className="text-[var(--track-accent-text)] hover:text-white"
-            onClick={() => void navigate({ to: invoicesPath })}
+            onClick={onCancel}
             type="button"
           >
             {t("invoices")}
@@ -157,11 +183,11 @@ export function InvoiceEditorPage(): ReactElement {
           <AppButton type="button">{t("connectQuickBooks")}</AppButton>
           <AppButton
             data-testid="invoice-save-button"
-            disabled={!documentId.trim() || createMutation.isPending}
+            disabled={!documentId.trim() || isSaving}
             onClick={() => void handleSave()}
             type="button"
           >
-            {createMutation.isPending ? t("saving") : t("save")}
+            {isSaving ? t("saving") : t("save")}
           </AppButton>
         </div>
       </header>

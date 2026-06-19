@@ -36,21 +36,13 @@ export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElem
   const { t } = useTranslation("tasks");
   const tasksQuery = useTasksQuery(workspaceId, projectId);
   const createTaskMutation = useCreateTaskMutation(workspaceId, projectId);
-  const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const tasks = normalizeTasks(tasksQuery.data);
   const activeCount = tasks.filter((task) => task.active !== false).length;
-  const trimmedTaskName = taskName.trim();
 
-  async function handleCreateTask(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (trimmedTaskName.length === 0) {
-      return;
-    }
-
-    await createTaskMutation.mutateAsync(trimmedTaskName);
-    setTaskName("");
+  async function handleCreateTask(name: string) {
+    await createTaskMutation.mutateAsync(name);
     setComposerOpen(false);
     setStatus(t("taskCreated"));
   }
@@ -82,31 +74,11 @@ export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElem
           ) : null}
 
           {composerOpen ? (
-            <form
-              className="flex items-center gap-3 border-b border-[var(--track-border)] pb-3"
-              data-testid="tasks-create-form"
-              onSubmit={handleCreateTask}
-            >
-              <label className="sr-only" htmlFor="task-name">
-                {t("taskName")}
-              </label>
-              <input
-                className="h-9 w-[320px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-                id="task-name"
-                onChange={(event) => setTaskName(event.target.value)}
-                placeholder={t("taskName")}
-                value={taskName}
-              />
-              <AppButton
-                disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending}
-                type="submit"
-              >
-                {t("saveTask")}
-              </AppButton>
-              <AppButton onClick={() => setComposerOpen(false)} type="button">
-                {t("cancel")}
-              </AppButton>
-            </form>
+            <TaskComposer
+              isPending={createTaskMutation.isPending}
+              onCancel={() => setComposerOpen(false)}
+              onCreate={handleCreateTask}
+            />
           ) : null}
 
           <DirectoryTable<TaskListItem>
@@ -138,6 +110,53 @@ export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElem
         </section>
       ) : null}
     </ProjectDetailLayout>
+  );
+}
+
+function TaskComposer({
+  isPending,
+  onCancel,
+  onCreate,
+}: {
+  isPending: boolean;
+  onCancel: () => void;
+  onCreate: (name: string) => Promise<void>;
+}): ReactElement {
+  const { t } = useTranslation("tasks");
+  const [taskName, setTaskName] = useState("");
+  const trimmedTaskName = taskName.trim();
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (trimmedTaskName.length === 0) {
+      return;
+    }
+    await onCreate(trimmedTaskName);
+  }
+
+  return (
+    <form
+      className="flex items-center gap-3 border-b border-[var(--track-border)] pb-3"
+      data-testid="tasks-create-form"
+      onSubmit={handleSubmit}
+    >
+      <label className="sr-only" htmlFor="task-name">
+        {t("taskName")}
+      </label>
+      <input
+        className="h-9 w-[320px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+        id="task-name"
+        onChange={(event) => setTaskName(event.target.value)}
+        placeholder={t("taskName")}
+        value={taskName}
+      />
+      <AppButton disabled={trimmedTaskName.length === 0 || isPending} type="submit">
+        {t("saveTask")}
+      </AppButton>
+      <AppButton onClick={onCancel} type="button">
+        {t("cancel")}
+      </AppButton>
+    </form>
   );
 }
 

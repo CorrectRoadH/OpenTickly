@@ -1,5 +1,5 @@
 import { Dropdown, SelectButton, useDropdownClose } from "@opentickly/web-ui";
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 type TimezoneOption = {
   name: string;
@@ -23,7 +23,7 @@ export function TimezonePicker({
   timezones: readonly string[];
   value: string;
 }): ReactElement {
-  const options = useMemo(() => buildOptions(timezones), [timezones]);
+  const options = buildOptions(timezones);
   const selected = options.find((o) => o.name === value);
   const triggerLabel = selected ? formatDisplay(selected) : (placeholder ?? value);
 
@@ -64,7 +64,7 @@ function TimezonePickerPanel({
     return new Set(selected ? [selected.region] : []);
   });
 
-  const { groups, total } = useMemo(() => filterGroups(options, query), [options, query]);
+  const { groups, total } = filterGroups(options, query);
   const isSearching = query.trim().length > 0;
 
   function toggle(region: string) {
