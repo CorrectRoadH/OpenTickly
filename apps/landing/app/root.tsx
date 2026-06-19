@@ -52,6 +52,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           data-key="HInytZVgzDj+QByz5SZcSA"
           async
         />
+        <script
+          src="https://api.goshipfast.com/tracker.js"
+          data-project="cmqkx4dgb00c1ow10h271w7tt"
+          data-endpoint="https://api.goshipfast.com"
+          defer
+        />
       </head>
       <body className="flex flex-col min-h-screen">
         <a
