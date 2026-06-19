@@ -41,7 +41,7 @@ spec:
     ## Updates
 
     To upgrade, change the image tag of the OpenTickly service to a newer release from
-    [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) and redeploy.
+    [Docker Hub](https://hub.docker.com/r/correctroad/opentickly/tags) and redeploy.
 
     ## License & attribution
 
@@ -141,7 +141,7 @@ spec:
       domainKey: PUBLIC_DOMAIN
       spec:
         source:
-          image: correctroad/opentoggl:0.2
+          image: correctroad/opentickly:0.2
           command:
             - /bin/sh
             - -c
@@ -215,7 +215,7 @@ localization:
 
       ## 升級
 
-      若要升級,將 OpenTickly 服務的 image tag 換成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本後重新部署即可。
+      若要升級,將 OpenTickly 服務的 image tag 換成 [Docker Hub](https://hub.docker.com/r/correctroad/opentickly/tags) 上的新版本後重新部署即可。
 
       ## 授權與致謝
 
@@ -254,7 +254,7 @@ localization:
 
       ## 升级
 
-      升级时,将 OpenTickly 服务的 image tag 换成 [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) 上的新版本,然后重新部署即可。
+      升级时,将 OpenTickly 服务的 image tag 换成 [Docker Hub](https://hub.docker.com/r/correctroad/opentickly/tags) 上的新版本,然后重新部署即可。
 
       ## 许可与致谢
 
@@ -293,7 +293,7 @@ localization:
 
       ## アップデート
 
-      アップデートする場合は、OpenTickly サービスの image タグを [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) の新しいリリースに変更して再デプロイしてください。
+      アップデートする場合は、OpenTickly サービスの image タグを [Docker Hub](https://hub.docker.com/r/correctroad/opentickly/tags) の新しいリリースに変更して再デプロイしてください。
 
       ## ライセンスとクレジット
 
@@ -332,7 +332,7 @@ localization:
 
       ## Actualizaciones
 
-      Para actualizar, cambia el tag de imagen del servicio OpenTickly a una versión más reciente de [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) y vuelve a desplegar.
+      Para actualizar, cambia el tag de imagen del servicio OpenTickly a una versión más reciente de [Docker Hub](https://hub.docker.com/r/correctroad/opentickly/tags) y vuelve a desplegar.
 
       ## Licencia y atribución
 
@@ -371,7 +371,7 @@ localization:
 
       ## Pembaruan
 
-      Untuk memperbarui, ubah tag image service OpenTickly ke rilis terbaru dari [GHCR](https://github.com/CorrectRoadH/OpenTickly/pkgs/container/opentoggl) lalu deploy ulang.
+      Untuk memperbarui, ubah tag image service OpenTickly ke rilis terbaru dari [Docker Hub](https://hub.docker.com/r/correctroad/opentickly/tags) lalu deploy ulang.
 
       ## Lisensi & atribusi
 

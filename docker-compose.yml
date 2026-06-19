@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   opentoggl:
-    image: correctroad/opentoggl:latest
+    image: correctroad/opentickly:latest
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
       PORT: "8080"

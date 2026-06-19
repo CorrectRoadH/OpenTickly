@@ -606,7 +606,7 @@ create table instance_admin_config (
     id integer primary key default 1,
     site_url text not null default '',
     sender_email text not null default '',
-    sender_name text not null default 'OpenToggl',
+    sender_name text not null default 'OpenTickly',
     smtp_host text not null default '',
     smtp_port integer not null default 0,
     smtp_username text not null default '',

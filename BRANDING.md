@@ -161,22 +161,24 @@ has teeth. None are required to merge PR #26.
 
 1. ~~**App header wordmark still says `opentoggl`.**~~ **Fixed** — `apps/website/src/app/AppShell.tsx:154`
    now renders `OpenTickly`, matching the tab title, `aria-label`, and `PublicMainPanelFrame.tsx:40`.
-2. **Email From‑name column default is still `OpenToggl`.** `apps/backend/db/schema/latest.sql:609`
-   and the baseline migration default `sender_name` to `'OpenToggl'` (the Go seed at
-   `instance-admin/infra/postgres/store.go:204,216` already uses `OpenTickly`). Fix via a
-   **new goose migration** updating the singleton row + `latest.sql`; do **not** edit the
-   immutable `00001_baseline.sql`. Avoid overwriting admins who customized the value.
-3. ~~**Zeabur `coverImage` is a 404.**~~ **Fixed** — `zeabur-template.yaml:10` now points at
+2. ~~**Email From‑name column default is still `OpenToggl`.**~~ **Fixed** — migration
+   `00014_rebrand_email_sender_name.sql` moves the `instance_admin_config.sender_name` default to
+   `'OpenTickly'` and updates the singleton row only where it still held the old default (admin
+   customizations untouched); `latest.sql` updated to match. The immutable `00001_baseline.sql`
+   was left as‑is. Verified by `TestLatestSQLMatchesMigrations`.
+3. ~~**Zeabur `coverImage` is a 404.**~~ **Fixed** — `zeabur-template.yaml` now points at
    `hero/opentickly-calendar-view.webp` (the renamed asset).
-4. **Zeabur GHCR upgrade link** uses `…/OpenTickly/pkgs/container/opentoggl` — verify that
-   package name resolves, or point it at the `opentickly` package.
-5. **`docker-compose.yml` / `zeabur-template.yaml` still pull `correctroad/opentoggl`** while
-   `correctroad/opentickly` is the recommended image. Acceptable as a compat mirror, but new
-   public templates (like PR #26) should lead with `correctroad/opentickly`.
-6. **`changelog.mdx` points users at the old `correctroad/opentoggl` Docker Hub repo** — list
-   the new image first (or both).
-7. **Rebrand note coverage is uneven.** "OpenTickly was previously named OpenToggl" appears in
-   `docs/en|zh|ko/index.mdx` only; add it to `es/ja/fr/pl/pt` for parity (additive).
+4. ~~**Zeabur GHCR upgrade link** was broken.~~ **Fixed** — the backend image is published to
+   **Docker Hub only** (not GHCR), so the six `pkgs/container/opentoggl` links now point at
+   `https://hub.docker.com/r/correctroad/opentickly/tags`.
+5. ~~**`docker-compose.yml` / `zeabur-template.yaml` still pulled `correctroad/opentoggl`.**~~
+   **Fixed** — both now pull `correctroad/opentickly` (`:latest` / `:0.2`), the recommended
+   go‑forward image (identical dual‑published tags, so existing data volumes are unaffected).
+6. ~~**`changelog.mdx` pointed users at the old `correctroad/opentoggl` Docker Hub repo.**~~
+   **Fixed** — updated to `correctroad/opentickly` across all 8 locales.
+7. ~~**Rebrand note coverage was uneven.**~~ **Fixed** — "OpenTickly was previously named
+   OpenToggl" now appears in all locale `index.mdx` (added to `ko/es/ja/fr/pl/pt`).
 8. **Duplicate `sessionCookieName` constant** is defined in both
    `web_openapi_support.go` and `route_handlers.go` (value `opentoggl_session` is correct, but
-   consolidate to one canonical const).
+   consolidate to one canonical const). _Not a naming bug — code‑dedup follow‑up; left as‑is to
+   avoid an unrelated cross‑package refactor._
