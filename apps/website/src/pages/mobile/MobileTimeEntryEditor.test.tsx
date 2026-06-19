@@ -34,6 +34,7 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
   useProjectsQuery: (...args: unknown[]) => mockUseProjectsQuery(...args),
   useTagsQuery: (...args: unknown[]) => mockUseTagsQuery(...args),
+  useTasksQuery: () => ({ data: { data: [] } }),
 }));
 
 vi.mock("../../shared/query/useUserPreferences.ts", () => ({

@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -7,6 +7,13 @@ import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { ReportsProjectFilter } from "./ReportsProjectFilter.tsx";
 
 vi.mock("@opentickly/web-ui", () => ({
+  AppButton: ({
+    size: _size,
+    children,
+    ...props
+  }: ButtonHTMLAttributes<HTMLButtonElement> & { size?: string }) => (
+    <button {...props}>{children}</button>
+  ),
   AppCheckbox: (props: InputHTMLAttributes<HTMLInputElement>) => (
     <input type="checkbox" {...props} />
   ),

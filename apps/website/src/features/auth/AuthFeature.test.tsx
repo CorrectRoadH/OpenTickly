@@ -52,7 +52,7 @@ describe("AuthFeature", () => {
   it("shows login errors in a toast instead of an inline alert", async () => {
     render(<AuthFeature mode="login" />);
 
-    fireEvent.change(screen.getByLabelText("email"), {
+    fireEvent.change(screen.getByLabelText("emailOrUsername"), {
       target: { value: "missing@example.com" },
     });
     fireEvent.change(screen.getByLabelText("password"), {

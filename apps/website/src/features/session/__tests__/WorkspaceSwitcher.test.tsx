@@ -60,7 +60,7 @@ describe("WorkspaceSwitcher", () => {
       />,
     );
 
-    fireEvent.click(screen.getByLabelText("Organization"));
+    fireEvent.click(screen.getByLabelText("organization"));
 
     const listbox = screen.getByRole("listbox");
     expect(within(listbox).getByRole("button", { name: /Alpha Org/ })).toBeTruthy();
@@ -100,14 +100,14 @@ describe("WorkspaceSwitcher", () => {
       />,
     );
 
-    fireEvent.click(screen.getByLabelText("Organization"));
-    fireEvent.click(screen.getByRole("button", { name: "Create organization" }));
+    fireEvent.click(screen.getByLabelText("organization"));
+    fireEvent.click(screen.getByRole("button", { name: "createOrganization" }));
 
     const dialog = screen.getByTestId("create-organization-dialog");
-    fireEvent.change(within(dialog).getByLabelText("Organization name"), {
+    fireEvent.change(within(dialog).getByLabelText("organizationName"), {
       target: { value: "Beta Org" },
     });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Create organization" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "createOrganization" }));
 
     await waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
@@ -117,9 +117,9 @@ describe("WorkspaceSwitcher", () => {
     });
 
     expect(onChange).toHaveBeenCalledWith(202);
-    expect(screen.getByLabelText("Organization").textContent ?? "").toContain("Beta Org");
+    expect(screen.getByLabelText("organization").textContent ?? "").toContain("Beta Org");
 
-    fireEvent.click(screen.getByLabelText("Organization"));
+    fireEvent.click(screen.getByLabelText("organization"));
     const listbox = screen.getByRole("listbox");
     expect(within(listbox).getByRole("button", { name: /Alpha Org/ })).toBeTruthy();
     expect(within(listbox).getByRole("button", { name: /Beta Org/ })).toBeTruthy();
@@ -164,23 +164,23 @@ describe("WorkspaceSwitcher", () => {
       />,
     );
 
-    fireEvent.click(screen.getByLabelText("Organization"));
+    fireEvent.click(screen.getByLabelText("organization"));
 
-    expect(screen.getAllByText("Default")).toHaveLength(1);
+    expect(screen.getAllByText("default")).toHaveLength(1);
     expect(screen.getByRole("button", { name: /Alpha Org/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Set default" })).toBeTruthy();
-    expect(screen.getByLabelText("Current organization")).toBeTruthy();
-    expect(screen.queryByText("Current organization")).toBeNull();
+    expect(screen.getByRole("button", { name: "setDefault" })).toBeTruthy();
+    expect(screen.getByLabelText("currentOrganization")).toBeTruthy();
+    expect(screen.queryByText("currentOrganization")).toBeNull();
 
     const betaOrganizationButton = screen.getByRole("button", { name: /Beta Org/ });
-    fireEvent.click(screen.getByRole("button", { name: "Set default" }));
+    fireEvent.click(screen.getByRole("button", { name: "setDefault" }));
 
     expect(onSetDefault).toHaveBeenCalledWith(202);
-    expect(screen.getAllByText("Default")).toHaveLength(1);
-    expect(betaOrganizationButton.closest('[role="option"]')?.textContent).toContain("Default");
+    expect(screen.getAllByText("default")).toHaveLength(1);
+    expect(betaOrganizationButton.closest('[role="option"]')?.textContent).toContain("default");
     expect(
       screen.getByRole("button", { name: /Alpha Org/ }).closest('[role="option"]')?.textContent,
-    ).not.toContain("Default");
+    ).not.toContain("default");
   });
 });
 

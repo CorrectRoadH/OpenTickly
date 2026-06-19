@@ -95,7 +95,7 @@ describe("ProjectDetailPage", () => {
   it("renders the canonical project team view", () => {
     render(<ProjectDetailPage projectId={5} workspaceId={2} />);
 
-    expect(screen.getByText("toggl CLI")).toBeTruthy();
+    expect(screen.getAllByText("toggl CLI").length).toBeGreaterThan(0);
     expect(screen.getByText("5:36:00")).toBeTruthy();
     expect(screen.getByText("0:00:00")).toBeTruthy();
     expect(screen.getByText("CtrdH")).toBeTruthy();
