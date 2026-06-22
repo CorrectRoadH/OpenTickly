@@ -39,13 +39,6 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	applyBoolOverride(&cfg.Telemetry.Enabled, getEnv("OPENTOGGL_TELEMETRY"))
 	applyBoolOverride(&cfg.Webhook.AllowPrivateTargets, getEnv("OPENTOGGL_WEBHOOK_ALLOW_PRIVATE_TARGETS"))
 
-	applyBoolOverride(&cfg.SSO.Enabled, getEnv("OPENTOGGL_SSO_ENABLED"))
-	applyStringOverride(&cfg.SSO.IssuerURL, getEnv("OPENTOGGL_SSO_ISSUER_URL"))
-	applyStringOverride(&cfg.SSO.ClientID, getEnv("OPENTOGGL_SSO_CLIENT_ID"))
-	applyStringOverride(&cfg.SSO.ClientSecret, getEnv("OPENTOGGL_SSO_CLIENT_SECRET"))
-	applyStringOverride(&cfg.SSO.RedirectURL, getEnv("OPENTOGGL_SSO_REDIRECT_URL"))
-	applyStringOverride(&cfg.SSO.ProviderName, getEnv("OPENTOGGL_SSO_PROVIDER_NAME"))
-
 	return withDefaults(cfg), nil
 }
 

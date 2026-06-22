@@ -54,7 +54,7 @@ func NewApp(cfg Config) (*App, error) {
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
 	telemetryPinger := newTelemetryPinger(cfg, platform)
-	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(cfg, platform, telemetryPinger)
+	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(platform, telemetryPinger)
 	if err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
@@ -152,9 +152,9 @@ func validateRequiredStartupConfig(cfg Config) error {
 	return nil
 }
 
-func newHTTPRouteRegistrar(cfg Config, platform *platform.Handles, pinger *telemetry.Pinger) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
+func newHTTPRouteRegistrar(platform *platform.Handles, pinger *telemetry.Pinger) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
 	appLogger := log.NewZapLogger(slog.Default())
-	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger, pinger, cfg.SSO)
+	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger, pinger)
 	if err != nil {
 		return nil, nil, err
 	}

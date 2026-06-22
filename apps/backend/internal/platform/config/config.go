@@ -12,7 +12,6 @@ type StartupConfig struct {
 	Governance  GovernanceConfig
 	Telemetry   TelemetryConfig
 	Webhook     WebhookConfig
-	SSO         SSOConfig
 }
 
 type ServerConfig struct {
@@ -54,24 +53,4 @@ type TelemetryConfig struct {
 // set OPENTOGGL_WEBHOOK_ALLOW_PRIVATE_TARGETS=true to opt back in.
 type WebhookConfig struct {
 	AllowPrivateTargets bool
-}
-
-// SSOConfig configures instance-level OpenID Connect single sign-on. When
-// Enabled is false (the default) the SSO login routes are inert and the login
-// page hides the SSO button. SSO is instance-wide: one identity provider
-// authenticates every workspace, which is the practical shape for a
-// self-hosted deployment (Google, Authentik, Keycloak, Okta, ...).
-//
-// IssuerURL must be the OIDC issuer that serves /.well-known/openid-configuration.
-// RedirectURL is optional: when empty it is derived from the configured site
-// URL (admin settings) and otherwise from the inbound request, suffixed with
-// /auth/sso/callback. It must exactly match a redirect URI registered with the
-// identity provider.
-type SSOConfig struct {
-	Enabled      bool
-	IssuerURL    string
-	ClientID     string
-	ClientSecret string
-	RedirectURL  string
-	ProviderName string
 }

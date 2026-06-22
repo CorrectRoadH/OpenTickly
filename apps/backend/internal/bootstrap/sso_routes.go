@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/sso"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 )
 
@@ -30,6 +32,35 @@ type ssoPendingLogin struct {
 	RedirectURL string
 }
 
+// ssoSettings is the runtime SSO configuration read from instance_admin_config.
+type ssoSettings struct {
+	Enabled     bool
+	RedirectURL string
+	Provider    sso.Config
+}
+
+// active reports whether SSO should serve logins: enabled by the admin AND
+// minimally configured (issuer + client id + secret present).
+func (s ssoSettings) active() bool {
+	return s.Enabled && s.Provider.Usable()
+}
+
+// ssoConfigReaderFromDB reads the runtime SSO settings from the singleton
+// instance_admin_config row. It mirrors siteURLReaderFromDB: a focused reader so
+// the SSO routes don't depend on the whole instance-admin service.
+type ssoConfigReaderFromDB struct {
+	pool *pgxpool.Pool
+}
+
+func (r *ssoConfigReaderFromDB) Read(ctx context.Context) ssoSettings {
+	var s ssoSettings
+	_ = r.pool.QueryRow(ctx,
+		`SELECT sso_enabled, sso_provider_name, sso_issuer_url, sso_client_id, sso_client_secret, sso_redirect_url
+		 FROM instance_admin_config WHERE id = 1`,
+	).Scan(&s.Enabled, &s.Provider.ProviderName, &s.Provider.IssuerURL, &s.Provider.ClientID, &s.Provider.ClientSecret, &s.RedirectURL)
+	return s
+}
+
 // newSSORoutes registers the instance-level OIDC single sign-on endpoints as
 // plain browser routes (not part of the typed web API): an unauthenticated
 // capability probe, the authorization redirect, and the provider callback.
@@ -49,31 +80,34 @@ type ssoInfoResponse struct {
 }
 
 func (handlers *routeHandlers) ssoInfo(ctx echo.Context) error {
-	if handlers.ssoProvider == nil {
+	settings := handlers.ssoConfigReader.Read(ctx.Request().Context())
+	if !settings.active() {
 		return ctx.JSON(http.StatusOK, ssoInfoResponse{Enabled: false})
 	}
 	return ctx.JSON(http.StatusOK, ssoInfoResponse{
 		Enabled:      true,
-		ProviderName: handlers.ssoProvider.ProviderName(),
+		ProviderName: handlers.ssoManager.Provider(settings.Provider).ProviderName(),
 	})
 }
 
 func (handlers *routeHandlers) ssoStart(ctx echo.Context) error {
-	if handlers.ssoProvider == nil {
+	requestCtx := ctx.Request().Context()
+	settings := handlers.ssoConfigReader.Read(requestCtx)
+	if !settings.active() {
 		return ctx.Redirect(http.StatusFound, ssoLoginErrorRedirect)
 	}
 
+	provider := handlers.ssoManager.Provider(settings.Provider)
 	request := sso.NewAuthRequest()
-	redirectURL := handlers.ssoRedirectURL(ctx)
+	redirectURL := handlers.ssoRedirectURL(ctx, settings.RedirectURL)
 
-	authURL, err := handlers.ssoProvider.AuthCodeURL(ctx.Request().Context(), request, redirectURL)
+	authURL, err := provider.AuthCodeURL(requestCtx, request, redirectURL)
 	if err != nil {
-		handlers.platformHandles.Cache.Del(ctx.Request().Context(), ssoStateKey(request.State))
 		return ctx.Redirect(http.StatusFound, ssoLoginErrorRedirect)
 	}
 
 	pending := ssoPendingLogin{Auth: request, RedirectURL: redirectURL}
-	if err := handlers.platformHandles.Cache.Set(ctx.Request().Context(), ssoStateKey(request.State), pending, ssoLoginStateTTL); err != nil {
+	if err := handlers.platformHandles.Cache.Set(requestCtx, ssoStateKey(request.State), pending, ssoLoginStateTTL); err != nil {
 		return ctx.Redirect(http.StatusFound, ssoLoginErrorRedirect)
 	}
 
@@ -81,7 +115,9 @@ func (handlers *routeHandlers) ssoStart(ctx echo.Context) error {
 }
 
 func (handlers *routeHandlers) ssoCallback(ctx echo.Context) error {
-	if handlers.ssoProvider == nil {
+	requestCtx := ctx.Request().Context()
+	settings := handlers.ssoConfigReader.Read(requestCtx)
+	if !settings.active() {
 		return ctx.Redirect(http.StatusFound, ssoLoginErrorRedirect)
 	}
 	if providerError := ctx.QueryParam("error"); providerError != "" {
@@ -94,7 +130,6 @@ func (handlers *routeHandlers) ssoCallback(ctx echo.Context) error {
 		return ctx.Redirect(http.StatusFound, ssoLoginErrorRedirect)
 	}
 
-	requestCtx := ctx.Request().Context()
 	var pending ssoPendingLogin
 	found, err := handlers.platformHandles.Cache.Get(requestCtx, ssoStateKey(state), &pending)
 	if err != nil || !found {
@@ -103,7 +138,7 @@ func (handlers *routeHandlers) ssoCallback(ctx echo.Context) error {
 	// Single-use: consume the state before exchanging so a replay cannot reuse it.
 	handlers.platformHandles.Cache.Del(requestCtx, ssoStateKey(state))
 
-	claims, err := handlers.ssoProvider.Exchange(requestCtx, code, pending.Auth, pending.RedirectURL)
+	claims, err := handlers.ssoManager.Provider(settings.Provider).Exchange(requestCtx, code, pending.Auth, pending.RedirectURL)
 	if err != nil {
 		return ctx.Redirect(http.StatusFound, ssoLoginErrorRedirect)
 	}
@@ -126,12 +161,13 @@ func identitySSOFromClaims(claims sso.Claims) identityapplication.SSOIdentity {
 	return identityapplication.SSOIdentity{Email: claims.Email, FullName: claims.Name}
 }
 
-// ssoRedirectURL resolves the OAuth2 redirect URI. A configured value wins;
-// otherwise it is derived from the admin site URL, then the inbound request.
-// The result must exactly match a redirect URI registered with the provider.
-func (handlers *routeHandlers) ssoRedirectURL(ctx echo.Context) string {
-	if configured := strings.TrimSpace(handlers.ssoConfig.RedirectURL); configured != "" {
-		return configured
+// ssoRedirectURL resolves the OAuth2 redirect URI. A value configured in the
+// admin UI wins; otherwise it is derived from the admin site URL, then the
+// inbound request. The result must exactly match a redirect URI registered with
+// the identity provider.
+func (handlers *routeHandlers) ssoRedirectURL(ctx echo.Context, configured string) string {
+	if trimmed := strings.TrimSpace(configured); trimmed != "" {
+		return trimmed
 	}
 
 	base := strings.TrimRight(handlers.ssoSiteURL.ReadSiteURL(ctx.Request().Context()), "/")

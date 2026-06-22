@@ -640,12 +640,33 @@
             "type": "string",
             "enum": ["open", "closed", "invite_only"]
           },
+          "sso_enabled": {
+            "type": "boolean"
+          },
+          "sso_provider_name": {
+            "type": "string"
+          },
+          "sso_issuer_url": {
+            "type": "string"
+          },
+          "sso_client_id": {
+            "type": "string"
+          },
+          "sso_client_secret": {
+            "type": "string"
+          },
+          "sso_redirect_url": {
+            "type": "string"
+          },
+          "sso_configured": {
+            "type": "boolean"
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "required": ["site_url", "sender_email", "sender_name", "smtp_configured", "email_verification_required", "registration_mode", "updated_at"]
+        "required": ["site_url", "sender_email", "sender_name", "smtp_configured", "email_verification_required", "registration_mode", "sso_enabled", "sso_configured", "updated_at"]
       },
       "UpdateInstanceConfigRequest": {
         "type": "object",
@@ -677,6 +698,24 @@
           "registration_mode": {
             "type": "string",
             "enum": ["open", "closed", "invite_only"]
+          },
+          "sso_enabled": {
+            "type": "boolean"
+          },
+          "sso_provider_name": {
+            "type": "string"
+          },
+          "sso_issuer_url": {
+            "type": "string"
+          },
+          "sso_client_id": {
+            "type": "string"
+          },
+          "sso_client_secret": {
+            "type": "string"
+          },
+          "sso_redirect_url": {
+            "type": "string"
           }
         }
       },

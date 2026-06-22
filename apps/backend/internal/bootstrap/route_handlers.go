@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,7 +29,6 @@ import (
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/platform"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
-	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 	"opentoggl/backend/apps/backend/internal/platform/filestore"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
@@ -75,12 +73,12 @@ type routeHandlers struct {
 	invoiceApp      *billingapplication.InvoiceService
 	referenceApp    *platformapplication.ReferenceService
 	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
-	ssoProvider     *identitysso.Provider        // nil when SSO is disabled
-	ssoConfig       platformconfig.SSOConfig
+	ssoManager      *identitysso.Manager
+	ssoConfigReader *ssoConfigReaderFromDB
 	ssoSiteURL      *siteURLReaderFromDB
 }
 
-func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger, ssoConfig platformconfig.SSOConfig) (*routeHandlers, error) {
+func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
 	cache := platformHandles.Cache
 
 	referenceService, err := platformapplication.NewReferenceService()
@@ -211,8 +209,6 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	)
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, siteURLReader)
 
-	ssoProvider := newSSOProvider(ssoConfig)
-
 	return &routeHandlers{
 		pool:            pool,
 		platformHandles: platformHandles,
@@ -234,30 +230,10 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		invoiceApp:      invoiceService,
 		referenceApp:    referenceService,
 		telemetryPinger: telemetryPinger,
-		ssoProvider:     ssoProvider,
-		ssoConfig:       ssoConfig,
+		ssoManager:      identitysso.NewManager(),
+		ssoConfigReader: &ssoConfigReaderFromDB{pool: pool},
 		ssoSiteURL:      siteURLReader,
 	}, nil
-}
-
-// newSSOProvider builds the OIDC provider when SSO is enabled and minimally
-// configured. Discovery is lazy, so a temporarily unreachable identity provider
-// does not block startup. Returns nil when SSO is off or misconfigured, which
-// leaves the SSO routes inert and hides the login button.
-func newSSOProvider(cfg platformconfig.SSOConfig) *identitysso.Provider {
-	if !cfg.Enabled {
-		return nil
-	}
-	if strings.TrimSpace(cfg.IssuerURL) == "" || strings.TrimSpace(cfg.ClientID) == "" || strings.TrimSpace(cfg.ClientSecret) == "" {
-		slog.Warn("SSO enabled but issuer/client_id/client_secret are incomplete; SSO disabled")
-		return nil
-	}
-	return identitysso.NewProvider(identitysso.Config{
-		IssuerURL:    cfg.IssuerURL,
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		ProviderName: cfg.ProviderName,
-	})
 }
 
 // --- Shared helpers ---

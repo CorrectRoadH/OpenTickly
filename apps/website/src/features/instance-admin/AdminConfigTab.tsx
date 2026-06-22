@@ -127,6 +127,26 @@ export function AdminConfigTab(): ReactElement {
         }}
         saving={updateMutation.isPending}
       />
+
+      <SsoSection
+        clientId={config.sso_client_id ?? ""}
+        clientSecret={config.sso_client_secret ?? ""}
+        configured={config.sso_configured}
+        enabled={config.sso_enabled}
+        issuerUrl={config.sso_issuer_url ?? ""}
+        providerName={config.sso_provider_name ?? ""}
+        redirectUrl={config.sso_redirect_url ?? ""}
+        onSave={(values) => {
+          updateMutation.mutate(values, {
+            onSuccess: () => toast.success(t("toast:ssoSettingsUpdated")),
+            onError: (err) =>
+              toast.error(
+                err instanceof WebApiError ? err.userMessage : t("toast:failedToUpdateSsoSettings"),
+              ),
+          });
+        }}
+        saving={updateMutation.isPending}
+      />
     </div>
   );
 }
@@ -415,6 +435,115 @@ function SmtpSection({
             </div>
           </div>
         ) : null}
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function SsoSection({
+  clientId,
+  clientSecret,
+  configured,
+  enabled,
+  issuerUrl,
+  providerName,
+  redirectUrl,
+  onSave,
+  saving,
+}: {
+  clientId: string;
+  clientSecret: string;
+  configured: boolean;
+  enabled: boolean;
+  issuerUrl: string;
+  providerName: string;
+  redirectUrl: string;
+  onSave: (values: Record<string, unknown>) => void;
+  saving: boolean;
+}): ReactElement {
+  const { t } = useTranslation();
+  const [isEnabled, setIsEnabled] = useState(enabled);
+  const [name, setName] = useState(providerName);
+  const [issuer, setIssuer] = useState(issuerUrl);
+  const [client, setClient] = useState(clientId);
+  const [secret, setSecret] = useState(clientSecret);
+  const [redirect, setRedirect] = useState(redirectUrl);
+
+  return (
+    <SurfaceCard>
+      <div className="p-5">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
+              {t("instanceAdmin:sso")}
+            </h3>
+            <p className="text-[12px] text-[var(--track-text-muted)]">
+              {t("instanceAdmin:ssoDescription")}
+              {configured ? t("instanceAdmin:ssoConfigured") : t("instanceAdmin:ssoNotConfigured")}
+            </p>
+          </div>
+          <button
+            aria-label={t("instanceAdmin:ssoEnable")}
+            aria-pressed={isEnabled}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+              isEnabled ? "bg-[var(--track-accent)]" : "bg-[var(--track-border)]"
+            }`}
+            disabled={saving}
+            onClick={() => setIsEnabled((value) => !value)}
+            type="button"
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
+                isEnabled ? "left-[22px]" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <ConfigField
+            label={t("instanceAdmin:ssoProviderName")}
+            onChange={setName}
+            placeholder="Google"
+            value={name}
+          />
+          <ConfigField
+            label={t("instanceAdmin:ssoIssuerUrl")}
+            onChange={setIssuer}
+            placeholder="https://accounts.google.com"
+            value={issuer}
+          />
+          <ConfigField label={t("instanceAdmin:ssoClientId")} onChange={setClient} value={client} />
+          <SecretField
+            label={t("instanceAdmin:ssoClientSecret")}
+            onChange={setSecret}
+            value={secret}
+          />
+          <ConfigField
+            label={t("instanceAdmin:ssoRedirectUrl")}
+            onChange={setRedirect}
+            placeholder={t("instanceAdmin:ssoRedirectUrlPlaceholder")}
+            value={redirect}
+          />
+        </div>
+        <div className="mt-4">
+          <button
+            className="rounded-[8px] bg-[var(--track-accent)] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-50"
+            disabled={saving}
+            onClick={() =>
+              onSave({
+                sso_enabled: isEnabled,
+                sso_provider_name: name,
+                sso_issuer_url: issuer,
+                sso_client_id: client,
+                sso_client_secret: secret,
+                sso_redirect_url: redirect,
+              })
+            }
+            type="button"
+          >
+            {t("instanceAdmin:saveSsoSettings")}
+          </button>
+        </div>
       </div>
     </SurfaceCard>
   );

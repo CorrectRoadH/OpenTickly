@@ -92,6 +92,13 @@ export type InstanceConfig = {
   smtp_configured: boolean;
   email_verification_required: boolean;
   registration_mode: "open" | "closed" | "invite_only";
+  sso_enabled: boolean;
+  sso_provider_name?: string;
+  sso_issuer_url?: string;
+  sso_client_id?: string;
+  sso_client_secret?: string;
+  sso_redirect_url?: string;
+  sso_configured: boolean;
   updated_at: string;
 };
 
@@ -105,6 +112,12 @@ export type UpdateInstanceConfigRequest = {
   smtp_password?: string;
   email_verification_required?: boolean;
   registration_mode?: "open" | "closed" | "invite_only";
+  sso_enabled?: boolean;
+  sso_provider_name?: string;
+  sso_issuer_url?: string;
+  sso_client_id?: string;
+  sso_client_secret?: string;
+  sso_redirect_url?: string;
 };
 
 export type AdminOrganization = {

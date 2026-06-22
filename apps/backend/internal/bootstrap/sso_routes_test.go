@@ -1,29 +1,47 @@
 package bootstrap
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
-func newSSOTestApp(t *testing.T, database *pgtest.Database, ssoConfig platformconfig.SSOConfig) *App {
+func newSSOTestApp(t *testing.T, database *pgtest.Database) *App {
 	t.Helper()
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server:      ServerConfig{ListenAddress: ":0"},
 		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
 		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
-		SSO:         ssoConfig,
 	})
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)
 	}
 	t.Cleanup(app.Platform.Database.Close)
 	return app
+}
+
+// configureSSO writes runtime SSO settings into the singleton instance config,
+// mirroring what an admin does through the config UI.
+func configureSSO(t *testing.T, app *App, enabled bool, issuer, clientID, secret, providerName string) {
+	t.Helper()
+	pool := app.Platform.Database.Pool()
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `INSERT INTO instance_admin_config (id) VALUES (1) ON CONFLICT (id) DO NOTHING`); err != nil {
+		t.Fatalf("ensure config row: %v", err)
+	}
+	if _, err := pool.Exec(ctx,
+		`UPDATE instance_admin_config
+		 SET sso_enabled = $1, sso_issuer_url = $2, sso_client_id = $3, sso_client_secret = $4, sso_provider_name = $5
+		 WHERE id = 1`,
+		enabled, issuer, clientID, secret, providerName,
+	); err != nil {
+		t.Fatalf("update sso config: %v", err)
+	}
 }
 
 func requestSSOInfo(t *testing.T, app *App) struct {
@@ -48,23 +66,17 @@ func requestSSOInfo(t *testing.T, app *App) struct {
 
 func TestSSOInfoReportsDisabledByDefault(t *testing.T) {
 	database := pgtest.Open(t)
-	app := newSSOTestApp(t, database, platformconfig.SSOConfig{})
+	app := newSSOTestApp(t, database)
 
-	info := requestSSOInfo(t, app)
-	if info.Enabled {
+	if info := requestSSOInfo(t, app); info.Enabled {
 		t.Fatalf("expected SSO disabled by default, got %+v", info)
 	}
 }
 
 func TestSSOInfoReportsEnabledWhenConfigured(t *testing.T) {
 	database := pgtest.Open(t)
-	app := newSSOTestApp(t, database, platformconfig.SSOConfig{
-		Enabled:      true,
-		IssuerURL:    "https://idp.example.com",
-		ClientID:     "client-id",
-		ClientSecret: "client-secret",
-		ProviderName: "Acme ID",
-	})
+	app := newSSOTestApp(t, database)
+	configureSSO(t, app, true, "https://idp.example.com", "client-id", "client-secret", "Acme ID")
 
 	info := requestSSOInfo(t, app)
 	if !info.Enabled {
@@ -75,9 +87,20 @@ func TestSSOInfoReportsEnabledWhenConfigured(t *testing.T) {
 	}
 }
 
+func TestSSOInfoStaysDisabledWhenEnabledButIncomplete(t *testing.T) {
+	database := pgtest.Open(t)
+	app := newSSOTestApp(t, database)
+	// Enabled but missing issuer/client => not usable, so the button must hide.
+	configureSSO(t, app, true, "", "", "", "Acme ID")
+
+	if info := requestSSOInfo(t, app); info.Enabled {
+		t.Fatalf("expected SSO disabled when incompletely configured, got %+v", info)
+	}
+}
+
 func TestSSOStartRedirectsToLoginErrorWhenDisabled(t *testing.T) {
 	database := pgtest.Open(t)
-	app := newSSOTestApp(t, database, platformconfig.SSOConfig{})
+	app := newSSOTestApp(t, database)
 
 	recorder := httptest.NewRecorder()
 	app.HTTP.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/auth/sso/start", nil))
