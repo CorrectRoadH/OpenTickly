@@ -95,7 +95,9 @@ export {
   useOnboardingQuery,
   useCompleteOnboardingMutation,
   useResetOnboardingMutation,
+  useSsoInfoQuery,
 } from "./web-shell-session.ts";
+export type { SsoInfo } from "./web-shell-session.ts";
 
 export {
   useProfileQuery,

@@ -8,6 +8,7 @@ import { BillableRatesContent } from "../billable-rates/BillableRatesPage.tsx";
 import { SettingsActivity } from "../../features/settings/SettingsActivity.tsx";
 import { SettingsCsvImport } from "../../features/settings/SettingsCsvImport.tsx";
 import { SettingsDataExport } from "../../features/settings/SettingsDataExport.tsx";
+import { SettingsSso } from "../../features/settings/SettingsSso.tsx";
 import { WorkspaceSettingsForm } from "../../features/settings/WorkspaceSettingsForm.tsx";
 import { createWorkspaceSettingsFormValues } from "../../shared/forms/settings-form.ts";
 import { buildWorkspaceSettingsPathWithSection } from "../../shared/lib/workspace-routing.ts";
@@ -154,12 +155,7 @@ function SettingsSectionContent(props: {
         />
       );
     case "sso":
-      return (
-        <FeatureWipNotice
-          description="Enable Single Sign On to let your team authenticate through your organization's identity provider."
-          title={props.t("singleSignOn")}
-        />
-      );
+      return <SettingsSso />;
     default:
       return (
         <SettingsState

@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,27 +20,29 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	identitysso "opentoggl/backend/apps/backend/internal/identity/sso"
 	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/public-api"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/log"
-	"opentoggl/backend/apps/backend/internal/platform"
-	"opentoggl/backend/apps/backend/internal/platform/filestore"
-	"opentoggl/backend/apps/backend/internal/platform/websession"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/platform"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
+	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
+	"opentoggl/backend/apps/backend/internal/platform/filestore"
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	reportspostgres "opentoggl/backend/apps/backend/internal/reports/infra/postgres"
+	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
-	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
-	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
-	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
+	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
+	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
@@ -72,9 +75,12 @@ type routeHandlers struct {
 	invoiceApp      *billingapplication.InvoiceService
 	referenceApp    *platformapplication.ReferenceService
 	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
+	ssoProvider     *identitysso.Provider        // nil when SSO is disabled
+	ssoConfig       platformconfig.SSOConfig
+	ssoSiteURL      *siteURLReaderFromDB
 }
 
-func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
+func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger, ssoConfig platformconfig.SSOConfig) (*routeHandlers, error) {
 	cache := platformHandles.Cache
 
 	referenceService, err := platformapplication.NewReferenceService()
@@ -205,6 +211,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	)
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, siteURLReader)
 
+	ssoProvider := newSSOProvider(ssoConfig)
+
 	return &routeHandlers{
 		pool:            pool,
 		platformHandles: platformHandles,
@@ -226,7 +234,30 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		invoiceApp:      invoiceService,
 		referenceApp:    referenceService,
 		telemetryPinger: telemetryPinger,
+		ssoProvider:     ssoProvider,
+		ssoConfig:       ssoConfig,
+		ssoSiteURL:      siteURLReader,
 	}, nil
+}
+
+// newSSOProvider builds the OIDC provider when SSO is enabled and minimally
+// configured. Discovery is lazy, so a temporarily unreachable identity provider
+// does not block startup. Returns nil when SSO is off or misconfigured, which
+// leaves the SSO routes inert and hides the login button.
+func newSSOProvider(cfg platformconfig.SSOConfig) *identitysso.Provider {
+	if !cfg.Enabled {
+		return nil
+	}
+	if strings.TrimSpace(cfg.IssuerURL) == "" || strings.TrimSpace(cfg.ClientID) == "" || strings.TrimSpace(cfg.ClientSecret) == "" {
+		slog.Warn("SSO enabled but issuer/client_id/client_secret are incomplete; SSO disabled")
+		return nil
+	}
+	return identitysso.NewProvider(identitysso.Config{
+		IssuerURL:    cfg.IssuerURL,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		ProviderName: cfg.ProviderName,
+	})
 }
 
 // --- Shared helpers ---
