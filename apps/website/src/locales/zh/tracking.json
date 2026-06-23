@@ -151,6 +151,7 @@
   "keepEditing": "继续编辑",
   "selected": "已选择",
   "createNewTag": "创建新标签",
+  "createTagNamed": "创建标签“{{name}}”",
   "billableHours": "可计费时间",
   "noDescription": "无描述",
   "noProjectLabel": "无项目",

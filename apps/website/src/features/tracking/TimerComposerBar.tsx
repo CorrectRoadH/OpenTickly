@@ -12,13 +12,16 @@ import {
 import { ProjectsIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import { ManualModeComposer } from "./ManualModeComposer.tsx";
 import { TimerElapsedDisplay } from "./TimerElapsedDisplay.tsx";
 import { TimerComposerSuggestionsDialog } from "./TimerComposerSuggestionsDialog.tsx";
+import { TimerComposerShortcutMenu } from "./TimerComposerShortcutMenu.tsx";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
 import { TagPickerDropdown, TagPickerTrigger } from "./TagPickerDropdown.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
+import { useComposerShortcutMenu } from "./useComposerShortcutMenu.ts";
 import { useTimerComposer } from "./useTimerComposer.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
@@ -30,6 +33,16 @@ type StartParams = {
   tagIds?: number[];
   billable?: boolean;
 };
+
+/** Reads the new tag's id from a create-tag response (array- or object-shaped). */
+function resolveCreatedTagId(created: unknown): number | undefined {
+  const tag = Array.isArray(created) ? created[0] : created;
+  if (tag && typeof tag === "object" && "id" in tag) {
+    const id = (tag as { id?: unknown }).id;
+    return typeof id === "number" ? id : undefined;
+  }
+  return undefined;
+}
 
 export function TimerComposerBar({
   initialDate,
@@ -45,9 +58,58 @@ export function TimerComposerBar({
   const composer = useTimerComposer();
   const { setSelectedWeekDate } = useWeekNavigation();
   const timerInputMode = useTimerViewStore((s) => s.timerInputMode);
+  const preferences = useUserPreferences();
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
   const createTagMutation = useCreateTagMutation(workspaceId);
+
+  // Inline "@" (project) / "#" (tag) shortcut menu for the idle composer.
+  const isComposerIdle = composer.runningEntry?.id == null;
+  const shortcutMenu = useComposerShortcutMenu({
+    enabled: isComposerIdle,
+    onAfterSelect: () => composer.setDraftDescription(""),
+    onCreateTag: (name) => {
+      void createTagMutation.mutateAsync(name).then((created) => {
+        const createdId = resolveCreatedTagId(created);
+        if (createdId != null && !composer.draftTagIds.includes(createdId)) {
+          composer.setDraftTagIds([...composer.draftTagIds, createdId]);
+        }
+      });
+    },
+    onSelectProject: (projectId) => {
+      composer.setDraftProjectId(projectId);
+      composer.setDraftTaskId(null);
+    },
+    onToggleTag: (tagId) => {
+      composer.setDraftTagIds(
+        composer.draftTagIds.includes(tagId)
+          ? composer.draftTagIds.filter((id) => id !== tagId)
+          : [...composer.draftTagIds, tagId],
+      );
+    },
+    projects: projectOptions
+      .filter((project): project is typeof project & { id: number } => project.id != null)
+      .map((project) => ({
+        active: project.active,
+        color: resolveProjectColorValue(project),
+        id: project.id,
+        name: project.name ?? "Untitled project",
+      })),
+    projectShortcutEnabled: preferences.projectShortcutEnabled,
+    selectedTagIds: composer.draftTagIds,
+    tags: tagOptions,
+    tagsShortcutEnabled: preferences.tagsShortcutEnabled,
+    value: composer.timerDescriptionValue,
+  });
+
+  // The inline shortcut menu and the focus suggestions dialog must not overlap.
+  const shortcutMenuOpen = shortcutMenu.isOpen;
+  const { closeComposerSuggestions, composerSuggestionsAnchor } = composer;
+  useEffect(() => {
+    if (shortcutMenuOpen && composerSuggestionsAnchor) {
+      closeComposerSuggestions();
+    }
+  }, [shortcutMenuOpen, composerSuggestionsAnchor, closeComposerSuggestions]);
 
   // Favorites and tasks for suggestions dialog
   const favoritesQuery = useFavoritesQuery(workspaceId);
@@ -124,7 +186,7 @@ export function TimerComposerBar({
 
   return (
     <div className="flex min-h-[70px] flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
-      <div className="min-w-0 flex-1">
+      <div className="relative min-w-0 flex-1">
         <label className="sr-only" htmlFor="timer-description">
           Time entry description
         </label>
@@ -143,6 +205,7 @@ export function TimerComposerBar({
             composer.setDraftDescription(event.target.value);
           }}
           onKeyDown={(event) => {
+            if (shortcutMenu.handleKeyDown(event)) return;
             if (event.key !== "Enter") return;
             event.preventDefault();
             if (composer.runningEntry?.id != null) {
@@ -155,6 +218,14 @@ export function TimerComposerBar({
           placeholder={t("whatAreYouWorkingOn")}
           value={composer.timerDescriptionValue}
         />
+        {shortcutMenu.isOpen ? (
+          <TimerComposerShortcutMenu
+            activeIndex={shortcutMenu.activeIndex}
+            items={shortcutMenu.items}
+            onHoverIndex={shortcutMenu.setActiveIndex}
+            onSelectIndex={shortcutMenu.selectItem}
+          />
+        ) : null}
       </div>
       <TimerBarProjectPicker
         draftProjectId={composer.draftProjectId}
@@ -316,7 +387,7 @@ export function TimerComposerBar({
           </>
         )}
       </div>
-      {composer.composerSuggestionsAnchor ? (
+      {composer.composerSuggestionsAnchor && !shortcutMenu.isOpen ? (
         <ComposerSuggestionsPortal
           composer={composer}
           favorites={favorites}
