@@ -19,27 +19,28 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	identitysso "opentoggl/backend/apps/backend/internal/identity/sso"
 	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/public-api"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/log"
-	"opentoggl/backend/apps/backend/internal/platform"
-	"opentoggl/backend/apps/backend/internal/platform/filestore"
-	"opentoggl/backend/apps/backend/internal/platform/websession"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/platform"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
+	"opentoggl/backend/apps/backend/internal/platform/filestore"
+	"opentoggl/backend/apps/backend/internal/platform/websession"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	reportspostgres "opentoggl/backend/apps/backend/internal/reports/infra/postgres"
+	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
-	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
-	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
-	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
+	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
+	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
@@ -72,6 +73,9 @@ type routeHandlers struct {
 	invoiceApp      *billingapplication.InvoiceService
 	referenceApp    *platformapplication.ReferenceService
 	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
+	ssoManager      *identitysso.Manager
+	ssoConfigReader *ssoConfigReaderFromDB
+	ssoSiteURL      *siteURLReaderFromDB
 }
 
 func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
@@ -226,6 +230,9 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		invoiceApp:      invoiceService,
 		referenceApp:    referenceService,
 		telemetryPinger: telemetryPinger,
+		ssoManager:      identitysso.NewManager(),
+		ssoConfigReader: &ssoConfigReaderFromDB{pool: pool},
+		ssoSiteURL:      siteURLReader,
 	}, nil
 }
 

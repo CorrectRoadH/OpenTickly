@@ -72,20 +72,33 @@ type InstanceConfigView struct {
 	SMTPConfigured            bool
 	EmailVerificationRequired bool
 	RegistrationMode          string
+	SSOEnabled                bool
+	SSOProviderName           string
+	SSOIssuerURL              string
+	SSOClientID               string
+	SSOClientSecret           string
+	SSORedirectURL            string
+	SSOConfigured             bool
 	UpdatedAt                 time.Time
 }
 
 // InstanceConfigUpdate is the write model for config changes.
 type InstanceConfigUpdate struct {
-	SiteURL          *string
-	SenderEmail      *string
-	SenderName       *string
-	SMTPHost         *string
-	SMTPPort         *int
-	SMTPUsername               *string
-	SMTPPassword               *string
+	SiteURL                   *string
+	SenderEmail               *string
+	SenderName                *string
+	SMTPHost                  *string
+	SMTPPort                  *int
+	SMTPUsername              *string
+	SMTPPassword              *string
 	EmailVerificationRequired *bool
-	RegistrationMode           *string
+	RegistrationMode          *string
+	SSOEnabled                *bool
+	SSOProviderName           *string
+	SSOIssuerURL              *string
+	SSOClientID               *string
+	SSOClientSecret           *string
+	SSORedirectURL            *string
 }
 
 // OrganizationLister lists all organizations for admin overview.

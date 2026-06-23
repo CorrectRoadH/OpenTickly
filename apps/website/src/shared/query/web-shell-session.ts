@@ -133,6 +133,36 @@ export function useUpdateWebSessionMutation() {
   });
 }
 
+export type SsoInfo = {
+  enabled: boolean;
+  providerName: string;
+};
+
+// useSsoInfoQuery reports whether instance-level OIDC single sign-on is
+// configured, so the login page and SSO settings tab can reflect it. The
+// endpoint is a plain unauthenticated browser route (not the typed web API),
+// so it is fetched directly.
+export function useSsoInfoQuery() {
+  return useQuery({
+    queryKey: ["sso-info"] as const,
+    queryFn: async (): Promise<SsoInfo> => {
+      const response = await fetch("/auth/sso/info", { credentials: "same-origin" });
+      if (!response.ok) {
+        return { enabled: false, providerName: "SSO" };
+      }
+      const data = (await response.json()) as { enabled?: boolean; provider_name?: string };
+      return {
+        enabled: data.enabled === true,
+        providerName:
+          typeof data.provider_name === "string" && data.provider_name.length > 0
+            ? data.provider_name
+            : "SSO",
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 const onboardingQueryKey = () => ["onboarding"] as const;
 
 export function useOnboardingQuery() {

@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { type ReactElement, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -7,7 +7,11 @@ import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-c
 import type { RegistrationPendingVerification } from "../../shared/api/web/index.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
-import { useLoginMutation, useRegisterMutation } from "../../shared/query/web-shell.ts";
+import {
+  useLoginMutation,
+  useRegisterMutation,
+  useSsoInfoQuery,
+} from "../../shared/query/web-shell.ts";
 import { AuthForm } from "./AuthForm.tsx";
 
 type AuthFeatureProps = {
@@ -28,6 +32,23 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
+  const ssoInfoQuery = useSsoInfoQuery();
+
+  // The SSO callback redirects back to /login?sso_error=1 when the provider
+  // flow fails, so surface a single toast and clean the URL.
+  useEffect(() => {
+    if (mode !== "login") {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sso_error") === null) {
+      return;
+    }
+    toast.error(t("ssoSignInFailed"));
+    params.delete("sso_error");
+    const query = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
+  }, [mode, t]);
 
   async function handleSubmit(payload: LoginRequestDto | RegisterRequestDto) {
     try {
@@ -57,6 +78,7 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
       isSubmitting={loginMutation.isPending || registerMutation.isPending}
       mode={mode}
       onSubmit={handleSubmit}
+      sso={ssoInfoQuery.data}
     />
   );
 }

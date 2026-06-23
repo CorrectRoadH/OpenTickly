@@ -22,6 +22,8 @@
   "failedToUpdate": "Failed to update",
   "emailSettingsUpdated": "Email settings updated",
   "failedToUpdateEmailSettings": "Failed to update email settings",
+  "ssoSettingsUpdated": "SSO settings updated",
+  "failedToUpdateSsoSettings": "Failed to update SSO settings",
   "testEmailSent": "Test email sent successfully",
   "failedToSendTestEmail": "Failed to send test email",
   "workspaceBillableRateUpdated": "Workspace billable rate has been updated.",

@@ -613,6 +613,12 @@ create table instance_admin_config (
     smtp_password text not null default '',
     email_verification_required boolean not null default false,
     updated_at timestamptz not null default now(),
+    sso_enabled boolean not null default false,
+    sso_provider_name text not null default '',
+    sso_issuer_url text not null default '',
+    sso_client_id text not null default '',
+    sso_client_secret text not null default '',
+    sso_redirect_url text not null default '',
     constraint instance_admin_config_singleton check (id = 1)
 );
 
