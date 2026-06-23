@@ -113,24 +113,11 @@ export function AnnouncementItem({
         </span>
       </div>
       {localized.bodyMarkdown ? (
-        <div className="text-[13px] leading-relaxed text-[var(--track-text-soft)]">
+        <div className="prose prose-invert prose-sm max-w-none text-[13px] leading-relaxed text-[var(--track-text-soft)] prose-a:text-[var(--track-accent)] prose-strong:text-white">
           <ReactMarkdown
             components={{
               a: ({ node: _node, ...props }) => (
-                <a
-                  {...props}
-                  className="text-[var(--track-accent)] underline underline-offset-2"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                />
-              ),
-              li: ({ node: _node, ...props }) => <li {...props} className="ml-4 list-disc" />,
-              p: ({ node: _node, ...props }) => <p {...props} className="mt-0 mb-3 last:mb-0" />,
-              strong: ({ node: _node, ...props }) => (
-                <strong {...props} className="font-semibold text-white" />
-              ),
-              ul: ({ node: _node, ...props }) => (
-                <ul {...props} className="mt-0 mb-3 space-y-1 last:mb-0" />
+                <a {...props} rel="noopener noreferrer" target="_blank" />
               ),
             }}
           >
