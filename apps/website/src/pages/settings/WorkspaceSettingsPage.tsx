@@ -155,7 +155,7 @@ function SettingsSectionContent(props: {
         />
       );
     case "sso":
-      return <SettingsSso />;
+      return <SettingsSso workspaceId={props.workspaceId} />;
     default:
       return (
         <SettingsState

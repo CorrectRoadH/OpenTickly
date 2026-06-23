@@ -129,6 +129,26 @@ func (service *Service) EnsureWorkspaceOwner(
 	return service.store.EnsureWorkspaceOwner(ctx, command)
 }
 
+// EnsureWorkspaceMember idempotently joins a user to a workspace with the given
+// role. Used by SAML SSO just-in-time provisioning when a verified identity logs
+// in to a workspace it does not yet belong to.
+func (service *Service) EnsureWorkspaceMember(
+	ctx context.Context,
+	command EnsureWorkspaceMemberCommand,
+) (WorkspaceMemberView, error) {
+	return service.store.EnsureWorkspaceMember(ctx, command)
+}
+
+// FindWorkspaceMemberByUserID returns a user's membership in a workspace, used by
+// the transport layer for role-based authorization.
+func (service *Service) FindWorkspaceMemberByUserID(
+	ctx context.Context,
+	workspaceID int64,
+	userID int64,
+) (WorkspaceMemberView, bool, error) {
+	return service.store.FindWorkspaceMemberByUserID(ctx, workspaceID, userID)
+}
+
 func (service *Service) ListWorkspaceMembers(
 	ctx context.Context,
 	workspaceID int64,

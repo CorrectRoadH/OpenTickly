@@ -136,6 +136,47 @@ func (store *Store) EnsureWorkspaceOwner(
 	)
 }
 
+func (store *Store) EnsureWorkspaceMember(
+	ctx context.Context,
+	command membershipapplication.EnsureWorkspaceMemberCommand,
+) (membershipapplication.WorkspaceMemberView, error) {
+	view, ok, err := store.FindWorkspaceMemberByUserID(ctx, command.WorkspaceID, command.UserID)
+	if err != nil {
+		return membershipapplication.WorkspaceMemberView{}, err
+	}
+	if ok {
+		return view, nil
+	}
+
+	email, fullName, found, err := store.lookupIdentityByUserID(ctx, command.UserID)
+	if err != nil {
+		return membershipapplication.WorkspaceMemberView{}, err
+	}
+	if !found {
+		return membershipapplication.WorkspaceMemberView{}, membershipapplication.ErrWorkspaceIdentityUserNotFound
+	}
+
+	role := command.Role
+	if role == "" {
+		role = membershipdomain.WorkspaceRoleMember
+	}
+
+	return store.insertWorkspaceMember(
+		ctx,
+		command.WorkspaceID,
+		&command.UserID,
+		email,
+		fullName,
+		role,
+		membershipdomain.WorkspaceMemberStateJoined,
+		nil,
+		nil,
+		&command.UserID,
+		nil,
+		nil,
+	)
+}
+
 func (store *Store) ListWorkspaceMembers(
 	ctx context.Context,
 	workspaceID int64,

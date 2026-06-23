@@ -137,6 +137,16 @@ func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, worksp
 	return server.handlers.updateWorkspaceSettings(ctx)
 }
 
+func (server *webOpenAPIServer) GetWorkspaceSsoConfig(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.handlers.getWorkspaceSsoConfig(ctx)
+}
+
+func (server *webOpenAPIServer) UpdateWorkspaceSsoConfig(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.handlers.updateWorkspaceSsoConfig(ctx)
+}
+
 func (server *webOpenAPIServer) SearchWorkspaceTimeEntries(ctx echo.Context, workspaceId int, params webapi.SearchWorkspaceTimeEntriesParams) error {
 	_ = workspaceId
 	_ = params

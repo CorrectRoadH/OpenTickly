@@ -95,9 +95,11 @@ export {
   useOnboardingQuery,
   useCompleteOnboardingMutation,
   useResetOnboardingMutation,
-  useSsoInfoQuery,
+  useSsoResolveMutation,
+  useWorkspaceSsoConfigQuery,
+  useUpdateWorkspaceSsoConfigMutation,
 } from "./web-shell-session.ts";
-export type { SsoInfo } from "./web-shell-session.ts";
+export type { SsoResolveResult } from "./web-shell-session.ts";
 
 export {
   useProfileQuery,

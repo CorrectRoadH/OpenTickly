@@ -325,6 +325,70 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/sso-config": {
+      "get": {
+        "summary": "Read the workspace SAML SSO configuration",
+        "operationId": "get-workspace-sso-config",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace SAML SSO configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSsoConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update the workspace SAML SSO configuration",
+        "operationId": "update-workspace-sso-config",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSsoConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated workspace SAML SSO configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSsoConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/capabilities": {
       "get": {
         "summary": "Capability snapshot for the current workspace",
@@ -1948,6 +2012,44 @@
           "admin",
           "premium",
           "role"
+        ]
+      },
+      "WorkspaceSsoConfig": {
+        "type": "object",
+        "description": "Workspace SAML SSO configuration plus the generated Service Provider integration details to paste into the identity provider.",
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "profile_name": { "type": "string" },
+          "email_domain": { "type": "string" },
+          "idp_metadata_url": { "type": "string" },
+          "idp_entity_id": { "type": "string" },
+          "idp_sso_url": { "type": "string" },
+          "idp_certificate": { "type": "string" },
+          "sp_entity_id": { "type": "string" },
+          "acs_url": { "type": "string" },
+          "sign_in_url": { "type": "string" },
+          "metadata_url": { "type": "string" }
+        },
+        "required": [
+          "enabled", "profile_name", "email_domain", "idp_metadata_url",
+          "idp_entity_id", "idp_sso_url", "idp_certificate",
+          "sp_entity_id", "acs_url", "sign_in_url", "metadata_url"
+        ]
+      },
+      "WorkspaceSsoConfigUpdate": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "profile_name": { "type": "string" },
+          "email_domain": { "type": "string" },
+          "idp_metadata_url": { "type": "string" },
+          "idp_entity_id": { "type": "string" },
+          "idp_sso_url": { "type": "string" },
+          "idp_certificate": { "type": "string" }
+        },
+        "required": [
+          "enabled", "profile_name", "email_domain", "idp_metadata_url",
+          "idp_entity_id", "idp_sso_url", "idp_certificate"
         ]
       },
       "WorkspaceSettingsEnvelope": {

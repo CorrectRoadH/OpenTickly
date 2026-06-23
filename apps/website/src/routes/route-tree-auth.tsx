@@ -23,6 +23,7 @@ import {
   InviteStatusJoinedPage,
   ProfilePage,
   ResetPasswordPage,
+  SsoLoginPage,
   VerifyEmailPage,
 } from "./route-tree-lazy-pages.tsx";
 
@@ -84,6 +85,12 @@ export const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: LoginRouteComponent,
+});
+
+export const loginSsoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login/sso",
+  component: LoginSsoRouteComponent,
 });
 
 export const registerRoute = createRoute({
@@ -157,6 +164,27 @@ function LoginRouteComponent() {
 
 function RegisterRouteComponent() {
   return <PublicAuthRoute mode="register" />;
+}
+
+// `/login/sso` is public but bounces already-authenticated users home, matching
+// `/login`. It shows a dedicated email-entry screen that resolves the workspace
+// SAML2 profile before redirecting the browser to the identity provider.
+function LoginSsoRouteComponent() {
+  const sessionQuery = useSessionBootstrapQuery();
+
+  if (sessionQuery.isPending) {
+    return <SessionPendingPanel />;
+  }
+
+  if (sessionQuery.data && !sessionQuery.isError) {
+    return <LoggedInHomeRedirect />;
+  }
+
+  return (
+    <Suspense fallback={pageSpinner}>
+      <SsoLoginPage />
+    </Suspense>
+  );
 }
 
 function VerifyEmailRouteComponent() {

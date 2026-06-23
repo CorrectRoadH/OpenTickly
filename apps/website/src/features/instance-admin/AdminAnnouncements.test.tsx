@@ -1,21 +1,12 @@
 /* @vitest-environment jsdom */
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { InstanceVersionInfo } from "../../shared/api/admin-client.ts";
 import { AnnouncementsSection } from "./AdminAnnouncements.tsx";
 
-const mockToastError = vi.fn();
-const mockToastWarning = vi.fn();
 const mockUseInstanceVersionQuery = vi.fn();
-
-vi.mock("sonner", () => ({
-  toast: {
-    error: (...args: unknown[]) => mockToastError(...args),
-    warning: (...args: unknown[]) => mockToastWarning(...args),
-  },
-}));
 
 let currentLanguage = "en";
 
@@ -28,10 +19,23 @@ vi.mock("react-i18next", () => ({
 }));
 
 vi.mock("@opentickly/web-ui", () => ({
+  AppButton: ({ children, ...props }: React.ComponentProps<"button">) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
   AppLinkButton: ({ children, ...props }: React.ComponentProps<"a">) => (
     <a {...props}>{children}</a>
   ),
   SurfaceCard: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
+  Dialog: ({ children, testId }: { children: React.ReactNode; testId?: string }) => (
+    <div data-testid={testId} role="dialog">
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ title }: { title: string }) => <h2>{title}</h2>,
+  DialogBody: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("react-markdown", () => ({
@@ -45,11 +49,11 @@ vi.mock("../../shared/query/instance-admin.ts", () => ({
 describe("AnnouncementsSection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.sessionStorage.clear();
+    window.localStorage.clear();
     currentLanguage = "en";
   });
 
-  it("shows a proactive toast once for warning announcements", async () => {
+  it("opens a modal for the warning announcement and keeps info out of the modal", () => {
     mockUseInstanceVersionQuery.mockReturnValue({
       data: versionWithAnnouncements([
         {
@@ -69,22 +73,42 @@ describe("AnnouncementsSection", () => {
       ]),
     });
 
-    const view = render(<AnnouncementsSection />);
+    const { getByTestId, queryByText } = render(<AnnouncementsSection />);
 
-    await waitFor(() => {
-      expect(mockToastWarning).toHaveBeenCalledWith("Maintenance window", {
-        description: "Back up before upgrading.",
-        id: "announcement-maintenance",
-      });
-    });
-    expect(mockToastError).not.toHaveBeenCalled();
-
-    view.rerender(<AnnouncementsSection />);
-
-    expect(mockToastWarning).toHaveBeenCalledTimes(1);
+    const modal = getByTestId("announcement-modal");
+    expect(modal).toHaveTextContent("Maintenance window");
+    expect(modal).toHaveTextContent("**Back up** before upgrading.");
+    // Info announcement is card-only, never surfaced in the modal.
+    expect(modal).not.toHaveTextContent("Welcome");
+    expect(queryByText("instanceAdmin:announcementDismiss")).toBeTruthy();
   });
 
-  it("uses error toasts for critical announcements", async () => {
+  it("surfaces the most severe announcement first", () => {
+    mockUseInstanceVersionQuery.mockReturnValue({
+      data: versionWithAnnouncements([
+        {
+          id: "maintenance",
+          title: "Maintenance window",
+          severity: "warning",
+          published_at: "2026-05-02T00:00:00Z",
+          body_markdown: "Heads up.",
+        },
+        {
+          id: "security",
+          title: "Security patch required",
+          severity: "critical",
+          published_at: "2026-05-03T00:00:00Z",
+          body_markdown: "",
+        },
+      ]),
+    });
+
+    const { getByTestId } = render(<AnnouncementsSection />);
+
+    expect(getByTestId("announcement-modal")).toHaveTextContent("Security patch required");
+  });
+
+  it("falls back to the default description when the critical body is empty", () => {
     mockUseInstanceVersionQuery.mockReturnValue({
       data: versionWithAnnouncements([
         {
@@ -97,18 +121,40 @@ describe("AnnouncementsSection", () => {
       ]),
     });
 
-    render(<AnnouncementsSection />);
+    const { getByTestId } = render(<AnnouncementsSection />);
 
-    await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith("Security patch required", {
-        description: "instanceAdmin:criticalAnnouncementToastDescription",
-        id: "announcement-security",
-      });
-    });
-    expect(mockToastWarning).not.toHaveBeenCalled();
+    expect(getByTestId("announcement-modal")).toHaveTextContent(
+      "instanceAdmin:criticalAnnouncementModalDescription",
+    );
   });
 
-  it("toasts the localized title and body for the active UI language", async () => {
+  it("dismisses forever: persists to localStorage and stays closed on remount", async () => {
+    mockUseInstanceVersionQuery.mockReturnValue({
+      data: versionWithAnnouncements([
+        {
+          id: "maintenance",
+          title: "Maintenance window",
+          severity: "warning",
+          published_at: "2026-05-02T00:00:00Z",
+          body_markdown: "Heads up.",
+        },
+      ]),
+    });
+
+    const first = render(<AnnouncementsSection />);
+    fireEvent.click(first.getByText("instanceAdmin:announcementDismiss"));
+
+    await waitFor(() => {
+      expect(first.queryByTestId("announcement-modal")).toBeNull();
+    });
+    expect(window.localStorage.getItem("opentickly:announcement-modal:maintenance")).toBe("1");
+    first.unmount();
+
+    const second = render(<AnnouncementsSection />);
+    expect(second.queryByTestId("announcement-modal")).toBeNull();
+  });
+
+  it("renders the localized title and body for the active UI language", () => {
     currentLanguage = "zh-CN";
     mockUseInstanceVersionQuery.mockReturnValue({
       data: versionWithAnnouncements([
@@ -125,64 +171,11 @@ describe("AnnouncementsSection", () => {
       ]),
     });
 
-    render(<AnnouncementsSection />);
+    const { getByTestId } = render(<AnnouncementsSection />);
 
-    await waitFor(() => {
-      expect(mockToastWarning).toHaveBeenCalledWith("维护窗口", {
-        description: "升级前请先备份。",
-        id: "announcement-maintenance",
-      });
-    });
-  });
-
-  it("keeps hyphenated and snake_case words in the toast description", async () => {
-    mockUseInstanceVersionQuery.mockReturnValue({
-      data: versionWithAnnouncements([
-        {
-          id: "ops",
-          title: "Heads up",
-          severity: "warning",
-          published_at: "2026-05-02T00:00:00Z",
-          body_markdown: "**Back up** the data_dir before re-running self-hosting upgrades.",
-        },
-      ]),
-    });
-
-    render(<AnnouncementsSection />);
-
-    await waitFor(() => {
-      expect(mockToastWarning).toHaveBeenCalledWith("Heads up", {
-        description: "Back up the data_dir before re-running self-hosting upgrades.",
-        id: "announcement-ops",
-      });
-    });
-  });
-
-  it("falls back to the default text when no translation matches the language", async () => {
-    currentLanguage = "fr";
-    mockUseInstanceVersionQuery.mockReturnValue({
-      data: versionWithAnnouncements([
-        {
-          id: "maintenance",
-          title: "Maintenance window",
-          severity: "warning",
-          published_at: "2026-05-02T00:00:00Z",
-          body_markdown: "**Back up** before upgrading.",
-          translations: {
-            zh: { title: "维护窗口", body_markdown: "升级前请先**备份**。" },
-          },
-        },
-      ]),
-    });
-
-    render(<AnnouncementsSection />);
-
-    await waitFor(() => {
-      expect(mockToastWarning).toHaveBeenCalledWith("Maintenance window", {
-        description: "Back up before upgrading.",
-        id: "announcement-maintenance",
-      });
-    });
+    const modal = getByTestId("announcement-modal");
+    expect(modal).toHaveTextContent("维护窗口");
+    expect(modal).toHaveTextContent("升级前请先**备份**。");
   });
 });
 

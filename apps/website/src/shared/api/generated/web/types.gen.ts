@@ -1003,3 +1003,31 @@ export type CompleteOnboardingResponses = {
 
 export type CompleteOnboardingResponse =
   CompleteOnboardingResponses[keyof CompleteOnboardingResponses];
+
+/**
+ * Workspace SAML SSO configuration plus the generated Service Provider integration
+ * details to paste into the identity provider.
+ */
+export type WorkspaceSsoConfig = {
+  enabled: boolean;
+  profile_name: string;
+  email_domain: string;
+  idp_metadata_url: string;
+  idp_entity_id: string;
+  idp_sso_url: string;
+  idp_certificate: string;
+  sp_entity_id: string;
+  acs_url: string;
+  sign_in_url: string;
+  metadata_url: string;
+};
+
+export type WorkspaceSsoConfigUpdate = {
+  enabled: boolean;
+  profile_name: string;
+  email_domain: string;
+  idp_metadata_url: string;
+  idp_entity_id: string;
+  idp_sso_url: string;
+  idp_certificate: string;
+};

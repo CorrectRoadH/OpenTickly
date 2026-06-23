@@ -1,17 +1,27 @@
-import { AppLinkButton, SurfaceCard } from "@opentickly/web-ui";
+import { AppButton, AppLinkButton, SurfaceCard } from "@opentickly/web-ui";
 import { AlertTriangle, Info, Megaphone } from "lucide-react";
-import { useEffect, type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
-import { toast } from "sonner";
 
 import type {
   InstanceAnnouncement,
   InstanceAnnouncementTranslation,
 } from "../../shared/api/generated/admin/types.gen.ts";
+import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { useInstanceVersionQuery } from "../../shared/query/instance-admin.ts";
 
-const warningToastStoragePrefix = "opentickly:announcement-toast:";
+// Dismissing an announcement modal is persisted per id in localStorage so a
+// blocking modal never re-interrupts the same admin across sessions. The card
+// list below still shows every announcement, so nothing is lost on dismiss.
+const dismissedModalStoragePrefix = "opentickly:announcement-modal:";
+
+// Higher-severity announcements take the single modal slot first.
+const announcementModalRank: Record<InstanceAnnouncement["severity"], number> = {
+  critical: 0,
+  warning: 1,
+  info: 2,
+};
 
 // LocalizedAnnouncement is the announcement's display text resolved for the
 // admin's current UI language. Localization happens client-side because one
@@ -54,30 +64,31 @@ export function AnnouncementsSection(): ReactElement | null {
   const versionQuery = useInstanceVersionQuery();
   const announcements = versionQuery.data?.announcements;
 
-  useAnnouncementToasts(announcements ?? []);
-
   if (!announcements || announcements.length === 0) return null;
 
   return (
-    <SurfaceCard>
-      <div className="p-5">
-        <div className="mb-3 flex items-center gap-2">
-          <Megaphone
-            aria-hidden="true"
-            className="h-4 w-4 text-[var(--track-text-muted)]"
-            size={16}
-          />
-          <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
-            {t("instanceAdmin:announcements")}
-          </h3>
+    <>
+      <AnnouncementModal announcements={announcements} />
+      <SurfaceCard>
+        <div className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Megaphone
+              aria-hidden="true"
+              className="h-4 w-4 text-[var(--track-text-muted)]"
+              size={16}
+            />
+            <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
+              {t("instanceAdmin:announcements")}
+            </h3>
+          </div>
+          <ul className="flex flex-col gap-3">
+            {announcements.map((a) => (
+              <AnnouncementItem key={a.id} announcement={a} />
+            ))}
+          </ul>
         </div>
-        <ul className="flex flex-col gap-3">
-          {announcements.map((a) => (
-            <AnnouncementItem key={a.id} announcement={a} />
-          ))}
-        </ul>
-      </div>
-    </SurfaceCard>
+      </SurfaceCard>
+    </>
   );
 }
 
@@ -85,6 +96,12 @@ const announcementAccentBySeverity: Record<InstanceAnnouncement["severity"], str
   info: "border-l-[var(--track-accent)] bg-[var(--track-accent)]/5",
   warning: "border-l-yellow-400 bg-yellow-500/5",
   critical: "border-l-red-400 bg-red-500/10",
+};
+
+const announcementIconBySeverity: Record<InstanceAnnouncement["severity"], string> = {
+  info: "text-[var(--track-text-muted)]",
+  warning: "text-yellow-400",
+  critical: "text-red-400",
 };
 
 export function AnnouncementItem({
@@ -112,19 +129,7 @@ export function AnnouncementItem({
           {new Date(announcement.published_at).toLocaleDateString(i18n.language)}
         </span>
       </div>
-      {localized.bodyMarkdown ? (
-        <div className="prose prose-invert prose-sm max-w-none text-[13px] leading-relaxed text-[var(--track-text-soft)] prose-a:text-[var(--track-accent)] prose-strong:text-white">
-          <ReactMarkdown
-            components={{
-              a: ({ node: _node, ...props }) => (
-                <a {...props} rel="noopener noreferrer" target="_blank" />
-              ),
-            }}
-          >
-            {localized.bodyMarkdown}
-          </ReactMarkdown>
-        </div>
-      ) : null}
+      {localized.bodyMarkdown ? <AnnouncementMarkdown markdown={localized.bodyMarkdown} /> : null}
       {localized.link ? (
         <div>
           <AppLinkButton
@@ -142,68 +147,123 @@ export function AnnouncementItem({
   );
 }
 
-function useAnnouncementToasts(announcements: InstanceAnnouncement[]): void {
-  const { t, i18n } = useTranslation();
-  const language = i18n.language;
-
-  useEffect(() => {
-    for (const announcement of announcements) {
-      if (!shouldToastAnnouncement(announcement)) continue;
-
-      const storageKey = `${warningToastStoragePrefix}${announcement.id}`;
-      if (hasSeenAnnouncementToast(storageKey)) continue;
-
-      const localized = localizeAnnouncement(announcement, language);
-      const description =
-        firstMarkdownParagraph(localized.bodyMarkdown) ??
-        t(`instanceAdmin:${announcement.severity}AnnouncementToastDescription`);
-      const options = {
-        description,
-        id: `announcement-${announcement.id}`,
-      };
-
-      if (announcement.severity === "critical") {
-        toast.error(localized.title, options);
-      } else {
-        toast.warning(localized.title, options);
-      }
-      markAnnouncementToastSeen(storageKey);
-    }
-  }, [announcements, t, language]);
+// AnnouncementMarkdown renders an announcement body as prose with links that
+// open in a new tab. Shared by the card list and the proactive modal.
+function AnnouncementMarkdown({ markdown }: { markdown: string }): ReactElement {
+  return (
+    <div className="prose prose-invert prose-sm max-w-none text-[13px] leading-relaxed text-[var(--track-text-soft)] prose-a:text-[var(--track-accent)] prose-strong:text-white">
+      <ReactMarkdown
+        components={{
+          a: ({ node: _node, ...props }) => (
+            <a {...props} rel="noopener noreferrer" target="_blank" />
+          ),
+        }}
+      >
+        {markdown}
+      </ReactMarkdown>
+    </div>
+  );
 }
 
-function shouldToastAnnouncement(announcement: InstanceAnnouncement): boolean {
+// AnnouncementModal proactively surfaces the most severe undismissed
+// warning/critical announcement in a blocking dialog. Dismissing acknowledges
+// that announcement forever (localStorage) and the next render advances to the
+// following pending one. Info announcements never modal — card list only.
+function AnnouncementModal({
+  announcements,
+}: {
+  announcements: InstanceAnnouncement[];
+}): ReactElement | null {
+  const { t, i18n } = useTranslation();
+  // Tracks ids dismissed during this mount so the modal advances to the next
+  // pending announcement without waiting for the version query to refetch.
+  const [dismissedThisMount, setDismissedThisMount] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+
+  const active = [...announcements]
+    .filter(
+      (a) =>
+        shouldModalAnnouncement(a) &&
+        !dismissedThisMount.has(a.id) &&
+        !hasDismissedAnnouncementModal(a.id),
+    )
+    .sort((a, b) => announcementModalRank[a.severity] - announcementModalRank[b.severity])[0];
+
+  if (!active) return null;
+
+  const localized = localizeAnnouncement(active, i18n.language);
+  const SeverityIcon = active.severity === "critical" ? AlertTriangle : Info;
+  const description =
+    localized.bodyMarkdown || t(`instanceAdmin:${active.severity}AnnouncementModalDescription`);
+
+  function dismiss(): void {
+    markAnnouncementModalDismissed(active.id);
+    setDismissedThisMount((prev) => new Set(prev).add(active.id));
+  }
+
+  return (
+    <ModalDialog
+      onClose={dismiss}
+      testId="announcement-modal"
+      title={localized.title}
+      width="max-w-[480px]"
+      footer={
+        <>
+          {localized.link ? (
+            <AppLinkButton
+              href={localized.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="ghost"
+              size="sm"
+            >
+              {t("instanceAdmin:announcementLearnMore")}
+            </AppLinkButton>
+          ) : null}
+          <AppButton onClick={dismiss} variant="primary" size="sm">
+            {t("instanceAdmin:announcementDismiss")}
+          </AppButton>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <SeverityIcon
+            aria-hidden="true"
+            className={`h-4 w-4 ${announcementIconBySeverity[active.severity]}`}
+            size={16}
+          />
+          <span className="ml-auto text-[12px] text-[var(--track-text-muted)]">
+            {new Date(active.published_at).toLocaleDateString(i18n.language)}
+          </span>
+        </div>
+        {localized.bodyMarkdown ? (
+          <AnnouncementMarkdown markdown={localized.bodyMarkdown} />
+        ) : (
+          <p className="text-[13px] leading-relaxed text-[var(--track-text-soft)]">{description}</p>
+        )}
+      </div>
+    </ModalDialog>
+  );
+}
+
+function shouldModalAnnouncement(announcement: InstanceAnnouncement): boolean {
   return announcement.severity === "warning" || announcement.severity === "critical";
 }
 
-function hasSeenAnnouncementToast(storageKey: string): boolean {
+function hasDismissedAnnouncementModal(id: string): boolean {
   try {
-    return window.sessionStorage.getItem(storageKey) === "1";
+    return window.localStorage.getItem(`${dismissedModalStoragePrefix}${id}`) === "1";
   } catch {
     return false;
   }
 }
 
-function markAnnouncementToastSeen(storageKey: string): void {
+function markAnnouncementModalDismissed(id: string): void {
   try {
-    window.sessionStorage.setItem(storageKey, "1");
+    window.localStorage.setItem(`${dismissedModalStoragePrefix}${id}`, "1");
   } catch {
-    // Best-effort dedupe only.
+    // Best-effort persistence only.
   }
-}
-
-function firstMarkdownParagraph(markdown: string | undefined): string | undefined {
-  const paragraph = markdown
-    ?.split(/\n\s*\n/u)
-    .map((part) => part.trim())
-    .find((part) => part.length > 0);
-  if (!paragraph) return undefined;
-
-  return paragraph
-    .replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1") // unwrap [text](url) → text
-    .replace(/^\s*[>#*-]+\s+/gmu, "") // leading heading/quote/list markers
-    .replace(/[*`]/gu, "") // inline emphasis / code markers
-    .replace(/(?<![\p{L}\p{N}])_+|_+(?![\p{L}\p{N}])/gu, "") // underscores only at word edges
-    .replace(/\s+/gu, " ")
-    .trim();
 }

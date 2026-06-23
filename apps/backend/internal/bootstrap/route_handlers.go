@@ -19,7 +19,7 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
-	identitysso "opentoggl/backend/apps/backend/internal/identity/sso"
+	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/public-api"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
@@ -73,9 +73,9 @@ type routeHandlers struct {
 	invoiceApp      *billingapplication.InvoiceService
 	referenceApp    *platformapplication.ReferenceService
 	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
-	ssoManager      *identitysso.Manager
-	ssoConfigReader *ssoConfigReaderFromDB
-	ssoSiteURL      *siteURLReaderFromDB
+	samlManager     *identitysaml.Manager
+	samlConfig      *samlConfigStore
+	siteURL         *siteURLReaderFromDB
 }
 
 func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
@@ -230,9 +230,9 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		invoiceApp:      invoiceService,
 		referenceApp:    referenceService,
 		telemetryPinger: telemetryPinger,
-		ssoManager:      identitysso.NewManager(),
-		ssoConfigReader: &ssoConfigReaderFromDB{pool: pool},
-		ssoSiteURL:      siteURLReader,
+		samlManager:     identitysaml.NewManager(),
+		samlConfig:      &samlConfigStore{pool: pool},
+		siteURL:         siteURLReader,
 	}, nil
 }
 

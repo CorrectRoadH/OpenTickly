@@ -81,6 +81,9 @@ func (s *inMemoryInviteStore) FindOrganizationMemberByUserID(context.Context, in
 func (s *inMemoryInviteStore) EnsureWorkspaceOwner(context.Context, membershipapplication.EnsureWorkspaceOwnerCommand) (membershipapplication.WorkspaceMemberView, error) {
 	return membershipapplication.WorkspaceMemberView{}, nil
 }
+func (s *inMemoryInviteStore) EnsureWorkspaceMember(context.Context, membershipapplication.EnsureWorkspaceMemberCommand) (membershipapplication.WorkspaceMemberView, error) {
+	return membershipapplication.WorkspaceMemberView{}, nil
+}
 func (s *inMemoryInviteStore) ListWorkspaceMembers(context.Context, int64) ([]membershipapplication.WorkspaceMemberView, error) {
 	out := make([]membershipapplication.WorkspaceMemberView, 0, len(s.members))
 	for _, v := range s.members {

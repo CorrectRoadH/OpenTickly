@@ -10,7 +10,6 @@ const mockNavigate = vi.fn();
 const mockLoginMutation = vi.fn();
 const mockRegisterMutation = vi.fn();
 const mockToastError = vi.fn();
-const mockSsoInfo = vi.fn();
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -33,7 +32,6 @@ vi.mock("sonner", () => ({
 vi.mock("../../shared/query/web-shell.ts", () => ({
   useLoginMutation: () => mockLoginMutation(),
   useRegisterMutation: () => mockRegisterMutation(),
-  useSsoInfoQuery: () => mockSsoInfo(),
 }));
 
 describe("AuthFeature", () => {
@@ -49,7 +47,6 @@ describe("AuthFeature", () => {
       isPending: false,
       mutateAsync: vi.fn(),
     });
-    mockSsoInfo.mockReturnValue({ data: { enabled: false, providerName: "SSO" } });
   });
 
   it("shows login errors in a toast instead of an inline alert", async () => {
@@ -69,17 +66,16 @@ describe("AuthFeature", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("renders the SSO button on login when SSO is enabled", () => {
-    mockSsoInfo.mockReturnValue({ data: { enabled: true, providerName: "Okta" } });
+  it("links to the SSO login screen on login", () => {
     render(<AuthFeature mode="login" />);
 
-    expect(screen.getByRole("button", { name: "continueWithSso" })).toBeTruthy();
+    const link = screen.getByText("ssoButton");
+    expect(link.getAttribute("to")).toBe("/login/sso");
   });
 
-  it("hides the SSO button when SSO is disabled", () => {
-    mockSsoInfo.mockReturnValue({ data: { enabled: false, providerName: "SSO" } });
-    render(<AuthFeature mode="login" />);
+  it("does not show the SSO link on register", () => {
+    render(<AuthFeature mode="register" />);
 
-    expect(screen.queryByRole("button", { name: "continueWithSso" })).toBeNull();
+    expect(screen.queryByText("ssoButton")).toBeNull();
   });
 });

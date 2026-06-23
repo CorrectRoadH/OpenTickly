@@ -44,6 +44,12 @@ type EnsureWorkspaceOwnerCommand struct {
 	UserID      int64
 }
 
+type EnsureWorkspaceMemberCommand struct {
+	WorkspaceID int64
+	UserID      int64
+	Role        membershipdomain.WorkspaceRole
+}
+
 type InviteWorkspaceMemberCommand struct {
 	WorkspaceID          int64
 	RequestedBy          int64
@@ -202,6 +208,7 @@ type Store interface {
 	FindOrganizationMemberByUserID(context.Context, int64, int64) (OrganizationMemberView, bool, error)
 
 	EnsureWorkspaceOwner(context.Context, EnsureWorkspaceOwnerCommand) (WorkspaceMemberView, error)
+	EnsureWorkspaceMember(context.Context, EnsureWorkspaceMemberCommand) (WorkspaceMemberView, error)
 	ListWorkspaceMembers(context.Context, int64) ([]WorkspaceMemberView, error)
 	FindWorkspaceMemberByID(context.Context, int64, int64) (WorkspaceMemberView, bool, error)
 	FindWorkspaceMemberByUserID(context.Context, int64, int64) (WorkspaceMemberView, bool, error)

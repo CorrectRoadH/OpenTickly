@@ -11,6 +11,10 @@ import type {
   ResetPasswordRequest,
   VerifyEmailRequest,
 } from "../api/web/index.ts";
+import type {
+  WorkspaceSsoConfig,
+  WorkspaceSsoConfigUpdate,
+} from "../api/generated/web/types.gen.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   completeOnboarding,
@@ -133,34 +137,89 @@ export function useUpdateWebSessionMutation() {
   });
 }
 
-export type SsoInfo = {
-  enabled: boolean;
-  providerName: string;
+export type SsoResolveResult = {
+  found: boolean;
+  profile_name?: string;
+  login_path?: string;
 };
 
-// useSsoInfoQuery reports whether instance-level OIDC single sign-on is
-// configured, so the login page and SSO settings tab can reflect it. The
-// endpoint is a plain unauthenticated browser route (not the typed web API),
-// so it is fetched directly.
-export function useSsoInfoQuery() {
-  return useQuery({
-    queryKey: ["sso-info"] as const,
-    queryFn: async (): Promise<SsoInfo> => {
-      const response = await fetch("/auth/sso/info", { credentials: "same-origin" });
+// useSsoResolveMutation looks up the workspace SAML2 profile for an email so
+// the dedicated SSO login screen can redirect the browser to the IdP. The
+// endpoint is a public browser route (not the typed web API), so it is posted
+// to directly. A non-ok response is treated as "no profile found".
+export function useSsoResolveMutation() {
+  return useMutation({
+    mutationFn: async (email: string): Promise<SsoResolveResult> => {
+      const response = await fetch("/auth/sso/resolve", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       if (!response.ok) {
-        return { enabled: false, providerName: "SSO" };
+        return { found: false };
       }
-      const data = (await response.json()) as { enabled?: boolean; provider_name?: string };
-      return {
-        enabled: data.enabled === true,
-        providerName:
-          typeof data.provider_name === "string" && data.provider_name.length > 0
-            ? data.provider_name
-            : "SSO",
-      };
+      return (await response.json()) as SsoResolveResult;
     },
-    staleTime: 5 * 60 * 1000,
   });
+}
+
+const workspaceSsoConfigQueryKey = (workspaceId: number) =>
+  ["workspace-sso-config", workspaceId] as const;
+
+// useWorkspaceSsoConfigQuery loads a workspace's SAML2 SSO configuration. The
+// endpoint is the authenticated web API but is not part of the generated
+// client, so it is fetched directly.
+export function useWorkspaceSsoConfigQuery(workspaceId: number) {
+  return useQuery({
+    queryKey: workspaceSsoConfigQueryKey(workspaceId),
+    queryFn: async (): Promise<WorkspaceSsoConfig> => {
+      const response = await fetch(`/web/v1/workspaces/${workspaceId}/sso-config`, {
+        credentials: "same-origin",
+      });
+      if (!response.ok) {
+        throw new Error(await resolveErrorMessage(response));
+      }
+      return (await response.json()) as WorkspaceSsoConfig;
+    },
+  });
+}
+
+export function useUpdateWorkspaceSsoConfigMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (body: WorkspaceSsoConfigUpdate): Promise<WorkspaceSsoConfig> => {
+      const response = await fetch(`/web/v1/workspaces/${workspaceId}/sso-config`, {
+        method: "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        throw new Error(await resolveErrorMessage(response));
+      }
+      return (await response.json()) as WorkspaceSsoConfig;
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(workspaceSsoConfigQueryKey(workspaceId), updated);
+    },
+  });
+}
+
+// resolveErrorMessage surfaces the server's text/JSON message so callers can
+// toast it (e.g. the 409 "domain already claimed" conflict).
+async function resolveErrorMessage(response: Response): Promise<string> {
+  const text = await response.text();
+  if (!text) {
+    return `Request failed (${response.status})`;
+  }
+  try {
+    const parsed = JSON.parse(text) as { message?: string; error?: string };
+    return parsed.message ?? parsed.error ?? text;
+  } catch {
+    return text;
+  }
 }
 
 const onboardingQueryKey = () => ["onboarding"] as const;

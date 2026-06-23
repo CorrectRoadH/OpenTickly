@@ -3,6 +3,10 @@ import { lazyNamed } from "./route-tree-shared.tsx";
 /* ---------- lazy page imports ---------- */
 
 export const AuthPage = lazyNamed(() => import("../pages/auth/AuthPage.tsx"), "AuthPage");
+export const SsoLoginPage = lazyNamed(
+  () => import("../pages/auth/SsoLoginPage.tsx"),
+  "SsoLoginPage",
+);
 export const VerifyEmailPage = lazyNamed(
   () => import("../pages/auth/VerifyEmailPage.tsx"),
   "VerifyEmailPage",
