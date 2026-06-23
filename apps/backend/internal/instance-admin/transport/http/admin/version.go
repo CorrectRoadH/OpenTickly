@@ -10,12 +10,13 @@ import (
 	telemetrydomain "opentoggl/backend/apps/backend/internal/telemetry/domain"
 
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 const (
-	githubRepo         = "CorrectRoadH/OpenTickly"
-	fallbackChangelog  = "https://github.com/" + githubRepo + "/blob/main/CHANGELOG.md"
-	upstreamCheckTTL   = 3 * time.Second
+	githubRepo        = "CorrectRoadH/OpenTickly"
+	fallbackChangelog = "https://github.com/" + githubRepo + "/blob/main/CHANGELOG.md"
+	upstreamCheckTTL  = 3 * time.Second
 )
 
 // CurrentVersion is the legacy entrypoint for the compiled-in version string.
@@ -113,7 +114,36 @@ func mapAnnouncements(src []telemetrydomain.Announcement) []adminapi.InstanceAnn
 			link := a.Link
 			item.Link = &link
 		}
+		if translations := mapAnnouncementTranslations(a.Translations); translations != nil {
+			item.Translations = &translations
+		}
 		out = append(out, item)
+	}
+	return out
+}
+
+// mapAnnouncementTranslations converts the upstream per-locale overrides into
+// the generated admin shape, keeping only the fields the author actually set.
+// Returns nil when there are no translations so the JSON field stays omitted.
+func mapAnnouncementTranslations(
+	src map[string]telemetrydomain.AnnouncementTranslation,
+) map[string]adminapi.InstanceAnnouncementTranslation {
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(map[string]adminapi.InstanceAnnouncementTranslation, len(src))
+	for locale, t := range src {
+		item := adminapi.InstanceAnnouncementTranslation{}
+		if t.Title != "" {
+			item.Title = lo.ToPtr(t.Title)
+		}
+		if t.BodyMarkdown != "" {
+			item.BodyMarkdown = lo.ToPtr(t.BodyMarkdown)
+		}
+		if t.Link != "" {
+			item.Link = lo.ToPtr(t.Link)
+		}
+		out[locale] = item
 	}
 	return out
 }

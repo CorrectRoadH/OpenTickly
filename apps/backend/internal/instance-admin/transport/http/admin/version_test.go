@@ -123,6 +123,83 @@ func TestGetInstanceVersion_LiveManifestWins(t *testing.T) {
 	}
 }
 
+func TestGetInstanceVersion_PassesThroughTranslations(t *testing.T) {
+	CurrentVersion = "0.1.0"
+	t.Cleanup(func() { CurrentVersion = "dev" })
+
+	feed := &fakeFeed{
+		sendManifest: telemetrydomain.Manifest{
+			LatestVersion: "0.2.0",
+			LatestTag:     "0.2.0",
+			Announcements: []telemetrydomain.Announcement{
+				{
+					ID:           "ann-1",
+					Title:        "Hello",
+					Severity:     "info",
+					PublishedAt:  time.Date(2026, 4, 16, 0, 0, 0, 0, time.UTC),
+					BodyMarkdown: "body",
+					Translations: map[string]telemetrydomain.AnnouncementTranslation{
+						"zh": {Title: "你好", BodyMarkdown: "正文"},
+					},
+				},
+			},
+		},
+	}
+	h := &Handler{updateFeed: feed}
+	resp := callVersion(t, h)
+
+	if len(resp.Announcements) != 1 {
+		t.Fatalf("Announcements = %+v", resp.Announcements)
+	}
+	translations := resp.Announcements[0].Translations
+	if translations == nil {
+		t.Fatalf("Translations not mapped")
+	}
+	zh, ok := (*translations)["zh"]
+	if !ok {
+		t.Fatalf("zh translation missing: %+v", *translations)
+	}
+	if zh.Title == nil || *zh.Title != "你好" {
+		t.Errorf("zh.Title = %v, want 你好", zh.Title)
+	}
+	if zh.BodyMarkdown == nil || *zh.BodyMarkdown != "正文" {
+		t.Errorf("zh.BodyMarkdown = %v, want 正文", zh.BodyMarkdown)
+	}
+	if zh.Link != nil {
+		t.Errorf("zh.Link should be nil when unset, got %v", *zh.Link)
+	}
+}
+
+func TestGetInstanceVersion_OmitsTranslationsWhenAbsent(t *testing.T) {
+	CurrentVersion = "0.1.0"
+	t.Cleanup(func() { CurrentVersion = "dev" })
+
+	feed := &fakeFeed{
+		sendManifest: telemetrydomain.Manifest{
+			LatestVersion: "0.2.0",
+			LatestTag:     "0.2.0",
+			Announcements: []telemetrydomain.Announcement{
+				{
+					ID:           "ann-1",
+					Title:        "Hello",
+					Severity:     "info",
+					PublishedAt:  time.Date(2026, 4, 16, 0, 0, 0, 0, time.UTC),
+					BodyMarkdown: "body",
+				},
+			},
+		},
+	}
+	h := &Handler{updateFeed: feed}
+	resp := callVersion(t, h)
+
+	if len(resp.Announcements) != 1 {
+		t.Fatalf("Announcements = %+v", resp.Announcements)
+	}
+	if resp.Announcements[0].Translations != nil {
+		t.Errorf("Translations should be nil when upstream omits them")
+	}
+}
+
 func TestGetInstanceVersion_FallsBackToCachedOnSendError(t *testing.T) {
 	CurrentVersion = "0.1.0"
 	t.Cleanup(func() { CurrentVersion = "dev" })

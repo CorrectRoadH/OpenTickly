@@ -74,6 +74,21 @@ export type InstanceAnnouncement = {
   expires_at?: string;
   link?: string;
   body_markdown: string;
+  /**
+   * Optional per-locale text overrides keyed by BCP-47 base language (e.g. "zh"). Additive: clients that ignore this keep rendering the default title/body_markdown.
+   */
+  translations?: {
+    [key: string]: InstanceAnnouncementTranslation;
+  };
+};
+
+/**
+ * Locale-specific override for an announcement's human-readable fields. Any omitted field falls back to the announcement default.
+ */
+export type InstanceAnnouncementTranslation = {
+  title?: string;
+  body_markdown?: string;
+  link?: string;
 };
 
 export type DependencyHealth = {

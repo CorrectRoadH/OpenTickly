@@ -1,5 +1,17 @@
 export type AnnouncementSeverity = "info" | "warning" | "critical";
 
+/**
+ * A locale-specific override for an announcement's human-readable fields.
+ * Keyed by BCP-47 base language (e.g. `zh`, `ja`) in `Announcement.translations`.
+ * Only text is localizable — `severity`, dates and `id` are shared. Any missing
+ * field falls back to the announcement's default (English) value.
+ */
+export interface AnnouncementTranslation {
+  title?: string;
+  bodyMarkdown?: string;
+  link?: string | null;
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -8,6 +20,11 @@ export interface Announcement {
   expiresAt: string | null;
   link: string | null;
   bodyMarkdown: string;
+  /**
+   * Optional per-locale overrides. Additive and backward-compatible: clients
+   * that don't understand this field keep rendering the default fields above.
+   */
+  translations?: Record<string, AnnouncementTranslation>;
 }
 
 /**

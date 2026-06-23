@@ -5,11 +5,47 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
-import i18n from "../../app/i18n.ts";
-import type { InstanceAnnouncement } from "../../shared/api/generated/admin/types.gen.ts";
+import type {
+  InstanceAnnouncement,
+  InstanceAnnouncementTranslation,
+} from "../../shared/api/generated/admin/types.gen.ts";
 import { useInstanceVersionQuery } from "../../shared/query/instance-admin.ts";
 
 const warningToastStoragePrefix = "opentickly:announcement-toast:";
+
+// LocalizedAnnouncement is the announcement's display text resolved for the
+// admin's current UI language. Localization happens client-side because one
+// instance can have admins reading in different languages.
+type LocalizedAnnouncement = {
+  title: string;
+  bodyMarkdown: string;
+  link: string | undefined;
+};
+
+// pickTranslation matches the UI language against the available translations,
+// trying the exact tag ("zh-CN") then the base language ("zh"). Returns
+// undefined when nothing matches so callers fall back to the default text.
+function pickTranslation(
+  translations: Record<string, InstanceAnnouncementTranslation> | undefined,
+  language: string,
+): InstanceAnnouncementTranslation | undefined {
+  if (!translations) return undefined;
+  return translations[language] ?? translations[language.split("-")[0]];
+}
+
+// localizeAnnouncement resolves each field independently: a translation that
+// only overrides the title still inherits the default body and link.
+function localizeAnnouncement(
+  announcement: InstanceAnnouncement,
+  language: string,
+): LocalizedAnnouncement {
+  const translation = pickTranslation(announcement.translations, language);
+  return {
+    title: translation?.title ?? announcement.title,
+    bodyMarkdown: translation?.body_markdown ?? announcement.body_markdown,
+    link: translation?.link ?? announcement.link,
+  };
+}
 
 // AnnouncementsSection renders the list of active announcements surfaced by
 // the upstream update worker. The data rides the same query as VersionCard.
@@ -56,7 +92,8 @@ export function AnnouncementItem({
 }: {
   announcement: InstanceAnnouncement;
 }): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const localized = localizeAnnouncement(announcement, i18n.language);
   const accent = announcementAccentBySeverity[announcement.severity];
   const SeverityIcon = announcement.severity === "info" ? Info : AlertTriangle;
 
@@ -70,43 +107,28 @@ export function AnnouncementItem({
           className="h-4 w-4 text-[var(--track-text-muted)]"
           size={16}
         />
-        <span className="text-[14px] font-medium text-[var(--track-text)]">
-          {announcement.title}
-        </span>
+        <span className="text-[14px] font-medium text-[var(--track-text)]">{localized.title}</span>
         <span className="ml-auto text-[12px] text-[var(--track-text-muted)]">
           {new Date(announcement.published_at).toLocaleDateString(i18n.language)}
         </span>
       </div>
-      {announcement.body_markdown ? (
-        <div className="text-[13px] leading-relaxed text-[var(--track-text-soft)]">
+      {localized.bodyMarkdown ? (
+        <div className="prose prose-invert prose-sm max-w-none text-[13px] leading-relaxed text-[var(--track-text-soft)] prose-a:text-[var(--track-accent)] prose-strong:text-white">
           <ReactMarkdown
             components={{
               a: ({ node: _node, ...props }) => (
-                <a
-                  {...props}
-                  className="text-[var(--track-accent)] underline underline-offset-2"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                />
-              ),
-              li: ({ node: _node, ...props }) => <li {...props} className="ml-4 list-disc" />,
-              p: ({ node: _node, ...props }) => <p {...props} className="mt-0 mb-3 last:mb-0" />,
-              strong: ({ node: _node, ...props }) => (
-                <strong {...props} className="font-semibold text-white" />
-              ),
-              ul: ({ node: _node, ...props }) => (
-                <ul {...props} className="mt-0 mb-3 space-y-1 last:mb-0" />
+                <a {...props} rel="noopener noreferrer" target="_blank" />
               ),
             }}
           >
-            {announcement.body_markdown}
+            {localized.bodyMarkdown}
           </ReactMarkdown>
         </div>
       ) : null}
-      {announcement.link ? (
+      {localized.link ? (
         <div>
           <AppLinkButton
-            href={announcement.link}
+            href={localized.link}
             target="_blank"
             rel="noopener noreferrer"
             variant="ghost"
@@ -121,7 +143,8 @@ export function AnnouncementItem({
 }
 
 function useAnnouncementToasts(announcements: InstanceAnnouncement[]): void {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
 
   useEffect(() => {
     for (const announcement of announcements) {
@@ -130,8 +153,9 @@ function useAnnouncementToasts(announcements: InstanceAnnouncement[]): void {
       const storageKey = `${warningToastStoragePrefix}${announcement.id}`;
       if (hasSeenAnnouncementToast(storageKey)) continue;
 
+      const localized = localizeAnnouncement(announcement, language);
       const description =
-        firstMarkdownParagraph(announcement.body_markdown) ??
+        firstMarkdownParagraph(localized.bodyMarkdown) ??
         t(`instanceAdmin:${announcement.severity}AnnouncementToastDescription`);
       const options = {
         description,
@@ -139,13 +163,13 @@ function useAnnouncementToasts(announcements: InstanceAnnouncement[]): void {
       };
 
       if (announcement.severity === "critical") {
-        toast.error(announcement.title, options);
+        toast.error(localized.title, options);
       } else {
-        toast.warning(announcement.title, options);
+        toast.warning(localized.title, options);
       }
       markAnnouncementToastSeen(storageKey);
     }
-  }, [announcements, t]);
+  }, [announcements, t, language]);
 }
 
 function shouldToastAnnouncement(announcement: InstanceAnnouncement): boolean {
@@ -176,8 +200,10 @@ function firstMarkdownParagraph(markdown: string | undefined): string | undefine
   if (!paragraph) return undefined;
 
   return paragraph
-    .replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1")
-    .replace(/[*_`>#-]/gu, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1") // unwrap [text](url) → text
+    .replace(/^\s*[>#*-]+\s+/gmu, "") // leading heading/quote/list markers
+    .replace(/[*`]/gu, "") // inline emphasis / code markers
+    .replace(/(?<![\p{L}\p{N}])_+|_+(?![\p{L}\p{N}])/gu, "") // underscores only at word edges
     .replace(/\s+/gu, " ")
     .trim();
 }

@@ -52,6 +52,7 @@ export type {
   GetRegistrationPolicyResponse,
   GetRegistrationPolicyResponses,
   InstanceAnnouncement,
+  InstanceAnnouncementTranslation,
   InstanceConfig,
   InstanceHealth,
   InstanceUser,
