@@ -13,6 +13,7 @@ import {
   useTimeEntriesQuery,
 } from "../../shared/query/web-shell.ts";
 import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
+import { getRecentTimeEntryRange } from "../../features/tracking/resolve-query-range.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import {
   CalendarIcon,
@@ -43,16 +44,13 @@ export function MobileShell(): ReactElement {
   const runningEntry = currentTimeEntryQuery.data;
   const { showTimeInTitle } = useUserPreferences();
 
-  // Fetch recent entries for continue suggestions
-  const recentEntriesDateRange = (() => {
-    const end = new Date();
-    end.setDate(end.getDate() + 1);
-    const start = new Date();
-    start.setDate(start.getDate() - 7);
-    return { startDate: start.toISOString(), endDate: end.toISOString() };
-  })();
+  // Fetch recent entries for continue suggestions. Use day-granularity dates
+  // (not raw `new Date().toISOString()`) so the query key stays stable across
+  // renders — otherwise every render mints a new key and refetches, which races
+  // optimistic mutations (e.g. a just-deleted entry gets resurrected by the
+  // fresh fetch).
   const recentEntriesQuery = useTimeEntriesQuery({
-    ...recentEntriesDateRange,
+    ...getRecentTimeEntryRange(7),
     workspaceId: session.currentWorkspace.id,
   });
   const recentStoppedEntries = (() => {
