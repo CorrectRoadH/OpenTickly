@@ -200,8 +200,10 @@ function firstMarkdownParagraph(markdown: string | undefined): string | undefine
   if (!paragraph) return undefined;
 
   return paragraph
-    .replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1")
-    .replace(/[*_`>#-]/gu, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1") // unwrap [text](url) → text
+    .replace(/^\s*[>#*-]+\s+/gmu, "") // leading heading/quote/list markers
+    .replace(/[*`]/gu, "") // inline emphasis / code markers
+    .replace(/(?<![\p{L}\p{N}])_+|_+(?![\p{L}\p{N}])/gu, "") // underscores only at word edges
     .replace(/\s+/gu, " ")
     .trim();
 }

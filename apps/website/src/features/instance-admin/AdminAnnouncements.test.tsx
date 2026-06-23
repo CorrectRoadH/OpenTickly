@@ -135,6 +135,29 @@ describe("AnnouncementsSection", () => {
     });
   });
 
+  it("keeps hyphenated and snake_case words in the toast description", async () => {
+    mockUseInstanceVersionQuery.mockReturnValue({
+      data: versionWithAnnouncements([
+        {
+          id: "ops",
+          title: "Heads up",
+          severity: "warning",
+          published_at: "2026-05-02T00:00:00Z",
+          body_markdown: "**Back up** the data_dir before re-running self-hosting upgrades.",
+        },
+      ]),
+    });
+
+    render(<AnnouncementsSection />);
+
+    await waitFor(() => {
+      expect(mockToastWarning).toHaveBeenCalledWith("Heads up", {
+        description: "Back up the data_dir before re-running self-hosting upgrades.",
+        id: "announcement-ops",
+      });
+    });
+  });
+
   it("falls back to the default text when no translation matches the language", async () => {
     currentLanguage = "fr";
     mockUseInstanceVersionQuery.mockReturnValue({
