@@ -8,9 +8,11 @@ import type {
   WorkspaceSsoConfigUpdate,
 } from "../../shared/api/generated/web/types.gen.ts";
 import {
+  useTestWorkspaceSsoConfigMutation,
   useUpdateWorkspaceSsoConfigMutation,
   useWorkspaceSsoConfigQuery,
 } from "../../shared/query/web-shell.ts";
+import { SsoDiagnosticsResults } from "./SettingsSsoDiagnostics.tsx";
 import { SsoField, SsoReadOnlyField, SsoTextArea } from "./SettingsSsoFields.tsx";
 
 // SettingsSso lets a workspace admin configure SAML2 single sign-on. It loads
@@ -39,6 +41,7 @@ function SsoConfigForm({
 }): ReactElement {
   const { t } = useTranslation("settings");
   const updateMutation = useUpdateWorkspaceSsoConfigMutation(workspaceId);
+  const testMutation = useTestWorkspaceSsoConfigMutation(workspaceId);
 
   const [enabled, setEnabled] = useState(config.enabled);
   const [profileName, setProfileName] = useState(config.profile_name);
@@ -48,8 +51,8 @@ function SsoConfigForm({
   const [idpEntityId, setIdpEntityId] = useState(config.idp_entity_id);
   const [idpCertificate, setIdpCertificate] = useState(config.idp_certificate);
 
-  function save(): void {
-    const body: WorkspaceSsoConfigUpdate = {
+  function buildBody(): WorkspaceSsoConfigUpdate {
+    return {
       enabled,
       profile_name: profileName,
       email_domain: emailDomain,
@@ -58,10 +61,20 @@ function SsoConfigForm({
       idp_entity_id: idpEntityId,
       idp_certificate: idpCertificate,
     };
-    updateMutation.mutate(body, {
+  }
+
+  function save(): void {
+    updateMutation.mutate(buildBody(), {
       onSuccess: () => toast.success(t("ssoSaved")),
       onError: (err) =>
         toast.error(err instanceof Error && err.message ? err.message : t("ssoSaveError")),
+    });
+  }
+
+  function runTest(): void {
+    testMutation.mutate(buildBody(), {
+      onError: (err) =>
+        toast.error(err instanceof Error && err.message ? err.message : t("ssoTestError")),
     });
   }
 
@@ -166,6 +179,30 @@ function SsoConfigForm({
             placeholder="-----BEGIN CERTIFICATE-----"
             value={idpCertificate}
           />
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard>
+        <div className="flex flex-col gap-3 p-5">
+          <div>
+            <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
+              {t("ssoTestTitle")}
+            </h3>
+            <p className="text-[12px] leading-5 text-[var(--track-text-muted)]">
+              {t("ssoTestDescription")}
+            </p>
+          </div>
+          <div>
+            <button
+              className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-4 py-2 text-[14px] font-medium text-[var(--track-text)] transition-colors hover:border-[var(--track-accent)] disabled:opacity-50"
+              disabled={testMutation.isPending}
+              onClick={runTest}
+              type="button"
+            >
+              {testMutation.isPending ? t("ssoTesting") : t("ssoTestRun")}
+            </button>
+          </div>
+          {testMutation.data ? <SsoDiagnosticsResults result={testMutation.data} /> : null}
         </div>
       </SurfaceCard>
 

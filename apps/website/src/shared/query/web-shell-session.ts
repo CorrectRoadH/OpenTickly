@@ -207,6 +207,37 @@ export function useUpdateWorkspaceSsoConfigMutation(workspaceId: number) {
   });
 }
 
+export type SsoConfigCheck = {
+  code: string;
+  status: "ok" | "warn" | "error";
+  detail?: string;
+};
+
+export type SsoConfigTestResult = {
+  ok: boolean;
+  checks: SsoConfigCheck[];
+};
+
+// useTestWorkspaceSsoConfigMutation validates an UNSAVED config so the admin can
+// find problems (unreachable metadata, expired certificate, domain conflict, …)
+// on the settings page before enabling SSO.
+export function useTestWorkspaceSsoConfigMutation(workspaceId: number) {
+  return useMutation({
+    mutationFn: async (body: WorkspaceSsoConfigUpdate): Promise<SsoConfigTestResult> => {
+      const response = await fetch(`/web/v1/workspaces/${workspaceId}/sso-config/test`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        throw new Error(await resolveErrorMessage(response));
+      }
+      return (await response.json()) as SsoConfigTestResult;
+    },
+  });
+}
+
 // resolveErrorMessage surfaces the server's text/JSON message so callers can
 // toast it (e.g. the 409 "domain already claimed" conflict).
 async function resolveErrorMessage(response: Response): Promise<string> {

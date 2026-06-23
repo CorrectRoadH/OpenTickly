@@ -107,7 +107,7 @@ func buildServiceProvider(ctx context.Context, p SPParams) (*saml.ServiceProvide
 		return nil, err
 	}
 
-	idpMetadata, err := resolveIDPMetadata(ctx, p)
+	idpMetadata, err := ResolveIDPMetadata(ctx, p.Config, p.HTTPClient)
 	if err != nil {
 		return nil, err
 	}
@@ -123,19 +123,50 @@ func buildServiceProvider(ctx context.Context, p SPParams) (*saml.ServiceProvide
 	}, nil
 }
 
-func resolveIDPMetadata(ctx context.Context, p SPParams) (*saml.EntityDescriptor, error) {
-	if trimmed := strings.TrimSpace(p.Config.IDPMetadataURL); trimmed != "" {
+// ResolveIDPMetadata resolves the IdP EntityDescriptor from a metadata URL
+// (fetched over HTTP) or from the manual sign-in URL + entity id + certificate.
+func ResolveIDPMetadata(ctx context.Context, cfg Config, client *http.Client) (*saml.EntityDescriptor, error) {
+	if trimmed := strings.TrimSpace(cfg.IDPMetadataURL); trimmed != "" {
 		metadataURL, err := url.Parse(trimmed)
 		if err != nil {
 			return nil, err
 		}
-		client := p.HTTPClient
 		if client == nil {
 			client = http.DefaultClient
 		}
 		return samlsp.FetchMetadata(ctx, client, *metadataURL)
 	}
-	return manualIDPMetadata(p.Config)
+	return manualIDPMetadata(cfg)
+}
+
+// ParseCertificate parses a PEM-encoded or bare-base64 X.509 certificate.
+func ParseCertificate(certificate string) (*x509.Certificate, error) {
+	trimmed := strings.TrimSpace(certificate)
+	if trimmed == "" {
+		return nil, errors.New("saml: empty certificate")
+	}
+	if block, _ := pem.Decode([]byte(trimmed)); block != nil {
+		return x509.ParseCertificate(block.Bytes)
+	}
+	der, err := base64.StdEncoding.DecodeString(strings.Join(strings.Fields(trimmed), ""))
+	if err != nil {
+		return nil, err
+	}
+	return x509.ParseCertificate(der)
+}
+
+// HasSSOEndpoint reports whether an IdP descriptor advertises at least one
+// SingleSignOnService endpoint.
+func HasSSOEndpoint(metadata *saml.EntityDescriptor) bool {
+	if metadata == nil {
+		return false
+	}
+	for _, descriptor := range metadata.IDPSSODescriptors {
+		if len(descriptor.SingleSignOnServices) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // manualIDPMetadata builds an IdP EntityDescriptor from the admin-entered

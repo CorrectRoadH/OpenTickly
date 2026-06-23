@@ -98,8 +98,9 @@ export {
   useSsoResolveMutation,
   useWorkspaceSsoConfigQuery,
   useUpdateWorkspaceSsoConfigMutation,
+  useTestWorkspaceSsoConfigMutation,
 } from "./web-shell-session.ts";
-export type { SsoResolveResult } from "./web-shell-session.ts";
+export type { SsoResolveResult, SsoConfigCheck, SsoConfigTestResult } from "./web-shell-session.ts";
 
 export {
   useProfileQuery,
