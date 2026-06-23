@@ -51,6 +51,34 @@ func NameFromAssertion(assertion *saml.Assertion) string {
 	return strings.TrimSpace(first + " " + last)
 }
 
+// AssertionAttribute is a single SAML attribute, surfaced to the admin during a
+// dry-run test so they can see exactly what the IdP released.
+type AssertionAttribute struct {
+	Name   string   `json:"name"`
+	Values []string `json:"values"`
+}
+
+// AttributesFromAssertion lists every attribute the IdP asserted, for display.
+func AttributesFromAssertion(assertion *saml.Assertion) []AssertionAttribute {
+	attributes := []AssertionAttribute{}
+	for _, statement := range assertion.AttributeStatements {
+		for _, attribute := range statement.Attributes {
+			name := attribute.FriendlyName
+			if strings.TrimSpace(name) == "" {
+				name = attribute.Name
+			}
+			values := []string{}
+			for _, value := range attribute.Values {
+				if trimmed := strings.TrimSpace(value.Value); trimmed != "" {
+					values = append(values, trimmed)
+				}
+			}
+			attributes = append(attributes, AssertionAttribute{Name: name, Values: values})
+		}
+	}
+	return attributes
+}
+
 func attributeValue(assertion *saml.Assertion, name string) string {
 	for _, statement := range assertion.AttributeStatements {
 		for _, attribute := range statement.Attributes {

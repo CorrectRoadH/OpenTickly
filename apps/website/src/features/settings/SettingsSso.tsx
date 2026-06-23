@@ -14,6 +14,7 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { SsoDiagnosticsResults } from "./SettingsSsoDiagnostics.tsx";
 import { SsoField, SsoReadOnlyField, SsoTextArea } from "./SettingsSsoFields.tsx";
+import { SsoLiveTest } from "./SettingsSsoLiveTest.tsx";
 
 // SettingsSso lets a workspace admin configure SAML2 single sign-on. It loads
 // the current config, then hands it to an editable form that owns its own field
@@ -203,6 +204,7 @@ function SsoConfigForm({
             </button>
           </div>
           {testMutation.data ? <SsoDiagnosticsResults result={testMutation.data} /> : null}
+          <SsoLiveTest claimedDomain={emailDomain} workspaceId={workspaceId} />
         </div>
       </SurfaceCard>
 

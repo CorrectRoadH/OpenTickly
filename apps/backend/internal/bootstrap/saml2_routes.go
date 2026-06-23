@@ -32,8 +32,11 @@ const (
 
 // samlPendingLogin is the per-login state persisted server-side (keyed by the
 // AuthnRequest ID, echoed back as RelayState) between the redirect and the ACS.
+// Test marks a dry-run started from the settings page: the ACS reports the
+// assertion back to the admin instead of creating a session.
 type samlPendingLogin struct {
 	WorkspaceID int64
+	Test        bool
 }
 
 func samlStateKey(requestID string) string {
@@ -48,6 +51,7 @@ func newSAML2Routes(handlers *routeHandlers) httpapp.RouteRegistrar {
 		server.POST("/auth/sso/resolve", handlers.ssoResolve)
 		server.GET("/auth/saml2/metadata/:workspace_id", handlers.saml2Metadata)
 		server.GET("/auth/saml2/login/:workspace_id", handlers.saml2Login)
+		server.GET("/auth/saml2/test/login/:workspace_id", handlers.saml2TestLogin)
 		server.POST("/auth/saml2/acs/:workspace_id", handlers.saml2ACS)
 	}
 }
@@ -152,8 +156,10 @@ func (handlers *routeHandlers) saml2ACS(ctx echo.Context) error {
 	if !ok {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
 	}
+	// A usable IdP config is enough to validate an assertion; the enabled check is
+	// deferred so a dry-run test works before SSO is switched on.
 	config, found, err := handlers.samlConfig.Get(requestCtx, workspaceID)
-	if err != nil || !found || !config.active() {
+	if err != nil || !found || !config.providerConfig().Usable() {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
 	}
 
@@ -179,8 +185,14 @@ func (handlers *routeHandlers) saml2ACS(ctx echo.Context) error {
 	}
 	handlers.platformHandles.Cache.Del(requestCtx, samlStateKey(relayState))
 
-	assertion, err := sp.ParseResponse(ctx.Request(), []string{relayState})
-	if err != nil {
+	assertion, parseErr := sp.ParseResponse(ctx.Request(), []string{relayState})
+
+	// Dry-run test: report the result to the admin instead of logging in.
+	if pending.Test {
+		return handlers.renderSAMLTestResult(ctx, config, assertion, parseErr)
+	}
+
+	if parseErr != nil || !config.active() {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
 	}
 
