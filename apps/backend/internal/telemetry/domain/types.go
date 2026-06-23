@@ -40,6 +40,18 @@ type Announcement struct {
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 	Link         string     `json:"link,omitempty"`
 	BodyMarkdown string     `json:"bodyMarkdown"`
+	// Translations carries optional per-locale text overrides keyed by BCP-47
+	// base language (e.g. "zh"). Locale selection happens client-side; the
+	// backend passes this through untouched. Absent on older upstream payloads.
+	Translations map[string]AnnouncementTranslation `json:"translations,omitempty"`
+}
+
+// AnnouncementTranslation is a locale-specific override for an announcement's
+// human-readable fields. Any empty field falls back to the announcement default.
+type AnnouncementTranslation struct {
+	Title        string `json:"title,omitempty"`
+	BodyMarkdown string `json:"bodyMarkdown,omitempty"`
+	Link         string `json:"link,omitempty"`
 }
 
 // Manifest is the response body from the upstream update worker.

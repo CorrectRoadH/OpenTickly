@@ -589,9 +589,32 @@
           },
           "body_markdown": {
             "type": "string"
+          },
+          "translations": {
+            "type": "object",
+            "description": "Optional per-locale text overrides keyed by BCP-47 base language (e.g. \"zh\"). Additive: clients that ignore this keep rendering the default title/body_markdown.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/InstanceAnnouncementTranslation"
+            }
           }
         },
         "required": ["id", "title", "severity", "published_at", "body_markdown"]
+      },
+      "InstanceAnnouncementTranslation": {
+        "type": "object",
+        "description": "Locale-specific override for an announcement's human-readable fields. Any omitted field falls back to the announcement default.",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body_markdown": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "DependencyHealth": {
         "type": "object",
