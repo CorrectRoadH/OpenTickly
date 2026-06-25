@@ -13,6 +13,7 @@ import Seo from "@/components/seo";
 import { homeContent } from "@/lib/home-content";
 import { i18n } from "@/lib/i18n";
 import { baseOptions } from "@/lib/layout.shared";
+import { homeUseCaseItems } from "@/lib/home-use-cases";
 import {
   buildFaqSchema,
   buildOrganizationSchema,
@@ -133,6 +134,8 @@ export default function Home() {
           </SurfaceCard>
         </section>
 
+        {locale === "en" && <HomeUseCases />}
+
         {/* Proof */}
         <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
           <ProofGridCard icons={proofIcons} items={proofItems} />
@@ -162,6 +165,31 @@ export default function Home() {
       </main>
       <Footer locale={locale} />
     </HomeLayout>
+  );
+}
+
+function HomeUseCases() {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
+      <div className="grid gap-6 md:grid-cols-[0.85fr_1.15fr] md:items-start">
+        <div>
+          <p className="landing-kicker">Why teams choose it</p>
+          <h2 className="mt-3 text-[22px] font-semibold leading-8 text-[var(--track-text)]">
+            A practical time tracking system you can inspect, host, and extend.
+          </h2>
+        </div>
+        <div className="grid gap-4">
+          {homeUseCaseItems.map((item) => (
+            <section key={item.title}>
+              <h3 className="text-[15px] font-semibold text-[var(--track-text)]">{item.title}</h3>
+              <p className="mt-2 text-[13px] leading-6 text-[var(--track-text-muted)]">
+                {item.body}
+              </p>
+            </section>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

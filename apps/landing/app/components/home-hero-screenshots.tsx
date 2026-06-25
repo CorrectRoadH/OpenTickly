@@ -6,9 +6,9 @@ type HomeHeroScreenshotsProps = {
 };
 
 const images = [
-  { src: "/hero/opentickly-overview.webp", altKey: "overview" },
-  { src: "/hero/opentickly-free.webp", altKey: "free" },
-  { src: "/hero/opentickly-calendar-view.webp", altKey: "calendar" },
+  { base: "opentickly-overview", altKey: "overview", height: 642, width: 1280 },
+  { base: "opentickly-free", altKey: "free", height: 643, width: 1280 },
+  { base: "opentickly-calendar-view", altKey: "calendar", height: 642, width: 1280 },
 ];
 
 const altByLocale: Record<Locale, Record<string, string>> = {
@@ -57,39 +57,50 @@ const altByLocale: Record<Locale, Record<string, string>> = {
 export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps) {
   const [active, setActive] = useState(0);
   const alts = altByLocale[locale];
+  const activeImage = images[active] ?? images[0]!;
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(timer);
+    let interval: number | undefined;
+    const delay = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        setActive((prev) => (prev + 1) % images.length);
+      }, 4000);
+    }, 12_000);
+
+    return () => {
+      window.clearTimeout(delay);
+      if (interval !== undefined) window.clearInterval(interval);
+    };
   }, []);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="relative overflow-hidden rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]">
-        {images.map((image, index) => (
-          <img
-            key={image.src}
-            alt={alts[image.altKey]}
-            className={`block w-full transition-opacity duration-500 ${
-              index === active ? "relative opacity-100" : "absolute inset-0 opacity-0"
-            }`}
-            fetchPriority={index === 0 ? "high" : "low"}
-            height={1924}
-            loading={index === 0 ? "eager" : "lazy"}
-            sizes="(max-width: 768px) 100vw, 896px"
-            src={image.src}
-            width={3836}
+        <picture key={activeImage.base}>
+          <source
+            media="(max-width: 768px)"
+            sizes="calc(100vw - 32px)"
+            srcSet={`/hero/${activeImage.base}-640.webp 640w, /hero/${activeImage.base}-960.webp 960w`}
           />
-        ))}
+          <img
+            alt={alts[activeImage.altKey]}
+            className="block w-full"
+            fetchPriority="high"
+            height={activeImage.height}
+            loading="eager"
+            sizes="896px"
+            src={`/hero/${activeImage.base}-1280.webp`}
+            srcSet={`/hero/${activeImage.base}-1280.webp 1280w`}
+            width={activeImage.width}
+          />
+        </picture>
       </div>
 
       {/* Dots */}
       <div className="flex justify-center gap-2">
         {images.map((image, index) => (
           <button
-            key={image.src}
+            key={image.base}
             type="button"
             aria-label={`Show screenshot ${index + 1}`}
             className={`size-2 rounded-full transition-colors ${

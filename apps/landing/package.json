@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "node scripts/optimize-images.mjs && react-router typegen && fumadocs-mdx && react-router build",
-    "postbuild": "cp ./serve.json ./build/client/serve.json && rm -rf ./dist && mkdir -p ./dist && cp -R ./build/client/. ./dist/ && cp ./serve.json ./dist/serve.json",
+    "postbuild": "cp ./serve.json ./build/client/serve.json && rm -rf ./dist && mkdir -p ./dist && cp -R ./build/client/. ./dist/ && cp ./serve.json ./dist/serve.json && find ./build/client ./dist -path '*/index.html' -type f -print0 | xargs -0 perl -0pi -e 's/<link rel=\"modulepreload\"[^>]*>//g'",
     "preview": "serve -c serve.json ./build/client",
     "check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
+    "test": "vp test run",
     "start": "serve -c serve.json ./build/client",
     "postinstall": "fumadocs-mdx"
   },

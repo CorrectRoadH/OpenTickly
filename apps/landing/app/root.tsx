@@ -14,7 +14,7 @@ import "./app.css";
 import SearchDialog from "@/components/search";
 import NotFound from "./routes/not-found";
 import { i18n } from "@/lib/i18n";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 const localeItems = [
   { name: "English", locale: "en" },
@@ -35,6 +35,24 @@ function useLocaleFromPath() {
 }
 
 export const links: Route.LinksFunction = () => [
+  {
+    rel: "preload",
+    as: "image",
+    href: "/hero/opentickly-overview-960.webp",
+    media: "(max-width: 768px)",
+    imageSrcSet: "/hero/opentickly-overview-640.webp 640w, /hero/opentickly-overview-960.webp 960w",
+    imageSizes: "calc(100vw - 32px)",
+    fetchPriority: "high",
+  },
+  {
+    rel: "preload",
+    as: "image",
+    href: "/hero/opentickly-overview-1280.webp",
+    media: "(min-width: 769px)",
+    imageSrcSet: "/hero/opentickly-overview-1280.webp 1280w",
+    imageSizes: "896px",
+    fetchPriority: "high",
+  },
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
 ];
 
@@ -47,17 +65,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        <script
-          src="https://analytics.ahrefs.com/analytics.js"
-          data-key="HInytZVgzDj+QByz5SZcSA"
-          async
-        />
-        <script
-          src="https://api.goshipfast.com/tracker.js"
-          data-project="cmqkx4dgb00c1ow10h271w7tt"
-          data-endpoint="https://api.goshipfast.com"
-          defer
-        />
       </head>
       <body className="flex flex-col min-h-screen">
         <a
@@ -67,11 +74,63 @@ export function Layout({ children }: { children: React.ReactNode }) {
           Skip to content
         </a>
         {children}
+        <DeferredAnalytics />
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
   );
+}
+
+function DeferredAnalytics() {
+  useEffect(() => {
+    let loaded = false;
+    let delay: number | undefined;
+    let idle: number | undefined;
+
+    const loadAnalytics = () => {
+      if (loaded) return;
+      loaded = true;
+
+      const ahrefs = document.createElement("script");
+      ahrefs.async = true;
+      ahrefs.dataset.key = "HInytZVgzDj+QByz5SZcSA";
+      ahrefs.src = "https://analytics.ahrefs.com/analytics.js";
+      document.head.append(ahrefs);
+
+      const goshipfast = document.createElement("script");
+      goshipfast.async = true;
+      goshipfast.dataset.endpoint = "https://api.goshipfast.com";
+      goshipfast.dataset.project = "cmqkx4dgb00c1ow10h271w7tt";
+      goshipfast.src = "https://api.goshipfast.com/tracker.js";
+      document.head.append(goshipfast);
+    };
+
+    const scheduleAnalytics = () => {
+      delay = window.setTimeout(() => {
+        if ("requestIdleCallback" in window) {
+          idle = window.requestIdleCallback(loadAnalytics, { timeout: 5000 });
+          return;
+        }
+
+        loadAnalytics();
+      }, 12_000);
+    };
+
+    if (document.readyState === "complete") {
+      scheduleAnalytics();
+    } else {
+      window.addEventListener("load", scheduleAnalytics, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", scheduleAnalytics);
+      if (delay !== undefined) window.clearTimeout(delay);
+      if (idle !== undefined) window.cancelIdleCallback(idle);
+    };
+  }, []);
+
+  return null;
 }
 
 export default function App() {
