@@ -44,6 +44,9 @@ func (handlers *routeHandlers) updateWorkspaceSsoConfig(ctx echo.Context) error 
 		IDPSSOURL:      strings.TrimSpace(request.IdpSsoUrl),
 		IDPCertificate: strings.TrimSpace(request.IdpCertificate),
 	}
+	if validationErr := validateWorkspaceSsoConfigForSave(config); validationErr != nil {
+		return validationErr
+	}
 	if upsertErr := handlers.samlConfig.Upsert(ctx.Request().Context(), config); upsertErr != nil {
 		if strings.Contains(upsertErr.Error(), "tenant_workspace_sso_config_domain_key") {
 			return echo.NewHTTPError(http.StatusConflict, "This email domain is already claimed by another workspace.")
