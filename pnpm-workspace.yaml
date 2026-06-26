@@ -5,7 +5,7 @@ packages:
 
 catalog:
   "@hey-api/client-fetch": ^0.13.1
-  "@hey-api/openapi-ts": 0.98.2
+  "@hey-api/openapi-ts": 0.99.0
   "@orama/tokenizers": ^3.1.18
   "@types/node": ^25
   "@types/react-big-calendar": ^1.16.3
