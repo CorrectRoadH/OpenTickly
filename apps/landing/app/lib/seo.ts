@@ -10,6 +10,21 @@ export const defaultOgImagePath = "/og-image.png";
 export const repoUrl = "https://github.com/CorrectRoadH/OpenTickly";
 export const demoUrl = "https://track.opentoggl.com";
 
+export const localizedTitles: Record<Locale, string> = {
+  en: defaultTitle,
+  zh: "开源时间追踪与 Toggl 替代方案",
+  es: "Seguimiento de Tiempo de Código Abierto y Alternativa a Toggl",
+  ja: "オープンソースの時間管理・Toggl 代替ツール",
+  fr: "Suivi du Temps Open Source et Alternative à Toggl",
+  ko: "오픈소스 시간 추적 및 Toggl 대안",
+  pl: "Otwartoźródłowe Śledzenie Czasu i Alternatywa dla Toggl",
+  pt: "Rastreamento de Tempo Open Source e Alternativa ao Toggl",
+};
+
+export function resolveLocalizedTitle(locale: string): string {
+  return localizedTitles[locale as Locale] ?? defaultTitle;
+}
+
 export const localizedDescriptions: Record<Locale, string> = {
   en: "OpenTickly is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
   zh: "OpenTickly 是开源的 Toggl 替代方案：100% 兼容 Toggl API，一键 Docker 自托管，数据完全在你手里。无座位限制，个人与团队免费使用。",

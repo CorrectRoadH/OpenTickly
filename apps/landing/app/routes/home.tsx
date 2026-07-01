@@ -19,6 +19,7 @@ import {
   buildOrganizationSchema,
   buildWebSiteSchema,
   resolveLocalizedDescription,
+  resolveLocalizedTitle,
   resolveSiteUrl,
 } from "@/lib/seo";
 import { appendSlot, appendUtm } from "@/lib/utm";
@@ -67,6 +68,7 @@ export default function Home() {
       <Seo
         locale={locale}
         pathname={`${prefix}/`}
+        title={resolveLocalizedTitle(locale)}
         description={resolveLocalizedDescription(locale)}
         schema={[
           buildWebSiteSchema(siteUrl),

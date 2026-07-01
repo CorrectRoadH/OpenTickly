@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { i18n } from "./i18n";
 import {
   buildCanonicalUrl,
   buildPageTitle,
   buildRobotsTxt,
   buildSitemapXml,
+  resolveLocalizedTitle,
   resolveSiteUrl,
 } from "./seo";
 
@@ -25,6 +27,11 @@ describe("seo helpers", () => {
   it("builds page titles", () => {
     expect(buildPageTitle()).toBe("OpenTickly | Open-Source Time Tracking and Toggl Alternative");
     expect(buildPageTitle("Self-Hosting")).toBe("Self-Hosting | OpenTickly");
+  });
+
+  it("gives every locale's home page title a distinct page title", () => {
+    const titles = i18n.languages.map((locale) => buildPageTitle(resolveLocalizedTitle(locale)));
+    expect(new Set(titles).size).toBe(i18n.languages.length);
   });
 
   it("builds robots text that points at the sitemap", () => {
