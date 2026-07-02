@@ -1,3 +1,5 @@
+import { appendUtm } from "@/lib/utm";
+
 const labelByLocale: Record<string, string> = {
   zh: "支持方",
   ja: "協力",
@@ -17,12 +19,18 @@ const taglineByLocale: Record<string, string> = {
 export default function PoweredByBadge({ locale }: { locale: string }) {
   const label = labelByLocale[locale] ?? "Supported by";
   const tagline = taglineByLocale[locale] ?? "Agent-native AI agent eval tool";
+  const href = appendUtm("https://www.niceeval.com", {
+    source: "opentickly_landing",
+    medium: "hero_credit",
+    campaign: "niceeval_partner",
+    content: locale,
+  });
 
   return (
     <div className="mt-6 flex items-center justify-center gap-2 text-[12px] text-[var(--track-text-muted)]">
       <span>{label}</span>
       <a
-        href="https://www.niceeval.com"
+        href={href}
         target="_blank"
         rel="noopener"
         className="font-semibold text-[var(--track-text)] hover:text-[var(--track-accent-text)]"
