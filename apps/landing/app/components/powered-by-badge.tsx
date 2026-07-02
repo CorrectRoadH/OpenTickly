@@ -7,16 +7,16 @@ const labelByLocale: Record<string, string> = {
 };
 
 const taglineByLocale: Record<string, string> = {
-  zh: "轻量级 AI Agent 评测工具",
-  ja: "軽量な AI エージェント評価ツール",
-  ko: "경량 AI 에이전트 평가 도구",
-  es: "Framework ligero de evaluación de agentes de IA",
-  fr: "Framework léger d'évaluation d'agents IA",
+  zh: "Agent Native 的 AI Agent 评测工具",
+  ja: "エージェントネイティブな AI エージェント評価ツール",
+  ko: "에이전트 네이티브 AI 에이전트 평가 도구",
+  es: "Herramienta de evaluación de agentes de IA agent-native",
+  fr: "Outil d'évaluation d'agents IA agent-native",
 };
 
 export default function PoweredByBadge({ locale }: { locale: string }) {
   const label = labelByLocale[locale] ?? "Supported by";
-  const tagline = taglineByLocale[locale] ?? "Lightweight AI agent eval framework";
+  const tagline = taglineByLocale[locale] ?? "Agent-native AI agent eval tool";
 
   return (
     <div className="mt-6 flex items-center justify-center gap-2 text-[12px] text-[var(--track-text-muted)]">
