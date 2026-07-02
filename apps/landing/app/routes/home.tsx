@@ -8,6 +8,7 @@ import Footer from "@/components/footer";
 import HomeHeroScreenshots from "@/components/home-hero-screenshots";
 import { GithubIcon } from "@/components/github-icon";
 import { ProofGridCard } from "@/components/home-primitives";
+import PoweredByBadge from "@/components/powered-by-badge";
 import { RotatingWords } from "@/components/rotating-words";
 import Seo from "@/components/seo";
 import { homeContent } from "@/lib/home-content";
@@ -101,6 +102,7 @@ export default function Home() {
                 {strings.hero.ctas.selfHost}
               </AppLinkButton>
             </div>
+            <PoweredByBadge locale={locale} />
           </div>
 
           <div className="mx-auto mt-10 max-w-4xl">
