@@ -194,12 +194,6 @@ func (h *Handler) UpdateInstanceConfig(ctx echo.Context) error {
 		SMTPUsername:              req.SmtpUsername,
 		SMTPPassword:              req.SmtpPassword,
 		EmailVerificationRequired: req.EmailVerificationRequired,
-		SSOEnabled:                req.SsoEnabled,
-		SSOProviderName:           req.SsoProviderName,
-		SSOIssuerURL:              req.SsoIssuerUrl,
-		SSOClientID:               req.SsoClientId,
-		SSOClientSecret:           req.SsoClientSecret,
-		SSORedirectURL:            req.SsoRedirectUrl,
 	}
 	if req.RegistrationMode != nil {
 		mode := string(*req.RegistrationMode)
@@ -268,32 +262,7 @@ func instanceConfigResponse(cfg application.InstanceConfigView) adminapi.Instanc
 		SmtpConfigured:            cfg.SMTPConfigured,
 		EmailVerificationRequired: cfg.EmailVerificationRequired,
 		RegistrationMode:          adminapi.InstanceConfigRegistrationMode(cfg.RegistrationMode),
-		SsoEnabled:                cfg.SSOEnabled,
-		SsoConfigured:             cfg.SSOConfigured,
 		UpdatedAt:                 cfg.UpdatedAt,
-	}
-	// Echo saved SSO settings back so the admin UI can re-render them after a
-	// refresh. The client secret is included like the SMTP password — the
-	// endpoint is gated to instance admins.
-	if cfg.SSOProviderName != "" {
-		v := cfg.SSOProviderName
-		resp.SsoProviderName = &v
-	}
-	if cfg.SSOIssuerURL != "" {
-		v := cfg.SSOIssuerURL
-		resp.SsoIssuerUrl = &v
-	}
-	if cfg.SSOClientID != "" {
-		v := cfg.SSOClientID
-		resp.SsoClientId = &v
-	}
-	if cfg.SSOClientSecret != "" {
-		v := cfg.SSOClientSecret
-		resp.SsoClientSecret = &v
-	}
-	if cfg.SSORedirectURL != "" {
-		v := cfg.SSORedirectURL
-		resp.SsoRedirectUrl = &v
 	}
 	// Echo saved SMTP connection settings back so the admin UI can re-render
 	// them after refresh. The endpoint is already gated to instance admins.

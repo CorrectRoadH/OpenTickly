@@ -197,11 +197,10 @@ func (s *Store) CountUsers(ctx context.Context) (int, error) {
 func (s *Store) GetConfig(ctx context.Context) (application.InstanceConfigView, error) {
 	var cfg application.InstanceConfigView
 	err := s.pool.QueryRow(ctx,
-		`SELECT site_url, sender_email, sender_name, smtp_host, smtp_port, smtp_username, smtp_password, email_verification_required,
-		        sso_enabled, sso_provider_name, sso_issuer_url, sso_client_id, sso_client_secret, sso_redirect_url, updated_at
+		`SELECT site_url, sender_email, sender_name, smtp_host, smtp_port, smtp_username, smtp_password, email_verification_required, updated_at
 		 FROM instance_admin_config WHERE id = 1`,
 	).Scan(&cfg.SiteURL, &cfg.SenderEmail, &cfg.SenderName, &cfg.SMTPHost, &cfg.SMTPPort, &cfg.SMTPUsername, &cfg.SMTPPassword, &cfg.EmailVerificationRequired,
-		&cfg.SSOEnabled, &cfg.SSOProviderName, &cfg.SSOIssuerURL, &cfg.SSOClientID, &cfg.SSOClientSecret, &cfg.SSORedirectURL, &cfg.UpdatedAt)
+		&cfg.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return application.InstanceConfigView{SenderName: "OpenTickly"}, nil
 	}
@@ -209,7 +208,6 @@ func (s *Store) GetConfig(ctx context.Context) (application.InstanceConfigView, 
 		return application.InstanceConfigView{}, fmt.Errorf("instance-admin get config: %w", err)
 	}
 	cfg.SMTPConfigured = cfg.SMTPHost != "" && cfg.SMTPUsername != ""
-	cfg.SSOConfigured = cfg.SSOIssuerURL != "" && cfg.SSOClientID != "" && cfg.SSOClientSecret != ""
 	return cfg, nil
 }
 
@@ -263,37 +261,6 @@ func (s *Store) UpdateConfig(ctx context.Context, update application.InstanceCon
 			return application.InstanceConfigView{}, err
 		}
 	}
-	if update.SSOEnabled != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET sso_enabled = $1, updated_at = now() WHERE id = 1`, *update.SSOEnabled); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update sso_enabled: %w", err)
-		}
-	}
-	if update.SSOProviderName != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET sso_provider_name = $1, updated_at = now() WHERE id = 1`, *update.SSOProviderName); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update sso_provider_name: %w", err)
-		}
-	}
-	if update.SSOIssuerURL != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET sso_issuer_url = $1, updated_at = now() WHERE id = 1`, *update.SSOIssuerURL); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update sso_issuer_url: %w", err)
-		}
-	}
-	if update.SSOClientID != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET sso_client_id = $1, updated_at = now() WHERE id = 1`, *update.SSOClientID); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update sso_client_id: %w", err)
-		}
-	}
-	if update.SSOClientSecret != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET sso_client_secret = $1, updated_at = now() WHERE id = 1`, *update.SSOClientSecret); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update sso_client_secret: %w", err)
-		}
-	}
-	if update.SSORedirectURL != nil {
-		if _, err := s.pool.Exec(ctx, `UPDATE instance_admin_config SET sso_redirect_url = $1, updated_at = now() WHERE id = 1`, *update.SSORedirectURL); err != nil {
-			return application.InstanceConfigView{}, fmt.Errorf("instance-admin update sso_redirect_url: %w", err)
-		}
-	}
-
 	return s.GetConfig(ctx)
 }
 

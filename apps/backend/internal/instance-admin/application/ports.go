@@ -72,13 +72,6 @@ type InstanceConfigView struct {
 	SMTPConfigured            bool
 	EmailVerificationRequired bool
 	RegistrationMode          string
-	SSOEnabled                bool
-	SSOProviderName           string
-	SSOIssuerURL              string
-	SSOClientID               string
-	SSOClientSecret           string
-	SSORedirectURL            string
-	SSOConfigured             bool
 	UpdatedAt                 time.Time
 }
 
@@ -93,12 +86,6 @@ type InstanceConfigUpdate struct {
 	SMTPPassword              *string
 	EmailVerificationRequired *bool
 	RegistrationMode          *string
-	SSOEnabled                *bool
-	SSOProviderName           *string
-	SSOIssuerURL              *string
-	SSOClientID               *string
-	SSOClientSecret           *string
-	SSORedirectURL            *string
 }
 
 // OrganizationLister lists all organizations for admin overview.
