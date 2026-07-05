@@ -48,6 +48,10 @@ spec:
     OpenTickly is licensed under [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
     Source: <https://github.com/CorrectRoadH/OpenTickly> · Website: <https://opentoggl.com>.
     OpenTickly's design and API surface are inspired by [Toggl](https://toggl.com).
+
+    ## Powered by
+
+    Supported by [NiceEval](https://www.niceeval.com/?utm_source=zeabur_template&utm_medium=readme&utm_campaign=niceeval_partner) — an agent-native AI agent eval framework.
   services:
     - name: postgresql
       icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/postgresql.svg
@@ -141,7 +145,7 @@ spec:
       domainKey: PUBLIC_DOMAIN
       spec:
         source:
-          image: correctroad/opentickly:0.2
+          image: correctroad/opentickly:0.3
           command:
             - /bin/sh
             - -c
@@ -223,6 +227,10 @@ localization:
       原始碼:<https://github.com/CorrectRoadH/OpenTickly> · 官方網站:<https://opentoggl.com>。
       OpenTickly 的設計與 API 介面皆受 [Toggl](https://toggl.com) 啟發。
 
+      ## 支持方
+
+      由 [NiceEval](https://www.niceeval.com/?utm_source=zeabur_template&utm_medium=readme&utm_campaign=niceeval_partner) 支持 — Agent Native 的 AI Agent 評測工具。
+
   zh-CN:
     description: |
       免费、隐私优先、对 AI 友好的自托管 Toggl Track 替代方案。完整兼容 Toggl Track v9 与 Reports v3 API,可无损将数据在两者之间迁移。
@@ -261,6 +269,10 @@ localization:
       OpenTickly 采用 [AGPL v3](https://www.gnu.org/licenses/agpl-3.0) 许可协议。
       源代码:<https://github.com/CorrectRoadH/OpenTickly> · 官方网站:<https://opentoggl.com>。
       OpenTickly 的设计与 API 接口皆受 [Toggl](https://toggl.com) 启发。
+
+      ## 支持方
+
+      由 [NiceEval](https://www.niceeval.com/?utm_source=zeabur_template&utm_medium=readme&utm_campaign=niceeval_partner) 支持 — Agent Native 的 AI Agent 评测工具。
 
   ja-JP:
     description: |
@@ -301,6 +313,10 @@ localization:
       ソース:<https://github.com/CorrectRoadH/OpenTickly> · 公式サイト:<https://opentoggl.com>。
       OpenTickly のデザインと API は [Toggl](https://toggl.com) にインスパイアされています。
 
+      ## 協力
+
+      [NiceEval](https://www.niceeval.com/?utm_source=zeabur_template&utm_medium=readme&utm_campaign=niceeval_partner) の協力を得ています — エージェントネイティブな AI エージェント評価ツール。
+
   es-ES:
     description: |
       Una alternativa autoalojada a Toggl Track, gratuita, centrada en la privacidad y compatible con IA. Compatible con las API de Toggl Track v9 y Reports v3, para que puedas mover tus datos entre ambas sin pérdidas.
@@ -340,6 +356,10 @@ localization:
       Código: <https://github.com/CorrectRoadH/OpenTickly> · Sitio: <https://opentoggl.com>.
       El diseño y la superficie de API de OpenTickly están inspirados en [Toggl](https://toggl.com).
 
+      ## Con el apoyo de
+
+      Con el apoyo de [NiceEval](https://www.niceeval.com/?utm_source=zeabur_template&utm_medium=readme&utm_campaign=niceeval_partner) — una herramienta de evaluación de agentes de IA agent-native.
+
   id-ID:
     description: |
       Alternatif Toggl Track yang gratis, mengutamakan privasi, dan ramah AI, dengan kemampuan self-hosted. Kompatibel dengan API Toggl Track v9 dan Reports v3, sehingga Anda dapat memindahkan data tanpa kehilangan apa pun.
@@ -378,3 +398,7 @@ localization:
       OpenTickly dilisensikan di bawah [AGPL v3](https://www.gnu.org/licenses/agpl-3.0).
       Kode sumber: <https://github.com/CorrectRoadH/OpenTickly> · Situs: <https://opentoggl.com>.
       Desain dan permukaan API OpenTickly terinspirasi dari [Toggl](https://toggl.com).
+
+      ## Didukung oleh
+
+      Didukung oleh [NiceEval](https://www.niceeval.com/?utm_source=zeabur_template&utm_medium=readme&utm_campaign=niceeval_partner) — alat evaluasi AI agent yang agent-native.
