@@ -137,6 +137,86 @@ test.describe("Timer composer @ / # shortcuts", () => {
     await expect(page.getByRole("button", { name: "Tags: deep-work" })).toBeVisible();
   });
 
+  test("@ typed after an existing description opens the picker and keeps the text", async ({
+    page,
+  }) => {
+    const email = `composer-shortcut-midtext-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Shortcut Midtext User",
+      password,
+    });
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = session.currentWorkspaceId;
+
+    await createProjectForWorkspace(page, { name: "Marketing", workspaceId });
+    await createProjectForWorkspace(page, { name: "Mobile App", workspaceId });
+    await enableShortcutPreferences(page);
+
+    await openTimerPage(page);
+
+    const description = page.locator("#timer-description");
+    await description.click();
+    await description.type("fix bug @Mob");
+
+    const menu = page.getByTestId("timer-composer-shortcut-menu");
+    await expect(menu).toBeVisible();
+    await expect(menu).toContainText("Mobile App");
+
+    await description.press("Enter");
+
+    // Menu closes, only the trigger token is stripped, and the project is assigned.
+    await expect(menu).toBeHidden();
+    await expect(description).toHaveValue("fix bug");
+    await expect(page.getByRole("button", { name: "Add a project: Mobile App" })).toBeVisible();
+  });
+
+  test("@ assigns a project to the running entry", async ({ page }) => {
+    const email = `composer-shortcut-running-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Shortcut Running User",
+      password,
+    });
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = session.currentWorkspaceId;
+
+    await createProjectForWorkspace(page, { name: "Marketing", workspaceId });
+    await createProjectForWorkspace(page, { name: "Mobile App", workspaceId });
+    await enableShortcutPreferences(page);
+
+    await openTimerPage(page);
+
+    const description = page.locator("#timer-description");
+    await description.click();
+    await description.type("deploy");
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    await description.click();
+    await description.press("End");
+    await description.type(" @Mob");
+
+    const menu = page.getByTestId("timer-composer-shortcut-menu");
+    await expect(menu).toBeVisible();
+    await expect(menu).toContainText("Mobile App");
+
+    await description.press("Enter");
+
+    // The trigger token is stripped, the description survives, and the
+    // running entry gets the project while it keeps running.
+    await expect(menu).toBeHidden();
+    await expect(description).toHaveValue("deploy");
+    await expect(page.getByRole("button", { name: "Add a project: Mobile App" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+  });
+
   test("triggers stay plain text when shortcut preferences are disabled", async ({ page }) => {
     const email = `composer-shortcut-off-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";

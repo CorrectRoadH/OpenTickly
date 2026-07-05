@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildShortcutItems,
+  removeShortcutToken,
   resolveComposerShortcutMode,
   shortcutItemKey,
 } from "./composer-shortcut-menu.ts";
@@ -10,40 +11,117 @@ const PREFS_ALL = { projectShortcutEnabled: true, tagsShortcutEnabled: true };
 
 describe("resolveComposerShortcutMode", () => {
   it("returns project mode for a leading @ when enabled", () => {
-    expect(resolveComposerShortcutMode("@web", PREFS_ALL)).toEqual({
+    expect(resolveComposerShortcutMode("@web", 4, PREFS_ALL)).toEqual({
       mode: "project",
       query: "web",
+      tokenEnd: 4,
+      tokenStart: 0,
     });
   });
 
   it("returns tag mode for a leading # when enabled", () => {
-    expect(resolveComposerShortcutMode("#focus", PREFS_ALL)).toEqual({
+    expect(resolveComposerShortcutMode("#focus", 6, PREFS_ALL)).toEqual({
       mode: "tag",
       query: "focus",
+      tokenEnd: 6,
+      tokenStart: 0,
     });
   });
 
   it("treats triggers as plain text when the matching preference is disabled", () => {
     expect(
-      resolveComposerShortcutMode("@web", {
+      resolveComposerShortcutMode("@web", 4, {
         projectShortcutEnabled: false,
         tagsShortcutEnabled: true,
       }),
     ).toBeNull();
     expect(
-      resolveComposerShortcutMode("#focus", {
+      resolveComposerShortcutMode("#focus", 6, {
         projectShortcutEnabled: true,
         tagsShortcutEnabled: false,
       }),
     ).toBeNull();
   });
 
-  it("ignores triggers that are not at the start of the value", () => {
-    expect(resolveComposerShortcutMode("ship @web", PREFS_ALL)).toBeNull();
+  it("finds a trigger typed after an existing description", () => {
+    expect(resolveComposerShortcutMode("fix bug @Mob", 12, PREFS_ALL)).toEqual({
+      mode: "project",
+      query: "Mob",
+      tokenEnd: 12,
+      tokenStart: 8,
+    });
+  });
+
+  it("allows the query to span whitespace", () => {
+    expect(resolveComposerShortcutMode("fix @Mobile App", 15, PREFS_ALL)).toEqual({
+      mode: "project",
+      query: "Mobile App",
+      tokenEnd: 15,
+      tokenStart: 4,
+    });
+  });
+
+  it("only resolves the token before the cursor", () => {
+    expect(resolveComposerShortcutMode("fix @Mob bug", 8, PREFS_ALL)).toEqual({
+      mode: "project",
+      query: "Mob",
+      tokenEnd: 8,
+      tokenStart: 4,
+    });
+  });
+
+  it("ignores triggers embedded in a word", () => {
+    expect(resolveComposerShortcutMode("mail me@example.com", 19, PREFS_ALL)).toBeNull();
+  });
+
+  it("uses the nearest trigger before the cursor", () => {
+    expect(resolveComposerShortcutMode("@web #foc", 9, PREFS_ALL)).toEqual({
+      mode: "tag",
+      query: "foc",
+      tokenEnd: 9,
+      tokenStart: 5,
+    });
+  });
+
+  it("skips a disabled trigger and falls back to an earlier enabled one", () => {
+    expect(
+      resolveComposerShortcutMode("@web #foc", 9, {
+        projectShortcutEnabled: true,
+        tagsShortcutEnabled: false,
+      }),
+    ).toEqual({
+      mode: "project",
+      query: "web #foc",
+      tokenEnd: 9,
+      tokenStart: 0,
+    });
   });
 
   it("returns an empty query for a bare trigger", () => {
-    expect(resolveComposerShortcutMode("@", PREFS_ALL)).toEqual({ mode: "project", query: "" });
+    expect(resolveComposerShortcutMode("@", 1, PREFS_ALL)).toEqual({
+      mode: "project",
+      query: "",
+      tokenEnd: 1,
+      tokenStart: 0,
+    });
+  });
+});
+
+describe("removeShortcutToken", () => {
+  it("removes a trailing token together with its separating space", () => {
+    expect(removeShortcutToken("fix bug @Mob", 8, 12)).toBe("fix bug");
+  });
+
+  it("removes a mid-text token without doubling whitespace", () => {
+    expect(removeShortcutToken("fix @Mob bug", 4, 8)).toBe("fix bug");
+  });
+
+  it("returns an empty string when the value is only the token", () => {
+    expect(removeShortcutToken("@Mob", 0, 4)).toBe("");
+  });
+
+  it("keeps text before and after intact for a leading token", () => {
+    expect(removeShortcutToken("@Mob fix bug", 0, 4)).toBe("fix bug");
   });
 });
 

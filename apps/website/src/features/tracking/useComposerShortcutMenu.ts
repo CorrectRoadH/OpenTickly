@@ -2,6 +2,7 @@ import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import {
   buildShortcutItems,
+  removeShortcutToken,
   resolveComposerShortcutMode,
   shortcutItemKey,
   type ShortcutMenuItem,
@@ -11,18 +12,18 @@ import {
 export type UseComposerShortcutMenuParams = {
   /** Current timer description value. */
   value: string;
-  /** Whether the shortcut menu may open at all (e.g. only for an idle composer). */
-  enabled: boolean;
+  /** Caret position inside the description input. */
+  cursor: number;
   projectShortcutEnabled: boolean;
   tagsShortcutEnabled: boolean;
   projects: { id: number; name: string; color: string; active?: boolean }[];
   tags: { id: number; name: string }[];
   selectedTagIds: number[];
-  onSelectProject: (projectId: number) => void;
-  onToggleTag: (tagId: number) => void;
-  onCreateTag: (name: string) => void;
-  /** Called after a selection to clear the trigger token from the description. */
-  onAfterSelect: () => void;
+  /**
+   * Called with the chosen item and the description with the trigger token
+   * stripped out (the caller persists both in one step).
+   */
+  onSelect: (item: ShortcutMenuItem, nextValue: string) => void;
 };
 
 export type ComposerShortcutMenu = {
@@ -40,11 +41,8 @@ export function useComposerShortcutMenu(
   params: UseComposerShortcutMenuParams,
 ): ComposerShortcutMenu {
   const {
-    enabled,
-    onAfterSelect,
-    onCreateTag,
-    onSelectProject,
-    onToggleTag,
+    cursor,
+    onSelect,
     projects,
     projectShortcutEnabled,
     selectedTagIds,
@@ -53,9 +51,10 @@ export function useComposerShortcutMenu(
     value,
   } = params;
 
-  const resolved = enabled
-    ? resolveComposerShortcutMode(value, { projectShortcutEnabled, tagsShortcutEnabled })
-    : null;
+  const resolved = resolveComposerShortcutMode(value, cursor, {
+    projectShortcutEnabled,
+    tagsShortcutEnabled,
+  });
   const mode = resolved?.mode ?? null;
   const items = resolved
     ? buildShortcutItems({
@@ -95,17 +94,10 @@ export function useComposerShortcutMenu(
 
   const selectItem = (index: number) => {
     const item = items[index];
-    if (!item) {
+    if (!item || !resolved) {
       return;
     }
-    if (item.kind === "project") {
-      onSelectProject(item.id);
-    } else if (item.kind === "tag") {
-      onToggleTag(item.id);
-    } else {
-      onCreateTag(item.name);
-    }
-    onAfterSelect();
+    onSelect(item, removeShortcutToken(value, resolved.tokenStart, resolved.tokenEnd));
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): boolean => {

@@ -14,18 +14,16 @@ const TAGS = [
 ];
 
 function makeProps(overrides: Partial<Parameters<typeof useComposerShortcutMenu>[0]> = {}) {
+  const value = overrides.value ?? "@";
   return {
-    enabled: true,
-    onAfterSelect: vi.fn(),
-    onCreateTag: vi.fn(),
-    onSelectProject: vi.fn(),
-    onToggleTag: vi.fn(),
+    cursor: value.length,
+    onSelect: vi.fn(),
     projects: PROJECTS,
     projectShortcutEnabled: true,
     selectedTagIds: [],
     tags: TAGS,
     tagsShortcutEnabled: true,
-    value: "@",
+    value,
     ...overrides,
   };
 }
@@ -44,9 +42,17 @@ describe("useComposerShortcutMenu", () => {
     expect(result.current.activeIndex).toBe(0);
   });
 
-  it("stays closed when disabled", () => {
+  it("opens for a trigger typed after an existing description", () => {
     const { result } = renderHook(() =>
-      useComposerShortcutMenu(makeProps({ enabled: false, value: "@web" })),
+      useComposerShortcutMenu(makeProps({ value: "fix bug @web" })),
+    );
+    expect(result.current.isOpen).toBe(true);
+    expect(result.current.mode).toBe("project");
+  });
+
+  it("stays closed when the cursor is before the trigger", () => {
+    const { result } = renderHook(() =>
+      useComposerShortcutMenu(makeProps({ cursor: 4, value: "fix @web" })),
     );
     expect(result.current.isOpen).toBe(false);
   });
@@ -67,11 +73,10 @@ describe("useComposerShortcutMenu", () => {
     expect(result.current.activeIndex).toBe(1); // wraps backwards
   });
 
-  it("selects the active project on Enter and clears the trigger", () => {
-    const onSelectProject = vi.fn();
-    const onAfterSelect = vi.fn();
+  it("selects the active project on Enter and strips the trigger token", () => {
+    const onSelect = vi.fn();
     const { result } = renderHook(() =>
-      useComposerShortcutMenu(makeProps({ onAfterSelect, onSelectProject, value: "@web" })),
+      useComposerShortcutMenu(makeProps({ onSelect, value: "fix bug @web" })),
     );
     act(() => {
       result.current.handleKeyDown(keyEvent("ArrowDown")); // Webhook
@@ -80,33 +85,41 @@ describe("useComposerShortcutMenu", () => {
       const consumed = result.current.handleKeyDown(keyEvent("Enter"));
       expect(consumed).toBe(true);
     });
-    expect(onSelectProject).toHaveBeenCalledWith(2);
-    expect(onAfterSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(
+      { color: "#0f0", id: 2, kind: "project", label: "Webhook" },
+      "fix bug",
+    );
   });
 
   it("toggles a tag on selection in tag mode", () => {
-    const onToggleTag = vi.fn();
+    const onSelect = vi.fn();
     const { result } = renderHook(() =>
-      useComposerShortcutMenu(makeProps({ onToggleTag, value: "#focus" })),
+      useComposerShortcutMenu(makeProps({ onSelect, value: "#focus" })),
     );
     expect(result.current.mode).toBe("tag");
     act(() => {
       result.current.selectItem(0);
     });
-    expect(onToggleTag).toHaveBeenCalledWith(10);
+    expect(onSelect).toHaveBeenCalledWith(
+      { id: 10, kind: "tag", label: "focus", selected: false },
+      "",
+    );
   });
 
   it("creates a tag when selecting the create row", () => {
-    const onCreateTag = vi.fn();
+    const onSelect = vi.fn();
     const { result } = renderHook(() =>
-      useComposerShortcutMenu(makeProps({ onCreateTag, value: "#deep-work" })),
+      useComposerShortcutMenu(makeProps({ onSelect, value: "#deep-work" })),
     );
     const createIndex = result.current.items.findIndex((item) => item.kind === "create-tag");
     expect(createIndex).toBeGreaterThanOrEqual(0);
     act(() => {
       result.current.selectItem(createIndex);
     });
-    expect(onCreateTag).toHaveBeenCalledWith("deep-work");
+    expect(onSelect).toHaveBeenCalledWith(
+      { kind: "create-tag", label: "deep-work", name: "deep-work" },
+      "",
+    );
   });
 
   it("dismisses with Escape until the value changes", () => {

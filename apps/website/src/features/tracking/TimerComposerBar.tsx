@@ -19,6 +19,7 @@ import { TimerElapsedDisplay } from "./TimerElapsedDisplay.tsx";
 import { TimerComposerSuggestionsDialog } from "./TimerComposerSuggestionsDialog.tsx";
 import { TimerComposerShortcutMenu } from "./TimerComposerShortcutMenu.tsx";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
+import { applyComposerShortcutSelection } from "./composer-shortcut-selection.ts";
 import { TagPickerDropdown, TagPickerTrigger } from "./TagPickerDropdown.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useComposerShortcutMenu } from "./useComposerShortcutMenu.ts";
@@ -63,28 +64,27 @@ export function TimerComposerBar({
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
   const createTagMutation = useCreateTagMutation(workspaceId);
 
-  // Inline "@" (project) / "#" (tag) shortcut menu for the idle composer.
-  const isComposerIdle = composer.runningEntry?.id == null;
+  // Inline "@" (project) / "#" (tag) shortcut menu for the composer.
+  const [descriptionCursor, setDescriptionCursor] = useState(0);
   const shortcutMenu = useComposerShortcutMenu({
-    enabled: isComposerIdle,
-    onAfterSelect: () => composer.setDraftDescription(""),
-    onCreateTag: (name) => {
-      void createTagMutation.mutateAsync(name).then((created) => {
-        const createdId = resolveCreatedTagId(created);
-        if (createdId != null && !composer.draftTagIds.includes(createdId)) {
-          composer.setDraftTagIds([...composer.draftTagIds, createdId]);
-        }
-      });
-    },
-    onSelectProject: (projectId) => {
-      composer.setDraftProjectId(projectId);
-      composer.setDraftTaskId(null);
-    },
-    onToggleTag: (tagId) => {
-      composer.setDraftTagIds(
-        composer.draftTagIds.includes(tagId)
-          ? composer.draftTagIds.filter((id) => id !== tagId)
-          : [...composer.draftTagIds, tagId],
+    cursor: descriptionCursor,
+    onSelect: (item, nextValue) => {
+      applyComposerShortcutSelection(
+        {
+          createTag: (name) =>
+            createTagMutation.mutateAsync(name).then((created) => resolveCreatedTagId(created)),
+          draftTagIds: composer.draftTagIds,
+          projectOptions,
+          runningEntry: composer.runningEntry,
+          setDraftDescription: composer.setDraftDescription,
+          setDraftProjectId: composer.setDraftProjectId,
+          setDraftTagIds: composer.setDraftTagIds,
+          setDraftTaskId: composer.setDraftTaskId,
+          setRunningDescription: composer.setRunningDescription,
+          updateTimeEntry: composer.updateTimeEntryMutation.mutateAsync,
+        },
+        item,
+        nextValue,
       );
     },
     projects: projectOptions
@@ -96,7 +96,10 @@ export function TimerComposerBar({
         name: project.name ?? "Untitled project",
       })),
     projectShortcutEnabled: preferences.projectShortcutEnabled,
-    selectedTagIds: composer.draftTagIds,
+    selectedTagIds:
+      composer.runningEntry?.id != null
+        ? (composer.runningEntry.tag_ids ?? [])
+        : composer.draftTagIds,
     tags: tagOptions,
     tagsShortcutEnabled: preferences.tagsShortcutEnabled,
     value: composer.timerDescriptionValue,
@@ -198,11 +201,15 @@ export function TimerComposerBar({
             void composer.handleRunningDescriptionCommit();
           }}
           onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setDescriptionCursor(event.target.selectionStart ?? event.target.value.length);
             if (composer.runningEntry?.id != null) {
               composer.setRunningDescription(event.target.value);
               return;
             }
             composer.setDraftDescription(event.target.value);
+          }}
+          onSelect={(event) => {
+            setDescriptionCursor(event.currentTarget.selectionStart ?? 0);
           }}
           onKeyDown={(event) => {
             if (shortcutMenu.handleKeyDown(event)) return;
