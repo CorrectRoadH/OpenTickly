@@ -143,7 +143,7 @@ void i18n
     partialBundledLanguages: true,
   });
 
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && typeof window !== "undefined") {
   (window as any).__i18n = i18n;
 }
 

@@ -20,7 +20,7 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 import { PreferenceCard, PreferenceSelect } from "../profile/ProfilePagePrimitives.tsx";
-import { TimezonePicker } from "./TimezonePicker.tsx";
+import { TimezonePicker } from "../../shared/ui/TimezonePicker.tsx";
 import i18n, {
   languageLabels,
   normalizeSupportedLanguage,

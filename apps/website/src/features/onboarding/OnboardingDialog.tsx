@@ -22,7 +22,7 @@ import {
   useUpdateProfileMutation,
   useUpdatePreferencesMutation,
 } from "../../shared/query/web-shell.ts";
-import { TimezonePicker } from "../../pages/account/TimezonePicker.tsx";
+import { TimezonePicker } from "../../shared/ui/TimezonePicker.tsx";
 import { ModalDialogWithNav } from "../../shared/ui/ModalDialog.tsx";
 
 export const ONBOARDING_VERSION = 1;
