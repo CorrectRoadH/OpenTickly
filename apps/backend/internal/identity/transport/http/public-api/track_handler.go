@@ -11,13 +11,13 @@ import (
 	"encoding/hex"
 	"io"
 
+	"opentoggl/backend/apps/backend/internal/files/imageupload"
+	filespostgres "opentoggl/backend/apps/backend/internal/files/infra/postgres"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
-	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
-	"opentoggl/backend/apps/backend/internal/platform/filestore"
-	"opentoggl/backend/apps/backend/internal/platform/imageupload"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
+	referenceapplication "opentoggl/backend/apps/backend/internal/reference/application"
 
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -26,8 +26,8 @@ import (
 
 type PublicTrackHandler struct {
 	identity  *Handler
-	reference *platformapplication.ReferenceService
-	files     *filestore.Store
+	reference *referenceapplication.ReferenceService
+	files     *filespostgres.Store
 }
 
 type publicTrackPreferencesRequest struct {
@@ -39,8 +39,8 @@ type publicTrackPreferencesRequest struct {
 
 func NewPublicTrackHandler(
 	identity *Handler,
-	reference *platformapplication.ReferenceService,
-	files *filestore.Store,
+	reference *referenceapplication.ReferenceService,
+	files *filespostgres.Store,
 ) *PublicTrackHandler {
 	return &PublicTrackHandler{
 		identity:  identity,

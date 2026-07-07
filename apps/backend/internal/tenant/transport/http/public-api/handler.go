@@ -10,11 +10,11 @@ import (
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	filespostgres "opentoggl/backend/apps/backend/internal/files/infra/postgres"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
-	"opentoggl/backend/apps/backend/internal/platform/filestore"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
@@ -58,7 +58,7 @@ type Handler struct {
 	membership *membershipapplication.Service
 	homes      HomeRepository
 	scope      ScopeAuthorizer
-	files      *filestore.Store
+	files      *filespostgres.Store
 }
 
 func NewHandler(
@@ -68,7 +68,7 @@ func NewHandler(
 	membership *membershipapplication.Service,
 	homes HomeRepository,
 	scope ScopeAuthorizer,
-	files *filestore.Store,
+	files *filespostgres.Store,
 ) *Handler {
 	return &Handler{
 		tenant:     tenant,
@@ -397,13 +397,13 @@ func meOrganizationBody(view tenantapplication.OrganizationView) publictrackapi.
 
 func organizationBody(view tenantapplication.OrganizationView) organizationResponse {
 	return organizationResponse{
-		ID:                       int64(view.ID),
-		Name:                     view.Name,
-		Admin:                    true,
-		MaxWorkspaces:            12,
-		PricingPlanName:          titleCasePlan(view.Commercial.Subscription.Plan),
-		IsMultiWorkspaceEnabled:  true,
-		UserCount:                len(view.WorkspaceIDs),
+		ID:                      int64(view.ID),
+		Name:                    view.Name,
+		Admin:                   true,
+		MaxWorkspaces:           12,
+		PricingPlanName:         titleCasePlan(view.Commercial.Subscription.Plan),
+		IsMultiWorkspaceEnabled: true,
+		UserCount:               len(view.WorkspaceIDs),
 	}
 }
 

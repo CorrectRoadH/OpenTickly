@@ -3,33 +3,33 @@ package bootstrap
 import "github.com/labstack/echo/v4"
 
 func (server *publicTrackOpenAPIServer) GetStatus(ctx echo.Context) error {
-	return server.platform.GetStatus(ctx)
+	return server.reference.GetStatus(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetCountries(ctx echo.Context) error {
-	return server.platform.GetCountries(ctx)
+	return server.reference.GetCountries(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetCountriesCountryIdSubdivisions(ctx echo.Context, countryId int) error {
-	return server.platform.GetCountriesCountryIdSubdivisions(ctx, countryId)
+	return server.reference.GetCountriesCountryIdSubdivisions(ctx, countryId)
 }
 
 func (server *publicTrackOpenAPIServer) GetCurrencies(ctx echo.Context) error {
-	return server.platform.GetCurrencies(ctx)
+	return server.reference.GetCurrencies(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetTimezones(ctx echo.Context) error {
-	return server.platform.GetTimezones(ctx)
+	return server.reference.GetTimezones(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetOffsets(ctx echo.Context) error {
-	return server.platform.GetOffsets(ctx)
+	return server.reference.GetOffsets(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceCurrencies(ctx echo.Context, workspaceId int) error {
-	return server.platform.GetWorkspaceCurrencies(ctx, workspaceId)
+	return server.reference.GetWorkspaceCurrencies(ctx, workspaceId)
 }
 
 func (server *publicTrackOpenAPIServer) GetKeys(ctx echo.Context) error {
-	return server.platform.GetKeys(ctx)
+	return server.reference.GetKeys(ctx)
 }

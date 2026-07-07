@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	filespostgres "opentoggl/backend/apps/backend/internal/files/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
-	"opentoggl/backend/apps/backend/internal/platform/filestore"
 
 	"github.com/labstack/echo/v4"
 )
@@ -16,7 +16,7 @@ func newFileRoutes(handlers *routeHandlers) httpapp.RouteRegistrar {
 	}
 }
 
-func serveFileBlob(files *filestore.Store) echo.HandlerFunc {
+func serveFileBlob(files *filespostgres.Store) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		storageKey := ctx.Param("*")
 		if storageKey == "" {
@@ -24,7 +24,7 @@ func serveFileBlob(files *filestore.Store) echo.HandlerFunc {
 		}
 
 		contentType, content, err := files.Get(ctx.Request().Context(), storageKey)
-		if errors.Is(err, filestore.ErrNotFound) {
+		if errors.Is(err, filespostgres.ErrNotFound) {
 			return ctx.NoContent(http.StatusNotFound)
 		}
 		if err != nil {

@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"opentoggl/backend/apps/backend/internal/files/imageupload"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
-	"opentoggl/backend/apps/backend/internal/platform/imageupload"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 

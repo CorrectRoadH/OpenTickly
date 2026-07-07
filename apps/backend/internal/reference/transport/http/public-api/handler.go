@@ -5,7 +5,7 @@ import (
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
-	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
+	referenceapplication "opentoggl/backend/apps/backend/internal/reference/application"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -17,11 +17,11 @@ type ScopeAuthorizer interface {
 }
 
 type Handler struct {
-	references *platformapplication.ReferenceService
+	references *referenceapplication.ReferenceService
 	scope      ScopeAuthorizer
 }
 
-func NewHandler(references *platformapplication.ReferenceService, scope ScopeAuthorizer) *Handler {
+func NewHandler(references *referenceapplication.ReferenceService, scope ScopeAuthorizer) *Handler {
 	return &Handler{
 		references: references,
 		scope:      scope,
@@ -89,7 +89,7 @@ func (handler *Handler) GetWorkspaceCurrencies(ctx echo.Context, workspaceID int
 	return ctx.JSON(http.StatusOK, currenciesToAPI(handler.references.Currencies()))
 }
 
-func currenciesToAPI(currencies []platformapplication.Currency) []publictrackapi.ModelsCurrency {
+func currenciesToAPI(currencies []referenceapplication.Currency) []publictrackapi.ModelsCurrency {
 	response := make([]publictrackapi.ModelsCurrency, 0, len(currencies))
 	for _, currency := range currencies {
 		response = append(response, publictrackapi.ModelsCurrency{

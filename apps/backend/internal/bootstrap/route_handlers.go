@@ -13,6 +13,7 @@ import (
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	catalogpostgres "opentoggl/backend/apps/backend/internal/catalog/infra/postgres"
+	filespostgres "opentoggl/backend/apps/backend/internal/files/infra/postgres"
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
@@ -28,9 +29,8 @@ import (
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/platform"
-	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
-	"opentoggl/backend/apps/backend/internal/platform/filestore"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
+	referenceapplication "opentoggl/backend/apps/backend/internal/reference/application"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	reportspostgres "opentoggl/backend/apps/backend/internal/reports/infra/postgres"
 	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
@@ -65,13 +65,13 @@ type routeHandlers struct {
 	reportsApp      *reportsapplication.Service
 	governanceApp   *governanceapplication.Service
 	webhooksApp     *webhooksapplication.Service
-	fileStore       *filestore.Store
+	fileStore       *filespostgres.Store
 	userHomes       userHomeRepository
 	tenant          *tenantweb.Handler
 	tenantApp       *tenantapplication.Service
 	billingApp      *billingapplication.Service
 	invoiceApp      *billingapplication.InvoiceService
-	referenceApp    *platformapplication.ReferenceService
+	referenceApp    *referenceapplication.ReferenceService
 	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
 	samlManager     *identitysaml.Manager
 	samlConfig      *samlConfigStore
@@ -81,7 +81,7 @@ type routeHandlers struct {
 func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
 	cache := platformHandles.Cache
 
-	referenceService, err := platformapplication.NewReferenceService()
+	referenceService, err := referenceapplication.NewReferenceService()
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	return &routeHandlers{
 		pool:            pool,
 		platformHandles: platformHandles,
-		fileStore:       filestore.NewStore(pool),
+		fileStore:       filespostgres.NewStore(pool),
 		catalogApp:      catalogService,
 		identity:        identityHandler,
 		identityApp:     identityService,
