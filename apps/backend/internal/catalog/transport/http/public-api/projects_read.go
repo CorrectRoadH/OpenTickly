@@ -48,6 +48,9 @@ var trackProjectDropFields = []string{
 	"current_period",
 }
 
+// secondsPerHour converts between duration seconds and hourly rates.
+const secondsPerHour = 3600
+
 func (p trackProjectResponse) MarshalJSON() ([]byte, error) {
 	raw, err := json.Marshal(p.GithubComTogglTogglApiInternalModelsProject)
 	if err != nil {
@@ -338,11 +341,11 @@ func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.Github
 	var actualHours, actualSeconds *int
 	if view.ActualSeconds > 0 {
 		actualSeconds = lo.ToPtr(int(view.ActualSeconds))
-		actualHours = lo.ToPtr(int(view.ActualSeconds / 3600))
+		actualHours = lo.ToPtr(int(view.ActualSeconds / secondsPerHour))
 	}
 	var estimatedHours *int
 	if view.EstimatedSeconds != nil {
-		estimatedHours = lo.ToPtr(int(*view.EstimatedSeconds / 3600))
+		estimatedHours = lo.ToPtr(int(*view.EstimatedSeconds / secondsPerHour))
 	}
 
 	project := publictrackapi.GithubComTogglTogglApiInternalModelsProject{

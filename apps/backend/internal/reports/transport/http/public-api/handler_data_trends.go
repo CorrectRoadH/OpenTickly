@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"net/http"
+	"slices"
 	"time"
 
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
@@ -30,7 +31,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -93,7 +94,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 			bs := lo.FromPtrOr(p.BillableSeconds, 0) + e.Duration
 			p.BillableSeconds = &bs
 			if hasRate {
-				earn := lo.FromPtrOr(p.Earnings, 0) + e.Duration*rateCents/3600
+				earn := lo.FromPtrOr(p.Earnings, 0) + e.Duration*rateCents/secondsPerHour
 				p.Earnings = &earn
 			}
 		}
@@ -142,7 +143,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -204,7 +205,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 			bs := lo.FromPtrOr(c.BillableSeconds, 0) + e.Duration
 			c.BillableSeconds = &bs
 			if hasRate {
-				earn := lo.FromPtrOr(c.Earnings, 0) + e.Duration*rateCents/3600
+				earn := lo.FromPtrOr(c.Earnings, 0) + e.Duration*rateCents/secondsPerHour
 				c.Earnings = &earn
 			}
 		}
@@ -254,7 +255,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -331,7 +332,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 			bs := lo.FromPtrOr(u.BillableSeconds, 0) + e.Duration
 			u.BillableSeconds = &bs
 			if hasRate {
-				earn := lo.FromPtrOr(u.Earnings, 0) + e.Duration*rateCents/3600
+				earn := lo.FromPtrOr(u.Earnings, 0) + e.Duration*rateCents/secondsPerHour
 				u.Earnings = &earn
 			}
 		}
@@ -380,7 +381,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdComparative(
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -422,11 +423,11 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdComparative(
 		dateTotals[dateStr] += e.Duration
 	}
 
-	sortedDates := sortedKeys(map[string]struct{}{})
+	sortedDates := make([]string, 0, len(dateTotals))
 	for d := range dateTotals {
 		sortedDates = append(sortedDates, d)
 	}
-	sortStringSlice(sortedDates)
+	slices.Sort(sortedDates)
 
 	data := make([]publicreportsapi.ComparativeGraphData, 0, len(sortedDates))
 	for _, d := range sortedDates {
@@ -498,10 +499,8 @@ func resolveDateBounds(startStr *string, endStr *string, loc *time.Location) (ti
 	return start, end, nil
 }
 
-// parseDateRange is the handler-facing alias for resolveDateBounds.
-func parseDateRange(startStr *string, endStr *string, loc *time.Location) (time.Time, time.Time, error) {
-	return resolveDateBounds(startStr, endStr, loc)
-}
+// secondsPerHour converts between duration seconds and hourly rates.
+const secondsPerHour = 3600
 
 func intSetFromRequest(ids *[]int) map[int64]bool {
 	if ids == nil || len(*ids) == 0 {
@@ -540,15 +539,7 @@ func sortedKeys(m map[string]struct{}) []string {
 	for k := range m {
 		result = append(result, k)
 	}
-	sortStringSlice(result)
+	slices.Sort(result)
 	return result
-}
-
-func sortStringSlice(s []string) {
-	for i := 1; i < len(s); i++ {
-		for j := i; j > 0 && s[j] < s[j-1]; j-- {
-			s[j], s[j-1] = s[j-1], s[j]
-		}
-	}
 }
 

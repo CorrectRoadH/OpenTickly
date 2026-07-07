@@ -169,7 +169,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntries(
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -277,7 +277,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesExt
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -359,7 +359,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesTot
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}

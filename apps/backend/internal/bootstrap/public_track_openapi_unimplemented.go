@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"net/http"
 
-	. "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
 	"github.com/labstack/echo/v4"
@@ -13,11 +12,11 @@ type publicTrackUnimplementedServer struct{}
 
 var _ publictrackapi.ServerInterface = (*publicTrackUnimplementedServer)(nil)
 
-func (server *publicTrackUnimplementedServer) GetAuditLogs(ctx echo.Context, organizationId int, from string, to string, params GetAuditLogsParams) error {
+func (server *publicTrackUnimplementedServer) GetAuditLogs(ctx echo.Context, organizationId int, from string, to string, params publictrackapi.GetAuditLogsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetSaml2LoginUrl(ctx echo.Context, params GetSaml2LoginUrlParams) error {
+func (server *publicTrackUnimplementedServer) GetSaml2LoginUrl(ctx echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -74,15 +73,15 @@ func (server *publicTrackUnimplementedServer) GetIntegrationsCalendar(ctx echo.C
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarCalendars(ctx echo.Context, params GetIntegrationsCalendarCalendarsParams) error {
+func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarCalendars(ctx echo.Context, params publictrackapi.GetIntegrationsCalendarCalendarsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarCalendarsSelected(ctx echo.Context, params GetIntegrationsCalendarCalendarsSelectedParams) error {
+func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarCalendarsSelected(ctx echo.Context, params publictrackapi.GetIntegrationsCalendarCalendarsSelectedParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarEvents(ctx echo.Context, params GetIntegrationsCalendarEventsParams) error {
+func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarEvents(ctx echo.Context, params publictrackapi.GetIntegrationsCalendarEventsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -98,7 +97,7 @@ func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarEventsEvent
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarSetup(ctx echo.Context, params GetIntegrationsCalendarSetupParams) error {
+func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarSetup(ctx echo.Context, params publictrackapi.GetIntegrationsCalendarSetupParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -110,7 +109,7 @@ func (server *publicTrackUnimplementedServer) PutIntegrationsCalendarIntegration
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendars(ctx echo.Context, integrationId int, params GetIntegrationsCalendarIntegrationIdCalendarsParams) error {
+func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendars(ctx echo.Context, integrationId int, params publictrackapi.GetIntegrationsCalendarIntegrationIdCalendarsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -126,7 +125,7 @@ func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegration
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEvents(ctx echo.Context, integrationId int, idCalendar string, params GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEventsParams) error {
+func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEvents(ctx echo.Context, integrationId int, idCalendar string, params publictrackapi.GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEventsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -138,7 +137,7 @@ func (server *publicTrackUnimplementedServer) GetKeys(ctx echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetMe(ctx echo.Context, params GetMeParams) error {
+func (server *publicTrackUnimplementedServer) GetMe(ctx echo.Context, params publictrackapi.GetMeParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -186,11 +185,11 @@ func (server *publicTrackUnimplementedServer) GetFavorites(ctx echo.Context) err
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) CreateFavorite(ctx echo.Context, params CreateFavoriteParams) error {
+func (server *publicTrackUnimplementedServer) CreateFavorite(ctx echo.Context, params publictrackapi.CreateFavoriteParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) UpdateFavorite(ctx echo.Context, params UpdateFavoriteParams) error {
+func (server *publicTrackUnimplementedServer) UpdateFavorite(ctx echo.Context, params publictrackapi.UpdateFavoriteParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -238,15 +237,15 @@ func (server *publicTrackUnimplementedServer) PostPreferences(ctx echo.Context) 
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetPreferencesClient(ctx echo.Context, client GetPreferencesClientParamsClient) error {
+func (server *publicTrackUnimplementedServer) GetPreferencesClient(ctx echo.Context, client publictrackapi.GetPreferencesClientParamsClient) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PostPreferencesClient(ctx echo.Context, client PostPreferencesClientParamsClient) error {
+func (server *publicTrackUnimplementedServer) PostPreferencesClient(ctx echo.Context, client publictrackapi.PostPreferencesClientParamsClient) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetMeProjects(ctx echo.Context, params GetMeProjectsParams) error {
+func (server *publicTrackUnimplementedServer) GetMeProjects(ctx echo.Context, params publictrackapi.GetMeProjectsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -278,11 +277,11 @@ func (server *publicTrackUnimplementedServer) GetTags(ctx echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetTasks(ctx echo.Context, params GetTasksParams) error {
+func (server *publicTrackUnimplementedServer) GetTasks(ctx echo.Context, params publictrackapi.GetTasksParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetTimeEntries(ctx echo.Context, params GetTimeEntriesParams) error {
+func (server *publicTrackUnimplementedServer) GetTimeEntries(ctx echo.Context, params publictrackapi.GetTimeEntriesParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -294,7 +293,7 @@ func (server *publicTrackUnimplementedServer) GetCurrentTimeEntry(ctx echo.Conte
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetTimeEntryById(ctx echo.Context, timeEntryId int, params GetTimeEntryByIdParams) error {
+func (server *publicTrackUnimplementedServer) GetTimeEntryById(ctx echo.Context, timeEntryId int, params publictrackapi.GetTimeEntryByIdParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -338,7 +337,7 @@ func (server *publicTrackUnimplementedServer) PutOrganization(ctx echo.Context, 
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOrganizationGroups(ctx echo.Context, organizationId int, params GetOrganizationGroupsParams) error {
+func (server *publicTrackUnimplementedServer) GetOrganizationGroups(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationGroupsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -378,7 +377,7 @@ func (server *publicTrackUnimplementedServer) GetOrganizationOwner(ctx echo.Cont
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOwnershipTransfers(ctx echo.Context, organizationId int, params GetOwnershipTransfersParams) error {
+func (server *publicTrackUnimplementedServer) GetOwnershipTransfers(ctx echo.Context, organizationId int, params publictrackapi.GetOwnershipTransfersParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -390,11 +389,11 @@ func (server *publicTrackUnimplementedServer) GetOwnershipTransfer(ctx echo.Cont
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PostOwnershipTransferActions(ctx echo.Context, organizationId int, transferId int, action PostOwnershipTransferActionsParamsAction) error {
+func (server *publicTrackUnimplementedServer) PostOwnershipTransferActions(ctx echo.Context, organizationId int, transferId int, action publictrackapi.PostOwnershipTransferActionsParamsAction) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOrganizationsPaymentsRecords(ctx echo.Context, organizationId int, params GetOrganizationsPaymentsRecordsParams) error {
+func (server *publicTrackUnimplementedServer) GetOrganizationsPaymentsRecords(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationsPaymentsRecordsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -418,7 +417,7 @@ func (server *publicTrackUnimplementedServer) PutOrganizationSegmentation(ctx ec
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) DeleteOrganizationSubscription(ctx echo.Context, organizationId int, params DeleteOrganizationSubscriptionParams) error {
+func (server *publicTrackUnimplementedServer) DeleteOrganizationSubscription(ctx echo.Context, organizationId int, params publictrackapi.DeleteOrganizationSubscriptionParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -458,7 +457,7 @@ func (server *publicTrackUnimplementedServer) GetFeatureUpsellMulti(ctx echo.Con
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOrganizationInvoiceSummary(ctx echo.Context, organizationId int, params GetOrganizationInvoiceSummaryParams) error {
+func (server *publicTrackUnimplementedServer) GetOrganizationInvoiceSummary(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationInvoiceSummaryParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -506,7 +505,7 @@ func (server *publicTrackUnimplementedServer) GetOrganizationUsage(ctx echo.Cont
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOrganizationUsers(ctx echo.Context, organizationId int, params GetOrganizationUsersParams) error {
+func (server *publicTrackUnimplementedServer) GetOrganizationUsers(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationUsersParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -514,7 +513,7 @@ func (server *publicTrackUnimplementedServer) PatchOrganizationUsers(ctx echo.Co
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOrganizationUsersDetailed(ctx echo.Context, organizationId int, params GetOrganizationUsersDetailedParams) error {
+func (server *publicTrackUnimplementedServer) GetOrganizationUsersDetailed(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationUsersDetailedParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -538,7 +537,7 @@ func (server *publicTrackUnimplementedServer) GetOrganizationWorkspacesGroups(ct
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetOrganizationWorkspacesWorkspaceusers(ctx echo.Context, organizationId int, workspaceId int, params GetOrganizationWorkspacesWorkspaceusersParams) error {
+func (server *publicTrackUnimplementedServer) GetOrganizationWorkspacesWorkspaceusers(ctx echo.Context, organizationId int, workspaceId int, params publictrackapi.GetOrganizationWorkspacesWorkspaceusersParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -566,7 +565,7 @@ func (server *publicTrackUnimplementedServer) GetAllPlans(ctx echo.Context) erro
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetSyncServerMeGoals(ctx echo.Context, params GetSyncServerMeGoalsParams) error {
+func (server *publicTrackUnimplementedServer) GetSyncServerMeGoals(ctx echo.Context, params publictrackapi.GetSyncServerMeGoalsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -574,7 +573,7 @@ func (server *publicTrackUnimplementedServer) DeleteTimeline(ctx echo.Context) e
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetTimeline(ctx echo.Context, params GetTimelineParams) error {
+func (server *publicTrackUnimplementedServer) GetTimeline(ctx echo.Context, params publictrackapi.GetTimelineParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -618,7 +617,7 @@ func (server *publicTrackUnimplementedServer) PutAlerts(ctx echo.Context, worksp
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceClients(ctx echo.Context, workspaceId int, params GetWorkspaceClientsParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceClients(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceClientsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -698,11 +697,11 @@ func (server *publicTrackUnimplementedServer) GetWorkspaceFavorites(ctx echo.Con
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) CreateWorkspaceFavorite(ctx echo.Context, workspaceId int, params CreateWorkspaceFavoriteParams) error {
+func (server *publicTrackUnimplementedServer) CreateWorkspaceFavorite(ctx echo.Context, workspaceId int, params publictrackapi.CreateWorkspaceFavoriteParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) UpdateWorkspaceFavorite(ctx echo.Context, workspaceId int, params UpdateWorkspaceFavoriteParams) error {
+func (server *publicTrackUnimplementedServer) UpdateWorkspaceFavorite(ctx echo.Context, workspaceId int, params publictrackapi.UpdateWorkspaceFavoriteParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -714,7 +713,7 @@ func (server *publicTrackUnimplementedServer) WorkspaceDeleteFavorite(ctx echo.C
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdGoals(ctx echo.Context, workspaceId int, params GetWorkspacesWorkspaceIdGoalsParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdGoals(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspacesWorkspaceIdGoalsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -822,7 +821,7 @@ func (server *publicTrackUnimplementedServer) DeleteProjectGroup(ctx echo.Contex
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceProjectUsers(ctx echo.Context, workspaceId int, params GetWorkspaceProjectUsersParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceProjectUsers(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceProjectUsersParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -830,7 +829,7 @@ func (server *publicTrackUnimplementedServer) PostWorkspaceProjectUsers(ctx echo
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PostWorkspaceProjectUsersPaginated(ctx echo.Context, workspaceId int, params PostWorkspaceProjectUsersPaginatedParams) error {
+func (server *publicTrackUnimplementedServer) PostWorkspaceProjectUsersPaginated(ctx echo.Context, workspaceId int, params publictrackapi.PostWorkspaceProjectUsersPaginatedParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -846,7 +845,7 @@ func (server *publicTrackUnimplementedServer) PutWorkspaceProjectUsers(ctx echo.
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetProjects(ctx echo.Context, workspaceId int, params GetProjectsParams) error {
+func (server *publicTrackUnimplementedServer) GetProjects(ctx echo.Context, workspaceId int, params publictrackapi.GetProjectsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -874,7 +873,7 @@ func (server *publicTrackUnimplementedServer) PatchWorkspaceProjects(ctx echo.Co
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) DeleteWorkspaceProject(ctx echo.Context, workspaceId int, projectId int, params DeleteWorkspaceProjectParams) error {
+func (server *publicTrackUnimplementedServer) DeleteWorkspaceProject(ctx echo.Context, workspaceId int, projectId int, params publictrackapi.DeleteWorkspaceProjectParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -886,7 +885,7 @@ func (server *publicTrackUnimplementedServer) PutWorkspaceProject(ctx echo.Conte
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceProjectPeriods(ctx echo.Context, workspaceId int, projectId int, params GetWorkspaceProjectPeriodsParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceProjectPeriods(ctx echo.Context, workspaceId int, projectId int, params publictrackapi.GetWorkspaceProjectPeriodsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -898,7 +897,7 @@ func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdProjectsPr
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceProjectTasks(ctx echo.Context, workspaceId int, projectId int, params GetWorkspaceProjectTasksParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceProjectTasks(ctx echo.Context, workspaceId int, projectId int, params publictrackapi.GetWorkspaceProjectTasksParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -926,14 +925,14 @@ func (server *publicTrackUnimplementedServer) CreateRate(ctx echo.Context, works
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetRatesByLevel(ctx echo.Context, workspaceId int, level string, levelId int, params GetRatesByLevelParams) error {
+func (server *publicTrackUnimplementedServer) GetRatesByLevel(ctx echo.Context, workspaceId int, level string, levelId int, params publictrackapi.GetRatesByLevelParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 // Saved/shared report endpoints — to be implemented with full persistence stack.
 // See: saved_reports and scheduled_reports tables in schema.sql.
 
-func (server *publicTrackUnimplementedServer) GetSharedReport(ctx echo.Context, workspaceId int, params GetSharedReportParams) error {
+func (server *publicTrackUnimplementedServer) GetSharedReport(ctx echo.Context, workspaceId int, params publictrackapi.GetSharedReportParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -985,7 +984,7 @@ func (server *publicTrackUnimplementedServer) GetWorkspacePurchaseOrderPdf(ctx e
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceTag(ctx echo.Context, workspaceId int, params GetWorkspaceTagParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceTag(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceTagParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -1005,23 +1004,23 @@ func (server *publicTrackUnimplementedServer) PutWorkspaceTag(ctx echo.Context, 
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceTasks(ctx echo.Context, workspaceId int, params GetWorkspaceTasksParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceTasks(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceTasksParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceTasksBasic(ctx echo.Context, workspaceId int, params GetWorkspaceTasksBasicParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceTasksBasic(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceTasksBasicParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceTasksData(ctx echo.Context, workspaceId int, params GetWorkspaceTasksDataParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceTasksData(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceTasksDataParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntries(ctx echo.Context, workspaceId int, params PostWorkspaceTimeEntriesParams) error {
+func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntries(ctx echo.Context, workspaceId int, params publictrackapi.PostWorkspaceTimeEntriesParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PatchTimeEntries(ctx echo.Context, workspaceId int, timeEntryIds []int, params PatchTimeEntriesParams) error {
+func (server *publicTrackUnimplementedServer) PatchTimeEntries(ctx echo.Context, workspaceId int, timeEntryIds []int, params publictrackapi.PatchTimeEntriesParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -1029,7 +1028,7 @@ func (server *publicTrackUnimplementedServer) DeleteWorkspaceTimeEntries(ctx ech
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PutWorkspaceTimeEntryHandler(ctx echo.Context, workspaceId int, timeEntryId int, params PutWorkspaceTimeEntryHandlerParams) error {
+func (server *publicTrackUnimplementedServer) PutWorkspaceTimeEntryHandler(ctx echo.Context, workspaceId int, timeEntryId int, params publictrackapi.PutWorkspaceTimeEntryHandlerParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -1053,7 +1052,7 @@ func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntryInvitationAc
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetTimesheetSetups(ctx echo.Context, workspaceId int, params GetTimesheetSetupsParams) error {
+func (server *publicTrackUnimplementedServer) GetTimesheetSetups(ctx echo.Context, workspaceId int, params publictrackapi.GetTimesheetSetupsParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -1069,7 +1068,7 @@ func (server *publicTrackUnimplementedServer) PutTimesheetSetups(ctx echo.Contex
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceTimesheetsHandler(ctx echo.Context, workspaceId int, params GetWorkspaceTimesheetsHandlerParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceTimesheetsHandler(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceTimesheetsHandlerParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -1109,7 +1108,7 @@ func (server *publicTrackUnimplementedServer) PutWorkspaceTrackReminder(ctx echo
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceUsers(ctx echo.Context, workspaceId int, params GetWorkspaceUsersParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceUsers(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceUsersParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
@@ -1121,7 +1120,7 @@ func (server *publicTrackUnimplementedServer) PutWorkspaceUsers(ctx echo.Context
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) GetWorkspaceWorkspaceUsers(ctx echo.Context, workspaceId int, params GetWorkspaceWorkspaceUsersParams) error {
+func (server *publicTrackUnimplementedServer) GetWorkspaceWorkspaceUsers(ctx echo.Context, workspaceId int, params publictrackapi.GetWorkspaceWorkspaceUsersParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 

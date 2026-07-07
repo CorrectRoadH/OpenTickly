@@ -168,9 +168,9 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, error) {
-	row := repo.pool.QueryRow(ctx, `
-		select
+// userColumns is the canonical identity_users projection; column order must
+// stay in lockstep with scanUser's Scan destructuring.
+const userColumns = `
 			id,
 			email,
 			full_name,
@@ -208,6 +208,11 @@ func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, e
 			preferences_alpha_features,
 			is_instance_admin,
 			avatar_storage_key
+`
+
+func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, error) {
+	row := repo.pool.QueryRow(ctx, `
+		select `+userColumns+`
 		from identity_users
 		where id = $1
 	`, id)
@@ -224,44 +229,7 @@ func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, e
 
 func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.User, error) {
 	row := repo.pool.QueryRow(ctx, `
-		select
-			id,
-			email,
-			full_name,
-			password_hash,
-			api_token,
-			timezone,
-			beginning_of_week,
-			country_id,
-			default_workspace_id,
-			state,
-			send_product_emails,
-			send_weekly_report,
-			tos_accept_needed,
-			product_emails_disable_code,
-			weekly_report_disable_code,
-			preferences_animation_opt_out,
-			preferences_collapse_time_entries,
-			preferences_date_format,
-			preferences_duration_format,
-			preferences_hide_sidebar_right,
-			preferences_is_goals_view_shown,
-			preferences_keyboard_shortcuts_enabled,
-			preferences_language_code,
-			preferences_manual_entry_mode,
-			preferences_manual_mode,
-			preferences_project_shortcut_enabled,
-			preferences_reports_collapse,
-			preferences_send_added_to_project_notification,
-			preferences_send_daily_project_invites,
-			preferences_send_product_release_notification,
-			preferences_send_timer_notifications,
-			preferences_show_time_in_title,
-			preferences_tags_shortcut_enabled,
-			preferences_time_of_day_format,
-			preferences_alpha_features,
-			is_instance_admin,
-			avatar_storage_key
+		select `+userColumns+`
 		from identity_users
 		where email = lower(trim($1))
 	`, email)
@@ -278,44 +246,7 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 
 func (repo *UserRepository) ByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
 	row := repo.pool.QueryRow(ctx, `
-		select
-			id,
-			email,
-			full_name,
-			password_hash,
-			api_token,
-			timezone,
-			beginning_of_week,
-			country_id,
-			default_workspace_id,
-			state,
-			send_product_emails,
-			send_weekly_report,
-			tos_accept_needed,
-			product_emails_disable_code,
-			weekly_report_disable_code,
-			preferences_animation_opt_out,
-			preferences_collapse_time_entries,
-			preferences_date_format,
-			preferences_duration_format,
-			preferences_hide_sidebar_right,
-			preferences_is_goals_view_shown,
-			preferences_keyboard_shortcuts_enabled,
-			preferences_language_code,
-			preferences_manual_entry_mode,
-			preferences_manual_mode,
-			preferences_project_shortcut_enabled,
-			preferences_reports_collapse,
-			preferences_send_added_to_project_notification,
-			preferences_send_daily_project_invites,
-			preferences_send_product_release_notification,
-			preferences_send_timer_notifications,
-			preferences_show_time_in_title,
-			preferences_tags_shortcut_enabled,
-			preferences_time_of_day_format,
-			preferences_alpha_features,
-			is_instance_admin,
-			avatar_storage_key
+		select `+userColumns+`
 		from identity_users
 		where email = lower(trim($1))
 			or (position('@' in trim($1)) = 0 and split_part(email, '@', 1) = lower(trim($1)))
@@ -335,44 +266,7 @@ func (repo *UserRepository) ByLoginIdentifier(ctx context.Context, identifier st
 
 func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*domain.User, error) {
 	row := repo.pool.QueryRow(ctx, `
-		select
-			id,
-			email,
-			full_name,
-			password_hash,
-			api_token,
-			timezone,
-			beginning_of_week,
-			country_id,
-			default_workspace_id,
-			state,
-			send_product_emails,
-			send_weekly_report,
-			tos_accept_needed,
-			product_emails_disable_code,
-			weekly_report_disable_code,
-			preferences_animation_opt_out,
-			preferences_collapse_time_entries,
-			preferences_date_format,
-			preferences_duration_format,
-			preferences_hide_sidebar_right,
-			preferences_is_goals_view_shown,
-			preferences_keyboard_shortcuts_enabled,
-			preferences_language_code,
-			preferences_manual_entry_mode,
-			preferences_manual_mode,
-			preferences_project_shortcut_enabled,
-			preferences_reports_collapse,
-			preferences_send_added_to_project_notification,
-			preferences_send_daily_project_invites,
-			preferences_send_product_release_notification,
-			preferences_send_timer_notifications,
-			preferences_show_time_in_title,
-			preferences_tags_shortcut_enabled,
-			preferences_time_of_day_format,
-			preferences_alpha_features,
-			is_instance_admin,
-			avatar_storage_key
+		select `+userColumns+`
 		from identity_users
 		where api_token = $1
 	`, token)
@@ -389,44 +283,7 @@ func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*doma
 
 func (repo *UserRepository) ByProductEmailsDisableCode(ctx context.Context, code string) (*domain.User, error) {
 	row := repo.pool.QueryRow(ctx, `
-		select
-			id,
-			email,
-			full_name,
-			password_hash,
-			api_token,
-			timezone,
-			beginning_of_week,
-			country_id,
-			default_workspace_id,
-			state,
-			send_product_emails,
-			send_weekly_report,
-			tos_accept_needed,
-			product_emails_disable_code,
-			weekly_report_disable_code,
-			preferences_animation_opt_out,
-			preferences_collapse_time_entries,
-			preferences_date_format,
-			preferences_duration_format,
-			preferences_hide_sidebar_right,
-			preferences_is_goals_view_shown,
-			preferences_keyboard_shortcuts_enabled,
-			preferences_language_code,
-			preferences_manual_entry_mode,
-			preferences_manual_mode,
-			preferences_project_shortcut_enabled,
-			preferences_reports_collapse,
-			preferences_send_added_to_project_notification,
-			preferences_send_daily_project_invites,
-			preferences_send_product_release_notification,
-			preferences_send_timer_notifications,
-			preferences_show_time_in_title,
-			preferences_tags_shortcut_enabled,
-			preferences_time_of_day_format,
-			preferences_alpha_features,
-			is_instance_admin,
-			avatar_storage_key
+		select `+userColumns+`
 		from identity_users
 		where product_emails_disable_code = $1
 	`, code)
@@ -443,44 +300,7 @@ func (repo *UserRepository) ByProductEmailsDisableCode(ctx context.Context, code
 
 func (repo *UserRepository) ByWeeklyReportDisableCode(ctx context.Context, code string) (*domain.User, error) {
 	row := repo.pool.QueryRow(ctx, `
-		select
-			id,
-			email,
-			full_name,
-			password_hash,
-			api_token,
-			timezone,
-			beginning_of_week,
-			country_id,
-			default_workspace_id,
-			state,
-			send_product_emails,
-			send_weekly_report,
-			tos_accept_needed,
-			product_emails_disable_code,
-			weekly_report_disable_code,
-			preferences_animation_opt_out,
-			preferences_collapse_time_entries,
-			preferences_date_format,
-			preferences_duration_format,
-			preferences_hide_sidebar_right,
-			preferences_is_goals_view_shown,
-			preferences_keyboard_shortcuts_enabled,
-			preferences_language_code,
-			preferences_manual_entry_mode,
-			preferences_manual_mode,
-			preferences_project_shortcut_enabled,
-			preferences_reports_collapse,
-			preferences_send_added_to_project_notification,
-			preferences_send_daily_project_invites,
-			preferences_send_product_release_notification,
-			preferences_send_timer_notifications,
-			preferences_show_time_in_title,
-			preferences_tags_shortcut_enabled,
-			preferences_time_of_day_format,
-			preferences_alpha_features,
-			is_instance_admin,
-			avatar_storage_key
+		select `+userColumns+`
 		from identity_users
 		where weekly_report_disable_code = $1
 	`, code)

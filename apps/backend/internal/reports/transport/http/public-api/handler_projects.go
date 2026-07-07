@@ -155,7 +155,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsProjectIdSum
 	}
 
 	location := loadLocation(user.Timezone)
-	startDate, endDate, err := parseDateRange(request.StartDate, request.EndDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
 		return err
 	}

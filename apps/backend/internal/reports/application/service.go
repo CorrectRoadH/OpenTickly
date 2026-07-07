@@ -59,6 +59,9 @@ type Service struct {
 	logger           log.Logger
 }
 
+// secondsPerHour converts between duration seconds and hourly rates.
+const secondsPerHour = 3600
+
 func NewService(tracking TrackingQueries, membership MembershipQueries, rates RateResolver, logger log.Logger) *Service {
 	return &Service{
 		membership: membership,
@@ -243,7 +246,7 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 		if entry.Billable {
 			row.BillableSeconds[dayIndex] += duration
 			if hasRate {
-				row.BillableAmountsInCents[dayIndex] += duration * rateCents / 3600
+				row.BillableAmountsInCents[dayIndex] += duration * rateCents / secondsPerHour
 			}
 		}
 		totalSeconds += duration
@@ -576,7 +579,7 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 	for projectID, acc := range projects {
 		earnings := 0
 		if hasRate {
-			earnings = acc.billableSeconds * rateCents / 3600
+			earnings = acc.billableSeconds * rateCents / secondsPerHour
 		}
 		results = append(results, ProjectProfitabilityRow{
 			ProjectID:       projectID,
@@ -666,7 +669,7 @@ func (service *Service) BuildEmployeeProfitability(ctx context.Context, query Em
 	for userID, acc := range employees {
 		earnings := 0
 		if hasRate {
-			earnings = acc.billableSeconds * rateCents / 3600
+			earnings = acc.billableSeconds * rateCents / secondsPerHour
 		}
 		results = append(results, EmployeeProfitabilityRow{
 			UserID:          userID,
