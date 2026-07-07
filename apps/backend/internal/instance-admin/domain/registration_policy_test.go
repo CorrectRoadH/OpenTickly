@@ -18,14 +18,19 @@ func TestParseRegistrationMode(t *testing.T) {
 		{"", "", true},
 	}
 	for _, tt := range tests {
-		got, err := ParseRegistrationMode(tt.input)
-		if (err != nil) != tt.wantErr {
-			t.Errorf("ParseRegistrationMode(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
-			continue
+		name := tt.input
+		if name == "" {
+			name = "empty"
 		}
-		if got != tt.want {
-			t.Errorf("ParseRegistrationMode(%q) = %v, want %v", tt.input, got, tt.want)
-		}
+		t.Run(name, func(t *testing.T) {
+			got, err := ParseRegistrationMode(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("ParseRegistrationMode(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+			}
+			if got != tt.want {
+				t.Errorf("ParseRegistrationMode(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
