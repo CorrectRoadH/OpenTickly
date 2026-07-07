@@ -175,8 +175,6 @@ function useFloatingPosition(
 // ---------------------------------------------------------------------------
 
 type DropdownMenuProps = {
-  /** @deprecated Use `placement` instead. */
-  align?: "left" | "right";
   children: ReactNode;
   className?: string;
   /** Minimum width of the floating panel. */
@@ -202,7 +200,6 @@ type DropdownMenuProps = {
  * ```
  */
 export function DropdownMenu({
-  align,
   children,
   className,
   minWidth = "180px",
@@ -210,7 +207,7 @@ export function DropdownMenu({
   testId,
   trigger,
 }: DropdownMenuProps): ReactElement {
-  const resolved = placement ?? (align === "left" ? "bottom-left" : "bottom-right");
+  const resolved = placement ?? "bottom-right";
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -254,8 +251,6 @@ export function DropdownMenu({
 // ---------------------------------------------------------------------------
 
 type DropdownProps = {
-  /** @deprecated Use `placement` instead. */
-  align?: "left" | "right";
   children: ReactNode;
   className?: string;
   /** Override the floating panel classes. Falls back to standard surface style. */
@@ -273,7 +268,6 @@ type DropdownProps = {
  * Uses portal to avoid overflow clipping.
  */
 export function Dropdown({
-  align,
   children,
   className,
   panelClassName = "max-h-[min(60vh,480px)] overflow-y-auto rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] shadow-[0_14px_32px_var(--track-shadow-overlay)]",
@@ -281,7 +275,7 @@ export function Dropdown({
   testId,
   trigger,
 }: DropdownProps): ReactElement {
-  const resolved = placement ?? (align === "right" ? "bottom-right" : "bottom-left");
+  const resolved = placement ?? "bottom-left";
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);

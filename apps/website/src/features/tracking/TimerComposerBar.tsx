@@ -1,7 +1,6 @@
-import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type ReactElement, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useCreateTagMutation,
   useCreateTimeEntryMutation,
@@ -9,41 +8,23 @@ import {
   useRecentTimeEntrySuggestionsQuery,
   useTasksQuery,
 } from "../../shared/query/web-shell.ts";
-import { ProjectsIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
-import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
+import { ComposerSuggestionsPortal } from "./ComposerSuggestionsPortal.tsx";
 import { ManualModeComposer } from "./ManualModeComposer.tsx";
+import { TimerBarProjectPicker } from "./TimerBarProjectPicker.tsx";
+import { TimerBarTagPicker } from "./TimerBarTagPicker.tsx";
 import { TimerElapsedDisplay } from "./TimerElapsedDisplay.tsx";
-import { TimerComposerSuggestionsDialog } from "./TimerComposerSuggestionsDialog.tsx";
 import { TimerComposerShortcutMenu } from "./TimerComposerShortcutMenu.tsx";
-import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
-import { applyComposerShortcutSelection } from "./composer-shortcut-selection.ts";
-import { TagPickerDropdown, TagPickerTrigger } from "./TagPickerDropdown.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
-import { useComposerShortcutMenu } from "./useComposerShortcutMenu.ts";
+import { useAutoStartFromParams } from "./useAutoStartFromParams.ts";
+import { useComposerGlobalHotkeys } from "./useComposerGlobalHotkeys.ts";
+import { useComposerShortcutBridge } from "./useComposerShortcutBridge.ts";
 import { useTimerComposer } from "./useTimerComposer.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
 import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
-
-type StartParams = {
-  description?: string;
-  projectId?: number;
-  tagIds?: number[];
-  billable?: boolean;
-};
-
-/** Reads the new tag's id from a create-tag response (array- or object-shaped). */
-function resolveCreatedTagId(created: unknown): number | undefined {
-  const tag = Array.isArray(created) ? created[0] : created;
-  if (tag && typeof tag === "object" && "id" in tag) {
-    const id = (tag as { id?: unknown }).id;
-    return typeof id === "number" ? id : undefined;
-  }
-  return undefined;
-}
+import type { StartParams } from "./useAutoStartFromParams.ts";
 
 export function TimerComposerBar({
   initialDate,
@@ -65,54 +46,13 @@ export function TimerComposerBar({
   const createTagMutation = useCreateTagMutation(workspaceId);
 
   // Inline "@" (project) / "#" (tag) shortcut menu for the composer.
-  const [descriptionCursor, setDescriptionCursor] = useState(0);
-  const shortcutMenu = useComposerShortcutMenu({
-    cursor: descriptionCursor,
-    onSelect: (item, nextValue) => {
-      applyComposerShortcutSelection(
-        {
-          createTag: (name) =>
-            createTagMutation.mutateAsync(name).then((created) => resolveCreatedTagId(created)),
-          draftTagIds: composer.draftTagIds,
-          projectOptions,
-          runningEntry: composer.runningEntry,
-          setDraftDescription: composer.setDraftDescription,
-          setDraftProjectId: composer.setDraftProjectId,
-          setDraftTagIds: composer.setDraftTagIds,
-          setDraftTaskId: composer.setDraftTaskId,
-          setRunningDescription: composer.setRunningDescription,
-          updateTimeEntry: composer.updateTimeEntryMutation.mutateAsync,
-        },
-        item,
-        nextValue,
-      );
-    },
-    projects: projectOptions
-      .filter((project): project is typeof project & { id: number } => project.id != null)
-      .map((project) => ({
-        active: project.active,
-        color: resolveProjectColorValue(project),
-        id: project.id,
-        name: project.name ?? "Untitled project",
-      })),
-    projectShortcutEnabled: preferences.projectShortcutEnabled,
-    selectedTagIds:
-      composer.runningEntry?.id != null
-        ? (composer.runningEntry.tag_ids ?? [])
-        : composer.draftTagIds,
-    tags: tagOptions,
-    tagsShortcutEnabled: preferences.tagsShortcutEnabled,
-    value: composer.timerDescriptionValue,
+  const { setDescriptionCursor, shortcutMenu } = useComposerShortcutBridge({
+    composer,
+    createTagMutation,
+    preferences,
+    projectOptions,
+    tagOptions,
   });
-
-  // The inline shortcut menu and the focus suggestions dialog must not overlap.
-  const shortcutMenuOpen = shortcutMenu.isOpen;
-  const { closeComposerSuggestions, composerSuggestionsAnchor } = composer;
-  useEffect(() => {
-    if (shortcutMenuOpen && composerSuggestionsAnchor) {
-      closeComposerSuggestions();
-    }
-  }, [shortcutMenuOpen, composerSuggestionsAnchor, closeComposerSuggestions]);
 
   // Favorites and tasks for suggestions dialog
   const favoritesQuery = useFavoritesQuery(workspaceId);
@@ -131,61 +71,10 @@ export function TimerComposerBar({
   }, [initialDate, setSelectedWeekDate]);
 
   // Auto-start timer from URL params
-  const startParamsConsumedRef = useRef(false);
-  const currentEntryLoaded =
-    !composer.currentTimeEntryQuery.isPending && !composer.currentTimeEntryQuery.isFetching;
-  useEffect(() => {
-    if (!startParams || startParamsConsumedRef.current || !currentEntryLoaded) return;
-    startParamsConsumedRef.current = true;
-
-    void composer.handleStartFromUrl(startParams).then(() => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("description");
-      url.searchParams.delete("desc");
-      url.searchParams.delete("project_id");
-      url.searchParams.delete("tag_ids");
-      url.searchParams.delete("billable");
-      url.searchParams.delete("wid");
-      window.history.replaceState(window.history.state, "", url.toString());
-    });
-  }, [startParams, currentEntryLoaded, composer]);
+  useAutoStartFromParams(composer, startParams);
 
   // Keyboard shortcuts
-  const handleGlobalKeyDown = (event: KeyboardEvent) => {
-    const target = event.target;
-    if (
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement ||
-      (target instanceof HTMLElement && target.isContentEditable)
-    ) {
-      return;
-    }
-
-    if (event.key === "?") {
-      event.preventDefault();
-      onShortcutsToggle();
-      return;
-    }
-
-    if (event.key === "n") {
-      event.preventDefault();
-      composer.timerDescriptionInputRef.current?.focus();
-      return;
-    }
-
-    if (event.key === "s" && composer.runningEntry?.id != null) {
-      event.preventDefault();
-      void composer.handleTimerAction();
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleGlobalKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleGlobalKeyDown);
-    };
-  });
+  useComposerGlobalHotkeys({ composer, onShortcutsToggle });
 
   return (
     <div className="flex min-h-[70px] flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
@@ -404,254 +293,6 @@ export function TimerComposerBar({
           tasks={allTasks}
           workspaceId={workspaceId}
         />
-      ) : null}
-    </div>
-  );
-}
-
-function ComposerSuggestionsPortal({
-  composer,
-  favorites,
-  projectOptions,
-  recentWorkspaceEntries,
-  session,
-  tasks,
-  workspaceId,
-}: {
-  composer: ReturnType<typeof useTimerComposer>;
-  favorites: Array<{
-    description?: string;
-    project_id?: number;
-    tag_ids?: number[];
-    billable?: boolean;
-  }>;
-  projectOptions: Parameters<typeof TimerComposerSuggestionsDialog>[0]["projects"];
-  recentWorkspaceEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
-  session: ReturnType<typeof useWorkspaceData>["session"];
-  tasks: Parameters<typeof TimerComposerSuggestionsDialog>[0]["tasks"];
-  workspaceId: number;
-}): ReactElement {
-  return (
-    <TimerComposerSuggestionsDialog
-      anchor={composer.composerSuggestionsAnchor!}
-      currentWorkspaceId={workspaceId}
-      favorites={favorites}
-      onClose={composer.closeComposerSuggestions}
-      onFavoriteSelect={(fav) => {
-        composer.setDraftDescription(fav.description ?? "");
-        composer.setDraftProjectId(fav.project_id ?? null);
-        composer.setDraftTagIds(fav.tag_ids ?? []);
-        composer.setDraftBillable(fav.billable ?? false);
-        composer.closeComposerSuggestions();
-      }}
-      query={composer.timerDescriptionValue}
-      onProjectSelect={(projectId) => {
-        composer.setDraftProjectId(projectId);
-        composer.setDraftTaskId(null);
-        composer.closeComposerSuggestions();
-      }}
-      onTaskSelect={(projectId, taskId) => {
-        composer.setDraftProjectId(projectId);
-        composer.setDraftTaskId(taskId);
-        composer.closeComposerSuggestions();
-      }}
-      onTimeEntrySelect={(entry) => {
-        composer.setDraftDescription(entry.description ?? "");
-        composer.setDraftProjectId(resolveTimeEntryProjectId(entry));
-        composer.setDraftTaskId(entry.task_id ?? null);
-        composer.setDraftTagIds(entry.tag_ids ?? []);
-        composer.closeComposerSuggestions();
-      }}
-      onWorkspaceSelect={(nextWorkspaceId) => {
-        composer.switchWorkspace(nextWorkspaceId);
-        composer.closeComposerSuggestions();
-      }}
-      projects={projectOptions}
-      searchResults={composer.searchedTimeEntries}
-      tasks={tasks}
-      timeEntries={recentWorkspaceEntries}
-      workspaces={session.availableWorkspaces.map((workspace) => ({
-        id: workspace.id,
-        isCurrent: workspace.isCurrent,
-        name: workspace.name,
-      }))}
-    />
-  );
-}
-
-// --- TimerBarProjectPicker & TimerBarTagPicker (moved from WorkspaceTimerPage) ---
-
-function TimerBarProjectPicker({
-  draftProjectId,
-  draftTaskId,
-  onProjectSelect,
-  onTaskSelect,
-  projectOptions,
-  runningEntry,
-  taskName,
-  tasks,
-  workspaceName,
-}: {
-  draftProjectId: number | null;
-  draftTaskId: number | null;
-  onProjectSelect: (id: number | null) => void;
-  onTaskSelect: (projectId: number, taskId: number) => void;
-  projectOptions: {
-    active?: boolean;
-    client_name?: string | null;
-    color?: string | null;
-    id?: number | null;
-    name?: string | null;
-    pinned?: boolean;
-  }[];
-  runningEntry: {
-    id?: number | null;
-    project_id?: number | null;
-    pid?: number | null;
-    task_id?: number | null;
-  } | null;
-  taskName?: string;
-  tasks: ProjectPickerTask[];
-  workspaceName: string;
-}): ReactElement {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const projects = projectOptions
-    .filter((p) => p.id != null && p.active !== false)
-    .map((p) => ({
-      clientName: p.client_name ?? undefined,
-      color: resolveProjectColorValue(p),
-      id: p.id as number,
-      name: p.name ?? "Untitled project",
-      pinned: p.pinned === true,
-    }))
-    .sort((a, b) => Number(b.pinned) - Number(a.pinned));
-
-  const displayProjectId =
-    runningEntry?.id != null ? resolveTimeEntryProjectId(runningEntry) : draftProjectId;
-  const displayTaskId = runningEntry?.id != null ? (runningEntry.task_id ?? null) : draftTaskId;
-  const selectedProject = projects.find((p) => p.id === displayProjectId);
-  const hasProject = displayProjectId != null || displayTaskId != null;
-
-  return (
-    <div className="relative" ref={containerRef}>
-      <button
-        aria-label={`Add a project${selectedProject ? `: ${selectedProject.name}` : ""}`}
-        className={`flex items-center justify-center gap-1.5 rounded-md transition hover:bg-[var(--track-row-hover)] ${
-          selectedProject
-            ? "h-9 max-w-[180px] px-2 text-[var(--track-accent)]"
-            : hasProject
-              ? "size-9 text-[var(--track-accent)]"
-              : "size-9 text-[var(--track-text-muted)] hover:text-white"
-        }`}
-        onClick={() => setOpen((prev) => !prev)}
-        onBlur={(e) => {
-          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-            setOpen(false);
-          }
-        }}
-        type="button"
-      >
-        {selectedProject ? (
-          <span
-            className="size-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: selectedProject.color }}
-          />
-        ) : (
-          <ProjectsIcon className="size-4 shrink-0" />
-        )}
-        {selectedProject ? (
-          <span
-            className="min-w-0 truncate text-[12px] font-medium"
-            style={{ color: selectedProject.color }}
-          >
-            {taskName ? `${selectedProject.name} | ${taskName}` : selectedProject.name}
-          </span>
-        ) : null}
-      </button>
-      {open ? (
-        <div
-          className="absolute left-0 top-full z-50 mt-1 w-[280px]"
-          onMouseDown={(e) => {
-            if ((e.target as HTMLElement).tagName !== "INPUT") {
-              e.preventDefault();
-            }
-          }}
-        >
-          <ProjectPickerDropdown
-            onSelect={(projectId) => {
-              setOpen(false);
-              onProjectSelect(projectId);
-            }}
-            onTaskSelect={(projectId, taskId) => {
-              setOpen(false);
-              onTaskSelect(projectId, taskId);
-            }}
-            projects={projects}
-            tasks={tasks}
-            workspaceName={workspaceName}
-          />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/** @internal Exported for testing only. */
-export function TimerBarTagPicker({
-  draftTagIds,
-  onCreateTag,
-  onTagToggle,
-  runningEntry,
-  tagOptions,
-}: {
-  draftTagIds: number[];
-  onCreateTag?: (name: string) => Promise<unknown>;
-  onTagToggle: (tagId: number) => void;
-  runningEntry: { id?: number | null; tag_ids?: number[] | null } | null;
-  tagOptions: { id: number; name: string }[];
-}): ReactElement {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const displayTagIds = runningEntry?.id != null ? (runningEntry.tag_ids ?? []) : draftTagIds;
-  const displayTags = tagOptions.filter((tag) => displayTagIds.includes(tag.id));
-
-  return (
-    <div className="relative" ref={containerRef}>
-      <TagPickerTrigger
-        onClick={() => {
-          setOpen((prev) => !prev);
-          setSearch("");
-        }}
-        onBlur={(e) => {
-          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-            setOpen(false);
-          }
-        }}
-        selectedTags={displayTags}
-      />
-      {open ? (
-        <div
-          className="absolute left-0 top-full z-50 mt-1 w-[220px]"
-          onMouseDown={(e) => {
-            if ((e.target as HTMLElement).tagName !== "INPUT") {
-              e.preventDefault();
-            }
-          }}
-        >
-          <TagPickerDropdown
-            createLabel={(name) => `Create tag "${name}"`}
-            onCreateTag={onCreateTag}
-            onSearchChange={setSearch}
-            onTagToggle={onTagToggle}
-            search={search}
-            selectedTagIds={displayTagIds}
-            tagOptions={tagOptions}
-          />
-        </div>
       ) : null}
     </div>
   );

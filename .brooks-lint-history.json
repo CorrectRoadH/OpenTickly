@@ -1,0 +1,9 @@
+[
+  {
+    "date": "2026-07-07",
+    "mode": "Full Sweep",
+    "score": 80,
+    "findings": { "critical": 0, "warning": 17, "suggestion": 8 },
+    "scope": "entire repository (~1565 tracked files: apps/backend, apps/website, apps/landing, apps/update-worker, packages)"
+  }
+]

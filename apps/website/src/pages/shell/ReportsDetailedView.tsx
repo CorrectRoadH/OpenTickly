@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { formatTimeHHMM } from "../../shared/lib/time-format.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
@@ -21,13 +22,6 @@ type ReportsDetailedViewProps = {
   clientFilter: string[];
   memberFilter: string[];
 };
-
-function formatTimeHHMM(isoString: string | undefined): string {
-  if (!isoString) return "-";
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return "-";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
 
 function matchesFilters(
   entry: GithubComTogglTogglApiInternalModelsTimeEntry,

@@ -4,13 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration, resolveEntryDurationSeconds } from "./overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-
-function formatTimeHHMM(isoString: string | undefined): string {
-  if (!isoString) return "-";
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return "-";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
+import { formatTimeHHMM } from "../../shared/lib/time-format.ts";
 
 function formatDate(isoString: string | undefined): string {
   if (!isoString) return "-";

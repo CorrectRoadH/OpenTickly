@@ -9,7 +9,10 @@ import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ChevronRightIcon, MenuIcon } from "../shared/ui/icons.tsx";
-import { resolveEntryDurationSeconds } from "../features/tracking/overview-data.ts";
+import {
+  formatClockDuration,
+  resolveEntryDurationSeconds,
+} from "../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../shared/query/useUserPreferences.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
 import { UserAvatar } from "../shared/ui/UserAvatar.tsx";
@@ -74,10 +77,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     }
     function updateTitle() {
       const seconds = resolveEntryDurationSeconds(runningEntry!, Date.now());
-      const h = Math.floor(seconds / 3600);
-      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-      const s = String(seconds % 60).padStart(2, "0");
-      document.title = `${h}:${m}:${s} \u00B7 OpenTickly`;
+      document.title = `${formatClockDuration(seconds)} \u00B7 OpenTickly`;
     }
     updateTitle();
     const id = setInterval(updateTitle, 1000);

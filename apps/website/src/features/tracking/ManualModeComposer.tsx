@@ -2,6 +2,7 @@ import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
+import { formatClockDuration } from "./overview-data.ts";
 import { PlusIcon } from "../../shared/ui/icons.tsx";
 
 interface ManualModeComposerProps {
@@ -50,7 +51,7 @@ export function ManualModeComposer({
       return "0:00:00";
     }
     const totalSeconds = Math.floor((stopMs - startMs) / 1000);
-    return formatDuration(totalSeconds);
+    return formatClockDuration(totalSeconds);
   })();
 
   const handleAdd = () => {
@@ -160,11 +161,4 @@ function parseLocalDateTime(dateStr: string, timeStr: string, _timezone: string)
   /* Approximate timezone offset correction: parse in local then adjust.
      For simplicity, we use the browser's timezone handling through Date. */
   return date.getTime();
-}
-
-function formatDuration(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }

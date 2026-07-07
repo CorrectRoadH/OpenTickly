@@ -1,22 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import { changePreferenceSelect } from "./fixtures/e2e-preferences.ts";
 import { selectDropdownOption } from "./fixtures/e2e-select.ts";
 
 const ENTRY_DURATION_SECONDS = 2847; // 47m 27s
 const ENTRY_DESCRIPTION = "Preference test entry";
-
-async function changePreferenceSelect(page: Page, testId: string, optionLabel: string) {
-  // Start listening before the action to avoid race conditions
-  const responsePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes("/me/preferences") && response.request().method() === "POST",
-    { timeout: 15_000 },
-  );
-  await selectDropdownOption(page, testId, optionLabel);
-  // Autosave debounces at 900ms, then POSTs — wait for the network round-trip
-  await responsePromise;
-}
 
 /** Switch to list view. */
 async function switchToListView(page: Page) {

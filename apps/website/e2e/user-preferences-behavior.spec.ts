@@ -1,20 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
-
-/**
- * Toggle a checkbox preference on the profile page and wait for the save round-trip.
- * The label text must match the visible checkbox label exactly.
- */
-async function togglePreferenceCheckbox(page: Page, label: string) {
-  const responsePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes("/me/preferences") && response.request().method() === "POST",
-    { timeout: 15_000 },
-  );
-  await page.getByLabel(label).click();
-  await responsePromise;
-}
+import { togglePreferenceCheckbox } from "./fixtures/e2e-preferences.ts";
 
 /** Navigate to the profile page and wait for it to load. */
 async function goToProfile(page: Page) {

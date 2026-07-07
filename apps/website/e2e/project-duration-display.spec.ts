@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
@@ -6,19 +6,9 @@ import {
   loginE2eUser,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
-import { selectDropdownOption } from "./fixtures/e2e-select.ts";
+import { changePreferenceSelect } from "./fixtures/e2e-preferences.ts";
 
 const ENTRY_DURATION_SECONDS = 2847; // 47m 27s
-
-async function changePreferenceSelect(page: Page, testId: string, optionLabel: string) {
-  const responsePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes("/me/preferences") && response.request().method() === "POST",
-    { timeout: 15_000 },
-  );
-  await selectDropdownOption(page, testId, optionLabel);
-  await responsePromise;
-}
 
 test.describe("Story: project surfaces use one canonical duration display", () => {
   test("project dashboard includes entries older than 90 days in the project total and table", async ({

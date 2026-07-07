@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { TimerBarTagPicker } from "./TimerComposerBar.tsx";
+import { TimerBarTagPicker } from "./TimerBarTagPicker.tsx";
 
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();

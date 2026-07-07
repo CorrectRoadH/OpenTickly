@@ -1,4 +1,4 @@
-import type { Locale } from "./i18n";
+import { i18n, type Locale } from "./i18n";
 
 export const siteName = "OpenTickly";
 export const siteUrl = "https://opentoggl.com";
@@ -75,9 +75,9 @@ export function buildPageTitle(title?: string): string {
 }
 
 export function buildCanonicalUrl(pathname: string, rawSiteUrl?: string): string {
-  const siteUrl = resolveSiteUrl(rawSiteUrl);
+  const resolvedSiteUrl = resolveSiteUrl(rawSiteUrl);
   const normalizedPath = pathname === "/" ? "/" : `/${pathname.replace(/^\/+|\/+$/g, "")}`;
-  return new URL(normalizedPath, `${siteUrl}/`).toString();
+  return new URL(normalizedPath, `${resolvedSiteUrl}/`).toString();
 }
 
 export function buildRobotsTxt(rawSiteUrl?: string): string {
@@ -195,7 +195,7 @@ export function buildWebSiteSchema(siteUrl: string) {
     name: siteName,
     url: siteUrl,
     description: defaultDescription,
-    inLanguage: ["en", "zh", "es", "ja", "fr", "ko", "pl", "pt"],
+    inLanguage: [...i18n.languages],
     publisher: {
       "@type": "Organization",
       name: siteName,

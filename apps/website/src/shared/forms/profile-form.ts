@@ -3,11 +3,13 @@ import { z } from "zod";
 import type { MePayload, RelatedUserWithRelated } from "../api/generated/public-track/types.gen.ts";
 import type { ProfilePreferencesDto } from "../query/web-shell.ts";
 
+const beginningOfWeekSchema = z.number().int().min(0).max(6);
+
 export const profileFormSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(1),
   timezone: z.string().min(1),
-  beginningOfWeek: z.number().int().min(0).max(6),
+  beginningOfWeek: beginningOfWeekSchema,
   countryId: z.number().int().nonnegative(),
   defaultWorkspaceId: z.number().int().nonnegative(),
   currentPassword: z.string(),
@@ -19,7 +21,7 @@ export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export const preferencesFormSchema = z.object({
   dateFormat: z.string().min(1),
   durationFormat: z.enum(["improved", "classic", "decimal"]),
-  beginningOfWeek: z.number().int().min(0).max(6),
+  beginningOfWeek: beginningOfWeekSchema,
   collapseTimeEntries: z.boolean(),
   isGoalsViewShown: z.boolean(),
   keyboardShortcutsEnabled: z.boolean(),

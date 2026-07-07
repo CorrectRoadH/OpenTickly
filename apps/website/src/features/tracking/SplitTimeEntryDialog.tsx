@@ -2,6 +2,8 @@ import { type PointerEvent as ReactPointerEvent, type ReactElement, useRef, useS
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
+import { formatClockDuration } from "./overview-data.ts";
+
 const STEP_SECONDS = 300; // 5-minute increments
 
 type SplitTimeEntryDialogProps = {
@@ -110,7 +112,7 @@ export function SplitTimeEntryDialog({
             style={{ flexBasis: `${firstPercent}%`, minHeight: 36 }}
           >
             <span className="text-[12px] leading-tight text-[var(--track-overlay-text-muted)]">
-              {formatDuration(firstDuration)} ({formatTime(startMs)} – {formatTime(splitMs)})
+              {formatClockDuration(firstDuration)} ({formatTime(startMs)} – {formatTime(splitMs)})
             </span>
           </div>
           {/* Bottom block */}
@@ -119,7 +121,7 @@ export function SplitTimeEntryDialog({
             style={{ flexBasis: `${100 - firstPercent}%`, minHeight: 36 }}
           >
             <span className="text-[12px] leading-tight text-[var(--track-overlay-text-muted)]">
-              {formatDuration(secondDuration)} ({formatTime(splitMs)} – {formatTime(stopMs)})
+              {formatClockDuration(secondDuration)} ({formatTime(splitMs)} – {formatTime(stopMs)})
             </span>
           </div>
 
@@ -175,13 +177,6 @@ function DragHandle(): ReactElement {
       />
     </svg>
   );
-}
-
-function formatDuration(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function formatTime(ms: number): string {
