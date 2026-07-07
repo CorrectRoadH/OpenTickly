@@ -342,6 +342,50 @@ export type WorkspaceSettings = {
   role: string;
 };
 
+/**
+ * Workspace SAML SSO configuration plus the generated Service Provider integration details to paste into the identity provider.
+ */
+export type WorkspaceSsoConfig = {
+  enabled: boolean;
+  profile_name: string;
+  email_domain: string;
+  idp_metadata_url: string;
+  idp_entity_id: string;
+  idp_sso_url: string;
+  idp_certificate: string;
+  sp_entity_id: string;
+  acs_url: string;
+  sign_in_url: string;
+  metadata_url: string;
+};
+
+export type WorkspaceSsoConfigUpdate = {
+  enabled: boolean;
+  profile_name: string;
+  email_domain: string;
+  idp_metadata_url: string;
+  idp_entity_id: string;
+  idp_sso_url: string;
+  idp_certificate: string;
+};
+
+/**
+ * One diagnostic result from validating an unsaved workspace SSO configuration.
+ */
+export type SsoConfigCheck = {
+  code: string;
+  status: "ok" | "warn" | "error";
+  detail?: string;
+};
+
+/**
+ * Diagnostic results for an unsaved workspace SAML SSO configuration.
+ */
+export type SsoConfigTestResult = {
+  ok: boolean;
+  checks: Array<SsoConfigCheck>;
+};
+
 export type WorkspaceSettingsEnvelope = {
   workspace: WorkspaceSettings;
   preferences: WorkspacePreferences;
@@ -640,6 +684,63 @@ export type UpdateWorkspaceSettingsResponses = {
 
 export type UpdateWorkspaceSettingsResponse =
   UpdateWorkspaceSettingsResponses[keyof UpdateWorkspaceSettingsResponses];
+
+export type GetWorkspaceSsoConfigData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/sso-config";
+};
+
+export type GetWorkspaceSsoConfigResponses = {
+  /**
+   * Workspace SAML SSO configuration
+   */
+  200: WorkspaceSsoConfig;
+};
+
+export type GetWorkspaceSsoConfigResponse =
+  GetWorkspaceSsoConfigResponses[keyof GetWorkspaceSsoConfigResponses];
+
+export type UpdateWorkspaceSsoConfigData = {
+  body: WorkspaceSsoConfigUpdate;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/sso-config";
+};
+
+export type UpdateWorkspaceSsoConfigResponses = {
+  /**
+   * Updated workspace SAML SSO configuration
+   */
+  200: WorkspaceSsoConfig;
+};
+
+export type UpdateWorkspaceSsoConfigResponse =
+  UpdateWorkspaceSsoConfigResponses[keyof UpdateWorkspaceSsoConfigResponses];
+
+export type TestWorkspaceSsoConfigData = {
+  body: WorkspaceSsoConfigUpdate;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/sso-config/test";
+};
+
+export type TestWorkspaceSsoConfigResponses = {
+  /**
+   * Diagnostic results for the given configuration
+   */
+  200: SsoConfigTestResult;
+};
+
+export type TestWorkspaceSsoConfigResponse =
+  TestWorkspaceSsoConfigResponses[keyof TestWorkspaceSsoConfigResponses];
 
 export type GetWorkspaceCapabilitiesData = {
   body?: never;
@@ -1003,31 +1104,3 @@ export type CompleteOnboardingResponses = {
 
 export type CompleteOnboardingResponse =
   CompleteOnboardingResponses[keyof CompleteOnboardingResponses];
-
-/**
- * Workspace SAML SSO configuration plus the generated Service Provider integration
- * details to paste into the identity provider.
- */
-export type WorkspaceSsoConfig = {
-  enabled: boolean;
-  profile_name: string;
-  email_domain: string;
-  idp_metadata_url: string;
-  idp_entity_id: string;
-  idp_sso_url: string;
-  idp_certificate: string;
-  sp_entity_id: string;
-  acs_url: string;
-  sign_in_url: string;
-  metadata_url: string;
-};
-
-export type WorkspaceSsoConfigUpdate = {
-  enabled: boolean;
-  profile_name: string;
-  email_domain: string;
-  idp_metadata_url: string;
-  idp_entity_id: string;
-  idp_sso_url: string;
-  idp_certificate: string;
-};

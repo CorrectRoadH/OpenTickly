@@ -389,6 +389,44 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/sso-config/test": {
+      "post": {
+        "summary": "Validate an unsaved workspace SAML SSO configuration",
+        "operationId": "test-workspace-sso-config",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSsoConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diagnostic results for the given configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoConfigTestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/capabilities": {
       "get": {
         "summary": "Capability snapshot for the current workspace",
@@ -2051,6 +2089,28 @@
           "enabled", "profile_name", "email_domain", "idp_metadata_url",
           "idp_entity_id", "idp_sso_url", "idp_certificate"
         ]
+      },
+      "SsoConfigCheck": {
+        "type": "object",
+        "description": "One diagnostic result from validating an unsaved workspace SSO configuration.",
+        "properties": {
+          "code": { "type": "string" },
+          "status": { "type": "string", "enum": ["ok", "warn", "error"] },
+          "detail": { "type": "string" }
+        },
+        "required": ["code", "status"]
+      },
+      "SsoConfigTestResult": {
+        "type": "object",
+        "description": "Diagnostic results for an unsaved workspace SAML SSO configuration.",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "checks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SsoConfigCheck" }
+          }
+        },
+        "required": ["ok", "checks"]
       },
       "WorkspaceSettingsEnvelope": {
         "type": "object",

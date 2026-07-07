@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { resolveSsoProfile } from "../api/auth-client.ts";
 import type {
   LoginRequestDto,
   RegisterRequestDto,
@@ -10,16 +11,14 @@ import type {
   ResendVerificationEmailRequest,
   ResetPasswordRequest,
   VerifyEmailRequest,
-} from "../api/web/index.ts";
-import type {
-  WorkspaceSsoConfig,
   WorkspaceSsoConfigUpdate,
-} from "../api/generated/web/types.gen.ts";
+} from "../api/web/index.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   completeOnboarding,
   getOnboarding,
   getWebSession,
+  getWorkspaceSsoConfig,
   loginWebUser,
   logoutWebUser,
   registerWebUser,
@@ -27,7 +26,9 @@ import {
   resendVerificationEmail,
   resetOnboarding,
   resetPassword,
+  testWorkspaceSsoConfig,
   updateWebSession,
+  updateWorkspaceSsoConfig,
   verifyEmail,
 } from "../api/web/index.ts";
 
@@ -137,51 +138,26 @@ export function useUpdateWebSessionMutation() {
   });
 }
 
-export type SsoResolveResult = {
-  found: boolean;
-  profile_name?: string;
-  login_path?: string;
-};
+export type { SsoResolveResult } from "../api/auth-client.ts";
+export type { SsoConfigCheck, SsoConfigTestResult } from "../api/web/index.ts";
 
 // useSsoResolveMutation looks up the workspace SAML2 profile for an email so
-// the dedicated SSO login screen can redirect the browser to the IdP. The
-// endpoint is a public browser route (not the typed web API), so it is posted
-// to directly. A non-ok response is treated as "no profile found".
+// the dedicated SSO login screen can redirect the browser to the IdP.
 export function useSsoResolveMutation() {
   return useMutation({
-    mutationFn: async (email: string): Promise<SsoResolveResult> => {
-      const response = await fetch("/auth/sso/resolve", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (!response.ok) {
-        return { found: false };
-      }
-      return (await response.json()) as SsoResolveResult;
-    },
+    mutationFn: (email: string) => resolveSsoProfile(email),
   });
 }
 
 const workspaceSsoConfigQueryKey = (workspaceId: number) =>
   ["workspace-sso-config", workspaceId] as const;
 
-// useWorkspaceSsoConfigQuery loads a workspace's SAML2 SSO configuration. The
-// endpoint is the authenticated web API but is not part of the generated
-// client, so it is fetched directly.
+// useWorkspaceSsoConfigQuery loads a workspace's SAML2 SSO configuration.
 export function useWorkspaceSsoConfigQuery(workspaceId: number) {
   return useQuery({
     queryKey: workspaceSsoConfigQueryKey(workspaceId),
-    queryFn: async (): Promise<WorkspaceSsoConfig> => {
-      const response = await fetch(`/web/v1/workspaces/${workspaceId}/sso-config`, {
-        credentials: "same-origin",
-      });
-      if (!response.ok) {
-        throw new Error(await resolveErrorMessage(response));
-      }
-      return (await response.json()) as WorkspaceSsoConfig;
-    },
+    queryFn: () =>
+      unwrapWebApiResult(getWorkspaceSsoConfig({ path: { workspace_id: workspaceId } })),
   });
 }
 
@@ -189,68 +165,22 @@ export function useUpdateWorkspaceSsoConfigMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (body: WorkspaceSsoConfigUpdate): Promise<WorkspaceSsoConfig> => {
-      const response = await fetch(`/web/v1/workspaces/${workspaceId}/sso-config`, {
-        method: "PUT",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        throw new Error(await resolveErrorMessage(response));
-      }
-      return (await response.json()) as WorkspaceSsoConfig;
-    },
+    mutationFn: (body: WorkspaceSsoConfigUpdate) =>
+      unwrapWebApiResult(updateWorkspaceSsoConfig({ path: { workspace_id: workspaceId }, body })),
     onSuccess: (updated) => {
       queryClient.setQueryData(workspaceSsoConfigQueryKey(workspaceId), updated);
     },
   });
 }
 
-export type SsoConfigCheck = {
-  code: string;
-  status: "ok" | "warn" | "error";
-  detail?: string;
-};
-
-export type SsoConfigTestResult = {
-  ok: boolean;
-  checks: SsoConfigCheck[];
-};
-
 // useTestWorkspaceSsoConfigMutation validates an UNSAVED config so the admin can
 // find problems (unreachable metadata, expired certificate, domain conflict, …)
 // on the settings page before enabling SSO.
 export function useTestWorkspaceSsoConfigMutation(workspaceId: number) {
   return useMutation({
-    mutationFn: async (body: WorkspaceSsoConfigUpdate): Promise<SsoConfigTestResult> => {
-      const response = await fetch(`/web/v1/workspaces/${workspaceId}/sso-config/test`, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        throw new Error(await resolveErrorMessage(response));
-      }
-      return (await response.json()) as SsoConfigTestResult;
-    },
+    mutationFn: (body: WorkspaceSsoConfigUpdate) =>
+      unwrapWebApiResult(testWorkspaceSsoConfig({ path: { workspace_id: workspaceId }, body })),
   });
-}
-
-// resolveErrorMessage surfaces the server's text/JSON message so callers can
-// toast it (e.g. the 409 "domain already claimed" conflict).
-async function resolveErrorMessage(response: Response): Promise<string> {
-  const text = await response.text();
-  if (!text) {
-    return `Request failed (${response.status})`;
-  }
-  try {
-    const parsed = JSON.parse(text) as { message?: string; error?: string };
-    return parsed.message ?? parsed.error ?? text;
-  } catch {
-    return text;
-  }
 }
 
 const onboardingQueryKey = () => ["onboarding"] as const;

@@ -1,6 +1,7 @@
 import { client as generatedImportClient } from "./generated/import-api/client.gen.ts";
-import type { ImportJob } from "./generated/import-api/types.gen.ts";
+import type { ImportJob, ImportJobCreateRequest } from "./generated/import-api/types.gen.ts";
 
+import { createImportJob } from "./import/index.ts";
 import { WebApiError } from "./web-client.ts";
 
 type ImportApiResult<TResponse> = Promise<{
@@ -19,12 +20,11 @@ export async function createArchiveImportJobUpload({
   archive: File;
   organizationName: string;
 }): Promise<ImportJob> {
-  const formData = new FormData();
-  formData.set("archive", archive);
-  formData.set("source", "toggl_export_archive");
-  formData.set("organization_name", organizationName);
-
-  return submitImportJob(formData);
+  return submitImportJob({
+    archive,
+    organization_name: organizationName,
+    source: "toggl_export_archive",
+  });
 }
 
 export async function createTimeEntriesImportJobUpload({
@@ -34,32 +34,15 @@ export async function createTimeEntriesImportJobUpload({
   archive: File;
   workspaceId: number;
 }): Promise<ImportJob> {
-  const formData = new FormData();
-  formData.set("archive", archive);
-  formData.set("source", "time_entries_csv");
-  formData.set("workspace_id", String(workspaceId));
-
-  return submitImportJob(formData);
+  return submitImportJob({
+    archive,
+    source: "time_entries_csv",
+    workspace_id: workspaceId,
+  });
 }
 
-async function submitImportJob(formData: FormData): Promise<ImportJob> {
-  const response = await fetch("/import/v1/jobs", {
-    body: formData,
-    credentials: "same-origin",
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    let data: unknown = null;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
-    throw new WebApiError(`Request failed for ${response.url}`, response.status, data);
-  }
-
-  return (await response.json()) as ImportJob;
+async function submitImportJob(body: ImportJobCreateRequest): Promise<ImportJob> {
+  return unwrapImportApiResult(createImportJob({ body }));
 }
 
 export async function unwrapImportApiResult<TResponse>(

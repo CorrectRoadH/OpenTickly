@@ -7,6 +7,7 @@ import type {
   WorkspaceSsoConfig,
   WorkspaceSsoConfigUpdate,
 } from "../../shared/api/generated/web/types.gen.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useTestWorkspaceSsoConfigMutation,
   useUpdateWorkspaceSsoConfigMutation,
@@ -68,14 +69,14 @@ function SsoConfigForm({
     updateMutation.mutate(buildBody(), {
       onSuccess: () => toast.success(t("ssoSaved")),
       onError: (err) =>
-        toast.error(err instanceof Error && err.message ? err.message : t("ssoSaveError")),
+        toast.error(err instanceof WebApiError ? err.userMessage : t("ssoSaveError")),
     });
   }
 
   function runTest(): void {
     testMutation.mutate(buildBody(), {
       onError: (err) =>
-        toast.error(err instanceof Error && err.message ? err.message : t("ssoTestError")),
+        toast.error(err instanceof WebApiError ? err.userMessage : t("ssoTestError")),
     });
   }
 
