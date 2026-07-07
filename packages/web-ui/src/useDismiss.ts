@@ -1,21 +1,29 @@
 import { type RefObject, useEffect } from "react";
 
+type DismissRef = RefObject<HTMLElement | null>;
+
 /**
  * Click-outside + Escape key dismiss for dropdowns, popovers, and menus.
  *
  * Attaches mousedown + keydown listeners to document when `isOpen` is true.
- * Calls `onClose` when a click lands outside `ref` or Escape is pressed.
+ * Calls `onClose` when a click lands outside every given ref (a single ref,
+ * or an array of refs for panels that span multiple DOM subtrees — e.g. a
+ * trigger plus a portaled panel) or when Escape is pressed.
  */
 export function useDismiss(
-  ref: RefObject<HTMLElement | null>,
+  refs: DismissRef | DismissRef[],
   isOpen: boolean,
   onClose: () => void,
 ): void {
   useEffect(() => {
     if (!isOpen) return;
 
+    const refList = Array.isArray(refs) ? refs : [refs];
+
     function handlePointerDown(event: MouseEvent) {
-      if (!ref.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInside = refList.some((ref) => ref.current?.contains(target));
+      if (!isInside) {
         onClose();
       }
     }
@@ -32,5 +40,5 @@ export function useDismiss(
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [ref, isOpen, onClose]);
+  }, [refs, isOpen, onClose]);
 }

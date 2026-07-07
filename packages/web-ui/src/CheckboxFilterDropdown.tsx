@@ -9,6 +9,11 @@ import {
 
 import { AppCheckbox } from "./AppCheckbox.tsx";
 import { AppInput } from "./AppInput.tsx";
+import {
+  FilterClearAffordance,
+  FilterDropdownPanel,
+  FilterTriggerButton,
+} from "./FilterDropdownChrome.tsx";
 import { useDismiss } from "./useDismiss.ts";
 
 type CheckboxFilterOption<T extends string | number> = {
@@ -67,44 +72,27 @@ export function CheckboxFilterDropdown<T extends string | number>({
 
   return (
     <div className="relative" ref={containerRef}>
-      <button
-        className={`flex h-10 items-center gap-1.5 rounded-[8px] border-2 px-3 text-[12px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
-          activeCount > 0
-            ? "border-[var(--track-accent-soft)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)] hover:bg-[var(--track-accent)]/20"
-            : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
-        }`}
-        data-testid={testId ?? `filter-${label.toLowerCase()}`}
+      <FilterTriggerButton
+        active={activeCount > 0}
+        label={label}
         onClick={() => setOpen(!open)}
-        style={{ transitionTimingFunction: "var(--ease-press)" }}
-        type="button"
+        testId={testId}
       >
         <span>{label}</span>
         {activeCount > 0 ? (
           <>
             <span className="text-[var(--track-accent-text)]/40">·</span>
             <span className="max-w-[160px] truncate">{selectedLabels.join(", ")}</span>
-            <span
-              className="flex size-4 shrink-0 items-center justify-center rounded-full opacity-50 hover:opacity-100"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClear();
-              }}
-              role="button"
-            >
-              <svg className="size-2.5" fill="none" viewBox="0 0 12 12">
-                <path
-                  d="M3 3l6 6M9 3l-6 6"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </span>
+            <FilterClearAffordance onClear={onClear} />
           </>
         ) : null}
-      </button>
+      </FilterTriggerButton>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[260px] max-w-[420px] rounded-[8px] border-2 border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] p-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
+        <FilterDropdownPanel
+          borderClassName="border-2"
+          paddingClassName="p-2"
+          sizeClassName="min-w-[260px] max-w-[420px]"
+        >
           {searchPlaceholder ? (
             <AppInput
               aria-label={searchLabel ?? searchPlaceholder}
@@ -162,7 +150,7 @@ export function CheckboxFilterDropdown<T extends string | number>({
               })
             )}
           </div>
-        </div>
+        </FilterDropdownPanel>
       ) : null}
     </div>
   );

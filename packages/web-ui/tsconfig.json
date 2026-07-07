@@ -9,7 +9,8 @@
     "verbatimModuleSyntax": true,
     "strict": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["@testing-library/jest-dom"]
   },
   "include": ["src"]
 }

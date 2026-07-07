@@ -16,11 +16,9 @@ export {
   Dropdown,
   DropdownMenu,
   type DropdownPlacement,
-  MenuItem,
-  MenuLink,
-  MenuSeparator,
   useDropdownClose,
 } from "./DropdownMenu.tsx";
+export { MenuItem, MenuLink, MenuSeparator } from "./DropdownMenuItems.tsx";
 export {
   DirectoryFilterChip,
   DirectoryHeaderCell,

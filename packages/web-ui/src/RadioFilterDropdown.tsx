@@ -1,5 +1,10 @@
 import { type ReactElement, useCallback, useRef, useState } from "react";
 
+import {
+  FilterClearAffordance,
+  FilterDropdownPanel,
+  FilterTriggerButton,
+} from "./FilterDropdownChrome.tsx";
 import { useDismiss } from "./useDismiss.ts";
 
 type RadioFilterOption<T extends string> = {
@@ -34,40 +39,28 @@ export function RadioFilterDropdown<T extends string>({
 
   return (
     <div className="relative" ref={containerRef}>
-      <button
-        className={`flex h-10 items-center gap-1.5 rounded-[8px] border-2 px-3 text-[12px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
-          isActive
-            ? "border-[var(--track-accent-soft)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)] hover:bg-[var(--track-accent)]/20"
-            : "border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
-        }`}
-        data-testid={testId ?? `filter-${label.toLowerCase()}`}
+      <FilterTriggerButton
+        active={isActive}
+        inactiveBorderStyle="dashed"
+        label={label}
         onClick={() => setOpen(!open)}
-        style={{ transitionTimingFunction: "var(--ease-press)" }}
-        type="button"
+        testId={testId}
       >
         <span>{isActive ? selectedLabel : label}</span>
         {isActive ? (
-          <span
-            className="flex size-4 shrink-0 items-center justify-center rounded-full opacity-50 hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation();
+          <FilterClearAffordance
+            onClear={() => {
               if (defaultOption) onChange(defaultOption.key);
             }}
-            role="button"
-          >
-            <svg className="size-2.5" fill="none" viewBox="0 0 12 12">
-              <path
-                d="M3 3l6 6M9 3l-6 6"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </span>
+          />
         ) : null}
-      </button>
+      </FilterTriggerButton>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[max(100%,180px)] whitespace-nowrap rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
+        <FilterDropdownPanel
+          borderClassName="border"
+          paddingClassName="py-3"
+          sizeClassName="min-w-[max(100%,180px)] whitespace-nowrap"
+        >
           <div className="px-1">
             {options.map((option) => (
               <button
@@ -87,7 +80,7 @@ export function RadioFilterDropdown<T extends string>({
               </button>
             ))}
           </div>
-        </div>
+        </FilterDropdownPanel>
       ) : null}
     </div>
   );
