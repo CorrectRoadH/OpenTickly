@@ -675,9 +675,12 @@ test.describe("Delete a Time Entry", () => {
     // Click delete
     await editor.getByRole("button", { name: "Delete this time entry" }).click();
 
-    // Editor closes and entry is gone
+    // Editor closes and entry is gone. Assert on the row's unique Edit button
+    // instead of getByText: the description also renders in MobileShell's
+    // recent-continue chip, so getByText(ENTRY_DESCRIPTION) legitimately
+    // matches two elements and triggers a strict-mode violation.
     await expect(editor).not.toBeVisible();
-    await expect(page.getByText(ENTRY_DESCRIPTION)).not.toBeVisible();
+    await expect(page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })).not.toBeVisible();
   });
 });
 
