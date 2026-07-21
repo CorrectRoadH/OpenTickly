@@ -417,6 +417,10 @@ func (store *Store) ListRecentTimeEntrySuggestions(
 		  and te.user_id = $2
 		  and te.deleted_at is null
 		  and te.stop_time is not null
+		  -- Bound the window function to recent history so this endpoint (polled
+		  -- every 30s by the timer bar) does not rank a long-tenured user's entire
+		  -- lifetime of entries. Rides (workspace_id, user_id, start_time).
+		  and te.start_time >= now() - interval '90 days'
 	)
 	select
 		id,
@@ -474,6 +478,7 @@ func (store *Store) ListWorkspaceTimeEntries(
 	ctx context.Context,
 	workspaceID int64,
 	since *time.Time,
+	until *time.Time,
 ) ([]trackingapplication.TimeEntryView, error) {
 	query := `select
 		te.id,
@@ -508,6 +513,10 @@ func (store *Store) ListWorkspaceTimeEntries(
 	if since != nil {
 		args = append(args, since.UTC())
 		query += " and te.start_time >= $" + intParam(len(args))
+	}
+	if until != nil {
+		args = append(args, until.UTC())
+		query += " and te.start_time < $" + intParam(len(args))
 	}
 	query += " order by te.start_time desc, te.id desc"
 

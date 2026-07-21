@@ -305,7 +305,7 @@ type Store interface {
 	ListTimeEntriesForUser(context.Context, ListTimeEntriesFilter) ([]TimeEntryView, error)
 	SearchTimeEntries(context.Context, int64, int64, string) ([]TimeEntrySearchView, error)
 	ListRecentTimeEntrySuggestions(context.Context, int64, int64, int) ([]TimeEntrySearchView, error)
-	ListWorkspaceTimeEntries(context.Context, int64, *time.Time) ([]TimeEntryView, error)
+	ListWorkspaceTimeEntries(context.Context, int64, *time.Time, *time.Time) ([]TimeEntryView, error)
 	GetCurrentTimeEntry(context.Context, int64) (TimeEntryView, bool, error)
 	UpdateTimeEntry(context.Context, UpdateTimeEntryRecord) (TimeEntryView, error)
 	DeleteTimeEntry(context.Context, int64, int64, int64) error

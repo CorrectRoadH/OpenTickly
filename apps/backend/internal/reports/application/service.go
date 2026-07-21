@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"opentoggl/backend/apps/backend/internal/log"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
-	"opentoggl/backend/apps/backend/internal/log"
 )
 
 type SavedReportStore interface {
@@ -33,6 +33,7 @@ type TrackingQueries interface {
 		ctx context.Context,
 		workspaceID int64,
 		since *time.Time,
+		until *time.Time,
 	) ([]trackingapplication.TimeEntryView, error)
 }
 
@@ -130,7 +131,8 @@ func (service *Service) BuildWeeklyReportEntries(
 ) ([]trackingapplication.TimeEntryView, error) {
 	location := resolveLocation(query.Timezone)
 	startUTC := query.StartDate.In(location).UTC()
-	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	until := reportUntil(query.EndDate, location)
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC, &until)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +177,8 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 	)
 	location := resolveLocation(query.Timezone)
 	startUTC := query.StartDate.In(location).UTC()
-	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	until := reportUntil(query.EndDate, location)
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC, &until)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to get time entries for weekly report",
 			"workspace_id", query.WorkspaceID,
@@ -384,8 +387,11 @@ func (service *Service) BuildProjectDataTrends(ctx context.Context, query Projec
 		earliest = *query.PreviousPeriodStart
 	}
 	earliestUTC := earliest.In(location).UTC()
+	// The comparison period only extends the window backwards (earliest), so the
+	// upper bound is still the report's end date.
+	until := reportUntil(query.EndDate, location)
 
-	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &earliestUTC)
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &earliestUTC, &until)
 	if err != nil {
 		return nil, err
 	}
@@ -508,7 +514,8 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 
 	location := resolveLocation(query.Timezone)
 	startUTC := query.StartDate.In(location).UTC()
-	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	until := reportUntil(query.EndDate, location)
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC, &until)
 	if err != nil {
 		return nil, err
 	}
@@ -612,7 +619,8 @@ func (service *Service) BuildEmployeeProfitability(ctx context.Context, query Em
 
 	location := resolveLocation(query.Timezone)
 	startUTC := query.StartDate.In(location).UTC()
-	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	until := reportUntil(query.EndDate, location)
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC, &until)
 	if err != nil {
 		return nil, err
 	}
@@ -812,6 +820,17 @@ func inclusiveDayCount(startDate time.Time, endDate time.Time, location *time.Lo
 func normalizeToDay(value time.Time, location *time.Location) time.Time {
 	local := value.In(location)
 	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, location)
+}
+
+// reportUntil returns an exclusive UTC upper bound for a report's time-entry
+// scan. The Go-side day filter accepts an entry iff its local day is <= endDay,
+// i.e. its start_time is before the start of the day after endDay in the
+// report's location. This returns that boundary plus one day of buffer, so the
+// SQL bound is always a safe superset of what the Go filter keeps — the exact
+// per-day trimming still happens in Go, so a slightly wide bound never drops an
+// in-range entry, while an unbounded scan to now() is avoided.
+func reportUntil(endDate time.Time, location *time.Location) time.Time {
+	return normalizeToDay(endDate, location).AddDate(0, 0, 2).UTC()
 }
 
 func reportDayIndex(entry trackingapplication.TimeEntryView, query Query, location *time.Location) (int, bool) {

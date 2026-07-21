@@ -2,11 +2,70 @@ package application
 
 import (
 	"testing"
+	"time"
 
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
 	"github.com/samber/lo"
 )
+
+// TestReportUntilIsSafeUpperBound guards the #2 report-scan optimization: the
+// SQL upper bound must never exclude an entry the Go-side day filter would keep.
+// The Go filter accepts an entry iff normalizeToDay(entry.Start) <= endDay, so
+// the last accepted instant is the final nanosecond of endDay in the report's
+// location. reportUntil must be strictly greater than that (in UTC) across
+// timezones and DST transitions.
+func TestReportUntilIsSafeUpperBound(t *testing.T) {
+	cases := []struct {
+		name string
+		tz   string
+		end  string
+	}{
+		{"utc", "UTC", "2026-05-07"},
+		{"positive offset (Tokyo)", "Asia/Tokyo", "2026-05-07"},
+		{"negative offset (New York)", "America/New_York", "2026-05-07"},
+		{"half-hour offset (India)", "Asia/Kolkata", "2026-05-07"},
+		{"US spring-forward DST edge", "America/New_York", "2026-03-08"},
+		{"US fall-back DST edge", "America/New_York", "2026-11-01"},
+		{"year end", "UTC", "2026-12-31"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			loc, err := time.LoadLocation(tc.tz)
+			if err != nil {
+				t.Fatalf("load location %q: %v", tc.tz, err)
+			}
+			endDate, err := time.ParseInLocation("2006-01-02", tc.end, loc)
+			if err != nil {
+				t.Fatalf("parse end date: %v", err)
+			}
+
+			until := reportUntil(endDate, loc)
+			endDay := normalizeToDay(endDate, loc)
+
+			// Last instant the Go filter accepts: 1ns before the start of the
+			// day after endDay, in the report's location.
+			lastAccepted := endDay.AddDate(0, 0, 1).Add(-time.Nanosecond)
+			if !lastAccepted.UTC().Before(until) {
+				t.Fatalf("until %v must be after last-accepted entry %v (tz=%s)",
+					until, lastAccepted.UTC(), tc.tz)
+			}
+
+			// A midday entry on endDay must be within the bound.
+			onEndDay := endDay.Add(12 * time.Hour)
+			if !onEndDay.UTC().Before(until) {
+				t.Fatalf("until %v must include a same-day entry %v (tz=%s)",
+					until, onEndDay.UTC(), tc.tz)
+			}
+
+			// The bound stays reasonably tight (never more than ~2 days past
+			// endDay), so it does not reintroduce an unbounded scan.
+			if until.After(endDay.AddDate(0, 0, 3).UTC()) {
+				t.Fatalf("until %v is too far past endDay %v (tz=%s)", until, endDay, tc.tz)
+			}
+		})
+	}
+}
 
 // entryWith builds a TimeEntryView with only the fields matchesQueryFilters
 // inspects.
