@@ -16,7 +16,7 @@
     "@opentickly/shared-contracts": "workspace:*",
     "@opentickly/web-ui": "workspace:*",
     "@tanstack/react-query": "^5.101.2",
-    "@tanstack/react-router": "^1.170.17",
+    "@tanstack/react-router": "^1.170.18",
     "@types/react-big-calendar": "catalog:",
     "@uidotdev/usehooks": "catalog:",
     "baseui": "^18.2.0",
