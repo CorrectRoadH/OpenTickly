@@ -498,6 +498,37 @@ func (store *Store) CountProjectUsers(
 	return counts, rows.Err()
 }
 
+// ExistingProjectIDs returns the subset of projectIDs that exist in the
+// workspace. Callers that only need to validate project existence use this
+// single indexed lookup instead of issuing one GetProject per id (each of
+// which carries a lateral SUM over the project's time entries).
+func (store *Store) ExistingProjectIDs(
+	ctx context.Context,
+	workspaceID int64,
+	projectIDs []int64,
+) ([]int64, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		`select id from catalog_projects where workspace_id = $1 and id = any($2)`,
+		workspaceID,
+		int64SliceOrNil(projectIDs),
+	)
+	if err != nil {
+		return nil, writeCatalogError("existing project ids", err)
+	}
+	defer rows.Close()
+
+	ids := make([]int64, 0, len(projectIDs))
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, writeCatalogError("scan existing project id", err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 func (store *Store) ListTasks(
 	ctx context.Context,
 	workspaceID int64,

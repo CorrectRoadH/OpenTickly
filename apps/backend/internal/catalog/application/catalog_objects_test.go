@@ -61,8 +61,8 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 
 	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
 		OrganizationID: organizationID,
-		CreatedBy:   userID,
-		Name:        "Core Team",
+		CreatedBy:      userID,
+		Name:           "Core Team",
 	})
 	if err != nil {
 		t.Fatalf("create group: %v", err)
@@ -393,8 +393,8 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 
 	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
 		OrganizationID: organizationID,
-		CreatedBy:   userID,
-		Name:        "Team A",
+		CreatedBy:      userID,
+		Name:           "Team A",
 	})
 	if err != nil {
 		t.Fatalf("create group: %v", err)
@@ -427,6 +427,24 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 	}
 	if len(userCounts) != 1 || userCounts[0].Count != 1 {
 		t.Fatalf("expected one user count, got %#v", userCounts)
+	}
+
+	// A duplicate existing id must still succeed (one count row, no error).
+	dupCounts, err := service.CountProjectTasks(ctx, workspaceID, []int64{project.ID, project.ID})
+	if err != nil {
+		t.Fatalf("count project tasks with duplicate id: %v", err)
+	}
+	if len(dupCounts) != 1 {
+		t.Fatalf("expected one count row for duplicate id, got %#v", dupCounts)
+	}
+
+	// A non-existent project id must surface ErrProjectNotFound (existence is
+	// derived from the count result set, not a per-id lookup).
+	if _, err := service.CountProjectTasks(ctx, workspaceID, []int64{project.ID, project.ID + 99999}); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
+		t.Fatalf("expected ErrProjectNotFound for missing project id, got %v", err)
+	}
+	if _, err := service.CountProjectUsers(ctx, workspaceID, []int64{project.ID + 99999}); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
+		t.Fatalf("expected ErrProjectNotFound for missing project id, got %v", err)
 	}
 
 	secondUserID := seedCatalogIdentityUser(t, ctx, database, 202, "teammate@example.com", "Teammate User")
@@ -604,8 +622,8 @@ func TestServicePersistsProjectGroupAssignments(t *testing.T) {
 	}
 	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
 		OrganizationID: organizationID,
-		CreatedBy:   userID,
-		Name:        "Delivery Team",
+		CreatedBy:      userID,
+		Name:           "Delivery Team",
 	})
 	if err != nil {
 		t.Fatalf("create group: %v", err)

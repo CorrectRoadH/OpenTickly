@@ -13,12 +13,8 @@ func (service *Service) ListProjectGroups(
 	if len(projectIDs) == 0 {
 		return []ProjectGroupView{}, nil
 	}
-	for _, projectID := range projectIDs {
-		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, ErrProjectNotFound
-		}
+	if err := service.ensureProjectsExist(ctx, workspaceID, projectIDs); err != nil {
+		return nil, err
 	}
 	return service.store.ListProjectGroups(ctx, workspaceID, projectIDs)
 }

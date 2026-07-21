@@ -360,6 +360,7 @@ type Store interface {
 	UnassignProjectTimeEntries(ctx context.Context, workspaceID int64, projectID int64) (int64, error)
 	CountProjectTasks(context.Context, int64, []int64) ([]ProjectCountView, error)
 	CountProjectUsers(context.Context, int64, []int64) ([]ProjectCountView, error)
+	ExistingProjectIDs(context.Context, int64, []int64) ([]int64, error)
 	SetProjectPinned(context.Context, int64, int64, bool) error
 	ListTasks(context.Context, int64, ListTasksFilter) (TaskPage, error)
 	GetTask(context.Context, int64, int64) (TaskView, bool, error)
