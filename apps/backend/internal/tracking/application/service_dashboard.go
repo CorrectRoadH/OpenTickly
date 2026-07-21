@@ -10,11 +10,12 @@ func (service *Service) ListWorkspaceTimeEntries(
 	ctx context.Context,
 	workspaceID int64,
 	since *time.Time,
+	until *time.Time,
 ) ([]TimeEntryView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
-	return service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	return service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since, until)
 }
 
 func (service *Service) ListWorkspaceDashboardActivities(
@@ -25,7 +26,7 @@ func (service *Service) ListWorkspaceDashboardActivities(
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
-	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func (service *Service) ListWorkspaceTopActivities(
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
-	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (service *Service) ListWorkspaceMostActiveUsers(
 		defaultSince := service.now().Add(-7 * 24 * time.Hour)
 		since = &defaultSince
 	}
-	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since, nil)
 	if err != nil {
 		return nil, err
 	}
