@@ -76,7 +76,38 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.content }}
 
+  # The built frontend is arch-independent static JS, so build it once here
+  # instead of repeating it in every leg of the build-binary arch matrix.
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Build frontend
+        run: |
+          pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
+          pnpm --filter @opentickly/website run build
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-dist
+          path: apps/website/dist
+          retention-days: 1
+          if-no-files-found: error
+
   build-binary:
+    needs: build-frontend
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -93,19 +124,11 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
         with:
-          node-version: 22
-
-      - name: Install pnpm
-        run: npm install -g pnpm@10.32.1
-
-      - name: Build frontend
-        run: |
-          pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
-          pnpm --filter @opentickly/website run build
-          cp -r apps/website/dist apps/backend/internal/web/dist
+          name: website-dist
+          path: apps/backend/internal/web/dist
 
       - name: Build binary
         run: |
