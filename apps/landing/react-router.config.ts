@@ -5,9 +5,6 @@ import { i18n } from "./app/lib/i18n";
 
 export default {
   ssr: false,
-  future: {
-    v8_middleware: true,
-  },
   async prerender({ getStaticPaths }) {
     const paths: string[] = ["/robots.txt", "/sitemap.xml"];
     const excluded: string[] = [];
