@@ -20,7 +20,7 @@
     "fumadocs-core": "16.11.5",
     "fumadocs-mdx": "15.2.0",
     "fumadocs-ui": "16.11.5",
-    "isbot": "^5.2.1",
+    "isbot": "^5",
     "lucide-react": "catalog:",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
