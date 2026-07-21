@@ -1,7 +1,7 @@
 # Force the builder stage to run natively on the CI runner arch (amd64 on GH hosted),
 # so pnpm install + vite build aren't executed under QEMU arm64 emulation (30min+ -> ~3min).
 # Output is a plain dist/ (static files), copied into the TARGETPLATFORM runtime image below.
-FROM --platform=$BUILDPLATFORM node:22.12.0-bookworm-slim AS builder
+FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS builder
 
 WORKDIR /workspace
 
@@ -9,16 +9,34 @@ RUN npm install -g pnpm@10.32.1
 
 # Copy workspace scaffolding
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+
+# Manifests-first: copy every workspace member's package.json so pnpm can resolve
+# the full graph, keeping the install layer cached across source-only edits.
+COPY apps/landing/package.json ./apps/landing/
+COPY apps/website/package.json ./apps/website/
+COPY apps/update-worker/package.json ./apps/update-worker/
+COPY packages/web-ui/package.json ./packages/web-ui/
+COPY packages/shared-contracts/package.json ./packages/shared-contracts/
+
+RUN pnpm install --filter @opentickly/landing... --no-frozen-lockfile --ignore-scripts
+
 COPY apps/landing ./apps/landing
 COPY packages ./packages
 
-RUN pnpm install --filter @opentickly/landing... --no-frozen-lockfile --ignore-scripts
-RUN pnpm --filter @opentickly/landing run postinstall
+# react-router's prerender step starts a Vite preview server and reaches it over
+# node:http. Under Node 24 the server binds localhost to ::1 while the client
+# dials 127.0.0.1, so prerender fails with ECONNREFUSED. Force IPv4-first
+# resolution so both ends agree on the loopback address.
+ENV NODE_OPTIONS="--dns-result-order=ipv4first"
+
+# The build script runs fumadocs-mdx before react-router build, so it
+# regenerates .source itself — no separate postinstall pass needed (install
+# ran with --ignore-scripts).
 RUN pnpm --filter @opentickly/landing run build
 
 # ---
 
-FROM node:22.12.0-bookworm-slim
+FROM node:24-bookworm-slim
 
 RUN npm install -g serve@14
 
