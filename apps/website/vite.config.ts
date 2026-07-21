@@ -107,11 +107,17 @@ export default defineConfig(() => {
         },
         injectManifest: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          // The onboarding screenshots (~3MB of PNGs) are only ever seen once,
+          // by users who have not completed onboarding. Precaching them for
+          // every visitor wastes bandwidth; let them load on demand instead.
+          globIgnores: ["**/onboarding/*.png"],
         },
       }),
     ],
     build: {
-      modulePreload: false,
+      // modulePreload left at Vite's default so the entry's static vendor
+      // chunks are discovered via injected <link rel="modulepreload"> hints
+      // instead of a serial html -> entry -> vendors waterfall.
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
