@@ -18,6 +18,7 @@ export function useFavoritesQuery(workspaceId: number) {
         }),
       ),
     queryKey: favoritesQueryKey(workspaceId),
+    staleTime: 60 * 1000,
   });
 }
 

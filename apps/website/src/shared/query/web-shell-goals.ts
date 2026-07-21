@@ -30,6 +30,7 @@ export function useGoalsQuery(workspaceId: number, active?: boolean) {
         }),
       ) as Promise<HandlergoalsApiResponse[]>,
     queryKey: goalsQueryKey(workspaceId, active),
+    staleTime: 60 * 1000,
   });
 }
 

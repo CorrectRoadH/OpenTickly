@@ -53,6 +53,7 @@ export function useProjectsQuery(workspaceId: number, status: ProjectListStatusF
         }),
       ),
     queryKey: projectsQueryKey(workspaceId, status),
+    staleTime: 60 * 1000,
   });
 }
 

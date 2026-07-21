@@ -19,6 +19,7 @@ export function useTagsQuery(workspaceId: number) {
         }),
       ),
     queryKey: ["tags", workspaceId],
+    staleTime: 60 * 1000,
   });
 }
 

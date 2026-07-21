@@ -1,14 +1,9 @@
-import { motion } from "motion/react";
+import { lazy, Suspense } from "react";
 import type { ReactElement } from "react";
 
 import { useUserPreferences } from "../query/useUserPreferences.ts";
 
-const activeIndicatorTransition = {
-  damping: 40,
-  mass: 0.45,
-  stiffness: 520,
-  type: "spring",
-} as const;
+const MotionActiveIndicator = lazy(() => import("./MotionActiveIndicator.tsx"));
 
 export function AnimatedActiveIndicator({
   className,
@@ -19,16 +14,15 @@ export function AnimatedActiveIndicator({
 }): ReactElement {
   const { showAnimations } = useUserPreferences();
 
+  const plain = <span aria-hidden="true" className={className} />;
+
   if (typeof window === "undefined" || !showAnimations) {
-    return <span aria-hidden="true" className={className} />;
+    return plain;
   }
 
   return (
-    <motion.span
-      aria-hidden="true"
-      className={className}
-      layoutId={layoutId}
-      transition={activeIndicatorTransition}
-    />
+    <Suspense fallback={plain}>
+      <MotionActiveIndicator className={className} layoutId={layoutId} />
+    </Suspense>
   );
 }

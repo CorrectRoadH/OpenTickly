@@ -191,7 +191,6 @@ create table membership_workspace_members (
     constraint membership_workspace_members_state_check check (state in ('invited', 'joined', 'disabled', 'restored', 'removed'))
 );
 
-create index membership_workspace_members_workspace_id_idx on membership_workspace_members (workspace_id);
 create unique index membership_workspace_members_workspace_email_key on membership_workspace_members (workspace_id, lower(email));
 create unique index membership_workspace_members_workspace_user_key
     on membership_workspace_members (workspace_id, user_id)
@@ -236,7 +235,6 @@ create table catalog_clients (
     created_at timestamptz not null default now()
 );
 
-create index catalog_clients_workspace_id_idx on catalog_clients (workspace_id);
 create unique index catalog_clients_workspace_name_key on catalog_clients (workspace_id, lower(name));
 
 create table catalog_projects (
@@ -263,7 +261,6 @@ create table catalog_projects (
     created_at timestamptz not null default now()
 );
 
-create index catalog_projects_workspace_id_idx on catalog_projects (workspace_id);
 create index catalog_projects_client_id_idx on catalog_projects (client_id);
 create unique index catalog_projects_workspace_name_key on catalog_projects (workspace_id, lower(name));
 
@@ -286,7 +283,6 @@ create table catalog_groups (
     created_at timestamptz not null default now()
 );
 
-create index catalog_groups_organization_id_idx on catalog_groups (organization_id);
 create unique index catalog_groups_organization_name_key on catalog_groups (organization_id, lower(name));
 
 create table catalog_group_members (
@@ -326,7 +322,6 @@ create table catalog_tags (
     created_at timestamptz not null default now()
 );
 
-create index catalog_tags_workspace_id_idx on catalog_tags (workspace_id);
 create unique index catalog_tags_workspace_name_key on catalog_tags (workspace_id, lower(name));
 
 create table catalog_tasks (
@@ -339,7 +334,6 @@ create table catalog_tasks (
     created_at timestamptz not null default now()
 );
 
-create index catalog_tasks_workspace_id_idx on catalog_tasks (workspace_id);
 create index catalog_tasks_project_id_idx on catalog_tasks (project_id);
 create unique index catalog_tasks_workspace_name_key on catalog_tasks (workspace_id, lower(name));
 
@@ -392,7 +386,9 @@ create table tracking_time_entries (
 );
 
 create index tracking_time_entries_workspace_user_start_idx on tracking_time_entries (workspace_id, user_id, start_time);
+create index tracking_time_entries_workspace_start_idx on tracking_time_entries (workspace_id, start_time);
 create index tracking_time_entries_user_id_idx on tracking_time_entries (user_id);
+create index tracking_time_entries_client_id_idx on tracking_time_entries (client_id);
 create index tracking_time_entries_project_id_idx on tracking_time_entries (project_id);
 create index tracking_time_entries_task_id_idx on tracking_time_entries (task_id);
 create index tracking_time_entries_start_time_idx on tracking_time_entries (start_time);

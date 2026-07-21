@@ -3,12 +3,21 @@ package platform
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 	"opentoggl/backend/apps/backend/internal/platform/safehttp"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// defaultWebMaxConns is the connection-pool floor for web workloads. pgx
+// defaults MaxConns to max(4, runtime.NumCPU()), which caps a small (1-2 vCPU)
+// self-hosted container at 4 while request handlers hold a connection across
+// several sequential queries (session resolve, workspace authorization, work),
+// serializing concurrent requests on acquisition. Operators can still pin an
+// explicit ceiling via the DSN (?pool_max_conns=N).
+const defaultWebMaxConns = 10
 
 // Services is a small compile-time boundary marker for the composition root.
 // apps/backend only needs to know it received platform services, not how later
@@ -67,7 +76,18 @@ type DatabaseHandle struct {
 }
 
 func NewDatabaseHandle(primaryDSN string) (DatabaseHandle, error) {
-	pool, err := pgxpool.New(context.Background(), primaryDSN)
+	poolCfg, err := pgxpool.ParseConfig(primaryDSN)
+	if err != nil {
+		return DatabaseHandle{}, err
+	}
+
+	// Only raise the floor: respect an operator-pinned pool_max_conns and any
+	// larger CPU-derived default; bump only the small-container case.
+	if !strings.Contains(strings.ToLower(primaryDSN), "pool_max_conns") && poolCfg.MaxConns < defaultWebMaxConns {
+		poolCfg.MaxConns = defaultWebMaxConns
+	}
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolCfg)
 	if err != nil {
 		return DatabaseHandle{}, err
 	}

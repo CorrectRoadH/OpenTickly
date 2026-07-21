@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"opentoggl/backend/apps/backend/internal/catalog/domain"
@@ -211,10 +212,10 @@ func (service *Service) SetProjectPinned(ctx context.Context, command SetProject
 }
 
 type DeleteProjectCommand struct {
-	WorkspaceID      int64
-	ProjectID        int64
-	TEDeletionMode   string // "unassign" (default) or "delete"
-	ReassignToID     *int64 // if set, reassign time entries to this project before deleting
+	WorkspaceID    int64
+	ProjectID      int64
+	TEDeletionMode string // "unassign" (default) or "delete"
+	ReassignToID   *int64 // if set, reassign time entries to this project before deleting
 }
 
 func (service *Service) DeleteProject(ctx context.Context, workspaceID int64, projectID int64) error {
@@ -316,28 +317,65 @@ func (service *Service) CountProjectTasks(ctx context.Context, workspaceID int64
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
-	for _, projectID := range projectIDs {
-		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, ErrProjectNotFound
-		}
+	// The count query returns exactly one row per existing project id, so
+	// existence is derivable from result-set membership — no per-id lookup.
+	counts, err := service.store.CountProjectTasks(ctx, workspaceID, projectIDs)
+	if err != nil {
+		return nil, err
 	}
-	return service.store.CountProjectTasks(ctx, workspaceID, projectIDs)
+	if err := ensureAllProjectsCounted(projectIDs, counts); err != nil {
+		return nil, err
+	}
+	return counts, nil
 }
 
 func (service *Service) CountProjectUsers(ctx context.Context, workspaceID int64, projectIDs []int64) ([]ProjectCountView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
-	for _, projectID := range projectIDs {
-		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, ErrProjectNotFound
+	counts, err := service.store.CountProjectUsers(ctx, workspaceID, projectIDs)
+	if err != nil {
+		return nil, err
+	}
+	if err := ensureAllProjectsCounted(projectIDs, counts); err != nil {
+		return nil, err
+	}
+	return counts, nil
+}
+
+// ensureAllProjectsCounted verifies every requested project id produced a count
+// row (i.e. exists in the workspace), returning ErrProjectNotFound otherwise.
+// Handles duplicate ids in the request naturally by checking membership.
+func ensureAllProjectsCounted(requested []int64, counts []ProjectCountView) error {
+	present := make(map[int64]struct{}, len(counts))
+	for _, c := range counts {
+		present[c.ProjectID] = struct{}{}
+	}
+	for _, id := range requested {
+		if _, ok := present[id]; !ok {
+			return ErrProjectNotFound
 		}
 	}
-	return service.store.CountProjectUsers(ctx, workspaceID, projectIDs)
+	return nil
+}
+
+// ensureProjectsExist validates that every id in projectIDs exists in the
+// workspace using a single batched lookup instead of one GetProject per id.
+func (service *Service) ensureProjectsExist(ctx context.Context, workspaceID int64, projectIDs []int64) error {
+	existing, err := service.store.ExistingProjectIDs(ctx, workspaceID, projectIDs)
+	if err != nil {
+		return err
+	}
+	present := make(map[int64]struct{}, len(existing))
+	for _, id := range existing {
+		present[id] = struct{}{}
+	}
+	for _, id := range projectIDs {
+		if _, ok := present[id]; !ok {
+			return ErrProjectNotFound
+		}
+	}
+	return nil
 }
 
 func (service *Service) PatchProjects(
@@ -356,21 +394,20 @@ func (service *Service) PatchProjects(
 		"workspace_id", workspaceID,
 		"project_ids", projectIDs,
 	)
-	for _, projectID := range projectIDs {
-		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
-			service.logger.ErrorContext(ctx, "failed to get project for patching",
-				"workspace_id", workspaceID,
-				"project_id", projectID,
-				"error", err.Error(),
-			)
-			return nil, err
-		} else if !ok {
+	if err := service.ensureProjectsExist(ctx, workspaceID, projectIDs); err != nil {
+		if errors.Is(err, ErrProjectNotFound) {
 			service.logger.WarnContext(ctx, "project not found for patching",
 				"workspace_id", workspaceID,
-				"project_id", projectID,
+				"project_ids", projectIDs,
 			)
-			return nil, ErrProjectNotFound
+		} else {
+			service.logger.ErrorContext(ctx, "failed to get projects for patching",
+				"workspace_id", workspaceID,
+				"project_ids", projectIDs,
+				"error", err.Error(),
+			)
 		}
+		return nil, err
 	}
 
 	if err := service.store.PatchProjects(ctx, workspaceID, projectIDs, commands); err != nil {
