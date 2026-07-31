@@ -46,9 +46,22 @@ catalog:
   zustand: ^5.0.14
 
 catalogMode: prefer
+# pnpm 10 no longer reads the "pnpm" field in package.json, so every override
+# lives here. The react/react-dom pins must track the apps' declared versions:
+# when they drifted apart, react resolved to 19.2.7 against react-dom 19.2.8 and
+# the app died on boot with "Incompatible React versions", taking the whole e2e
+# suite with it.
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
+  react: ^19.2.8
+  react-dom: ^19.2.8
+  dompurify: ^3.4.1
+  lodash: ^4.18.1
+  lodash-es: ^4.18.1
+  serialize-javascript: ^7.0.5
+  brace-expansion@1: ^1.1.13
+  picomatch@4: ^4.0.4
 peerDependencyRules:
   allowAny:
     - vite
