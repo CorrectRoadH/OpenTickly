@@ -54,3 +54,7 @@ func (s *dbBackedEmailSender) SendTest(ctx context.Context, to string, siteURL s
 	sender := platform.NewEmailSender(s.loadConfig())
 	return sender.SendTest(ctx, to, siteURL)
 }
+
+func (s *dbBackedEmailSender) ClassifyFailure(err error) string {
+	return string(platform.ClassifySendFailure(err))
+}

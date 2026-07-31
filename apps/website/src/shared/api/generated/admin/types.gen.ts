@@ -7,6 +7,23 @@ export type ClientOptions = {
 
 export type FeatureGateDecision = OpentogglSharedOpenapiFeatureGateDecision;
 
+export type TestEmailResult = {
+  success: boolean;
+  /**
+   * Machine-readable outcome. Clients localise this; `message` is the raw SMTP detail for diagnostics.
+   */
+  code:
+    | "sent"
+    | "not_configured"
+    | "connect_failed"
+    | "tls_failed"
+    | "auth_failed"
+    | "recipient_rejected"
+    | "timeout"
+    | "unknown";
+  message: string;
+};
+
 export type BootstrapRequest = {
   email: string;
   password: string;
@@ -342,19 +359,16 @@ export type SendTestEmailData = {
 
 export type SendTestEmailErrors = {
   /**
-   * SMTP not configured
+   * Recipient address missing or malformed
    */
   400: unknown;
 };
 
 export type SendTestEmailResponses = {
   /**
-   * Test email sent successfully
+   * Delivery attempt finished. `success` reports whether the mail was accepted by the SMTP server; a failed attempt is still a 200 so clients receive the machine-readable reason instead of a gateway error page.
    */
-  200: {
-    success: boolean;
-    message: string;
-  };
+  200: TestEmailResult;
 };
 
 export type SendTestEmailResponse = SendTestEmailResponses[keyof SendTestEmailResponses];

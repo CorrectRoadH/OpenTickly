@@ -123,6 +123,12 @@ func (s *memEmailSender) Send(_ context.Context, _ string, _ string, _ string) e
 	return nil
 }
 func (s *memEmailSender) SendTest(_ context.Context, _ string, _ string) error { return nil }
+func (s *memEmailSender) ClassifyFailure(err error) string {
+	if err == nil {
+		return "sent"
+	}
+	return "unknown"
+}
 
 type memOrgLister struct{}
 

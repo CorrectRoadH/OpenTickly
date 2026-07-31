@@ -13,12 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// sendTestEmailResponse is the JSON shape for the send-test-email endpoint.
-type sendTestEmailResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-}
-
 // Handler implements adminapi.ServerInterface for the instance-admin module.
 type Handler struct {
 	service    *application.Service
@@ -237,15 +231,22 @@ func (h *Handler) SendTestEmail(ctx echo.Context) error {
 	// so a stuck handler can never outlive the request.
 	reqCtx, cancel := context.WithTimeout(ctx.Request().Context(), 12*time.Second)
 	defer cancel()
-	if err := h.service.SendTestEmail(reqCtx, req.To); err != nil {
+	// A rejected delivery is a reported result, not a transport failure: 5xx
+	// bodies get replaced by reverse proxies (Cloudflare's 502 page), which
+	// would strip the reason the admin needs. Always answer 200 and put the
+	// outcome in the payload.
+	code, err := h.service.SendTestEmail(reqCtx, req.To)
+	if err != nil {
 		ctx.Logger().Errorf("send test email to %s failed: %v", req.To, err)
-		return ctx.JSON(http.StatusBadGateway, sendTestEmailResponse{
+		return ctx.JSON(http.StatusOK, adminapi.TestEmailResult{
 			Success: false,
+			Code:    adminapi.TestEmailResultCode(code),
 			Message: err.Error(),
 		})
 	}
-	return ctx.JSON(http.StatusOK, sendTestEmailResponse{
+	return ctx.JSON(http.StatusOK, adminapi.TestEmailResult{
 		Success: true,
+		Code:    adminapi.TestEmailResultCode(code),
 		Message: "Test email sent to " + req.To,
 	})
 }

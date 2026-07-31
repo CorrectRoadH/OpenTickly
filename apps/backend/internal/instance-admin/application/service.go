@@ -205,15 +205,20 @@ func (s *Service) IsSMTPConfigured() bool {
 	return s.emailSender.IsConfigured()
 }
 
-// SendTestEmail sends a test email to verify SMTP configuration.
-func (s *Service) SendTestEmail(ctx context.Context, to string) error {
+// SendTestEmail sends a test email to verify SMTP configuration. On failure it
+// returns the machine-readable outcome code alongside the error so transports
+// can report an actionable reason instead of a raw SMTP dump.
+func (s *Service) SendTestEmail(ctx context.Context, to string) (string, error) {
 	cfg, err := s.instanceConfig.GetConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("instance-admin send test email: %w", err)
+		return s.emailSender.ClassifyFailure(err), fmt.Errorf("instance-admin send test email: %w", err)
 	}
 	siteURL := cfg.SiteURL
 	if siteURL == "" {
 		siteURL = "https://localhost"
 	}
-	return s.emailSender.SendTest(ctx, to, siteURL)
+	if err := s.emailSender.SendTest(ctx, to, siteURL); err != nil {
+		return s.emailSender.ClassifyFailure(err), err
+	}
+	return s.emailSender.ClassifyFailure(nil), nil
 }

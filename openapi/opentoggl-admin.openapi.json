@@ -279,22 +279,17 @@
         },
         "responses": {
           "200": {
-            "description": "Test email sent successfully",
+            "description": "Delivery attempt finished. `success` reports whether the mail was accepted by the SMTP server; a failed attempt is still a 200 so clients receive the machine-readable reason instead of a gateway error page.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" }
-                  },
-                  "required": ["success", "message"]
+                  "$ref": "#/components/schemas/TestEmailResult"
                 }
               }
             }
           },
           "400": {
-            "description": "SMTP not configured"
+            "description": "Recipient address missing or malformed"
           }
         }
       }
@@ -391,6 +386,28 @@
     "schemas": {
       "FeatureGateDecision": {
         "$ref": "./opentoggl-shared.openapi.json#/components/schemas/FeatureGateDecision"
+      },
+      "TestEmailResult": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "code": {
+            "type": "string",
+            "description": "Machine-readable outcome. Clients localise this; `message` is the raw SMTP detail for diagnostics.",
+            "enum": [
+              "sent",
+              "not_configured",
+              "connect_failed",
+              "tls_failed",
+              "auth_failed",
+              "recipient_rejected",
+              "timeout",
+              "unknown"
+            ]
+          },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "code", "message"]
       },
       "BootstrapRequest": {
         "type": "object",
