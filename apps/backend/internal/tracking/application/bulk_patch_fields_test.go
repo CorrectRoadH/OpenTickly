@@ -2,6 +2,7 @@ package application_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func TestPatchTimeEntries_AppliesProjectAndTagIDs(t *testing.T) {
 		entryIDs = append(entryIDs, entry.ID)
 	}
 
-	success, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+	success, failures, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
 		WorkspaceID:  workspaceID,
 		UserID:       userID,
 		TimeEntryIDs: entryIDs,
@@ -80,6 +81,9 @@ func TestPatchTimeEntries_AppliesProjectAndTagIDs(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("patch time entries: %v", err)
+	}
+	if len(failures) != 0 {
+		t.Fatalf("expected no failures, got %+v", failures)
 	}
 	if len(success) != len(entryIDs) {
 		t.Fatalf("expected %d success IDs, got %d", len(entryIDs), len(success))
@@ -142,7 +146,7 @@ func TestPatchTimeEntries_ClearsProjectWhenIDZero(t *testing.T) {
 		t.Fatalf("create entry: %v", err)
 	}
 
-	if _, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+	if _, _, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
 		WorkspaceID:  workspaceID,
 		UserID:       userID,
 		TimeEntryIDs: []int64{entry.ID},
@@ -157,5 +161,140 @@ func TestPatchTimeEntries_ClearsProjectWhenIDZero(t *testing.T) {
 	}
 	if readback.ProjectID != nil {
 		t.Fatalf("expected project cleared, got %v", *readback.ProjectID)
+	}
+}
+
+// TestPatchTimeEntries_AddAndRemoveTagsAreIncremental pins Toggl's semantics for
+// the `add` and `remove` ops on /tags: unlike `replace`, they must leave the
+// tags an entry already carries alone.
+func TestPatchTimeEntries_AddAndRemoveTagsAreIncremental(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "bulk-patch-tag-ops")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	keep, err := catalogService.CreateTag(ctx, catalogapplication.CreateTagCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "KeepTag",
+	})
+	if err != nil {
+		t.Fatalf("create keep tag: %v", err)
+	}
+	added, err := catalogService.CreateTag(ctx, catalogapplication.CreateTagCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "AddedTag",
+	})
+	if err != nil {
+		t.Fatalf("create added tag: %v", err)
+	}
+
+	start := time.Date(2026, 4, 3, 9, 0, 0, 0, time.UTC)
+	stop := start.Add(time.Hour)
+	entry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "tag ops",
+		Start:       start,
+		Stop:        &stop,
+		TagIDs:      []int64{keep.ID},
+		CreatedWith: "bulk-patch-tag-ops-test",
+	})
+	if err != nil {
+		t.Fatalf("create entry: %v", err)
+	}
+
+	if _, _, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+		WorkspaceID:  workspaceID,
+		UserID:       userID,
+		TimeEntryIDs: []int64{entry.ID},
+		AddTagIDs:    []int64{added.ID},
+	}); err != nil {
+		t.Fatalf("add tag patch: %v", err)
+	}
+
+	readback, err := trackingService.GetTimeEntry(ctx, workspaceID, userID, entry.ID)
+	if err != nil {
+		t.Fatalf("readback after add: %v", err)
+	}
+	if !slices.Contains(readback.TagIDs, keep.ID) {
+		t.Fatalf("add op dropped the pre-existing tag: %v", readback.TagIDs)
+	}
+	if !slices.Contains(readback.TagIDs, added.ID) {
+		t.Fatalf("add op did not add the requested tag: %v", readback.TagIDs)
+	}
+
+	if _, _, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+		WorkspaceID:  workspaceID,
+		UserID:       userID,
+		TimeEntryIDs: []int64{entry.ID},
+		RemoveTagIDs: []int64{added.ID},
+	}); err != nil {
+		t.Fatalf("remove tag patch: %v", err)
+	}
+
+	readback, err = trackingService.GetTimeEntry(ctx, workspaceID, userID, entry.ID)
+	if err != nil {
+		t.Fatalf("readback after remove: %v", err)
+	}
+	if slices.Contains(readback.TagIDs, added.ID) {
+		t.Fatalf("remove op left the tag in place: %v", readback.TagIDs)
+	}
+	if !slices.Contains(readback.TagIDs, keep.ID) {
+		t.Fatalf("remove op dropped an unrelated tag: %v", readback.TagIDs)
+	}
+}
+
+// TestPatchTimeEntries_ReportsMissingEntriesAsFailures pins the non-transactional
+// contract: a bad id lands in the failure list while the good ids still apply,
+// instead of aborting the batch or being reported as a success.
+func TestPatchTimeEntries_ReportsMissingEntriesAsFailures(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "bulk-patch-failures")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	start := time.Date(2026, 4, 4, 9, 0, 0, 0, time.UTC)
+	stop := start.Add(time.Hour)
+	entry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "before",
+		Start:       start,
+		Stop:        &stop,
+		CreatedWith: "bulk-patch-failures-test",
+	})
+	if err != nil {
+		t.Fatalf("create entry: %v", err)
+	}
+
+	const missingID int64 = 999_999_999
+	success, failures, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+		WorkspaceID:  workspaceID,
+		UserID:       userID,
+		TimeEntryIDs: []int64{missingID, entry.ID},
+		Description:  lo.ToPtr("after"),
+	})
+	if err != nil {
+		t.Fatalf("patch time entries: %v", err)
+	}
+	if !slices.Equal(success, []int64{entry.ID}) {
+		t.Fatalf("expected only the real entry to succeed, got %v", success)
+	}
+	if len(failures) != 1 || failures[0].ID != missingID {
+		t.Fatalf("expected the missing id in the failure list, got %+v", failures)
+	}
+
+	readback, err := trackingService.GetTimeEntry(ctx, workspaceID, userID, entry.ID)
+	if err != nil {
+		t.Fatalf("readback: %v", err)
+	}
+	if readback.Description != "after" {
+		t.Fatalf("expected the valid entry to still be patched, got %q", readback.Description)
 	}
 }

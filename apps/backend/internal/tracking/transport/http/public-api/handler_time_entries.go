@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -14,6 +15,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 )
+
+// maxBulkPatchTimeEntryIDs mirrors Toggl's documented cap for
+// PATCH /workspaces/{workspace_id}/time_entries/{time_entry_ids}.
+const maxBulkPatchTimeEntryIDs = 100
 
 func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
@@ -237,6 +242,14 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 	if parseErr != nil || len(timeEntryIDs) == 0 {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
+	// Toggl caps this endpoint at 100 ids per request; reject beyond that
+	// rather than silently accepting an unbounded fan-out.
+	if len(timeEntryIDs) > maxBulkPatchTimeEntryIDs {
+		return echo.NewHTTPError(
+			http.StatusBadRequest,
+			fmt.Sprintf("at most %d time entry ids per request", maxBulkPatchTimeEntryIDs),
+		)
+	}
 	var payload []publictrackapi.TimeentryPatchInput
 	if err := ctx.Bind(&payload); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -253,7 +266,7 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 		}
 	}
 
-	success, err := handler.tracking.PatchTimeEntries(ctx.Request().Context(), command)
+	success, failures, err := handler.tracking.PatchTimeEntries(ctx.Request().Context(), command)
 	if err != nil {
 		return writePublicTrackTrackingError(err)
 	}
@@ -261,8 +274,19 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 	for _, id := range success {
 		successIDs = append(successIDs, int(id))
 	}
+	// Entries that could not be patched are reported here rather than folded
+	// into `success`. Reporting a dropped entry as successful is what made the
+	// original bulk-edit bug invisible to callers.
+	failureViews := make([]publictrackapi.TimeentryPatchFailure, 0, len(failures))
+	for _, failure := range failures {
+		failureViews = append(failureViews, publictrackapi.TimeentryPatchFailure{
+			Id:      lo.ToPtr(int(failure.ID)),
+			Message: lo.ToPtr(failure.Message),
+		})
+	}
 	return ctx.JSON(http.StatusOK, publictrackapi.TimeentryPatchOutput{
 		Success: &successIDs,
+		Failure: &failureViews,
 	})
 }
 
@@ -270,6 +294,10 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 // Unknown op, unknown path, or value-type mismatches produce a 400 instead of
 // being silently dropped — silent drops were the root cause of the bulk-edit
 // "200 OK but nothing saved" bug.
+//
+// Toggl accepts `add` and `remove` only on the tag paths, where they mean
+// "keep the entry's other tags" rather than "overwrite the tag list"; every
+// other path is `replace` only.
 func (handler *Handler) applyTimeEntryPatch(
 	ctx context.Context,
 	command *trackingapplication.PatchTimeEntriesCommand,
@@ -277,10 +305,15 @@ func (handler *Handler) applyTimeEntryPatch(
 ) error {
 	op := strings.TrimSpace(lo.FromPtr(patch.Op))
 	path := strings.TrimSpace(lo.FromPtr(patch.Path))
-	if !strings.EqualFold(op, "replace") {
+	value := interfaceValue(patch.Value)
+
+	switch {
+	case strings.EqualFold(op, "replace"):
+	case strings.EqualFold(op, "add"), strings.EqualFold(op, "remove"):
+		return handler.applyTimeEntryTagPatch(ctx, command, op, path, value)
+	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "unsupported op: "+op)
 	}
-	value := interfaceValue(patch.Value)
 
 	switch path {
 	case "/description":
@@ -370,6 +403,59 @@ func (handler *Handler) applyTimeEntryPatch(
 	return nil
 }
 
+// applyTimeEntryTagPatch handles the `add` and `remove` ops, which Toggl only
+// defines for the tag paths. Unlike `replace`, these leave the entry's other
+// tags alone, so they are collected separately and resolved per entry.
+func (handler *Handler) applyTimeEntryTagPatch(
+	ctx context.Context,
+	command *trackingapplication.PatchTimeEntriesCommand,
+	op string,
+	path string,
+	value any,
+) error {
+	var ids []int64
+	switch path {
+	case "/tag_ids":
+		parsed, err := jsonPatchValueAsInt64Slice(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /tag_ids must be an array of integers")
+		}
+		ids = parsed
+	case "/tags":
+		names, err := jsonPatchValueAsStringSlice(value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "value for /tags must be an array of strings")
+		}
+		// `remove` must not create tags that do not exist yet, so only `add`
+		// goes through EnsureTagsByName.
+		if strings.EqualFold(op, "remove") {
+			resolved, err := handler.catalog.ResolveTagIDsByName(ctx, command.WorkspaceID, names)
+			if err != nil {
+				return writePublicTrackTrackingError(err)
+			}
+			ids = resolved
+		} else {
+			created, err := handler.catalog.EnsureTagsByName(ctx, command.WorkspaceID, command.UserID, names)
+			if err != nil {
+				return writePublicTrackTrackingError(err)
+			}
+			ids = created
+		}
+	default:
+		return echo.NewHTTPError(
+			http.StatusBadRequest,
+			"op "+op+" is only supported for /tags and /tag_ids, not "+path,
+		)
+	}
+
+	if strings.EqualFold(op, "remove") {
+		command.RemoveTagIDs = append(command.RemoveTagIDs, ids...)
+		return nil
+	}
+	command.AddTagIDs = append(command.AddTagIDs, ids...)
+	return nil
+}
+
 func (handler *Handler) StopPublicTrackTimeEntry(ctx echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
@@ -410,4 +496,3 @@ func (handler *Handler) resolveTagIDs(ctx context.Context, workspaceID int64, us
 	}
 	return nil, nil
 }
-

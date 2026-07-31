@@ -105,6 +105,12 @@ type UpdateTimeEntryCommand struct {
 	TaskID      *int64
 	TagIDs      []int64
 	ReplaceTags bool
+	// AddTagIDs and RemoveTagIDs express the incremental tag semantics Toggl's
+	// bulk patch uses for the `add` and `remove` ops on /tags: the entry keeps
+	// the tags it already has, minus/plus these. They are applied after
+	// ReplaceTags so a replace followed by an add still behaves sanely.
+	AddTagIDs    []int64
+	RemoveTagIDs []int64
 }
 
 type PatchTimeEntriesCommand struct {
@@ -120,6 +126,18 @@ type PatchTimeEntriesCommand struct {
 	TaskID       *int64
 	TagIDs       []int64
 	ReplaceTags  bool
+	AddTagIDs    []int64
+	RemoveTagIDs []int64
+}
+
+// PatchTimeEntryFailure reports one entry the bulk patch could not apply.
+// Toggl's contract for this endpoint is explicitly non-transactional ("patch
+// will be executed partially when there are errors with some records, no
+// transaction, no rollback"), so a failing entry must not abort the ones that
+// still succeed — it is reported here instead.
+type PatchTimeEntryFailure struct {
+	ID      int64
+	Message string
 }
 
 type FavoriteView struct {
