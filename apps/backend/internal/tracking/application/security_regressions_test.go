@@ -3,6 +3,8 @@ package application_test
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -744,21 +746,26 @@ func TestSameWorkspaceUserACannotPatchUserBTimeEntries(t *testing.T) {
 	attackerPatchDescription := "Attacker patched description"
 
 	// Call PatchTimeEntries with user A's userID but targeting user B's entry IDs.
-	// This tests whether the batch operation partially applies to user A's own entry
-	// while denying user B's entries, or whether it fails atomically.
-	_, err = trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+	// The batch is partial by contract, so user A's own entry may be patched;
+	// what must never happen is user B's entry being touched.
+	success, failures, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
 		WorkspaceID:  workspaceID,
 		UserID:       ownerID,
 		TimeEntryIDs: []int64{memberEntry1.ID, ownerEntry.ID},
 		Description:  &attackerPatchDescription,
 	})
+	if err != nil {
+		t.Fatalf("PatchTimeEntries should report per-entry denial, not a call error: %v", err)
+	}
 
-	// PatchTimeEntries calls UpdateTimeEntry for each ID in sequence.
-	// If it hits user B's entry first, UpdateTimeEntry will return ErrTimeEntryNotFound
-	// (because userID=ownerID doesn't match user B's entry owner), and the batch stops.
-	// Either the entire batch fails, or it must not partially apply.
-	if err != nil && err != trackingapplication.ErrTimeEntryNotFound {
-		t.Fatalf("PatchTimeEntries with mixed attacker/target IDs should return error, got: %v", err)
+	// User B's entry must be reported as a failure and must never appear as a success.
+	if slices.Contains(success, memberEntry1.ID) {
+		t.Fatalf("VAL-SEC-TRACK-004: user B's entry %d was reported as successfully patched", memberEntry1.ID)
+	}
+	if !slices.ContainsFunc(failures, func(failure trackingapplication.PatchTimeEntryFailure) bool {
+		return failure.ID == memberEntry1.ID
+	}) {
+		t.Fatalf("VAL-SEC-TRACK-004: user B's entry %d missing from failure list: %+v", memberEntry1.ID, failures)
 	}
 
 	// VAL-SEC-TRACK-004 core assertion: direct readback of ALL targeted user B entries
@@ -790,7 +797,10 @@ func TestSameWorkspaceUserACannotPatchUserBTimeEntries(t *testing.T) {
 		t.Fatalf("VAL-SEC-TRACK-004: user B should still have exactly 2 entries, got %d", len(memberEntries))
 	}
 
-	// Verify user A's own entry is also intact (batch didn't partially apply to anything)
+	// User A's own entry may be patched: the batch is partial by contract, and
+	// editing their own entry is something user A can do anyway. The security
+	// property under test is that user B's entries are untouched (asserted
+	// above), not that a mixed batch is rejected wholesale.
 	ownerReadback, err := trackingService.GetTimeEntry(ctx, workspaceID, ownerID, ownerEntry.ID)
 	if err != nil {
 		t.Fatalf("user A direct readback of own entry after denied patch: %v", err)
@@ -798,10 +808,8 @@ func TestSameWorkspaceUserACannotPatchUserBTimeEntries(t *testing.T) {
 	if ownerReadback.ID != ownerEntry.ID {
 		t.Fatalf("user A's own entry ID changed; expected %d, got %d", ownerEntry.ID, ownerReadback.ID)
 	}
-	// Note: If the patch was partially applied to ownerEntry before failing on memberEntry1,
-	// ownerReadback.Description would be attackerPatchDescription. We check this is NOT the case.
-	if ownerReadback.Description == attackerPatchDescription {
-		t.Fatalf("VAL-SEC-TRACK-004: user A's own entry was partially mutated by failed batch; description changed to attacker value %q", attackerPatchDescription)
+	if !slices.Contains(success, ownerEntry.ID) {
+		t.Fatalf("user A's own entry %d should still be patched in a partial batch, got success %v", ownerEntry.ID, success)
 	}
 }
 
@@ -1035,19 +1043,27 @@ func TestSameWorkspaceBatchMutationExcludesUnauthorizedEntries(t *testing.T) {
 	attackerPatchDescription := "Attacker patched"
 
 	// Call PatchTimeEntries targeting only user B's entries with user A's userID
-	_, err = trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
+	success, failures, err := trackingService.PatchTimeEntries(ctx, trackingapplication.PatchTimeEntriesCommand{
 		WorkspaceID:  workspaceID,
 		UserID:       ownerID,
 		TimeEntryIDs: []int64{memberEntry1.ID, memberEntry2.ID},
 		Description:  &attackerPatchDescription,
 	})
-
-	// The batch must be denied - all targeted entries belong to user B
-	if err == nil {
-		t.Fatalf("PatchTimeEntries with only unauthorized targets should return error, got nil")
+	if err != nil {
+		t.Fatalf("PatchTimeEntries should report per-entry denial, not a call error: %v", err)
 	}
-	if err != trackingapplication.ErrTimeEntryNotFound {
-		t.Fatalf("expected ErrTimeEntryNotFound for unauthorized batch, got: %v", err)
+
+	// Every targeted entry belongs to user B, so nothing may be reported as patched.
+	if len(success) != 0 {
+		t.Fatalf("PatchTimeEntries with only unauthorized targets reported successes: %v", success)
+	}
+	if len(failures) != 2 {
+		t.Fatalf("expected both unauthorized entries in the failure list, got: %+v", failures)
+	}
+	for _, failure := range failures {
+		if !strings.Contains(failure.Message, trackingapplication.ErrTimeEntryNotFound.Error()) {
+			t.Fatalf("expected not-found reason for unauthorized entry %d, got: %q", failure.ID, failure.Message)
+		}
 	}
 
 	// VAL-SEC-TRACK-004 core assertion: NO partial mutation on ANY targeted entry.

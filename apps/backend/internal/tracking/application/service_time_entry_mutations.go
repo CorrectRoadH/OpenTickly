@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"opentoggl/backend/apps/backend/internal/xptr"
@@ -72,6 +73,18 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 	}
 	if command.ReplaceTags {
 		current.TagIDs = append([]int64(nil), command.TagIDs...)
+	}
+	if len(command.AddTagIDs) > 0 {
+		for _, tagID := range command.AddTagIDs {
+			if !slices.Contains(current.TagIDs, tagID) {
+				current.TagIDs = append(current.TagIDs, tagID)
+			}
+		}
+	}
+	if len(command.RemoveTagIDs) > 0 {
+		current.TagIDs = lo.Filter(current.TagIDs, func(tagID int64, _ int) bool {
+			return !slices.Contains(command.RemoveTagIDs, tagID)
+		})
 	}
 
 	start := current.Start
@@ -157,29 +170,45 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 	return updated, nil
 }
 
-func (service *Service) PatchTimeEntries(ctx context.Context, command PatchTimeEntriesCommand) ([]int64, error) {
+// PatchTimeEntries applies one patch to every requested entry. Per Toggl's
+// contract the operation is partial: an entry that cannot be updated is
+// reported in the failure list and the remaining entries are still applied.
+// Only an infrastructure-level problem aborts the whole call.
+func (service *Service) PatchTimeEntries(
+	ctx context.Context,
+	command PatchTimeEntriesCommand,
+) ([]int64, []PatchTimeEntryFailure, error) {
 	success := make([]int64, 0, len(command.TimeEntryIDs))
+	failures := make([]PatchTimeEntryFailure, 0)
 	for _, timeEntryID := range command.TimeEntryIDs {
 		update := UpdateTimeEntryCommand{
-			WorkspaceID: command.WorkspaceID,
-			TimeEntryID: timeEntryID,
-			UserID:      command.UserID,
-			Billable:    command.Billable,
-			Description: command.Description,
-			Start:       command.Start,
-			Stop:        command.Stop,
-			Duration:    command.Duration,
-			ProjectID:   command.ProjectID,
-			TaskID:      command.TaskID,
-			TagIDs:      command.TagIDs,
-			ReplaceTags: command.ReplaceTags,
+			WorkspaceID:  command.WorkspaceID,
+			TimeEntryID:  timeEntryID,
+			UserID:       command.UserID,
+			Billable:     command.Billable,
+			Description:  command.Description,
+			Start:        command.Start,
+			Stop:         command.Stop,
+			Duration:     command.Duration,
+			ProjectID:    command.ProjectID,
+			TaskID:       command.TaskID,
+			TagIDs:       command.TagIDs,
+			ReplaceTags:  command.ReplaceTags,
+			AddTagIDs:    command.AddTagIDs,
+			RemoveTagIDs: command.RemoveTagIDs,
 		}
 		if _, err := service.UpdateTimeEntry(ctx, update); err != nil {
-			return nil, err
+			service.logger.WarnContext(ctx, "bulk patch failed for time entry",
+				"workspace_id", command.WorkspaceID,
+				"entry_id", timeEntryID,
+				"error", err.Error(),
+			)
+			failures = append(failures, PatchTimeEntryFailure{ID: timeEntryID, Message: err.Error()})
+			continue
 		}
 		success = append(success, timeEntryID)
 	}
-	return success, nil
+	return success, failures, nil
 }
 
 func (service *Service) StopTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (TimeEntryView, error) {

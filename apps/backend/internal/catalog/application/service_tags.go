@@ -67,6 +67,44 @@ func (service *Service) EnsureTagsByName(ctx context.Context, workspaceID int64,
 	return service.store.EnsureTagsByName(ctx, workspaceID, createdBy, names)
 }
 
+// ResolveTagIDsByName maps existing tag names to ids without creating anything.
+// Names that do not exist in the workspace are skipped: removing a tag nobody
+// has is a no-op, not an error, and a `remove` op must never create the tag it
+// is trying to drop.
+func (service *Service) ResolveTagIDsByName(ctx context.Context, workspaceID int64, names []string) ([]int64, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	wanted := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			continue
+		}
+		wanted[strings.ToLower(trimmed)] = struct{}{}
+	}
+	if len(wanted) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]int64, 0, len(wanted))
+	const perPage = 200
+	for page := 1; ; page++ {
+		tags, err := service.ListTags(ctx, workspaceID, ListTagsFilter{Page: page, PerPage: perPage})
+		if err != nil {
+			return nil, err
+		}
+		for _, tag := range tags {
+			if _, ok := wanted[strings.ToLower(tag.Name)]; ok {
+				ids = append(ids, tag.ID)
+			}
+		}
+		if len(tags) < perPage {
+			return ids, nil
+		}
+	}
+}
+
 func (service *Service) GetTag(ctx context.Context, workspaceID int64, tagID int64) (TagView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return TagView{}, err
