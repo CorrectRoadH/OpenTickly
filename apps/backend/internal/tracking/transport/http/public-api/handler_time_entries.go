@@ -21,12 +21,20 @@ import (
 const maxBulkPatchTimeEntryIDs = 100
 
 func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
-	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	// Account-wide by Toggl's definition: read across every workspace the user
+	// belongs to rather than the single "home" workspace, which drifts away
+	// from users.default_workspace_id and then hides entries created against
+	// the default.
+	workspaceIDs, err := handler.scope.ListPublicTrackUserWorkspaces(ctx)
 	if err != nil {
 		return err
 	}
 
-	filter := trackingapplication.ListTimeEntriesFilter{UserID: user.ID, WorkspaceID: workspaceID}
+	filter := trackingapplication.ListTimeEntriesFilter{UserID: user.ID, WorkspaceIDs: workspaceIDs}
 	if since, ok := queryInt64(ctx, "since"); ok {
 		timeValue := time.Unix(since, 0).UTC()
 		filter.Since = &timeValue
@@ -72,13 +80,17 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 }
 
 func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx echo.Context) error {
-	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	workspaceIDs, err := handler.scope.ListPublicTrackUserWorkspaces(ctx)
 	if err != nil {
 		return err
 	}
 	entries, err := handler.tracking.ListUserTimeEntries(ctx.Request().Context(), trackingapplication.ListTimeEntriesFilter{
-		UserID:      user.ID,
-		WorkspaceID: workspaceID,
+		UserID:       user.ID,
+		WorkspaceIDs: workspaceIDs,
 	})
 	if err != nil {
 		return writePublicTrackTrackingError(err)
