@@ -9,7 +9,23 @@ import {
   useSendTestEmailMutation,
   useUpdateInstanceConfigMutation,
 } from "../../shared/query/instance-admin.ts";
+import type { TestEmailResult } from "../../shared/api/admin-client.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
+
+const testEmailFailureKeys: Record<TestEmailResult["code"], string> = {
+  sent: "toast:testEmailSent",
+  not_configured: "toast:testEmailNotConfigured",
+  connect_failed: "toast:testEmailConnectFailed",
+  tls_failed: "toast:testEmailTlsFailed",
+  auth_failed: "toast:testEmailAuthFailed",
+  recipient_rejected: "toast:testEmailRecipientRejected",
+  timeout: "toast:testEmailTimeout",
+  unknown: "toast:failedToSendTestEmail",
+};
+
+function testEmailFailureKey(code: TestEmailResult["code"]): string {
+  return testEmailFailureKeys[code] ?? "toast:failedToSendTestEmail";
+}
 
 const registrationModes = [
   {
@@ -392,10 +408,14 @@ function SmtpSection({
                   testMutation.mutate(testTo, {
                     onSuccess: (result) => {
                       if (result.success) {
-                        toast.success(result.message);
-                      } else {
-                        toast.error(result.message);
+                        toast.success(t("toast:testEmailSent"));
+                        return;
                       }
+                      // The raw SMTP error is diagnostic detail, not a message
+                      // for an admin — show the localised reason instead.
+                      toast.error(t(testEmailFailureKey(result.code)), {
+                        description: result.message,
+                      });
                     },
                     onError: (err) => {
                       const fallback = t("toast:failedToSendTestEmail");

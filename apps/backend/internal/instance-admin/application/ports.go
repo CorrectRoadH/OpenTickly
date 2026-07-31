@@ -113,6 +113,9 @@ type EmailSender interface {
 	IsConfigured() bool
 	Send(ctx context.Context, to string, subject string, bodyHTML string) error
 	SendTest(ctx context.Context, to string, siteURL string) error
+	// ClassifyFailure maps a Send/SendTest error to a machine-readable outcome
+	// code (the TestEmailResult `code` enum) so clients can localise it.
+	ClassifyFailure(err error) string
 }
 
 // Clock provides the current time for testability.

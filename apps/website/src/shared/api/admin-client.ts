@@ -5,7 +5,9 @@ import type {
   RegistrationPolicy,
   InstanceConfig,
   OrganizationList,
+  TestEmailResult,
 } from "./generated/admin/types.gen.ts";
+export type { TestEmailResult };
 
 class AdminApiError extends Error {
   status: number;
@@ -14,6 +16,11 @@ class AdminApiError extends Error {
     this.name = "AdminApiError";
     this.status = status;
   }
+}
+
+function isHTMLDocument(body: string): boolean {
+  const head = body.trimStart().slice(0, 200).toLowerCase();
+  return head.startsWith("<!doctype html") || head.startsWith("<html");
 }
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -36,7 +43,12 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
         message = parsed.message;
       }
     } catch {
-      // body wasn't JSON — keep the raw text
+      // Body wasn't JSON. Anything from a reverse proxy (Cloudflare's 5xx
+      // pages) is an HTML document — dumping it into a toast is unreadable,
+      // so degrade to the status line instead.
+      message = isHTMLDocument(text)
+        ? response.statusText || `HTTP ${response.status}`
+        : text || response.statusText;
     }
     throw new AdminApiError(message, response.status);
   }
@@ -104,7 +116,7 @@ export function fetchInstanceVersion(): Promise<InstanceVersionInfo> {
   return adminFetch("/admin/v1/version");
 }
 
-export function sendTestEmailApi(to: string): Promise<{ success: boolean; message: string }> {
+export function sendTestEmailApi(to: string): Promise<TestEmailResult> {
   return adminFetch("/admin/v1/config/test-email", {
     method: "POST",
     body: JSON.stringify({ to }),
