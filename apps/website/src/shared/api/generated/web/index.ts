@@ -37,7 +37,7 @@ export {
   updateWorkspaceSettings,
   updateWorkspaceSsoConfig,
   verifyEmail,
-} from "./sdk.gen.js";
+} from "./sdk.gen";
 export type {
   AcceptedWorkspaceInvite,
   AcceptWorkspaceInviteData,
@@ -89,6 +89,8 @@ export type {
   GetWorkspaceSsoConfigResponse,
   GetWorkspaceSsoConfigResponses,
   InviteWorkspaceMemberData,
+  InviteWorkspaceMemberError,
+  InviteWorkspaceMemberErrors,
   InviteWorkspaceMemberResponse,
   InviteWorkspaceMemberResponses,
   ListRecentWorkspaceTimeEntrySuggestionsData,
@@ -138,6 +140,8 @@ export type {
   ResendVerificationEmailResponse,
   ResendVerificationEmailResponses,
   ResendWorkspaceInviteData,
+  ResendWorkspaceInviteError,
+  ResendWorkspaceInviteErrors,
   ResendWorkspaceInviteResponse,
   ResendWorkspaceInviteResponses,
   ResetOnboardingData,
@@ -189,6 +193,7 @@ export type {
   VerifyEmailRequest,
   VerifyEmailResponse,
   VerifyEmailResponses,
+  WorkspaceInvitationError,
   WorkspaceInviteInfo,
   WorkspaceInviteSignupRequest,
   WorkspaceMember,
@@ -201,4 +206,4 @@ export type {
   WorkspaceSettingsUpdate,
   WorkspaceSsoConfig,
   WorkspaceSsoConfigUpdate,
-} from "./types.gen.js";
+} from "./types.gen";

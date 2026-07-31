@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	httpapp "opentoggl/backend/apps/backend/internal/http"
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 
@@ -29,15 +28,6 @@ type ssoTestResponse struct {
 }
 
 var emailDomainPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$`)
-
-// newWebSSODiagnosticsRoutes registers the authenticated SSO config test endpoint
-// alongside the generated web API. It validates an unsaved config so the admin can
-// find problems on the settings page before enabling SSO.
-func newWebSSODiagnosticsRoutes(handlers *routeHandlers) httpapp.RouteRegistrar {
-	return func(server *echo.Echo) {
-		server.POST("/web/v1/workspaces/:workspace_id/sso-config/test", handlers.testWorkspaceSsoConfig)
-	}
-}
 
 func (handlers *routeHandlers) testWorkspaceSsoConfig(ctx echo.Context) error {
 	workspaceID, err := handlers.authorizeWorkspaceAdmin(ctx)

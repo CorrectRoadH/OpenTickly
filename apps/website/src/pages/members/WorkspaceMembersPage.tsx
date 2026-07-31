@@ -23,6 +23,7 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import { copyToClipboard } from "../../shared/lib/clipboard.ts";
 import { InviteMemberDialog } from "./InviteMemberDialog.tsx";
+import { resolveInvitationError } from "./invitation-error.ts";
 import { MemberRowActions } from "./MemberRowActions.tsx";
 
 type MemberStatusFilter = "all" | "active" | "disabled" | "invited";
@@ -180,7 +181,7 @@ export function WorkspaceMembersPage(): ReactElement {
                 .mutateAsync(id)
                 .then(() => toast.success(t("inviteResent")))
                 .catch((error) =>
-                  toast.error(resolveInviteMutationError(error, t, "couldNotResendInvite")),
+                  toast.error(resolveInvitationError(error, t, "couldNotResendInvite")),
                 );
             }}
             onRestore={(id) => {
@@ -294,31 +295,4 @@ async function copyInviteLink(token: string): Promise<void> {
     return;
   }
   throw new Error("clipboard_unavailable");
-}
-
-function resolveInviteMutationError(
-  error: unknown,
-  t: (key: string) => string,
-  fallbackKey: "couldNotResendInvite" | "couldNotSendInvitation",
-): string {
-  if (error instanceof WebApiError) {
-    if (error.status === 422 && typeof error.data === "object" && error.data !== null) {
-      const code = (error.data as { error?: unknown }).error;
-      if (code === "smtp_not_configured") {
-        return t("toast:emailSendingNotConfigured");
-      }
-      if (code === "site_url_not_configured") {
-        return t("toast:siteUrlNotConfigured");
-      }
-    }
-    const raw = error.userMessage;
-    if (raw.includes("smtp_not_configured") || raw.includes("SMTP")) {
-      return t("toast:emailSendingNotConfigured");
-    }
-    if (raw.includes("site_url_not_configured") || raw.includes("site URL")) {
-      return t("toast:siteUrlNotConfigured");
-    }
-    if (raw) return raw;
-  }
-  return t(fallbackKey);
 }

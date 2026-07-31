@@ -143,8 +143,27 @@ func newHTTPErrorHandler(server *echo.Echo, logger *slog.Logger) echo.HTTPErrorH
 			}
 		}
 
+		if httpError != nil && isStructuredHTTPErrorMessage(httpError.Message) {
+			if writeErr := c.JSON(status, httpError.Message); writeErr != nil {
+				logger.ErrorContext(c.Request().Context(), "failed to write structured http error",
+					"path", c.Request().URL.Path,
+					"status", status,
+					"error", writeErr.Error(),
+				)
+			}
+			return
+		}
+
 		server.DefaultHTTPErrorHandler(responseError, c)
 	}
+}
+
+func isStructuredHTTPErrorMessage(message any) bool {
+	if message == nil {
+		return false
+	}
+	_, isString := message.(string)
+	return !isString
 }
 
 func resolveHTTPErrorMessage(httpError *echo.HTTPError, fallback error) any {

@@ -222,28 +222,29 @@ func float32PointerFromFloat64(value *float64) *float32 {
 	return &converted
 }
 
-// invitePreconditionBody is the canonical shape used when invite creation or
-// resend cannot proceed due to missing instance configuration (SMTP, site URL).
-type invitePreconditionBody struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
-}
-
 func writeMembershipError(err error) error {
+	var deliveryErr *membershipapplication.EmailDeliveryError
+	_ = errors.As(err, &deliveryErr)
+
 	switch {
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
 		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrSMTPNotConfigured):
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, invitePreconditionBody{
-			Error:   "smtp_not_configured",
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, webapi.WorkspaceInvitationError{
+			Error:   webapi.SmtpNotConfigured,
 			Message: "Configure SMTP under instance admin settings before inviting members.",
 		}).SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrSiteURLNotConfigured):
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, invitePreconditionBody{
-			Error:   "site_url_not_configured",
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, webapi.WorkspaceInvitationError{
+			Error:   webapi.SiteUrlNotConfigured,
 			Message: "Set the site URL under instance admin settings before inviting members — invites carry a link recipients must be able to open.",
+		}).SetInternal(err)
+	case deliveryErr != nil:
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, webapi.WorkspaceInvitationError{
+			Error:   workspaceInvitationErrorCode(deliveryErr.Code),
+			Message: "Invitation email delivery failed.",
 		}).SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrInviteTokenInvalid):
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
@@ -267,5 +268,22 @@ func writeMembershipError(err error) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	default:
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+}
+
+func workspaceInvitationErrorCode(code string) webapi.WorkspaceInvitationErrorError {
+	switch code {
+	case string(webapi.ConnectFailed):
+		return webapi.ConnectFailed
+	case string(webapi.TlsFailed):
+		return webapi.TlsFailed
+	case string(webapi.AuthFailed):
+		return webapi.AuthFailed
+	case string(webapi.RecipientRejected):
+		return webapi.RecipientRejected
+	case string(webapi.Timeout):
+		return webapi.Timeout
+	default:
+		return webapi.Unknown
 	}
 }

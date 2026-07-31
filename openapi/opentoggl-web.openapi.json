@@ -774,6 +774,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Invitation could not be delivered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceInvitationError"
+                }
+              }
+            }
           }
         }
       }
@@ -807,6 +817,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invitation could not be delivered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceInvitationError"
                 }
               }
             }
@@ -1916,6 +1936,29 @@
           }
         },
         "required": ["email"]
+      },
+      "WorkspaceInvitationError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "smtp_not_configured",
+              "site_url_not_configured",
+              "connect_failed",
+              "tls_failed",
+              "auth_failed",
+              "recipient_rejected",
+              "timeout",
+              "unknown"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Safe failure detail. Clients should localize the error code."
+          }
+        },
+        "required": ["error", "message"]
       },
       "UpdateWorkspaceMemberRateCostRequest": {
         "type": "object",

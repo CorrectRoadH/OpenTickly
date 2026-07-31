@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AppButton, AppInput, SelectDropdown } from "@opentickly/web-ui";
 
-import { WebApiError } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { useInviteWorkspaceMemberMutation } from "../../shared/query/web-shell.ts";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
+import { resolveInvitationError } from "./invitation-error.ts";
 
 type InviteMemberDialogProps = {
   onClose: () => void;
@@ -34,7 +34,7 @@ export function InviteMemberDialog({ onClose }: InviteMemberDialogProps): ReactE
           onClose();
         },
         onError: (error) => {
-          toast.error(resolveInviteErrorMessage(error, t));
+          toast.error(resolveInvitationError(error, t, "couldNotSendInvitation"));
         },
       },
     );
@@ -95,38 +95,4 @@ export function InviteMemberDialog({ onClose }: InviteMemberDialogProps): ReactE
       </form>
     </ModalDialog>
   );
-}
-
-function resolveInviteErrorMessage(error: unknown, t: (key: string) => string): string {
-  if (error instanceof WebApiError) {
-    const code = invitePreconditionCode(error);
-    if (code === "smtp_not_configured") {
-      return t("toast:emailSendingNotConfigured");
-    }
-    if (code === "site_url_not_configured") {
-      return t("toast:siteUrlNotConfigured");
-    }
-    return error.userMessage || t("couldNotSendInvitation");
-  }
-  return t("couldNotSendInvitation");
-}
-
-function invitePreconditionCode(error: WebApiError): string | null {
-  if (error.status === 422) {
-    const data = error.data;
-    if (typeof data === "object" && data !== null && "error" in data) {
-      const code = (data as { error?: unknown }).error;
-      if (typeof code === "string") {
-        return code;
-      }
-    }
-  }
-  const message = error.userMessage ?? "";
-  if (message.includes("smtp_not_configured") || message.includes("SMTP")) {
-    return "smtp_not_configured";
-  }
-  if (message.includes("site_url_not_configured") || message.includes("site URL")) {
-    return "site_url_not_configured";
-  }
-  return null;
 }

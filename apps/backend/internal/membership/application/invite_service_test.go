@@ -15,12 +15,13 @@ import (
 // fakeEmailSender captures the last message sent so tests can make assertions
 // about subject/recipient without running an actual SMTP server.
 type fakeEmailSender struct {
-	configured bool
-	lastTo     string
-	lastSubj   string
-	lastBody   string
-	sendErr    error
-	calls      int
+	configured  bool
+	failureCode string
+	lastTo      string
+	lastSubj    string
+	lastBody    string
+	sendErr     error
+	calls       int
 }
 
 func newFakeEmailSender() *fakeEmailSender {
@@ -36,6 +37,8 @@ func (f *fakeEmailSender) Send(ctx context.Context, to, subject, body string) er
 	f.lastBody = body
 	return f.sendErr
 }
+
+func (f *fakeEmailSender) ClassifyFailure(error) string { return f.failureCode }
 
 // fakeSiteURLReader returns a fixed site URL so invite link assertions are
 // stable across runs.
@@ -338,6 +341,79 @@ func TestInviteWorkspaceMemberGeneratesTokenAndSendsEmail(t *testing.T) {
 	}
 	if got := sender.lastSubj; got == "" || !contains(got, "OpenTickly") {
 		t.Fatalf("expected subject to mention OpenTickly, got %q", got)
+	}
+}
+
+func TestInviteWorkspaceMemberReturnsClassifiedDeliveryFailure(t *testing.T) {
+	manager := makeManager()
+	store := newInMemoryInviteStore(manager)
+	sender := newFakeEmailSender()
+	sender.sendErr = errors.New("temporary resolver failure")
+	sender.failureCode = "timeout"
+
+	service, err := membershipapplication.NewService(
+		store,
+		membershipapplication.WithLogger(log.NopLogger()),
+		membershipapplication.WithEmailSender(sender),
+		membershipapplication.WithSiteURLReader(&fakeSiteURLReader{url: "https://example.test"}),
+	)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	_, err = service.InviteWorkspaceMember(context.Background(), membershipapplication.InviteWorkspaceMemberCommand{
+		WorkspaceID: manager.WorkspaceID,
+		RequestedBy: *manager.UserID,
+		Email:       "invitee@example.com",
+	})
+	var deliveryErr *membershipapplication.EmailDeliveryError
+	if !errors.As(err, &deliveryErr) {
+		t.Fatalf("expected EmailDeliveryError, got %v", err)
+	}
+	if deliveryErr.Code != "timeout" {
+		t.Fatalf("expected timeout code, got %q", deliveryErr.Code)
+	}
+	if !errors.Is(err, sender.sendErr) {
+		t.Fatalf("expected original delivery failure to remain wrapped, got %v", err)
+	}
+}
+
+func TestResendWorkspaceInviteReturnsClassifiedDeliveryFailure(t *testing.T) {
+	manager := makeManager()
+	store := newInMemoryInviteStore(manager)
+	sender := newFakeEmailSender()
+	service, err := membershipapplication.NewService(
+		store,
+		membershipapplication.WithLogger(log.NopLogger()),
+		membershipapplication.WithEmailSender(sender),
+		membershipapplication.WithSiteURLReader(&fakeSiteURLReader{url: "https://example.test"}),
+	)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	member, err := service.InviteWorkspaceMember(context.Background(), membershipapplication.InviteWorkspaceMemberCommand{
+		WorkspaceID: manager.WorkspaceID,
+		RequestedBy: *manager.UserID,
+		Email:       "invitee@example.com",
+	})
+	if err != nil {
+		t.Fatalf("seed invite: %v", err)
+	}
+	sender.sendErr = errors.New("temporary resolver failure")
+	sender.failureCode = "timeout"
+
+	_, err = service.ResendWorkspaceInvite(context.Background(), membershipapplication.ResendWorkspaceInviteCommand{
+		WorkspaceID: manager.WorkspaceID,
+		MemberID:    member.ID,
+		RequestedBy: *manager.UserID,
+	})
+	var deliveryErr *membershipapplication.EmailDeliveryError
+	if !errors.As(err, &deliveryErr) {
+		t.Fatalf("expected EmailDeliveryError, got %v", err)
+	}
+	if deliveryErr.Code != "timeout" {
+		t.Fatalf("expected timeout code, got %q", deliveryErr.Code)
 	}
 }
 

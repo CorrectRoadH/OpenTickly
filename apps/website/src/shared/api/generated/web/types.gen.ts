@@ -304,6 +304,22 @@ export type WorkspaceMemberInvitationRequest = {
   role?: string;
 };
 
+export type WorkspaceInvitationError = {
+  error:
+    | "smtp_not_configured"
+    | "site_url_not_configured"
+    | "connect_failed"
+    | "tls_failed"
+    | "auth_failed"
+    | "recipient_rejected"
+    | "timeout"
+    | "unknown";
+  /**
+   * Safe failure detail. Clients should localize the error code.
+   */
+  message: string;
+};
+
 export type UpdateWorkspaceMemberRateCostRequest = {
   hourly_rate: number;
   labor_cost: number;
@@ -926,6 +942,16 @@ export type InviteWorkspaceMemberData = {
   url: "/web/v1/workspaces/{workspace_id}/members/invitations";
 };
 
+export type InviteWorkspaceMemberErrors = {
+  /**
+   * Invitation could not be delivered
+   */
+  422: WorkspaceInvitationError;
+};
+
+export type InviteWorkspaceMemberError =
+  InviteWorkspaceMemberErrors[keyof InviteWorkspaceMemberErrors];
+
 export type InviteWorkspaceMemberResponses = {
   /**
    * Workspace member invitation accepted
@@ -945,6 +971,16 @@ export type ResendWorkspaceInviteData = {
   query?: never;
   url: "/web/v1/workspaces/{workspace_id}/members/{member_id}/resend-invite";
 };
+
+export type ResendWorkspaceInviteErrors = {
+  /**
+   * Invitation could not be delivered
+   */
+  422: WorkspaceInvitationError;
+};
+
+export type ResendWorkspaceInviteError =
+  ResendWorkspaceInviteErrors[keyof ResendWorkspaceInviteErrors];
 
 export type ResendWorkspaceInviteResponses = {
   /**

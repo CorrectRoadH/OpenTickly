@@ -49,6 +49,21 @@ type EmailSender interface {
 	Send(ctx context.Context, to string, subject string, bodyHTML string) error
 }
 
+type emailFailureClassifier interface {
+	ClassifyFailure(error) string
+}
+
+// EmailDeliveryError preserves an email sender's machine-readable failure code
+// across the application boundary so HTTP clients can render an actionable
+// result without turning an expected delivery failure into a proxy-level 5xx.
+type EmailDeliveryError struct {
+	Code string
+	Err  error
+}
+
+func (err *EmailDeliveryError) Error() string { return err.Err.Error() }
+func (err *EmailDeliveryError) Unwrap() error { return err.Err }
+
 // SiteURLReader returns the configured public site URL used to compose invite
 // links. Returning an empty string is an error: without a site URL we cannot
 // mint an invite link recipients can actually open.
@@ -243,7 +258,7 @@ func (service *Service) InviteWorkspaceMember(
 			"member_id", member.ID,
 			"error", err.Error(),
 		)
-		return WorkspaceMemberView{}, err
+		return WorkspaceMemberView{}, service.emailDeliveryError(err)
 	}
 	return member, nil
 }
@@ -283,9 +298,19 @@ func (service *Service) ResendWorkspaceInvite(
 			"member_id", member.ID,
 			"error", err.Error(),
 		)
-		return WorkspaceMemberView{}, err
+		return WorkspaceMemberView{}, service.emailDeliveryError(err)
 	}
 	return member, nil
+}
+
+func (service *Service) emailDeliveryError(err error) error {
+	code := "unknown"
+	if classifier, ok := service.emailSender.(emailFailureClassifier); ok {
+		if classified := strings.TrimSpace(classifier.ClassifyFailure(err)); classified != "" {
+			code = classified
+		}
+	}
+	return &EmailDeliveryError{Code: code, Err: err}
 }
 
 // GetInviteByToken returns the public invite summary used by the accept page.

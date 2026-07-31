@@ -359,6 +359,40 @@ func TestServerLogsClientErrorsWithInternalCauseAndReturnsRealMessage(t *testing
 	}
 }
 
+func TestServerPreservesStructuredClientErrorWhileLoggingInternalCause(t *testing.T) {
+	type deliveryError struct {
+		Error   string `json:"error"`
+		Message string `json:"message"`
+	}
+	server := NewServerWithOptions(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		func(server *echo.Echo) {
+			server.POST("/invite", func(c echo.Context) error {
+				return echo.NewHTTPError(http.StatusUnprocessableEntity, deliveryError{
+					Error:   "timeout",
+					Message: "Invitation email delivery failed.",
+				}).SetInternal(errors.New("smtp resolver timed out"))
+			})
+		},
+		ServerOptions{},
+	)
+
+	request := httptest.NewRequest(http.MethodPost, "/invite", nil)
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected /invite to return 422, got %d", recorder.Code)
+	}
+	var response deliveryError
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("expected structured response body: %v", err)
+	}
+	if response.Error != "timeout" || response.Message != "Invitation email delivery failed." {
+		t.Fatalf("unexpected structured response: %#v", response)
+	}
+}
+
 func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 	postgresListener := mustListenTCP(t)
 	closedAddress := postgresListener.Addr().String()
