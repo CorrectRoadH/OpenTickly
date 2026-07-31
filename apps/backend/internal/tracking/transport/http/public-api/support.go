@@ -18,6 +18,13 @@ type ScopeAuthorizer interface {
 	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
 	RequirePublicTrackTrackingScope(ctx echo.Context) (int64, *identityapplication.UserSnapshot, error)
+	// ListPublicTrackUserWorkspaces returns every workspace the authenticated
+	// user belongs to. The /me/time_entries routes read across all of them,
+	// matching official Toggl v9 semantics, instead of collapsing to the
+	// "home" workspace — web_user_homes drifts out of sync with
+	// users.default_workspace_id, and when it does, entries created through
+	// the default workspace become invisible to the list endpoint.
+	ListPublicTrackUserWorkspaces(ctx echo.Context) ([]int64, error)
 }
 
 type Handler struct {

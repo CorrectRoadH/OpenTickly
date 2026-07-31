@@ -265,9 +265,13 @@ func (store *Store) ListTimeEntriesForUser(
 	left join catalog_tasks t on t.id = te.task_id
 	where te.user_id = $1`
 	args := []any{filter.UserID}
-	if filter.WorkspaceID > 0 {
+	switch {
+	case filter.WorkspaceID > 0:
 		args = append(args, filter.WorkspaceID)
 		query += " and te.workspace_id = $" + intParam(len(args))
+	case len(filter.WorkspaceIDs) > 0:
+		args = append(args, filter.WorkspaceIDs)
+		query += " and te.workspace_id = any($" + intParam(len(args)) + ")"
 	}
 	if !filter.IncludeAll {
 		query += " and te.deleted_at is null"

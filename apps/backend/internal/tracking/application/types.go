@@ -71,11 +71,16 @@ type MostActiveUserView struct {
 type ListTimeEntriesFilter struct {
 	UserID      int64
 	WorkspaceID int64
-	Since       *time.Time
-	Before      *time.Time
-	StartDate   *time.Time
-	EndDate     *time.Time
-	IncludeAll  bool
+	// WorkspaceIDs restricts the read to a set of workspaces. It is what the
+	// account-wide /me/time_entries routes use, so they stay correct when the
+	// user's home workspace and default workspace disagree. Ignored when
+	// WorkspaceID is set.
+	WorkspaceIDs []int64
+	Since        *time.Time
+	Before       *time.Time
+	StartDate    *time.Time
+	EndDate      *time.Time
+	IncludeAll   bool
 }
 
 type CreateTimeEntryCommand struct {
