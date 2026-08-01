@@ -469,7 +469,6 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		ProductEmailsDisableCode: productEmailsDisableCode,
 		WeeklyReportDisableCode:  weeklyReportDisableCode,
 		AvatarStorageKey:         avatarStorageKey,
-		PendingVerification:      domain.UserState(state) == domain.UserStatePendingVerification,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("rebuild identity user %d: %w", id, err)
@@ -516,8 +515,16 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		user.PromoteToInstanceAdmin()
 	}
 
+	// State is applied after hydration: the profile/preferences writes below
+	// reject non-active users, so a row must be rebuilt as active and then
+	// moved to its stored state.
 	switch domain.UserState(state) {
-	case domain.UserStateActive, domain.UserStatePendingVerification:
+	case domain.UserStateActive:
+		return user, nil
+	case domain.UserStatePendingVerification:
+		if err := user.MarkPendingVerification(); err != nil {
+			return nil, fmt.Errorf("hydrate pending identity user %d: %w", id, err)
+		}
 		return user, nil
 	case domain.UserStateDeactivated:
 		if err := user.Deactivate(); err != nil {

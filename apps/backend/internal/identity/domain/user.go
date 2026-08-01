@@ -60,6 +60,15 @@ type RegisterParams struct {
 	PendingVerification      bool
 }
 
+// RestartRegistrationParams carries the credentials that replace those of an
+// abandoned pending_verification signup.
+type RestartRegistrationParams struct {
+	FullName string
+	Password string
+	APIToken string
+	Timezone string
+}
+
 type BasicCredentials struct {
 	Username string
 	Password string
@@ -591,6 +600,53 @@ func (user *User) ensureAuthenticatable() error {
 	default:
 		return nil
 	}
+}
+
+// RestartPendingRegistration re-seeds an unverified account with fresh
+// credentials so an abandoned signup stops squatting the email address.
+// Legal only while the account is pending_verification: nobody has proven
+// ownership of the address yet, so the row is a placeholder rather than an
+// account. The state is left pending — the caller decides whether a new
+// verification round is required or the account can be activated outright.
+func (user *User) RestartPendingRegistration(params RestartRegistrationParams) error {
+	if user.state != UserStatePendingVerification {
+		return ErrEmailAlreadyRegistered
+	}
+	if !isValidFullName(params.FullName) {
+		return ErrInvalidFullName
+	}
+	if !isValidPassword(params.Password) {
+		return ErrInvalidPassword
+	}
+	timezone := "UTC"
+	if params.Timezone != "" {
+		if _, err := time.LoadLocation(params.Timezone); err != nil {
+			return ErrInvalidTimezone
+		}
+		timezone = params.Timezone
+	}
+	if params.APIToken == "" {
+		return ErrInvalidCredentials
+	}
+
+	user.fullName = strings.TrimSpace(params.FullName)
+	user.passwordHash = hashSecret(params.Password)
+	user.timezone = timezone
+	user.apiToken = params.APIToken
+	user.productEmailsDisableCode = notificationCode("product-emails", params.APIToken)
+	user.weeklyReportDisableCode = notificationCode("weekly-report", params.APIToken)
+	return nil
+}
+
+// MarkPendingVerification moves an active user back to pending_verification.
+// It exists for hydration: a stored row is rebuilt as active so profile and
+// preference writes are legal, then moved to the state it was persisted in.
+func (user *User) MarkPendingVerification() error {
+	if user.state != UserStateActive {
+		return errors.New("only active users can be marked pending_verification")
+	}
+	user.state = UserStatePendingVerification
+	return nil
 }
 
 // Activate transitions a user from pending_verification to active.
