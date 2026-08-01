@@ -9,6 +9,7 @@ export const homeContentZh = {
     ctas: {
       tryDemo: "在线试用",
       selfHost: "自托管部署",
+      starOnGithub: "GitHub 点星",
     },
   },
 

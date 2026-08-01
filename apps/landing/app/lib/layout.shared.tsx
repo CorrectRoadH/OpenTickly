@@ -25,6 +25,13 @@ export function baseOptions(locale?: string): BaseLayoutProps {
         on: "nav",
         active: "nested-url",
       },
+      // The toggl-cli page is English-only, so it never takes a locale prefix.
+      {
+        text: "toggl-cli",
+        url: "/toggl-cli",
+        on: "nav",
+        active: "nested-url",
+      },
     ],
     // GitHub ignores UTM; ?s=nav_header lets Ahrefs outbound report split by slot.
     githubUrl: appendSlot(`https://github.com/${gitConfig.user}/${gitConfig.repo}`, "nav_header"),

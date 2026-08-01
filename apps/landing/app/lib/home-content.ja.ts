@@ -9,6 +9,7 @@ export const homeContentJa = {
     ctas: {
       tryDemo: "デモを試す",
       selfHost: "セルフホスト",
+      starOnGithub: "GitHub でスター",
     },
   },
 

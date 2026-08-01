@@ -5,6 +5,30 @@ export const togglCliInstallCommands = {
   cli: "npm install -g @correctroadh/toggl-cli",
 } as const;
 
+export const togglCliAuthSetups = [
+  {
+    backend: "Toggl Track",
+    title: "Connect to official Toggl Track",
+    body: "Grab your API token from Toggl Track profile settings, then authenticate once. The token is stored in your operating system keychain.",
+    lines: ["toggl auth <YOUR_API_TOKEN>"],
+  },
+  {
+    backend: "OpenToggl",
+    title: "Connect to self-hosted OpenToggl",
+    body: "Point the same CLI at your own instance with --api-type opentoggl and the instance's /api/v9 base URL. Every other command stays identical.",
+    lines: [
+      "toggl auth <YOUR_API_TOKEN> \\",
+      "  --api-type opentoggl \\",
+      "  --api-url https://your-instance.com/api/v9",
+    ],
+  },
+] as const;
+
+export const togglCliAuthNotes = [
+  "Run toggl auth with no arguments for an interactive prompt.",
+  "No persistent keyring on Linux? Set TOGGL_API_TOKEN in your shell profile instead.",
+] as const;
+
 export const togglCliFeatures = [
   {
     title: "Track time",

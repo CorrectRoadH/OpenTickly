@@ -13,7 +13,7 @@ import { RotatingWords } from "@/components/rotating-words";
 import Seo from "@/components/seo";
 import { homeContent } from "@/lib/home-content";
 import { i18n } from "@/lib/i18n";
-import { baseOptions } from "@/lib/layout.shared";
+import { baseOptions, gitConfig } from "@/lib/layout.shared";
 import { homeUseCaseItems } from "@/lib/home-use-cases";
 import {
   buildFaqSchema,
@@ -67,6 +67,12 @@ export default function Home() {
     content: locale,
   });
 
+  // GitHub ignores UTM; ?s=<slot> lets the Ahrefs outbound report split by slot.
+  const heroGithubHref = appendSlot(
+    `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
+    "hero_cta",
+  );
+
   const proofItems = strings.proof.items.map((item) => {
     if (!item.href.startsWith("http")) return item;
     // GitHub ignores UTM; use ?s=<slot> so Ahrefs outbound report splits by slot.
@@ -115,13 +121,17 @@ export default function Home() {
             <p className="mt-3 text-[15px] leading-7 text-[var(--track-text-muted)]">
               {strings.hero.subtitle}
             </p>
-            <div className="mt-8 flex justify-center gap-3">
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <AppLinkButton href={demoHref} target="_blank">
                 {strings.hero.ctas.tryDemo}
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </AppLinkButton>
               <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
                 {strings.hero.ctas.selfHost}
+              </AppLinkButton>
+              <AppLinkButton href={heroGithubHref} target="_blank" variant="secondary">
+                <GithubIcon className="size-4" aria-hidden="true" />
+                {strings.hero.ctas.starOnGithub}
               </AppLinkButton>
             </div>
             <PoweredByBadge locale={locale} />

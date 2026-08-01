@@ -21,9 +21,12 @@ import type { ComponentType, SVGProps } from "react";
 import Footer from "@/components/footer";
 import { GithubIcon } from "@/components/github-icon";
 import Seo from "@/components/seo";
+import { gitConfig } from "@/lib/layout.shared";
 import { buildFaqSchema, resolveSiteUrl } from "@/lib/seo";
 import {
   buildTogglCliSchema,
+  togglCliAuthNotes,
+  togglCliAuthSetups,
   togglCliFaq,
   togglCliFeatures,
   togglCliInstallCommands,
@@ -42,6 +45,10 @@ type Icon = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
 export default function TogglCliPage() {
   const siteUrl = resolveSiteUrl();
   const githubUrl = appendSlot(togglCliRepoUrl, "toggl_cli_landing");
+  const opentickyGithubUrl = appendSlot(
+    `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
+    "toggl_cli_hero_badge",
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--track-canvas)]">
@@ -104,14 +111,21 @@ export default function TogglCliPage() {
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </AppLinkButton>
                 <AppLinkButton href={githubUrl} target="_blank" variant="secondary">
-                  View source
+                  Star on GitHub
                   <ArrowUpRight className="size-4" aria-hidden="true" />
                 </AppLinkButton>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 <span>Rust native</span>
                 <span>MIT licensed</span>
-                <span>Toggl + OpenToggl</span>
+                <a
+                  className="underline decoration-dotted underline-offset-4 hover:text-[var(--track-text)]"
+                  href={opentickyGithubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Toggl + OpenTickly
+                </a>
               </div>
             </div>
 
@@ -136,6 +150,41 @@ export default function TogglCliPage() {
                 command={togglCliInstallCommands.agent}
               />
             </div>
+          </MarketingSection>
+
+          <MarketingSection
+            title="Point it at your backend."
+            description="Authenticate once against official Toggl Track or your own OpenToggl instance. The command surface is identical either way."
+          >
+            <div id="connect" className="grid gap-4 scroll-mt-8 md:grid-cols-2">
+              {togglCliAuthSetups.map((setup) => (
+                <MarketingCard
+                  key={setup.backend}
+                  eyebrow={setup.backend}
+                  title={setup.title}
+                  description={setup.body}
+                >
+                  <pre className="mt-5 overflow-x-auto rounded-[8px] border border-[var(--track-border)] bg-[#0b0c0e] px-4 py-3 font-mono text-[12px] leading-6 text-[var(--track-accent-text)]">
+                    <code>
+                      {setup.lines.map((line, index) => (
+                        <span key={line} className="block">
+                          {index === 0 ? "$ " : "  "}
+                          {line}
+                        </span>
+                      ))}
+                    </code>
+                  </pre>
+                </MarketingCard>
+              ))}
+            </div>
+            <ul className="mt-4 grid gap-2 text-[12px] leading-6 text-[var(--track-text-muted)]">
+              {togglCliAuthNotes.map((note) => (
+                <li key={note} className="flex items-start gap-2">
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--track-accent)]" />
+                  {note}
+                </li>
+              ))}
+            </ul>
           </MarketingSection>
 
           <MarketingSection

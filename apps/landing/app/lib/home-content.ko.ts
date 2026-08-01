@@ -9,6 +9,7 @@ export const homeContentKo = {
     ctas: {
       tryDemo: "데모 체험",
       selfHost: "셀프호스팅",
+      starOnGithub: "GitHub에서 스타",
     },
   },
 

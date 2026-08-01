@@ -9,6 +9,7 @@ export const homeContentEs = {
     ctas: {
       tryDemo: "Probar demo",
       selfHost: "Autoalojar",
+      starOnGithub: "Dar estrella en GitHub",
     },
   },
 
