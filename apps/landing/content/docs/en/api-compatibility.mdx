@@ -1,0 +1,63 @@
+---
+title: Toggl API Compatibility
+description: Connect Toggl-compatible tools to OpenTickly using the Track v9, Reports v3, and Webhooks v1 base URLs, API-token authentication, and a practical verification checklist.
+---
+
+OpenTickly exposes Toggl-compatible public API surfaces so existing scripts, CLIs, and agents can use a self-hosted instance. The repository tracks the upstream Toggl Track v9, Reports v3, and Webhooks v1 contracts.
+
+## Base URLs
+
+Replace `https://your-instance.example` with the public URL of your OpenTickly server.
+
+| API         | Base URL                                        |
+| ----------- | ----------------------------------------------- |
+| Track v9    | `https://your-instance.example/api/v9`          |
+| Reports v3  | `https://your-instance.example/reports/api/v3`  |
+| Webhooks v1 | `https://your-instance.example/webhooks/api/v1` |
+
+Use HTTPS whenever a client connects across an untrusted network. The Docker container listens behind the port you publish; TLS normally terminates at your reverse proxy.
+
+## Get an API token
+
+Sign in to the OpenTickly web app, open your avatar menu, choose **Profile**, and find **API Token**. Treat the token like a password: do not commit it, paste it into issue reports, or expose it in client-side logs.
+
+Toggl-compatible Basic authentication uses the API token as the username and the literal value `api_token` as the password:
+
+```bash
+curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
+  https://your-instance.example/api/v9/me
+```
+
+Set `OPENTICKLY_API_TOKEN` in your local secret manager or shell environment before running the request.
+
+## Repoint an existing integration
+
+Most clients need two changes:
+
+1. Replace the official Toggl API host with the matching OpenTickly base URL.
+2. Supply the API token created by your OpenTickly user.
+
+For [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), the explicit configuration is:
+
+```bash
+toggl auth <YOUR_API_TOKEN> \
+  --api-type opentoggl \
+  --api-url https://your-instance.example/api/v9
+```
+
+If a third-party client hard-codes Toggl's hostname and offers no base-URL setting, it cannot be repointed through configuration alone.
+
+## Verify compatibility for your workflow
+
+Compatibility is most useful when tested against the endpoints your integration actually calls. Before a production cutover:
+
+1. Read the current user with `GET /api/v9/me`.
+2. List the target workspace, projects, tags, and recent time entries.
+3. Create and stop a test time entry.
+4. Run the report query used by your automation.
+5. Create a disposable webhook subscription if your workflow depends on webhooks.
+6. Confirm error handling, pagination, dates, time zones, and token rotation.
+
+The upstream OpenAPI files in the repository are the compatibility reference. Implementation coverage continues to evolve, so test the concrete operations your client requires and report a reproducible mismatch in [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues).
+
+For unattended automation, keep the instance URL and token outside source code, give the user only the workspace access it needs, and rotate the token if it is exposed.

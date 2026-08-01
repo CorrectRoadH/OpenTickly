@@ -71,7 +71,7 @@ ${description}
 - Website: ${site}${localePrefix}/
 - Live demo: ${demoUrl}
 - Repository: ${repoUrl}
-- License: MIT
+- License: AGPL-3.0
 - Install: \`docker compose up -d\` (Go backend, React frontend, PostgreSQL)
 - API compatibility: Toggl Track v9, Reports v3, Webhooks v1
 - Platforms: CasaOS, Synology, fnOS, any Docker host
@@ -88,6 +88,10 @@ ${faq}
 ## ${headings.docs}
 
 - ${site}${localePrefix}/docs
+- ${site}${localePrefix}/docs/getting-started
+- ${site}${localePrefix}/docs/migrate-from-toggl
+- ${site}${localePrefix}/docs/api-compatibility
+- ${site}${localePrefix}/docs/admin-email-sso
 - ${site}${localePrefix}/docs/self-hosting
 - ${site}${localePrefix}/docs/ai-integration
 

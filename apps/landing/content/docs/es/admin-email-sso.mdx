@@ -1,0 +1,18 @@
+---
+title: Configurar correo SMTP y SAML SSO
+description: Configura correo saliente, verificación, invitaciones, recuperación de contraseña y SAML 2.0 SSO en OpenTickly autoalojado.
+---
+
+Configura primero la **URL del sitio** pública en **Administración de la instancia → Configuración**. Los enlaces de correo y las URL del proveedor de servicio SAML dependen de ella.
+
+## SMTP
+
+En **Correo / SMTP**, introduce nombre y dirección del remitente, host, puerto, usuario y contraseña. El puerto 465 usa TLS implícito; otros puertos actualizan a STARTTLS cuando el servidor lo anuncia.
+
+Guarda y envía un correo de prueba. SMTP es necesario para invitaciones, recuperación de contraseña y verificación de correo. Activa la verificación solo después de recibir la prueba.
+
+## SAML SSO
+
+En **Ajustes del espacio → Inicio de sesión único**, define nombre y dominio. Copia Entity ID, ACS URL, URL de inicio y Metadata URL al proveedor de identidad. Usa preferentemente los metadatos del IdP; como alternativa, introduce URL de acceso, Entity ID y certificado X.509.
+
+Ejecuta **Probar configuración** y **Probar inicio de sesión** antes de activar SSO. Mantén abierta una sesión de administrador con contraseña durante la prueba y no elimines el acceso alternativo hasta que otro administrador haya iniciado sesión correctamente.

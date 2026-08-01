@@ -1,0 +1,59 @@
+---
+title: Getting Started with OpenTickly
+description: "Start tracking time with OpenTickly: try the hosted demo or self-host with Docker, create your first workspace, run a timer, and review the result."
+---
+
+This guide takes you from a blank account to a useful first report. You can explore the hosted demo first or run the same application on infrastructure you control.
+
+## Choose how to run OpenTickly
+
+| Option      | Best for                                                | What to do                                                                    |
+| ----------- | ------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Hosted demo | Evaluating the interface before installing              | Open [track.opentoggl.com](https://track.opentoggl.com) and create an account |
+| Self-hosted | Keeping the application and database on your own server | Follow the [Docker self-hosting guide](/docs/self-hosting)                    |
+
+The demo and self-hosted editions use the same core workflows. A self-hosted instance gives you control of the application, PostgreSQL database, backups, network access, and upgrade schedule.
+
+## Create your account and workspace
+
+1. Register with your name, email address, and password.
+2. Open the workspace created during onboarding.
+3. Check the workspace time zone before recording team activity.
+4. Add a project if you want the first entry to appear in project reports.
+
+A workspace is the reporting and collaboration boundary. Projects, clients, tags, members, billable rates, and time entries belong to a workspace.
+
+## Record your first time entry
+
+1. Open **Timer**.
+2. Enter a concrete description such as `Write onboarding guide`.
+3. Select a project and optional tags.
+4. Start the timer, then stop it when the work is complete.
+
+Use manual mode when you already know the start and end times. The calendar and list views show the same underlying entries, so you can choose the editing style that fits the task.
+
+## Review where the time went
+
+Open **Reports** and choose a date range. Start with the summary view, then group or filter by project, client, user, tag, billable state, or description when you need a narrower answer.
+
+Useful checks for a new workspace:
+
+- Does the total match the time you expected to record?
+- Are entries assigned to the correct project and client?
+- Are billable and non-billable entries separated correctly?
+- Do team members use the same tags for the same type of work?
+
+## Bring existing data or integrations
+
+- Moving from Toggl Track: follow [Migrate from Toggl to OpenTickly](/docs/migrate-from-toggl).
+- Reusing a CLI, script, or agent: read [Toggl API compatibility](/docs/api-compatibility).
+- Automating time capture with an agent: connect [toggl-cli and an AI agent](/docs/ai-integration).
+
+## Recommended next steps
+
+1. Create clients and projects that match how you report work.
+2. Invite teammates and verify their workspace roles.
+3. Decide how the self-hosted database will be backed up.
+4. Add one repeatable review habit, such as a daily timer check or weekly project report.
+
+OpenTickly becomes more useful when descriptions, projects, and tags answer real questions. Start with the smallest structure you can apply consistently, then add detail only when a report needs it.

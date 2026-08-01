@@ -165,7 +165,7 @@ export function buildOrganizationSchema(siteUrl: string) {
     description: defaultDescription,
     url: siteUrl,
     screenshot: `${siteUrl}${defaultOgImagePath}`,
-    license: "https://opensource.org/licenses/MIT",
+    license: "https://www.gnu.org/licenses/agpl-3.0.html",
     isAccessibleForFree: true,
     softwareVersion: "rolling",
     featureList: [
@@ -182,7 +182,7 @@ export function buildOrganizationSchema(siteUrl: string) {
     sameAs: [repoUrl, demoUrl],
     offers: {
       "@type": "Offer",
-      price: "0",
+      price: 0,
       priceCurrency: "USD",
     },
   };

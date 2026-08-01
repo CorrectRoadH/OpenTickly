@@ -1,0 +1,25 @@
+---
+title: Toggl API 호환성
+description: API 토큰으로 Toggl 호환 도구를 OpenTickly의 Track v9, Reports v3, Webhooks v1 API에 연결합니다.
+---
+
+OpenTickly는 스크립트, CLI, 에이전트를 위한 Toggl 호환 공개 API를 제공합니다.
+
+| API         | 기본 URL                                        |
+| ----------- | ----------------------------------------------- |
+| Track v9    | `https://your-instance.example/api/v9`          |
+| Reports v3  | `https://your-instance.example/reports/api/v3`  |
+| Webhooks v1 | `https://your-instance.example/webhooks/api/v1` |
+
+**프로필 → API Token**에서 토큰을 얻고 비밀번호처럼 보호하세요. 호환 Basic 인증은 토큰을 사용자명으로, `api_token`을 비밀번호로 사용합니다.
+
+```bash
+curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
+  https://your-instance.example/api/v9/me
+```
+
+기존 연동은 Toggl 공식 호스트를 해당 OpenTickly 기본 URL로 바꾸고 OpenTickly 사용자 토큰을 설정합니다. 호스트를 변경할 수 없는 클라이언트는 설정만으로 연결 대상을 바꿀 수 없습니다.
+
+운영 전에는 `GET /api/v9/me`, 프로젝트와 태그 목록, 시간 항목 생성과 중지, 실제 보고서 쿼리, 필요하면 삭제 가능한 웹훅을 시험하세요. 페이지네이션, 날짜, 시간대, 토큰 교체도 확인합니다.
+
+저장소의 upstream OpenAPI 파일이 계약 기준입니다. 재현 가능한 차이는 [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues)에 알려주세요.

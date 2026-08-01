@@ -1,0 +1,25 @@
+---
+title: Compatibilidade com a API Toggl
+description: Conecte ferramentas compatíveis com Toggl às APIs Track v9, Reports v3 e Webhooks v1 do OpenTickly usando um token de API.
+---
+
+O OpenTickly oferece interfaces públicas compatíveis com Toggl para scripts, CLIs e agentes.
+
+| API         | URL base                                        |
+| ----------- | ----------------------------------------------- |
+| Track v9    | `https://sua-instancia.example/api/v9`          |
+| Reports v3  | `https://sua-instancia.example/reports/api/v3`  |
+| Webhooks v1 | `https://sua-instancia.example/webhooks/api/v1` |
+
+Obtenha o token em **Perfil → API Token** e proteja-o como uma senha. A autenticação Basic compatível usa o token como usuário e `api_token` como senha:
+
+```bash
+curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
+  https://sua-instancia.example/api/v9/me
+```
+
+Para migrar uma integração, substitua o host oficial do Toggl pela URL base correspondente e use o token do usuário OpenTickly. Um cliente com host fixo não pode ser redirecionado apenas por configuração.
+
+Antes da produção, teste `GET /api/v9/me`, listas de projetos e tags, criação e parada de um registro, a consulta real de relatório e um webhook descartável se necessário. Verifique paginação, datas, fusos horários e rotação do token.
+
+Os arquivos OpenAPI upstream do repositório são a referência do contrato. Relate diferenças reproduzíveis em [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues).

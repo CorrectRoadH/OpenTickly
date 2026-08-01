@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { i18n } from "./i18n";
 import {
   buildCanonicalUrl,
+  buildOrganizationSchema,
   buildPageTitle,
   buildRobotsTxt,
   buildSitemapXml,
@@ -27,6 +28,13 @@ describe("seo helpers", () => {
   it("builds page titles", () => {
     expect(buildPageTitle()).toBe("OpenTickly | Open-Source Time Tracking and Toggl Alternative");
     expect(buildPageTitle("Self-Hosting")).toBe("Self-Hosting | OpenTickly");
+  });
+
+  it("describes the published app with the repository license", () => {
+    const schema = buildOrganizationSchema("https://opentickly.example");
+
+    expect(schema.license).toBe("https://www.gnu.org/licenses/agpl-3.0.html");
+    expect(schema.offers.price).toBe(0);
   });
 
   it("gives every locale's home page title a distinct page title", () => {

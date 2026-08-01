@@ -1,0 +1,60 @@
+---
+title: Configure SMTP Email and SAML SSO
+description: Configure outgoing SMTP email, email verification, invitations, password resets, and workspace SAML 2.0 single sign-on for a self-hosted OpenTickly instance.
+---
+
+Self-hosted OpenTickly stores SMTP settings at the instance level and SAML 2.0 single sign-on settings at the workspace level. Configure the public Site URL first because email links and SAML Service Provider URLs depend on it.
+
+## Configure the public Site URL
+
+Sign in as an instance administrator and open **Instance Admin → Configuration**. Set **Site URL** to the public HTTPS origin users open, for example `https://time.example.com`.
+
+Do not use an internal container hostname or append an API path. After changing the public domain, recheck email links and the SAML values shown to your identity provider.
+
+## Configure outgoing SMTP email
+
+In **Instance Admin → Configuration → Email / SMTP**, enter:
+
+| Field         | Meaning                                                              |
+| ------------- | -------------------------------------------------------------------- |
+| Sender Name   | Display name shown on messages                                       |
+| Sender Email  | From address accepted by your mail provider                          |
+| SMTP Host     | Mail server hostname                                                 |
+| SMTP Port     | Provider port; commonly `587` for STARTTLS or `465` for implicit TLS |
+| SMTP Username | Account used to authenticate                                         |
+| SMTP Password | Password or provider-issued app password                             |
+
+OpenTickly uses implicit TLS on port 465. On other ports it upgrades with STARTTLS when the server advertises support.
+
+Save the settings, enter a recipient under **Send Test Email**, and send a test. The result distinguishes connection, authentication, rejected-recipient, and timeout failures so you can check the relevant provider setting or firewall rule.
+
+SMTP is required for member invitations, password resets, and email verification. After a test message arrives, enable **Email Verification** if every newly registered user should confirm their address.
+
+<Callout type="warn">
+  Keep SMTP credentials out of screenshots, support tickets, source control, and shared shell
+  history. Rotate the credential if it is exposed.
+</Callout>
+
+## Configure workspace SAML SSO
+
+Open **Workspace Settings → Single Sign-On** as a workspace administrator.
+
+1. Enter a profile name and the email domain that should route to this workspace.
+2. Copy the generated **Entity ID**, **ACS URL**, **Sign-in URL**, and **Metadata URL** into a new SAML application at your identity provider.
+3. Prefer the identity provider's metadata URL. If it is unavailable, enter the IdP sign-in URL, entity ID, and X.509 signing certificate manually.
+4. Run **Test configuration** before enabling SSO.
+5. Run **Test login** with a user from the claimed domain and inspect the returned email, name, domain match, and assertion attributes.
+6. Save the configuration, then enable single sign-on.
+
+The email domain is the routing key on the public **SSO** login screen. An enabled domain can belong to only one workspace. The SAML assertion must return an email address, either through a recognized email attribute or an email-formatted NameID.
+
+## Safe rollout checklist
+
+- Keep an existing password-authenticated administrator session open while testing.
+- Test with a non-critical user before directing the whole domain to SSO.
+- Confirm the IdP uses the exact generated Entity ID and ACS URL.
+- Confirm the instance is reachable over HTTPS from users and the identity provider.
+- Retest after changing the public Site URL, reverse proxy, certificate, or identity-provider metadata.
+- Do not disable your fallback login method until another administrator has completed SSO successfully.
+
+For general deployment and reverse-proxy context, see [Self-Hosting](/docs/self-hosting). For scripts and tokens, see [Toggl API Compatibility](/docs/api-compatibility).

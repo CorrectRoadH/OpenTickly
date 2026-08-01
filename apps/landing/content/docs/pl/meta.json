@@ -1,0 +1,14 @@
+{
+  "title": "Dokumentacja OpenTickly",
+  "pages": [
+    "index",
+    "getting-started",
+    "migrate-from-toggl",
+    "api-compatibility",
+    "admin-email-sso",
+    "self-hosting",
+    "ai-integration",
+    "practices",
+    "changelog"
+  ]
+}

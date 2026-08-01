@@ -1,0 +1,63 @@
+---
+title: Toggl API 兼容接入
+description: 使用 Track v9、Reports v3 和 Webhooks v1 基础地址及 API Token，把 Toggl 兼容的 CLI、脚本和 Agent 接入 OpenTickly。
+---
+
+OpenTickly 提供兼容 Toggl 的公共 API，让已有脚本、CLI 和 Agent 可以连接自托管实例。仓库持续跟进 Toggl Track v9、Reports v3 和 Webhooks v1 契约。
+
+## 基础地址
+
+把 `https://your-instance.example` 替换成 OpenTickly 实例的公网地址。
+
+| API         | 基础地址                                        |
+| ----------- | ----------------------------------------------- |
+| Track v9    | `https://your-instance.example/api/v9`          |
+| Reports v3  | `https://your-instance.example/reports/api/v3`  |
+| Webhooks v1 | `https://your-instance.example/webhooks/api/v1` |
+
+客户端经过不可信网络访问时应使用 HTTPS。Docker 容器监听你映射的端口，TLS 通常由反向代理终止。
+
+## 获取 API Token
+
+登录 OpenTickly 网页，打开头像菜单，进入 **个人资料**，找到 **API Token**。Token 应像密码一样保管，不要提交到代码仓库、粘贴到 Issue 或输出在前端日志中。
+
+兼容 Toggl 的 Basic Authentication 使用 API Token 作为用户名，固定字符串 `api_token` 作为密码：
+
+```bash
+curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
+  https://your-instance.example/api/v9/me
+```
+
+运行命令前，请通过本地密码管理器或 Shell 环境设置 `OPENTICKLY_API_TOKEN`。
+
+## 迁移已有集成
+
+大多数客户端只需修改两项：
+
+1. 把 Toggl 官方 API 主机替换为对应的 OpenTickly 基础地址。
+2. 使用 OpenTickly 用户的 API Token。
+
+[`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 可以这样配置：
+
+```bash
+toggl auth <YOUR_API_TOKEN> \
+  --api-type opentoggl \
+  --api-url https://your-instance.example/api/v9
+```
+
+如果第三方客户端写死了 Toggl 主机名，且没有提供自定义基础地址配置，就无法只靠设置将它切换到 OpenTickly。
+
+## 验证你的工作流
+
+兼容性应该针对集成实际调用的端点验证。生产切换前：
+
+1. 用 `GET /api/v9/me` 读取当前用户。
+2. 查询目标工作区、项目、标签和最近的时间记录。
+3. 创建并停止一条测试记录。
+4. 运行自动化实际使用的报表查询。
+5. 如果依赖 Webhook，创建一条可删除的测试订阅。
+6. 检查错误处理、分页、日期、时区和 Token 轮换。
+
+仓库中的上游 OpenAPI 文件是兼容性参考，具体端点覆盖仍会继续完善。请先测试客户端真正依赖的操作；发现差异时，在 [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues) 提交可复现步骤。
+
+无人值守的自动化应把实例地址和 Token 放在源码之外，并只授予所需工作区权限；Token 泄露后应立即轮换。

@@ -1,0 +1,30 @@
+---
+title: Migrar de Toggl a OpenTickly
+description: Importa a OpenTickly el archivo ZIP de tu cuenta Toggl y los CSV detallados de tiempo; después valida espacios, proyectos, etiquetas y totales.
+---
+
+OpenTickly permite importar la estructura de una cuenta Toggl y sus entradas de tiempo sin reconstruir cada espacio manualmente.
+
+<Callout type="info">
+  Conserva los archivos originales hasta haber comparado los informes. Una importación no sustituye
+  una copia de seguridad.
+</Callout>
+
+## Importa la cuenta
+
+1. Solicita la exportación de datos en [Toggl Track](https://track.toggl.com/settings) y descarga el ZIP sin modificarlo.
+2. En OpenTickly abre **Importar**.
+3. Escribe el nombre de la nueva organización, elige el ZIP e inicia la importación.
+4. Espera el resultado del trabajo antes de volver a cargar el archivo.
+
+## Importa las entradas detalladas
+
+Exporta desde Toggl los intervalos necesarios como CSV. En **Importar**, elige la organización y el espacio de destino, selecciona uno o varios CSV y espera a que cada trabajo termine.
+
+Nombra cada archivo con su espacio y fechas para detectar intervalos ausentes o repetidos.
+
+## Valida antes del cambio
+
+Compara organizaciones, espacios, clientes, proyectos, etiquetas y miembros. Revisa en **Informes** un día, una semana y un mes conocidos, y comprueba duración, descripción, proyecto, usuario, etiquetas y estado facturable de varias entradas.
+
+Cuando los totales coincidan, indica al equipo dónde crear nuevas entradas y conserva los archivos exportados y una copia de seguridad de PostgreSQL. Después consulta [Primeros pasos](/es/docs/getting-started) o [Compatibilidad de API](/es/docs/api-compatibility).

@@ -1,0 +1,25 @@
+---
+title: Toggl API 互換性
+description: API トークンを使い、Toggl 互換ツールを OpenTickly の Track v9、Reports v3、Webhooks v1 API に接続します。
+---
+
+OpenTickly は、スクリプト、CLI、エージェント向けに Toggl 互換の公開 API を提供します。
+
+| API         | ベース URL                                      |
+| ----------- | ----------------------------------------------- |
+| Track v9    | `https://your-instance.example/api/v9`          |
+| Reports v3  | `https://your-instance.example/reports/api/v3`  |
+| Webhooks v1 | `https://your-instance.example/webhooks/api/v1` |
+
+**プロフィール → API Token** でトークンを取得し、パスワードと同様に保護してください。互換 Basic 認証では、ユーザー名にトークン、パスワードに `api_token` を使います。
+
+```bash
+curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
+  https://your-instance.example/api/v9/me
+```
+
+既存の連携では、Toggl 公式ホストを対応するベース URL に変更し、OpenTickly ユーザーのトークンを設定します。ホストを変更できないクライアントは、設定だけでは接続先を変えられません。
+
+本番移行前に `GET /api/v9/me`、プロジェクトとタグの一覧、時間エントリの作成・停止、実際のレポートクエリ、必要なら破棄可能な Webhook を試してください。ページネーション、日付、タイムゾーン、トークン更新も確認します。
+
+リポジトリの upstream OpenAPI が契約の基準です。再現可能な差異は [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues) に報告してください。

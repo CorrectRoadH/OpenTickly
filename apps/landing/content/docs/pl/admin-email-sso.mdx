@@ -1,0 +1,18 @@
+---
+title: Konfiguracja SMTP i SAML SSO
+description: Skonfiguruj pocztę SMTP, weryfikację, zaproszenia, reset hasła i SAML 2.0 SSO w samodzielnie hostowanym OpenTickly.
+---
+
+Najpierw ustaw publiczny **Site URL** w **Administracja instancją → Konfiguracja**. Od niego zależą odnośniki w wiadomościach oraz adresy SAML Service Provider.
+
+## SMTP
+
+W **E-mail / SMTP** podaj nazwę i adres nadawcy, host, port, użytkownika i hasło. Port 465 używa niejawnego TLS; inne porty przechodzą na STARTTLS, jeśli serwer go oferuje.
+
+Zapisz ustawienia i wyślij wiadomość testową. SMTP jest wymagany dla zaproszeń, resetu hasła i weryfikacji adresu. Włącz weryfikację dopiero po odebraniu testu.
+
+## SAML SSO
+
+W **Ustawienia obszaru → Single Sign-On** podaj nazwę i domenę e-mail. Skopiuj Entity ID, ACS URL, adres logowania i Metadata URL do dostawcy tożsamości. Preferuj URL metadanych IdP; w przeciwnym razie wpisz adres logowania, Entity ID i certyfikat X.509.
+
+Przed włączeniem uruchom test konfiguracji i logowania. Zachowaj otwartą sesję administratora zalogowanego hasłem i nie wyłączaj metody awaryjnej, dopóki drugi administrator nie zaloguje się pomyślnie.

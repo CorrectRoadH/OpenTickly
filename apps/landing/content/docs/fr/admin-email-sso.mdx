@@ -1,0 +1,18 @@
+---
+title: Configurer l'e-mail SMTP et le SAML SSO
+description: Configurez l'envoi SMTP, la vérification, les invitations, la réinitialisation de mot de passe et le SAML 2.0 SSO d'OpenTickly.
+---
+
+Commencez par définir l'**URL du site** publique dans **Administration de l'instance → Configuration**. Les liens d'e-mail et les URL du Service Provider SAML en dépendent.
+
+## SMTP
+
+Dans **E-mail / SMTP**, renseignez le nom et l'adresse d'expéditeur, l'hôte, le port, l'utilisateur et le mot de passe. Le port 465 utilise TLS implicite ; les autres ports passent à STARTTLS lorsque le serveur le propose.
+
+Enregistrez puis envoyez un e-mail de test. SMTP est requis pour les invitations, la réinitialisation du mot de passe et la vérification de l'adresse. N'activez cette dernière qu'après réception du test.
+
+## SAML SSO
+
+Dans **Paramètres de l'espace → Authentification unique**, définissez un nom et un domaine. Copiez l'Entity ID, l'ACS URL, l'URL de connexion et la Metadata URL vers l'IdP. Préférez les métadonnées IdP ; sinon, saisissez l'URL de connexion, l'Entity ID et le certificat X.509.
+
+Exécutez **Tester la configuration** puis **Tester la connexion** avant d'activer le SSO. Gardez une session administrateur par mot de passe ouverte et conservez une méthode de secours jusqu'à la réussite d'un second administrateur.
