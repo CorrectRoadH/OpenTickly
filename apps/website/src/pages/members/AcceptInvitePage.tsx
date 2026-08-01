@@ -1,13 +1,16 @@
-import { AppPanel } from "@opentickly/web-ui";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { type FormEvent, type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { PublicMainPanelFrame } from "../../app/PublicMainPanelFrame.tsx";
+import { PublicStatusPage } from "../../app/PublicStatusPage.tsx";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import type { WorkspaceInviteInfo } from "../../shared/api/generated/web/types.gen.ts";
 import {
   useAcceptWorkspaceInviteMutation,
   useAcceptWorkspaceInviteSignupMutation,
+  useLogoutMutation,
   useSessionBootstrapQuery,
   useWorkspaceInviteQuery,
 } from "../../shared/query/web-shell.ts";
@@ -42,10 +45,7 @@ function AcceptInviteFlow({ token }: { token: string }): ReactElement {
         heading={notFound ? t("acceptInviteNotFound") : t("acceptInviteUnavailable")}
         tone="error"
       >
-        <Link
-          className="inline-block rounded-2xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-emerald-600 hover:text-emerald-800"
-          to="/login"
-        >
+        <Link className={primaryLinkClassName} to="/login">
           {t("acceptInviteGoToLogin")}
         </Link>
       </InviteStatusPanel>
@@ -57,7 +57,7 @@ function AcceptInviteFlow({ token }: { token: string }): ReactElement {
   if (invite.status === "expired") {
     return (
       <InviteStatusPanel heading={t("acceptInviteExpired")} tone="error">
-        <p className="text-sm leading-6 text-slate-600">
+        <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
           {t("acceptInviteExpiredHint", { inviter: invite.inviter_name })}
         </p>
       </InviteStatusPanel>
@@ -66,11 +66,8 @@ function AcceptInviteFlow({ token }: { token: string }): ReactElement {
 
   if (invite.status === "consumed") {
     return (
-      <InviteStatusPanel heading={t("acceptInviteConsumed")}>
-        <Link
-          className="inline-block rounded-2xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-emerald-600 hover:text-emerald-800"
-          to="/login"
-        >
+      <InviteStatusPanel heading={t("acceptInviteConsumed")} tone="success">
+        <Link className={primaryLinkClassName} to="/login">
           {t("acceptInviteGoToLogin")}
         </Link>
       </InviteStatusPanel>
@@ -93,14 +90,10 @@ function AcceptInviteFlow({ token }: { token: string }): ReactElement {
 
   if (loggedIn && !matches) {
     return (
-      <InviteStatusPanel heading={t("acceptInviteWrongAccount")} tone="error">
-        <p className="text-sm leading-6 text-slate-600">
-          {t("acceptInviteWrongAccountHint", {
-            sessionEmail: sessionQuery.data?.user?.email ?? "",
-            inviteEmail: invite.email,
-          })}
-        </p>
-      </InviteStatusPanel>
+      <WrongAccountStatus
+        inviteEmail={invite.email}
+        sessionEmail={sessionQuery.data?.user?.email ?? ""}
+      />
     );
   }
 
@@ -147,7 +140,7 @@ function AutoAcceptFlow({
   if (errorMessage) {
     return (
       <InviteStatusPanel heading={t("acceptInviteFailed")} tone="error">
-        <p className="text-sm leading-6 text-slate-600">{errorMessage}</p>
+        <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{errorMessage}</p>
       </InviteStatusPanel>
     );
   }
@@ -168,42 +161,32 @@ function InviteAuthChoice({
   const [mode, setMode] = useState<"signup" | "login">("signup");
 
   return (
-    <main className="min-h-screen px-4 py-8">
-      <AppPanel className="mx-auto max-w-2xl" tone="light">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-              {t("acceptInviteEyebrow")}
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              {t("acceptInviteHeading", { workspace: invite.workspace_name })}
-            </h1>
-            <p className="text-sm leading-6 text-slate-600">
-              {t("acceptInviteBlurb", {
-                inviter: invite.inviter_name || t("acceptInviteUnknownInviter"),
-                organization: invite.organization_name,
-                email: invite.email,
-              })}
-            </p>
-          </div>
-
-          <div className="flex gap-2 border-b border-slate-200">
-            <TabButton active={mode === "signup"} onClick={() => setMode("signup")}>
-              {t("acceptInviteCreateAccount")}
-            </TabButton>
-            <TabButton active={mode === "login"} onClick={() => setMode("login")}>
-              {t("acceptInviteHaveAccount")}
-            </TabButton>
-          </div>
-
-          {mode === "signup" ? (
-            <InviteSignupForm invite={invite} token={token} />
-          ) : (
-            <InviteLoginHint email={invite.email} token={token} />
-          )}
+    <PublicMainPanelFrame
+      badge={t("acceptInviteEyebrow")}
+      description={t("acceptInviteBlurb", {
+        inviter: invite.inviter_name || t("acceptInviteUnknownInviter"),
+        organization: invite.organization_name,
+        email: invite.email,
+      })}
+      title={t("acceptInviteHeading", { workspace: invite.workspace_name })}
+    >
+      <div className="space-y-6">
+        <div className="flex gap-2 border-b border-[var(--track-border)]">
+          <TabButton active={mode === "signup"} onClick={() => setMode("signup")}>
+            {t("acceptInviteCreateAccount")}
+          </TabButton>
+          <TabButton active={mode === "login"} onClick={() => setMode("login")}>
+            {t("acceptInviteHaveAccount")}
+          </TabButton>
         </div>
-      </AppPanel>
-    </main>
+
+        {mode === "signup" ? (
+          <InviteSignupForm invite={invite} token={token} />
+        ) : (
+          <InviteLoginHint email={invite.email} token={token} />
+        )}
+      </div>
+    </PublicMainPanelFrame>
   );
 }
 
@@ -281,18 +264,14 @@ function InviteSignupForm({
 
       {errorMessage ? (
         <p
-          className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm leading-5 text-rose-700"
+          className="rounded-[6px] border border-[var(--track-state-error-border)] bg-[var(--track-danger-tint)] px-3 py-2 text-[14px] leading-5 text-[var(--track-state-error-text)]"
           role="alert"
         >
           {errorMessage}
         </p>
       ) : null}
 
-      <button
-        className="w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={!canSubmit}
-        type="submit"
-      >
+      <button className={primaryButtonClassName} disabled={!canSubmit} type="submit">
         {signupMutation.isPending ? t("acceptInviteSubmitting") : t("acceptInviteCreateAndJoin")}
       </button>
     </form>
@@ -303,12 +282,13 @@ function InviteLoginHint({ email }: { email: string; token: string }): ReactElem
   const { t } = useTranslation("members");
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-6 text-slate-600">{t("acceptInviteLoginHint", { email })}</p>
-      <p className="text-xs leading-5 text-slate-500">{t("acceptInviteLoginReopenHint")}</p>
-      <Link
-        className="inline-block rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-600"
-        to="/login"
-      >
+      <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
+        {t("acceptInviteLoginHint", { email })}
+      </p>
+      <p className="text-[12px] leading-5 text-[var(--track-text-soft)]">
+        {t("acceptInviteLoginReopenHint")}
+      </p>
+      <Link className={primaryLinkClassName} to="/login">
         {t("acceptInviteGoToLogin")}
       </Link>
     </div>
@@ -322,25 +302,67 @@ function InviteStatusPanel({
 }: {
   children?: ReactElement | ReactElement[];
   heading: string;
-  tone?: "error";
+  tone?: "error" | "success";
 }): ReactElement {
   const { t } = useTranslation("members");
-  const eyebrowClass =
-    tone === "error"
-      ? "text-xs font-semibold uppercase tracking-[0.24em] text-rose-700"
-      : "text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700";
   return (
-    <main className="min-h-screen px-4 py-8">
-      <AppPanel className="mx-auto max-w-2xl" tone="light">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className={eyebrowClass}>{t("acceptInviteEyebrow")}</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{heading}</h1>
-          </div>
-          {children}
+    <PublicStatusPage
+      badge={t("acceptInviteEyebrow")}
+      icon={tone === "error" ? CircleAlert : tone === "success" ? CircleCheck : LoaderCircle}
+      title={heading}
+      tone={tone ?? "neutral"}
+    >
+      {children}
+    </PublicStatusPage>
+  );
+}
+
+function WrongAccountStatus({
+  inviteEmail,
+  sessionEmail,
+}: {
+  inviteEmail: string;
+  sessionEmail: string;
+}): ReactElement {
+  const { t } = useTranslation("members");
+  const { t: tAppShell } = useTranslation("appShell");
+  const logoutMutation = useLogoutMutation();
+
+  async function handleLogout(): Promise<void> {
+    try {
+      await logoutMutation.mutateAsync();
+      window.location.reload();
+    } catch {
+      // The mutation state renders the localized recovery message below the action.
+    }
+  }
+
+  return (
+    <PublicStatusPage
+      badge={t("acceptInviteEyebrow")}
+      description={t("acceptInviteWrongAccountHint", { inviteEmail, sessionEmail })}
+      icon={CircleAlert}
+      title={t("acceptInviteWrongAccount")}
+      tone="error"
+    >
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            className={primaryButtonClassName}
+            disabled={logoutMutation.isPending}
+            onClick={() => void handleLogout()}
+            type="button"
+          >
+            {tAppShell("logOut")}
+          </button>
         </div>
-      </AppPanel>
-    </main>
+        {logoutMutation.isError ? (
+          <p className="text-[14px] text-[var(--track-state-error-text)]" role="alert">
+            {t("acceptInviteUnavailable")}
+          </p>
+        ) : null}
+      </div>
+    </PublicStatusPage>
   );
 }
 
@@ -357,8 +379,8 @@ function TabButton({
     <button
       className={
         active
-          ? "border-b-2 border-emerald-700 px-3 py-2 text-sm font-medium text-slate-950"
-          : "border-b-2 border-transparent px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-800"
+          ? "border-b-2 border-[var(--track-accent)] px-3 py-2 text-[14px] font-semibold text-[var(--track-text)]"
+          : "border-b-2 border-transparent px-3 py-2 text-[14px] font-medium text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
       }
       onClick={onClick}
       type="button"
@@ -371,7 +393,7 @@ function TabButton({
 function Field({ children, label }: { children: ReactElement; label: string }): ReactElement {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-600">
+      <span className="text-[11px] font-semibold uppercase text-[var(--track-text-muted)]">
         {label}
       </span>
       {children}
@@ -410,8 +432,11 @@ function resolveBrowserTimezone(): string | undefined {
 }
 
 const fieldClassName =
-  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600";
+  "h-9 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-[var(--track-text)] outline-none transition focus:border-[var(--track-accent)]";
 const lockedFieldClassName =
-  "h-10 w-full rounded-md border border-slate-200 bg-slate-100 px-3 text-sm text-slate-500 outline-none";
+  "h-9 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-canvas)] px-3 text-[14px] text-[var(--track-text-muted)] outline-none";
+const primaryButtonClassName =
+  "inline-flex h-9 items-center justify-center rounded-[6px] border border-[var(--track-accent)] bg-[var(--track-accent)] px-4 text-[14px] font-semibold text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] transition hover:bg-[var(--track-accent-fill-hover)] disabled:cursor-not-allowed disabled:opacity-50";
+const primaryLinkClassName = primaryButtonClassName;
 
 export default AcceptInvitePage;

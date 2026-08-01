@@ -4,6 +4,7 @@ type PublicMainPanelFrameProps = {
   badge: string;
   children: ReactNode;
   description?: string;
+  headerGraphic?: ReactNode;
   title: string;
 };
 
@@ -11,6 +12,7 @@ export function PublicMainPanelFrame({
   badge,
   children,
   description,
+  headerGraphic,
   title,
 }: PublicMainPanelFrameProps): ReactElement {
   return (
@@ -42,6 +44,7 @@ export function PublicMainPanelFrame({
 
           <section className="w-full max-w-[440px] rounded-[18px] border-2 border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-depth-shadow-rest)]">
             <div className="mb-6 space-y-2">
+              {headerGraphic ? <div className="mb-5">{headerGraphic}</div> : null}
               <p className="text-[11px] font-semibold uppercase text-[var(--track-text-muted)]">
                 {badge}
               </p>
