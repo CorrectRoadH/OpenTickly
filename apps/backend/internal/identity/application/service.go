@@ -295,105 +295,6 @@ func (service *Service) DeletePushService(ctx context.Context, userID int64, tok
 	return service.pushServices.Delete(ctx, userID, pushToken)
 }
 
-func (service *Service) Register(ctx context.Context, input RegisterInput) (RegisterResult, error) {
-	service.logger.InfoContext(ctx, "registering user",
-		"email", input.Email,
-	)
-	if service.registrationGuard != nil {
-		if err := service.registrationGuard.CanRegister(ctx); err != nil {
-			service.logger.WarnContext(ctx, "registration denied",
-				"email", input.Email,
-				"error", err.Error(),
-			)
-			return RegisterResult{}, err
-		}
-	}
-
-	needsVerification := service.emailVerifier != nil && service.emailVerifier.IsVerificationRequired(ctx)
-	if input.EmailAlreadyVerified {
-		needsVerification = false
-	}
-
-	userID, err := service.ids.NextUserID()
-	if err != nil {
-		service.logger.ErrorContext(ctx, "failed to generate user ID",
-			"error", err.Error(),
-		)
-		return RegisterResult{}, err
-	}
-	apiToken, err := service.ids.NextAPIToken()
-	if err != nil {
-		service.logger.ErrorContext(ctx, "failed to generate API token",
-			"error", err.Error(),
-		)
-		return RegisterResult{}, err
-	}
-
-	user, err := domain.RegisterUser(domain.RegisterParams{
-		ID:                  userID,
-		Email:               input.Email,
-		FullName:            input.FullName,
-		Password:            input.Password,
-		APIToken:            apiToken,
-		Timezone:            input.Timezone,
-		PendingVerification: needsVerification,
-	})
-	if err != nil {
-		service.logger.WarnContext(ctx, "invalid registration data",
-			"email", input.Email,
-			"error", err.Error(),
-		)
-		return RegisterResult{}, err
-	}
-
-	if err := service.users.Save(ctx, user); err != nil {
-		service.logger.ErrorContext(ctx, "failed to save user",
-			"user_id", userID,
-			"error", err.Error(),
-		)
-		return RegisterResult{}, err
-	}
-
-	if needsVerification {
-		tokenStr, err := service.ids.NextAPIToken()
-		if err != nil {
-			return RegisterResult{}, err
-		}
-		vToken := VerificationToken{
-			UserID:    userID,
-			Token:     tokenStr,
-			ExpiresAt: time.Now().Add(24 * time.Hour),
-		}
-		if err := service.verificationTokens.Save(ctx, vToken); err != nil {
-			return RegisterResult{}, err
-		}
-		if err := service.emailVerifier.SendVerificationEmail(ctx, user.Email(), tokenStr); err != nil {
-			service.logger.ErrorContext(ctx, "failed to send verification email",
-				"user_id", userID,
-				"error", err.Error(),
-			)
-			return RegisterResult{}, err
-		}
-		service.logger.InfoContext(ctx, "user registered, verification email sent",
-			"user_id", userID,
-		)
-		return RegisterResult{
-			VerificationRequired: true,
-			Email:                user.Email(),
-		}, nil
-	}
-
-	session, err := service.issueSession(ctx, user)
-	if err != nil {
-		return RegisterResult{}, err
-	}
-	service.logger.InfoContext(ctx, "user registered",
-		"user_id", userID,
-		"session_id", session.SessionID,
-	)
-	return RegisterResult{Session: &session}, nil
-}
-
 func (service *Service) VerifyEmail(ctx context.Context, token string) (AuthenticatedSession, error) {
 	service.logger.InfoContext(ctx, "verifying email", "token_prefix", token[:min(8, len(token))])
 
@@ -938,7 +839,7 @@ func (service *Service) ResendVerificationEmail(ctx context.Context, email strin
 	fresh := VerificationToken{
 		UserID:    user.ID(),
 		Token:     tokenStr,
-		ExpiresAt: now.Add(24 * time.Hour),
+		ExpiresAt: now.Add(verificationTokenTTL),
 		CreatedAt: now,
 	}
 	if err := service.verificationTokens.Save(ctx, fresh); err != nil {
