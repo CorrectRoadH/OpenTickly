@@ -17,3 +17,16 @@
   border-radius: 8px;
   background: var(--track-panel);
 }
+
+.toggl-cli-glow {
+  position: absolute;
+  top: -220px;
+  left: 50%;
+  width: 760px;
+  height: 520px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--track-accent-soft) 0%, transparent 68%);
+  opacity: 0.85;
+  pointer-events: none;
+}

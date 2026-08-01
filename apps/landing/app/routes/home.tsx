@@ -24,6 +24,28 @@ import {
   resolveSiteUrl,
 } from "@/lib/seo";
 import { appendSlot, appendUtm } from "@/lib/utm";
+import type { Route } from "./+types/home";
+
+export const links: Route.LinksFunction = () => [
+  {
+    rel: "preload",
+    as: "image",
+    href: "/hero/opentickly-overview-960.webp",
+    media: "(max-width: 768px)",
+    imageSrcSet: "/hero/opentickly-overview-640.webp 640w, /hero/opentickly-overview-960.webp 960w",
+    imageSizes: "calc(100vw - 32px)",
+    fetchPriority: "high",
+  },
+  {
+    rel: "preload",
+    as: "image",
+    href: "/hero/opentickly-overview-1280.webp",
+    media: "(min-width: 769px)",
+    imageSrcSet: "/hero/opentickly-overview-1280.webp 1280w",
+    imageSizes: "896px",
+    fetchPriority: "high",
+  },
+];
 
 const featureIcons = [RefreshCw, Server, Unlock];
 const proofIcons = [Play, GithubIcon, FileText];

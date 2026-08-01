@@ -2,6 +2,7 @@ import { index, route, type RouteConfig } from "@react-router/dev/routes";
 
 export default [
   index("routes/home.tsx"),
+  route("toggl-cli", "routes/toggl-cli.tsx"),
   route(":lang", "routes/home.tsx", { id: "home-i18n" }),
   route("docs/*", "routes/docs.tsx", { id: "docs-default" }),
   route(":lang/docs/*", "routes/docs.tsx", { id: "docs-i18n" }),

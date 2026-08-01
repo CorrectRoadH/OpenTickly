@@ -10,6 +10,7 @@ import {
 import { i18n } from "@/lib/i18n";
 
 type SeoProps = {
+  alternates?: boolean;
   description?: string;
   imagePath?: string;
   imageAlt?: string;
@@ -87,6 +88,7 @@ function buildHreflangEntries(pathname: string, currentLocale: string, siteUrl: 
 }
 
 export default function Seo({
+  alternates = true,
   description = defaultDescription,
   imagePath = defaultOgImagePath,
   imageAlt,
@@ -101,7 +103,7 @@ export default function Seo({
   const canonicalUrl = buildCanonicalUrl(pathname, siteUrl);
   const imageUrl = buildCanonicalUrl(imagePath, siteUrl);
   const pageTitle = buildPageTitle(title);
-  const hreflangEntries = buildHreflangEntries(pathname, locale, siteUrl);
+  const hreflangEntries = alternates ? buildHreflangEntries(pathname, locale, siteUrl) : [];
   const resolvedImageAlt = imageAlt ?? resolveOgImageAlt(locale);
 
   return (

@@ -21,6 +21,12 @@ async function getSitemapEntries(): Promise<SitemapEntry[]> {
       changeFrequency: "weekly",
       priority: 1,
     },
+    {
+      pathname: "/toggl-cli",
+      lastModified: await getLastModified("app/routes/toggl-cli.tsx"),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
   ];
 
   for (const lang of i18n.languages) {
