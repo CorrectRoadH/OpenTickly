@@ -19,6 +19,9 @@ type authPreconditionBody struct {
 }
 
 func (handlers *routeHandlers) requestPasswordReset(ctx echo.Context) error {
+	if err := handlers.authEmailLimiter.allow(ctx); err != nil {
+		return err
+	}
 	var request webapi.ForgotPasswordRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -52,6 +55,9 @@ func (handlers *routeHandlers) resetPassword(ctx echo.Context) error {
 }
 
 func (handlers *routeHandlers) resendVerificationEmail(ctx echo.Context) error {
+	if err := handlers.authEmailLimiter.allow(ctx); err != nil {
+		return err
+	}
 	var request webapi.ResendVerificationEmailRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")

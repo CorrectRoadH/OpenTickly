@@ -76,6 +76,9 @@ type routeHandlers struct {
 	samlManager     *identitysaml.Manager
 	samlConfig      *samlConfigStore
 	siteURL         *siteURLReaderFromDB
+	// authEmailLimiter caps the unauthenticated endpoints that mail a
+	// caller-supplied address.
+	authEmailLimiter *authEmailRateLimiter
 }
 
 func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
@@ -210,29 +213,30 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, siteURLReader)
 
 	return &routeHandlers{
-		pool:            pool,
-		platformHandles: platformHandles,
-		fileStore:       filespostgres.NewStore(pool),
-		catalogApp:      catalogService,
-		identity:        identityHandler,
-		identityApp:     identityService,
-		identityAPI:     identitypublicapi.NewHandler(identityService),
-		membershipApp:   membershipService,
-		importingApp:    importingService,
-		trackingApp:     trackingService,
-		reportsApp:      reportsService,
-		governanceApp:   governanceService,
-		webhooksApp:     webhooksService,
-		userHomes:       userHomes,
-		tenant:          tenantHandler,
-		tenantApp:       tenantService,
-		billingApp:      billingService,
-		invoiceApp:      invoiceService,
-		referenceApp:    referenceService,
-		telemetryPinger: telemetryPinger,
-		samlManager:     identitysaml.NewManager(),
-		samlConfig:      &samlConfigStore{pool: pool},
-		siteURL:         siteURLReader,
+		pool:             pool,
+		platformHandles:  platformHandles,
+		fileStore:        filespostgres.NewStore(pool),
+		catalogApp:       catalogService,
+		identity:         identityHandler,
+		identityApp:      identityService,
+		identityAPI:      identitypublicapi.NewHandler(identityService),
+		membershipApp:    membershipService,
+		importingApp:     importingService,
+		trackingApp:      trackingService,
+		reportsApp:       reportsService,
+		governanceApp:    governanceService,
+		webhooksApp:      webhooksService,
+		userHomes:        userHomes,
+		tenant:           tenantHandler,
+		tenantApp:        tenantService,
+		billingApp:       billingService,
+		invoiceApp:       invoiceService,
+		referenceApp:     referenceService,
+		telemetryPinger:  telemetryPinger,
+		samlManager:      identitysaml.NewManager(),
+		samlConfig:       &samlConfigStore{pool: pool},
+		siteURL:          siteURLReader,
+		authEmailLimiter: newAuthEmailRateLimiter(),
 	}, nil
 }
 

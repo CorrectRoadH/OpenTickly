@@ -137,6 +137,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too many email requests from this client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthPreconditionError"
+                }
+              }
+            }
           }
         }
       }
@@ -161,6 +171,16 @@
           },
           "422": {
             "description": "Instance email configuration is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthPreconditionError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many email requests from this client",
             "content": {
               "application/json": {
                 "schema": {
