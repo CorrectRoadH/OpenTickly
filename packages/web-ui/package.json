@@ -25,8 +25,8 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.0",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
