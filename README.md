@@ -31,7 +31,7 @@ Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synolo
 
 [Read the self-hosting docs](https://opentoggl.com/docs/self-hosting)
 
-[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/0272TO)
 
 ### Unraid Community Apps
 

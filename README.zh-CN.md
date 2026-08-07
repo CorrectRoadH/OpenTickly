@@ -30,7 +30,7 @@ OpenTickly 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-c
 
 [阅读自部署文档](https://opentoggl.com/zh/docs/self-hosting)
 
-[![在 Zeabur 部署](https://zeabur.com/button.svg)](https://zeabur.com/templates/4RM6JX?referralCode=CorrectRoadH)
+[![在 Zeabur 部署](https://zeabur.com/button.svg)](https://zeabur.com/templates/0272TO)
 
 ## 手机端 PWA 支持
 
