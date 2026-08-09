@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { AppDisplayProvider } from "./AppDisplayProvider.tsx";
 import { type AppRouter } from "./create-app-router.tsx";
 import "./i18n.ts";
+import { useTheme } from "./theme-context.tsx";
 
 type AppProvidersProps = {
   queryClient: QueryClient;
@@ -17,8 +18,13 @@ export function AppProviders({ queryClient, router }: AppProvidersProps): ReactE
     <AppDisplayProvider>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster position="bottom-right" richColors theme="dark" />
+        <AppToaster />
       </QueryClientProvider>
     </AppDisplayProvider>
   );
+}
+
+function AppToaster(): ReactElement {
+  const { resolvedTheme } = useTheme();
+  return <Toaster position="bottom-right" richColors theme={resolvedTheme} />;
 }

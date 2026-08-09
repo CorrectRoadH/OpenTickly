@@ -6,6 +6,10 @@
   "profileSettings": "Paramètres du profil",
   "accountSettings": "Paramètres du compte",
   "keyboardShortcuts": "Raccourcis clavier",
+  "appearance": "Apparence",
+  "themeSystem": "Système",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
   "logOut": "Se déconnecter",
   "sessionReady": "Session prête"
 }

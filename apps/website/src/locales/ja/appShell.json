@@ -6,6 +6,10 @@
   "profileSettings": "プロフィール設定",
   "accountSettings": "アカウント設定",
   "keyboardShortcuts": "キーボードショートカット",
+  "appearance": "外観",
+  "themeSystem": "システム",
+  "themeLight": "ライト",
+  "themeDark": "ダーク",
   "logOut": "ログアウト",
   "sessionReady": "セッション準備完了"
 }

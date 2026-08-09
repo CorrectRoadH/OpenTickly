@@ -13,6 +13,33 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Legacy `text-white` utilities predate semantic theme tokens. In light mode,
+   treat them as primary text unless the element is explicitly contrast text. */
+[data-theme="light"] .text-white:not([data-theme-contrast]) {
+  color: var(--track-text);
+}
+
+[data-theme="light"] .hover\:text-white:not([data-theme-contrast]):hover {
+  color: var(--track-text);
+}
+
+[data-theme-contrast] {
+  color: #ffffff;
+}
+
+[data-theme="light"] [data-theme-contrast] .text-white {
+  color: #ffffff;
+}
+
+[data-theme="light"] [class*="bg-rose-"].text-white,
+[data-theme="light"] [class*="bg-red-"].text-white,
+[data-theme="light"] [class*="bg-emerald-"].text-white,
+[data-theme="light"] [class*="bg-amber-"].text-white,
+[data-theme="light"] [class*="bg-[var(--track-accent-strong)]"].text-white,
+[data-theme="light"] [class*="bg-[var(--track-tooltip-surface)]"].text-white {
+  color: #ffffff;
+}
+
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;

@@ -6,6 +6,7 @@ import { LiveDuration } from "../features/tracking/LiveDuration.tsx";
 import { Dropdown, MenuSeparator, useDropdownClose } from "@opentickly/web-ui";
 
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
+import { ThemePreferenceControl } from "./ThemePreferenceControl.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ChevronRightIcon, MenuIcon } from "../shared/ui/icons.tsx";
@@ -178,7 +179,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
       {/* Desktop sidebar -- fixed, stays in place during window scroll */}
       <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[5px_0_0_0_var(--track-depth-border)] lg:flex">
-        <div className="flex w-[47px] flex-col items-center justify-between border-r-2 border-[var(--track-border)] bg-black py-2">
+        <div className="flex w-[47px] flex-col items-center justify-between border-r-2 border-[var(--track-border)] bg-[var(--track-black)] py-2">
           <BrandRailMark />
           <div className="space-y-1">
             <ProfileMenuButton
@@ -330,6 +331,10 @@ function ProfileMenuContent({
 
       <MenuSeparator />
 
+      <ThemePreferenceControl />
+
+      <MenuSeparator />
+
       <div className="py-1">
         <ProfileMenuAction
           destructive
@@ -388,7 +393,7 @@ function BrandRailMark(): ReactElement {
       >
         <rect fill="#e05d26" height="32" rx="8" width="32" />
         <text
-          fill="white"
+          fill="var(--track-button-text)"
           fontFamily="Arial, sans-serif"
           fontSize="20"
           fontWeight="bold"

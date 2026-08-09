@@ -6,6 +6,10 @@
   "profileSettings": "Profile settings",
   "accountSettings": "Account settings",
   "keyboardShortcuts": "Keyboard shortcuts",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
   "logOut": "Log out",
   "sessionReady": "Session ready"
 }

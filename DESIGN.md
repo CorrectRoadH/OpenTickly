@@ -12,7 +12,9 @@ This document is intentionally opinionated. If current code differs, the code sh
 
 ## 1. Core Visual Direction
 
-OpenTickly workspace UI uses a dense dark enterprise UI:
+OpenTickly workspace UI uses a dense enterprise UI with dark and light appearances.
+Dark remains the visual reference palette; light mode maps the same semantic roles
+to accessible light surfaces without changing layout, density, typography, or accent hierarchy.
 
 - Black-first workspace chrome
 - Charcoal content surfaces
@@ -21,7 +23,15 @@ OpenTickly workspace UI uses a dense dark enterprise UI:
 - Magenta/pink accent for active state and interactive emphasis
 - Tight, compact typography rather than oversized dashboard marketing styling
 
-The product should feel like Toggl Track's operational workspace, not a separate dark theme experiment.
+The product should feel like Toggl Track's operational workspace, not a separate theme experiment.
+
+### Appearance behavior
+
+- The user can choose system, light, or dark appearance from the profile menu.
+- System follows `prefers-color-scheme` and responds to operating-system changes.
+- Appearance is device-local and applies before the React app renders to avoid a theme flash.
+- Both appearances consume the same semantic token names. Components must not branch on theme.
+- Browser chrome, BaseUI components, overlays, and toast notifications follow the resolved appearance.
 
 ## 2. Color Roles
 
@@ -688,6 +698,7 @@ Rules:
 - Shell-facing code must not introduce raw hex values for workspace neutrals, workspace accent roles, overlays, inputs, or chart chrome when a semantic token exists or should exist.
 - Raw hex is only acceptable for user-authored content colors, imported third-party brand marks, or decorative illustration art that is not part of the reusable workspace theme.
 - `packages/web-ui/src/theme.ts` must cover the same semantic families as the CSS tokens: surface, text, border, accent, disabled, input, overlay, and status feedback.
+- Theme-specific values belong in the centralized dark and light token sets, never in page components.
 
 ## 11. Theme Coverage Requirements
 

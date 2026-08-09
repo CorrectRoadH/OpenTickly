@@ -160,6 +160,7 @@ export function MobileCalendarDayTimeline({
                   key={key}
                   aria-label={t("editTimeEntry", { description })}
                   className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5 text-left"
+                  data-theme-contrast
                   onClick={() => onEntryTap?.(entry)}
                   type="button"
                   style={{

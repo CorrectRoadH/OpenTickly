@@ -6,6 +6,10 @@
   "profileSettings": "Configurações do perfil",
   "accountSettings": "Configurações da conta",
   "keyboardShortcuts": "Atalhos de teclado",
+  "appearance": "Aparência",
+  "themeSystem": "Sistema",
+  "themeLight": "Claro",
+  "themeDark": "Escuro",
   "logOut": "Sair",
   "sessionReady": "Sessão pronta"
 }

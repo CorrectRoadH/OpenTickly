@@ -6,6 +6,10 @@
   "profileSettings": "个人资料设置",
   "accountSettings": "账户设置",
   "keyboardShortcuts": "键盘快捷键",
+  "appearance": "外观",
+  "themeSystem": "系统",
+  "themeLight": "浅色",
+  "themeDark": "深色",
   "logOut": "退出登录",
   "sessionReady": "会话就绪"
 }

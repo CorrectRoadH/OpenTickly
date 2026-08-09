@@ -28,7 +28,7 @@ export function PublicMainPanelFrame({
             >
               <rect fill="#e05d26" height="32" rx="8" width="32" />
               <text
-                fill="white"
+                fill="var(--track-button-text)"
                 fontFamily="Arial, sans-serif"
                 fontSize="20"
                 fontWeight="bold"
