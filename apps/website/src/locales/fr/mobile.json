@@ -18,6 +18,8 @@
   "current": "Actuel",
   "loggingOut": "Déconnexion…",
   "logOut": "Se déconnecter",
+  "logoutFailed": "Impossible de vous déconnecter. Vérifiez votre connexion et réessayez.",
+  "workspaceSwitchFailed": "Impossible de changer d’organisation. Votre espace de travail précédent reste sélectionné.",
   "cancelEditing": "Annuler la modification",
   "editEntry": "Modifier l'entrée",
   "saveChanges": "Enregistrer les modifications",

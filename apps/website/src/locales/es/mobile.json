@@ -18,6 +18,8 @@
   "current": "Actual",
   "loggingOut": "Cerrando sesión…",
   "logOut": "Cerrar sesión",
+  "logoutFailed": "No se pudo cerrar la sesión. Comprueba tu conexión e inténtalo de nuevo.",
+  "workspaceSwitchFailed": "No se pudo cambiar de organización. Tu espacio de trabajo anterior sigue seleccionado.",
   "cancelEditing": "Cancelar edición",
   "editEntry": "Editar entrada",
   "saveChanges": "Guardar cambios",

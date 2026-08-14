@@ -18,6 +18,8 @@
   "current": "Atual",
   "loggingOut": "Saindo…",
   "logOut": "Sair",
+  "logoutFailed": "Não foi possível sair. Verifique sua conexão e tente novamente.",
+  "workspaceSwitchFailed": "Não foi possível mudar de organização. O workspace anterior continua selecionado.",
   "cancelEditing": "Cancelar edição",
   "editEntry": "Editar Registro",
   "saveChanges": "Salvar alterações",

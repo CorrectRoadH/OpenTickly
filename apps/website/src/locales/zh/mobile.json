@@ -18,6 +18,8 @@
   "current": "当前",
   "loggingOut": "正在退出…",
   "logOut": "退出登录",
+  "logoutFailed": "无法退出登录。请检查网络连接后重试。",
+  "workspaceSwitchFailed": "无法切换组织，仍保留之前的工作区。",
   "cancelEditing": "取消编辑",
   "editEntry": "编辑条目",
   "saveChanges": "保存更改",

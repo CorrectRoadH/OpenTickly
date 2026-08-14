@@ -18,6 +18,8 @@
   "current": "Current",
   "loggingOut": "Logging out…",
   "logOut": "Log out",
+  "logoutFailed": "Could not log out. Check your connection and try again.",
+  "workspaceSwitchFailed": "Could not switch organizations. Your previous workspace is still selected.",
   "cancelEditing": "Cancel editing",
   "editEntry": "Edit Entry",
   "saveChanges": "Save changes",

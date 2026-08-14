@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 import { useLogoutMutation, useUpdateWebSessionMutation } from "../../shared/query/web-shell.ts";
@@ -27,6 +28,7 @@ export function MobileMePage(): ReactElement {
       .mutateAsync({ workspace_id: workspaceId })
       .catch(() => {
         setCurrentWorkspaceId(previousWorkspaceId);
+        toast.error(t("workspaceSwitchFailed"));
       })
       .finally(() => {
         setSwitchingOrgId(null);
@@ -34,9 +36,14 @@ export function MobileMePage(): ReactElement {
   }
 
   function handleLogout() {
-    void logoutMutation.mutateAsync().then(() => {
-      window.location.href = "/";
-    });
+    void logoutMutation
+      .mutateAsync()
+      .then(() => {
+        window.location.href = "/";
+      })
+      .catch(() => {
+        toast.error(t("logoutFailed"));
+      });
   }
 
   return (

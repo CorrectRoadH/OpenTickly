@@ -18,6 +18,8 @@
   "current": "Bieżąca",
   "loggingOut": "Wylogowywanie…",
   "logOut": "Wyloguj się",
+  "logoutFailed": "Nie udało się wylogować. Sprawdź połączenie i spróbuj ponownie.",
+  "workspaceSwitchFailed": "Nie udało się zmienić organizacji. Poprzednia przestrzeń robocza pozostaje wybrana.",
   "cancelEditing": "Anuluj edycję",
   "editEntry": "Edytuj wpis",
   "saveChanges": "Zapisz zmiany",

@@ -18,6 +18,8 @@
   "current": "현재",
   "loggingOut": "로그아웃 중…",
   "logOut": "로그아웃",
+  "logoutFailed": "로그아웃할 수 없습니다. 연결을 확인하고 다시 시도하세요.",
+  "workspaceSwitchFailed": "조직을 전환할 수 없습니다. 이전 작업 공간이 계속 선택되어 있습니다.",
   "cancelEditing": "편집 취소",
   "editEntry": "항목 편집",
   "saveChanges": "변경 사항 저장",
