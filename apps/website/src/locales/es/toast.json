@@ -46,6 +46,7 @@
   "failedToUpdateLanguage": "Error al actualizar el idioma",
   "timeEntrySaved": "Entrada de tiempo guardada",
   "failedToSaveTimeEntry": "Error al guardar la entrada de tiempo. Inténtalo de nuevo.",
+  "failedToDeleteTimeEntry": "Error al eliminar la entrada de tiempo. Inténtalo de nuevo.",
   "passwordResetComplete": "Contraseña actualizada. Inicia sesión con tu nueva contraseña.",
   "verificationEmailResent": "Correo de verificación enviado. Revisa tu bandeja de entrada."
 }

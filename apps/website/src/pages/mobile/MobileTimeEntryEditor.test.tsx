@@ -1,5 +1,6 @@
 /* @vitest-environment jsdom */
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -16,6 +17,10 @@ vi.mock("react-i18next", () => ({
     t: (key: string) => key,
   }),
   initReactI18next: { type: "3rdParty", init: () => undefined },
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: vi.fn() },
 }));
 
 vi.mock("../../app/i18n.ts", () => ({
@@ -116,5 +121,33 @@ describe("MobileTimeEntryEditor — modal closes instantly, mutation runs in bac
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(deleteMutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports an update failure after closing optimistically", async () => {
+    const updateMutateAsync = vi.fn().mockRejectedValue(new Error("update failed"));
+    mockUseUpdateTimeEntryMutation.mockReturnValue({
+      mutateAsync: updateMutateAsync,
+      isPending: false,
+    });
+    mockUseDeleteTimeEntryMutation.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+
+    render(<MobileTimeEntryEditor entry={entry} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "saveChanges" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("failedToSaveTimeEntry"));
+  });
+
+  it("reports a delete failure after closing optimistically", async () => {
+    const deleteMutateAsync = vi.fn().mockRejectedValue(new Error("delete failed"));
+    mockUseUpdateTimeEntryMutation.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+    mockUseDeleteTimeEntryMutation.mockReturnValue({
+      mutateAsync: deleteMutateAsync,
+      isPending: false,
+    });
+
+    render(<MobileTimeEntryEditor entry={entry} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "deleteThisTimeEntry" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("failedToDeleteTimeEntry"));
   });
 });

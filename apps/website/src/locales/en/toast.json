@@ -47,6 +47,7 @@
   "failedToUpdateLanguage": "Failed to update language",
   "timeEntrySaved": "Time entry saved",
   "failedToSaveTimeEntry": "Failed to save time entry. Try again.",
+  "failedToDeleteTimeEntry": "Failed to delete time entry. Try again.",
   "passwordResetComplete": "Password updated. Sign in with your new password.",
   "verificationEmailResent": "Verification email sent. Check your inbox."
 }

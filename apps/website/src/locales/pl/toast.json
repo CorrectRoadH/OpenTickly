@@ -46,6 +46,7 @@
   "failedToUpdateLanguage": "Nie udało się zaktualizować języka",
   "timeEntrySaved": "Wpis czasu zapisany",
   "failedToSaveTimeEntry": "Nie udało się zapisać wpisu czasu. Spróbuj ponownie.",
+  "failedToDeleteTimeEntry": "Nie udało się usunąć wpisu czasu. Spróbuj ponownie.",
   "passwordResetComplete": "Hasło zaktualizowane. Zaloguj się nowym hasłem.",
   "verificationEmailResent": "E-mail weryfikacyjny wysłany. Sprawdź skrzynkę odbiorczą."
 }

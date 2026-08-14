@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useState } from "react";
+import { toast } from "sonner";
 
 import { GoalItem } from "../../features/tracking/GoalsFavoritesSidebar.tsx";
 import { formatClockDuration, formatGroupLabel } from "../../features/tracking/overview-data.ts";
@@ -22,6 +23,7 @@ import { MobileTimeEntryRow } from "./MobileTimeEntryRow.tsx";
 
 export function MobileTimerPage(): ReactElement {
   const { t } = useTranslation("mobile");
+  const { t: toastT } = useTranslation("toast");
   const { workspaceId, timezone } = useWorkspaceData();
   const composer = useTimerComposer();
   const views = useTimeEntryViews({
@@ -39,15 +41,17 @@ export function MobileTimerPage(): ReactElement {
   const startMutation = useStartTimeEntryMutation(workspaceId);
 
   function handleStartFavorite(fav: ModelsFavorite) {
-    void startMutation.mutateAsync({
-      billable: fav.billable,
-      description: fav.description ?? "",
-      projectColor: fav.project_color ?? null,
-      projectId: fav.project_id ?? null,
-      projectName: fav.project_name ?? null,
-      start: new Date().toISOString(),
-      tagIds: fav.tag_ids ?? [],
-    });
+    void startMutation
+      .mutateAsync({
+        billable: fav.billable,
+        description: fav.description ?? "",
+        projectColor: fav.project_color ?? null,
+        projectId: fav.project_id ?? null,
+        projectName: fav.project_name ?? null,
+        start: new Date().toISOString(),
+        tagIds: fav.tag_ids ?? [],
+      })
+      .catch(() => toast.error(toastT("failedToSaveTimeEntry")));
   }
 
   return (

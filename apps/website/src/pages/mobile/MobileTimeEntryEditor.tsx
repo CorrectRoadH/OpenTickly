@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useState } from "react";
+import { toast } from "sonner";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -33,6 +34,7 @@ export function MobileTimeEntryEditor({
   entry,
   onClose,
 }: MobileTimeEntryEditorProps): ReactElement {
+  const { t: toastT } = useTranslation("toast");
   const { t } = useTranslation(["mobile", "tracking"]);
   const session = useSession();
   const { durationFormat } = useUserPreferences();
@@ -85,27 +87,31 @@ export function MobileTimeEntryEditor({
   function handleSave() {
     if (!entry.id) return;
     onClose();
-    void updateMutation.mutateAsync({
-      request: {
-        billable,
-        description: description.trim(),
-        projectColor: selectedProject?.color ?? null,
-        projectId,
-        projectName: selectedProject?.name ?? null,
-        start: startIso,
-        stop: stopIso,
-        tagIds,
-        taskId,
-      },
-      timeEntryId: entry.id,
-      workspaceId,
-    });
+    void updateMutation
+      .mutateAsync({
+        request: {
+          billable,
+          description: description.trim(),
+          projectColor: selectedProject?.color ?? null,
+          projectId,
+          projectName: selectedProject?.name ?? null,
+          start: startIso,
+          stop: stopIso,
+          tagIds,
+          taskId,
+        },
+        timeEntryId: entry.id,
+        workspaceId,
+      })
+      .catch(() => toast.error(toastT("failedToSaveTimeEntry")));
   }
 
   function handleDelete() {
     if (!entry.id) return;
     onClose();
-    void deleteMutation.mutateAsync({ timeEntryId: entry.id, workspaceId });
+    void deleteMutation
+      .mutateAsync({ timeEntryId: entry.id, workspaceId })
+      .catch(() => toast.error(toastT("failedToDeleteTimeEntry")));
   }
 
   const selectedProject = projects.find((p) => p.id === projectId) ?? null;
