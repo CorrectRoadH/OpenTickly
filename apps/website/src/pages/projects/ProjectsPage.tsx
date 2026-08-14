@@ -17,16 +17,7 @@ import {
   SelectDropdown,
 } from "@opentickly/web-ui";
 
-import {
-  ArchiveIcon,
-  CloseIcon,
-  EditIcon,
-  PinIcon,
-  PlusIcon,
-  ProjectsIcon,
-  SearchIcon,
-  TrashIcon,
-} from "../../shared/ui/icons.tsx";
+import { CloseIcon, PinIcon, PlusIcon, ProjectsIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
@@ -60,6 +51,7 @@ import {
 } from "./projects-page-helpers.ts";
 import { ProjectEditorDialogHost } from "./ProjectEditorDialogHost.tsx";
 import { type ProjectEditorMode } from "./ProjectEditorDialog.tsx";
+import { ProjectsBulkBar } from "./ProjectsBulkBar.tsx";
 import { openCreateProjectEditor, openEditProjectEditor } from "./project-editor-store.ts";
 import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
 import { useProjectFilters, type ProjectCategory } from "./useProjectFilters.ts";
@@ -409,59 +401,19 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
   const bulkBar =
     selectedIds.size > 0 ? (
-      <div className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5">
-        <span className="text-[14px] font-medium text-white">
-          {t("itemsSelected", { count: selectedIds.size })}
-        </span>
-        <span className="h-4 w-px bg-[var(--track-border)]" />
-        <AppButton
-          onClick={() => {
-            if (selectedIds.size === 1) {
-              const projectId = [...selectedIds][0];
-              const project = projects.find((p) => p.id === projectId);
-              if (project) openEditProjectEditor(project);
-            }
-          }}
-          size="sm"
-        >
-          <EditIcon className="size-3.5" />
-          <span>{t("edit")}</span>
-        </AppButton>
-        <AppButton
-          onClick={() => {
-            for (const id of selectedIds) {
-              void archiveProjectMutation.mutateAsync(id);
-            }
-            setSelectedIds(new Set());
-            setStatusMessage(t("archiveProjectsConfirm", { count: selectedIds.size }));
-          }}
-          size="sm"
-        >
-          <ArchiveIcon className="size-3.5" />
-          <span>{t("archive")}</span>
-        </AppButton>
-        <AppButton
-          onClick={() => {
-            if (!window.confirm(t("deleteProjectsConfirm", { count: selectedIds.size }))) return;
-            for (const id of selectedIds) {
-              void deleteProjectMutation.mutateAsync({ projectId: id, teDeletionMode: "unassign" });
-            }
-            setSelectedIds(new Set());
-            setStatusMessage(t("deleteProjectsConfirm", { count: selectedIds.size }));
-          }}
-          size="sm"
-        >
-          <TrashIcon className="size-3.5" />
-          <span>{t("delete")}</span>
-        </AppButton>
-        <IconButton
-          aria-label={t("clearSelection")}
-          onClick={() => setSelectedIds(new Set())}
-          size="sm"
-        >
-          <CloseIcon className="size-3.5" />
-        </IconButton>
-      </div>
+      <ProjectsBulkBar
+        onArchive={(projectId) => archiveProjectMutation.mutateAsync(projectId)}
+        onDelete={(projectId) =>
+          deleteProjectMutation.mutateAsync({ projectId, teDeletionMode: "unassign" })
+        }
+        onEditSingle={(projectId) => {
+          const project = projects.find((candidate) => candidate.id === projectId);
+          if (project) openEditProjectEditor(project);
+        }}
+        onSelectionChange={setSelectedIds}
+        onStatus={setStatusMessage}
+        selectedIds={selectedIds}
+      />
     ) : null;
 
   const summaryFooter =
