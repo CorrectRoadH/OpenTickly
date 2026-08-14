@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@opentickly/web-ui": "workspace:*",
-    "@orama/orama": "^3.1.18",
     "@react-router/node": "^8.3.0",
     "fumadocs-core": "16.14.0",
     "fumadocs-mdx": "15.2.2",
@@ -28,7 +27,6 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@orama/tokenizers": "^3.1.18",
     "@react-router/dev": "^8.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/mdx": "^2.0.14",

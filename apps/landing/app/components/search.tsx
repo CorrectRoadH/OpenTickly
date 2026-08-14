@@ -11,25 +11,12 @@ import {
   type SharedProps,
 } from "fumadocs-ui/components/dialog/search";
 import { useDocsSearch } from "fumadocs-core/search/client";
-import { create } from "@orama/orama";
-import { createTokenizer } from "@orama/tokenizers/mandarin";
 import { useI18n } from "fumadocs-ui/contexts/i18n";
-
-function initOrama(locale?: string) {
-  return create({
-    schema: { _: "string" },
-    components: {
-      tokenizer: locale === "zh" ? createTokenizer() : undefined,
-    },
-    ...(locale !== "zh" && { language: "english" }),
-  });
-}
 
 export default function DefaultSearchDialog(props: SharedProps) {
   const { locale } = useI18n();
   const { search, setSearch, query } = useDocsSearch({
     type: "static",
-    initOrama,
     locale,
   });
 
