@@ -24,6 +24,7 @@
   "noWorkspaces": "워크스페이스 없음",
   "archiveImportFailed": "아카이브 가져오기에 실패했습니다.",
   "archiveImportFailedWithMessage": "아카이브 가져오기에 실패했습니다: {{message}}",
+  "workspaceSwitchFailed": "아카이브를 가져왔지만 OpenTickly가 새 작업 공간으로 전환하지 못했습니다. 페이지를 새로고침하고 CSV 파일을 가져오기 전에 해당 작업 공간을 선택하세요.",
   "enterNewOrgName": "새 조직 이름을 입력하고 유효한 Toggl 내보내기 zip을 업로드하세요.",
   "archiveUploadFailed": "아카이브 가져오기 업로드에 실패했습니다. 원본 Toggl 내보내기 zip으로 다시 시도하세요.",
   "csvImportFailed": "시간 항목 가져오기에 실패했습니다.",

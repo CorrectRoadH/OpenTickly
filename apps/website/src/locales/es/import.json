@@ -24,6 +24,7 @@
   "noWorkspaces": "Sin espacios de trabajo",
   "archiveImportFailed": "Error en la importación del archivo.",
   "archiveImportFailedWithMessage": "Error en la importación del archivo: {{message}}",
+  "workspaceSwitchFailed": "El archivo se importó, pero OpenTickly no pudo cambiar al nuevo espacio de trabajo. Actualiza la página y selecciónalo antes de importar archivos CSV.",
   "enterNewOrgName": "Ingresa un nuevo nombre de organización y sube un archivo zip válido de exportación de Toggl.",
   "archiveUploadFailed": "Error en la subida de importación del archivo. Reintenta con el archivo zip original de exportación de Toggl.",
   "csvImportFailed": "Error en la importación de entradas de tiempo.",

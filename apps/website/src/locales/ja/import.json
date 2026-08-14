@@ -24,6 +24,7 @@
   "noWorkspaces": "ワークスペースなし",
   "archiveImportFailed": "アーカイブのインポートに失敗しました。",
   "archiveImportFailedWithMessage": "アーカイブのインポートに失敗しました：{{message}}",
+  "workspaceSwitchFailed": "アーカイブはインポートされましたが、OpenTickly は新しいワークスペースに切り替えられませんでした。ページを更新し、CSV ファイルをインポートする前にそのワークスペースを選択してください。",
   "enterNewOrgName": "新しい組織名を入力し、有効なTogglエクスポートzipをアップロードしてください。",
   "archiveUploadFailed": "アーカイブのインポートアップロードに失敗しました。元のTogglエクスポートzipで再試行してください。",
   "csvImportFailed": "タイムエントリのインポートに失敗しました。",

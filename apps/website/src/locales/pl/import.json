@@ -24,6 +24,7 @@
   "noWorkspaces": "Brak przestrzeni roboczych",
   "archiveImportFailed": "Import archiwum nie powiódł się.",
   "archiveImportFailedWithMessage": "Import archiwum nie powiódł się: {{message}}",
+  "workspaceSwitchFailed": "Archiwum zostało zaimportowane, ale OpenTickly nie mógł przełączyć się do nowej przestrzeni roboczej. Odśwież stronę i wybierz ją przed importem plików CSV.",
   "enterNewOrgName": "Wpisz nazwę nowej organizacji i prześlij poprawny plik zip eksportu Toggl.",
   "archiveUploadFailed": "Przesyłanie importu archiwum nie powiodło się. Spróbuj ponownie z oryginalnym plikiem zip eksportu Toggl.",
   "csvImportFailed": "Import wpisów czasu nie powiódł się.",

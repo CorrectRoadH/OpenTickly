@@ -24,6 +24,7 @@
   "noWorkspaces": "无工作区",
   "archiveImportFailed": "归档导入失败。",
   "archiveImportFailedWithMessage": "归档导入失败：{{message}}",
+  "workspaceSwitchFailed": "归档已导入，但 OpenTickly 无法切换到新工作区。请刷新页面并选择该工作区后再导入 CSV 文件。",
   "enterNewOrgName": "请输入新组织名称并上传有效的 Toggl 导出 zip。",
   "archiveUploadFailed": "归档上传失败。请使用原始 Toggl 导出 zip 重试。",
   "csvImportFailed": "时间条目导入失败。",

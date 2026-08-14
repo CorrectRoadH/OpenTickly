@@ -24,6 +24,7 @@
   "noWorkspaces": "No workspaces",
   "archiveImportFailed": "Archive import failed.",
   "archiveImportFailedWithMessage": "Archive import failed: {{message}}",
+  "workspaceSwitchFailed": "The archive was imported, but OpenTickly could not switch to the new workspace. Refresh the page and select it before importing CSV files.",
   "enterNewOrgName": "Enter a new organization name and upload a valid Toggl export zip.",
   "archiveUploadFailed": "Archive import upload failed. Retry with the original Toggl export zip.",
   "csvImportFailed": "Time entries import failed.",
