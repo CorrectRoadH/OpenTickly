@@ -13,12 +13,11 @@ import {
   DisplaySettingsPopover,
   readDisplaySettings,
 } from "../../features/tracking/DisplaySettingsPopover.tsx";
-import { GoalsFavoritesSidebar } from "../../features/tracking/GoalsFavoritesSidebar.tsx";
+import { ConnectedGoalsFavoritesSidebar } from "../../features/tracking/ConnectedGoalsFavoritesSidebar.tsx";
 import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcutsDialog.tsx";
 import { SelfContainedTimeEntryEditor } from "../../features/tracking/SelfContainedTimeEntryEditor.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { createPreferencesFormValues } from "../../shared/forms/profile-form.ts";
-import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import {
   formatDayLabel,
@@ -34,11 +33,8 @@ import {
 import { PanelRightIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 import {
   useCreateTimeEntryMutation,
-  useDeleteFavoriteMutation,
   useFavoritesQuery,
-  useGoalsQuery,
   useProjectsQuery,
-  useStartTimeEntryMutation,
   useTagsQuery,
   timeEntriesQueryKey,
 } from "../../shared/query/web-shell.ts";
@@ -306,7 +302,7 @@ export function WorkspaceTimerPage({
           {view === "timesheet" ? <ConnectedTimesheetView showAllEntries={showAllEntries} /> : null}
           <EditorPortal onDeleteWithUndo={showDeleteToast} />
         </div>
-        {sidebarOpen ? <ConnectedSidebar workspaceId={workspaceId} /> : null}
+        {sidebarOpen ? <ConnectedGoalsFavoritesSidebar workspaceId={workspaceId} /> : null}
       </div>
       {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
       {deleteToast ? (
@@ -544,42 +540,5 @@ function TimerDateShortcuts({
         );
       })}
     </>
-  );
-}
-
-/**
- * Self-contained sidebar — subscribes to favorites/goals queries internally.
- * Only mounts when the sidebar is open, so queries don't run when closed.
- */
-function ConnectedSidebar({ workspaceId }: { workspaceId: number }): ReactElement {
-  const { isGoalsViewShown } = useUserPreferences();
-  const favoritesQuery = useFavoritesQuery(workspaceId);
-  const goalsQuery = useGoalsQuery(workspaceId, isGoalsViewShown);
-  const deleteFavoriteMutation = useDeleteFavoriteMutation(workspaceId);
-  const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
-
-  const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
-  const goals = isGoalsViewShown && Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
-
-  return (
-    <GoalsFavoritesSidebar
-      favorites={favorites}
-      goals={goals}
-      showGoals={isGoalsViewShown}
-      workspaceId={workspaceId}
-      onDeleteFavorite={(favoriteId) => {
-        void deleteFavoriteMutation.mutateAsync(favoriteId);
-      }}
-      onStartFavorite={(fav) => {
-        void startTimeEntryMutation.mutateAsync({
-          billable: fav.billable,
-          description: (fav.description ?? "").trim(),
-          projectId: fav.project_id ?? null,
-          start: new Date().toISOString(),
-          tagIds: fav.tag_ids ?? [],
-          taskId: fav.task_id ?? null,
-        });
-      }}
-    />
   );
 }
