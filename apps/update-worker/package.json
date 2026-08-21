@@ -15,7 +15,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260814.1",
+    "@cloudflare/workers-types": "^5.20260818.1",
     "@types/node": "catalog:",
     "gray-matter": "^4.0.3",
     "typescript": "catalog:",
