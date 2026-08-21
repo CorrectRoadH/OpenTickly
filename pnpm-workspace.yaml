@@ -15,7 +15,7 @@ catalog:
   execa: ^10.0.1
   i18next: ^26.3.6
   i18next-resources-to-backend: ^1.2.3
-  immer: ^11.1.16
+  immer: ^11.1.17
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.8
   lucide-react: ^1.31.0
@@ -24,7 +24,7 @@ catalog:
   react: ^18.3.1
   react-big-calendar: ^1.20.0
   react-compiler-runtime: ^1.0.0
-  react-grab: ^0.1.50
+  react-grab: ^0.2.0
   react-hook-form: ^7.85.0
   react-i18next: ^17.0.11
   react-markdown: ^10.1.0
@@ -43,7 +43,7 @@ catalog:
   workbox-routing: ^7.4.1
   workbox-strategies: ^7.4.1
   workbox-window: ^7.4.1
-  zustand: ^5.0.14
+  zustand: ^5.0.15
 
 catalogMode: prefer
 # pnpm 10 no longer reads the "pnpm" field in package.json, so every override
