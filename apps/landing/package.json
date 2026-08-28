@@ -32,7 +32,7 @@
     "@types/mdx": "^2.0.14",
     "@types/node": "catalog:",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/react-dom": "^19.2.5",
     "react-router-devtools": "^6.2.3",
     "serve": "^14.2.6",
     "sharp": "catalog:",
