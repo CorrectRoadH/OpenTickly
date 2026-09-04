@@ -15,8 +15,8 @@
   "dependencies": {
     "@opentickly/shared-contracts": "workspace:*",
     "@opentickly/web-ui": "workspace:*",
-    "@tanstack/react-query": "^5.101.4",
-    "@tanstack/react-router": "^1.170.25",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-router": "^1.170.32",
     "@types/react-big-calendar": "catalog:",
     "@uidotdev/usehooks": "catalog:",
     "baseui": "^18.2.0",
@@ -39,7 +39,7 @@
     "sonner": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
     "styletron-react": "^6.1.1",
-    "zod": "^4.4.3",
+    "zod": "^4.5.4",
     "zustand": "catalog:"
   },
   "devDependencies": {
