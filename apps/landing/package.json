@@ -15,15 +15,15 @@
   },
   "dependencies": {
     "@opentickly/web-ui": "workspace:*",
-    "@react-router/node": "^8.3.0",
-    "fumadocs-core": "16.14.3",
-    "fumadocs-mdx": "15.2.3",
-    "fumadocs-ui": "16.14.3",
+    "@react-router/node": "^8.3.1",
+    "fumadocs-core": "16.15.4",
+    "fumadocs-mdx": "15.4.0",
+    "fumadocs-ui": "16.15.4",
     "isbot": "^5",
     "lucide-react": "catalog:",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router": "^8.3.0",
+    "react-router": "^8.3.1",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
