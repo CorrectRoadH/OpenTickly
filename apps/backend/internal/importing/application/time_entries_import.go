@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
-	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -175,9 +173,10 @@ func newImportedTimeEntryCSVHeader(row []string) (importedTimeEntryCSVHeader, er
 }
 
 func parseImportedTimeEntryRow(row []string, header importedTimeEntryCSVHeader) (ImportedTimeEntry, error) {
-	duration, err := parseImportedDuration(csvValue(row, header.Duration))
+	durationValue := csvValue(row, header.Duration)
+	duration, err := parseImportedDuration(durationValue)
 	if err != nil {
-		return ImportedTimeEntry{}, fmt.Errorf("%w: invalid duration", ErrImportArchiveInvalid)
+		return ImportedTimeEntry{}, fmt.Errorf("%w: invalid duration %q", ErrImportArchiveInvalid, durationValue)
 	}
 	start, err := parseImportedDateTime(csvValue(row, header.StartDate), csvValue(row, header.StartTime), true)
 	if err != nil {
@@ -230,29 +229,6 @@ func parseImportedDateTime(dateValue string, timeValue string, required bool) (*
 			Value: dateValue + " " + timeValue,
 		}, nil
 	}
-}
-
-func parseImportedDuration(value string) (int, error) {
-	parts := strings.Split(strings.TrimSpace(value), ":")
-	if len(parts) != 3 {
-		return 0, errors.New("invalid duration")
-	}
-	hours, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, err
-	}
-	minutes, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, err
-	}
-	seconds, err := strconv.Atoi(parts[2])
-	if err != nil {
-		return 0, err
-	}
-	if hours < 0 || minutes < 0 || seconds < 0 {
-		return 0, errors.New("negative duration")
-	}
-	return hours*3600 + minutes*60 + seconds, nil
 }
 
 func parseImportedTags(value string) []string {
