@@ -24,9 +24,9 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/react-dom": "^19.2.7",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
