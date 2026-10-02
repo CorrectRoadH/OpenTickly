@@ -16,9 +16,9 @@
   "dependencies": {
     "@opentickly/web-ui": "workspace:*",
     "@react-router/node": "^8.4.0",
-    "fumadocs-core": "16.15.12",
-    "fumadocs-mdx": "15.4.3",
-    "fumadocs-ui": "16.15.12",
+    "fumadocs-core": "16.15.15",
+    "fumadocs-mdx": "15.4.5",
+    "fumadocs-ui": "16.15.15",
     "isbot": "^5",
     "lucide-react": "catalog:",
     "react": "^19.3.0",
