@@ -18,17 +18,17 @@ catalog:
   immer: ^11.1.18
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.8
-  lucide-react: ^1.47.0
-  motion: ^13.4.0
+  lucide-react: ^1.48.0
+  motion: ^13.4.5
   polished: ^4.3.1
   react: ^18.3.1
   react-big-calendar: ^1.20.0
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.2.0
-  react-hook-form: ^7.88.0
+  react-hook-form: ^7.89.0
   react-i18next: ^17.0.15
   react-markdown: ^10.1.0
-  sharp: ^0.35.4
+  sharp: ^0.35.5
   sonner: ^2.0.8
   typescript: ^7
   vite: npm:@voidzero-dev/vite-plus-core@0.1.18
