@@ -15,24 +15,24 @@ catalog:
   execa: ^10.0.1
   i18next: ^26.4.2
   i18next-resources-to-backend: ^1.2.3
-  immer: ^11.1.18
+  immer: ^11.1.21
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.8
-  lucide-react: ^1.47.0
-  motion: ^13.4.0
+  lucide-react: ^1.52.0
+  motion: ^14.0.0
   polished: ^4.3.1
   react: ^18.3.1
   react-big-calendar: ^1.20.0
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.2.0
-  react-hook-form: ^7.88.0
+  react-hook-form: ^7.89.0
   react-i18next: ^17.0.15
   react-markdown: ^10.1.0
-  sharp: ^0.35.4
+  sharp: ^0.35.5
   sonner: ^2.0.8
   typescript: ^7
   vite: npm:@voidzero-dev/vite-plus-core@0.1.18
-  vite-plugin-pwa: ^1.3.0
+  vite-plugin-pwa: ^2.0.0
   vite-plus: 0.1.18
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.18
   workbox-background-sync: ^7.4.1
