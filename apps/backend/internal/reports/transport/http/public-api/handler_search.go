@@ -187,6 +187,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntries(
 		TaskIDs:     filters.TaskIDs,
 		NoTask:      filters.NoTask,
 	}
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
+	}
 	if request.Description != nil {
 		query.Description = *request.Description
 	}
@@ -295,6 +298,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesExt
 		TaskIDs:     filters.TaskIDs,
 		NoTask:      filters.NoTask,
 	}
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
+	}
 	if request.Description != nil {
 		query.Description = *request.Description
 	}
@@ -376,6 +382,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesTot
 		NoTag:       filters.NoTag,
 		TaskIDs:     filters.TaskIDs,
 		NoTask:      filters.NoTask,
+	}
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
 	}
 	if request.Description != nil {
 		query.Description = *request.Description

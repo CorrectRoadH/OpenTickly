@@ -67,6 +67,7 @@ func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerI
 			handlers.catalogApp,
 			handlers.membershipApp,
 			handlers.trackingApp,
+			handlers.tenantApp,
 		),
 	}
 }

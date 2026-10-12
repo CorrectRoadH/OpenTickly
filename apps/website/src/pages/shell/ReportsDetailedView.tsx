@@ -8,7 +8,11 @@ import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 
+import { useReportEntryDurations } from "../../shared/query/report-entry-durations.ts";
+
 type ReportsDetailedViewProps = {
+  rounding: number;
+  roundingMinutes: number;
   workspaceId: number;
   dateRange: {
     endDate: string;
@@ -55,6 +59,8 @@ function matchesFilters(
 }
 
 export function ReportsDetailedView({
+  rounding,
+  roundingMinutes,
   clientFilter,
   dateRange,
   filters,
@@ -69,10 +75,18 @@ export function ReportsDetailedView({
     workspaceId,
   });
 
+  const durationsQuery = useReportEntryDurations(workspaceId, {
+    ...dateRange,
+    ...filters,
+    rounding,
+    roundingMinutes,
+  });
+
   const filteredEntries = (() => {
     if (!entriesQuery.data) return [];
     return (entriesQuery.data as GithubComTogglTogglApiInternalModelsTimeEntry[])
-      .filter((entry) => (entry.duration ?? 0) >= 0)
+      .filter((entry) => (entry.duration ?? 0) >= 0 && durationsQuery.data?.has(entry.id ?? 0))
+      .map((entry) => ({ ...entry, duration: durationsQuery.data!.get(entry.id ?? 0)! }))
       .filter((entry) => matchesFilters(entry, filters, clientFilter, memberFilter))
       .sort((a, b) => {
         const aStart = a.start ?? "";
@@ -83,11 +97,11 @@ export function ReportsDetailedView({
 
   const totalSeconds = filteredEntries.reduce((sum, entry) => sum + (entry.duration ?? 0), 0);
 
-  if (entriesQuery.isPending) {
+  if (entriesQuery.isPending || durationsQuery.isPending) {
     return <ReportsSurfaceMessage message={t("loadingDetailedEntries")} />;
   }
 
-  if (entriesQuery.isError) {
+  if (entriesQuery.isError || durationsQuery.isError) {
     return <ReportsSurfaceMessage message={t("couldNotLoadTimeEntries")} tone="error" />;
   }
 

@@ -337,6 +337,8 @@ export function useWorkspaceWeeklyReportQuery(
       unwrapWebApiResult(
         postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries({
           body: {
+            rounding: options.rounding,
+            rounding_minutes: options.roundingMinutes,
             description: options.description?.trim() || undefined,
             end_date: options.endDate,
             project_ids: options.projectIds?.length ? options.projectIds : undefined,
@@ -350,6 +352,8 @@ export function useWorkspaceWeeklyReportQuery(
       ) as Promise<SavedWeeklyReportData>,
     queryKey: [
       "workspace-weekly-report",
+      options.rounding,
+      options.roundingMinutes,
       workspaceId,
       options.startDate,
       options.endDate,

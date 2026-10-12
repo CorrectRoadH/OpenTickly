@@ -1,4 +1,13 @@
 {
+  "timeRounding": "시간 반올림",
+  "timeRoundingDescription": "기록된 시간을 변경하지 않고 보고서, 내보내기 및 청구서의 각 항목을 반올림합니다.",
+  "roundingDirection": "반올림 방향",
+  "roundingNearest": "가장 가까운 값",
+  "roundingUp": "올림",
+  "roundingDown": "내림",
+  "roundingInterval": "반올림 간격",
+  "roundingDisabled": "사용 안 함",
+  "roundingMinutes": "{{count}}분",
   "general": "일반",
   "alerts": "알림",
   "reminders": "리마인더",

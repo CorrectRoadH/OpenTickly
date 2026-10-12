@@ -1,4 +1,6 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { createContext, useContext, useLayoutEffect, useRef } from "react";
+
+export const CalendarStartEntryContext = createContext<(() => void) | undefined>(undefined);
 
 /**
  * Custom day column wrapper matching Toggl's StyledDayColumnWrapper.
@@ -12,10 +14,10 @@ export const CalendarDayColumnWrapper = React.forwardRef<
     children?: React.ReactNode;
     className?: string;
     style?: React.CSSProperties;
-    isNow?: boolean;
-    onStartEntry?: () => void;
   }
->(function CalendarDayColumnWrapper({ children, className, style, isNow, onStartEntry }, ref) {
+>(function CalendarDayColumnWrapper({ children, className, style }, ref) {
+  const onStartEntry = useContext(CalendarStartEntryContext);
+  const isNow = className?.includes("rbc-now") ?? false;
   const columnRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<SVGSVGElement>(null);
 

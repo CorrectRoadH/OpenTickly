@@ -187,12 +187,13 @@ export function buildSuggestionKey(entry: GithubComTogglTogglApiInternalModelsTi
 export function resolveEditorPosition(
   anchor: TimeEntryEditorAnchor,
   picker: "project" | "tag" | null,
+  size?: { width: number; height: number },
 ): {
   left: number;
   top: number;
 } {
-  const cardWidth = picker ? 460 : 440;
-  const cardHeight = picker ? 470 : 212;
+  const cardWidth = Math.max(picker ? 460 : 0, size?.width ?? 440);
+  const cardHeight = Math.max(picker ? 470 : 0, size?.height ?? 212);
   const padding = 16;
   const preferredLeft = anchor.left + anchor.width + 12;
   const fallbackLeft = anchor.left - cardWidth - 12;

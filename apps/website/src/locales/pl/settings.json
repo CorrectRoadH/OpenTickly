@@ -1,4 +1,13 @@
 {
+  "timeRounding": "Zaokrąglanie czasu",
+  "timeRoundingDescription": "Zaokrąglaj każdy wpis w raportach, eksportach i fakturach bez zmiany zapisanego czasu.",
+  "roundingDirection": "Kierunek zaokrąglania",
+  "roundingNearest": "Do najbliższej",
+  "roundingUp": "W górę",
+  "roundingDown": "W dół",
+  "roundingInterval": "Interwał zaokrąglania",
+  "roundingDisabled": "Wyłączone",
+  "roundingMinutes": "{{count}} min",
   "general": "Ogólne",
   "alerts": "Alerty",
   "reminders": "Przypomnienia",

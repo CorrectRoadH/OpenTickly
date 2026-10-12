@@ -1,4 +1,13 @@
 {
+  "timeRounding": "時間の丸め",
+  "timeRoundingDescription": "記録した時間を変更せず、レポート・エクスポート・請求書の各記録を丸めます。",
+  "roundingDirection": "丸め方向",
+  "roundingNearest": "四捨五入",
+  "roundingUp": "切り上げ",
+  "roundingDown": "切り捨て",
+  "roundingInterval": "丸め間隔",
+  "roundingDisabled": "無効",
+  "roundingMinutes": "{{count}} 分",
   "general": "一般",
   "alerts": "アラート",
   "reminders": "リマインダー",

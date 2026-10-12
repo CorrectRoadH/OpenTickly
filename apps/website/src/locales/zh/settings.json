@@ -1,4 +1,13 @@
 {
+  "timeRounding": "时间取整",
+  "timeRoundingDescription": "对报表、导出和发票中的每条记录取整，不修改原始工时。",
+  "roundingDirection": "取整方向",
+  "roundingNearest": "就近取整",
+  "roundingUp": "向上取整",
+  "roundingDown": "向下取整",
+  "roundingInterval": "取整间隔",
+  "roundingDisabled": "禁用",
+  "roundingMinutes": "{{count}} 分钟",
   "general": "常规",
   "alerts": "提醒",
   "reminders": "通知",

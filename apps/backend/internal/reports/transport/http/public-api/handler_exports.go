@@ -92,6 +92,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesEx
 	_ = startDate
 	_ = endDate
 	applyNullableIDFilters(&query, filters)
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
+	}
 	if request.Description != nil {
 		query.Description = *request.Description
 	}
@@ -149,6 +152,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntriesCsv
 		return err
 	}
 	applyNullableIDFilters(&query, filters)
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
+	}
 	if request.Description != nil {
 		query.Description = *request.Description
 	}
