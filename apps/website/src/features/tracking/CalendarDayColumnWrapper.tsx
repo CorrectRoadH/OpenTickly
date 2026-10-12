@@ -7,6 +7,12 @@ export const CalendarStartEntryContext = createContext<(() => void) | undefined>
  * Uses forwardRef because RBC's DayColumn passes a ref to dayColumnWrapper.
  * On the "today" column, appends a play button next to the RBC-rendered
  * .rbc-current-time-indicator.
+ *
+ * Must stay a module-level component passed directly as
+ * `components.dayColumnWrapper`. RBC's DayColumn binds slot selection
+ * (drag-to-create) to this node once, in componentDidMount; a wrapper type
+ * created during render remounts the node on the next render and silently
+ * kills slot selection. Per-render data comes in via context instead.
  */
 export const CalendarDayColumnWrapper = React.forwardRef<
   HTMLDivElement,
