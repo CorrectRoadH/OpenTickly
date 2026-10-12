@@ -1,4 +1,4 @@
-import React, { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { Calendar, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import type { EventProps, SlotInfo } from "react-big-calendar";
@@ -10,7 +10,10 @@ import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared
 import type { CalendarEvent, CalendarViewProps } from "./calendar-types.ts";
 import { buildCalendarLocalizer, formatDateIso } from "./calendar-types.ts";
 export type { CalendarContextMenuAction } from "./calendar-types.ts";
-import { CalendarDayColumnWrapper } from "./CalendarDayColumnWrapper.tsx";
+import {
+  CalendarDayColumnWrapper,
+  CalendarStartEntryContext,
+} from "./CalendarDayColumnWrapper.tsx";
 import { CalendarDayHeader } from "./CalendarDayHeader.tsx";
 import { CalendarEventCard } from "./CalendarEventCard.tsx";
 import { buildDailyTotals, buildEvents } from "./calendar-events-builder.ts";
@@ -228,24 +231,7 @@ export function CalendarView({
     header: ({ date }: { date: Date }) => (
       <CalendarDayHeader date={date} dailyTotals={dailyTotals} timezone={timezone} today={today} />
     ),
-    dayColumnWrapper: React.forwardRef<HTMLDivElement, Record<string, unknown>>(
-      function DayColumnWrapperBridge(props, ref) {
-        return (
-          <CalendarDayColumnWrapper
-            ref={ref}
-            className={props.className as string | undefined}
-            isNow={Boolean(
-              typeof props.className === "string" &&
-              (props.className as string).includes("rbc-now"),
-            )}
-            onStartEntry={onStartEntry}
-            style={props.style as React.CSSProperties | undefined}
-          >
-            {props.children as React.ReactNode}
-          </CalendarDayColumnWrapper>
-        );
-      },
-    ),
+    dayColumnWrapper: CalendarDayColumnWrapper,
   };
 
   return (
@@ -260,97 +246,99 @@ export function CalendarView({
       data-testid="timer-calendar-view"
       ref={wrapperRef}
     >
-      <DnDCalendar
-        components={calendarComponents}
-        date={calendarDate}
-        defaultView={Views.WEEK}
-        getNow={() => new Date()}
-        draggableAccessor={(event) =>
-          !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
-        }
-        endAccessor={(event) => event.end}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        dayLayoutAlgorithm={calendarDayLayout as any}
-        eventPropGetter={(event) => ({
-          className: event.resource.isRunning ? "rbc-event-running" : undefined,
-          style: {
-            backgroundColor: "transparent",
-            border: event.resource.isDraft ? "1px dashed var(--track-accent-outline)" : "none",
-            color: "var(--track-text)",
-            opacity: event.resource.isDraft ? 0.7 : undefined,
-          },
-        })}
-        events={events}
-        formats={{
-          timeGutterFormat: (date: Date) => formatClockTime(date, timezone, timeFormat),
-        }}
-        localizer={calendarLocalizer}
-        max={maxTime}
-        messages={{
-          day: "Day",
-          next: "Next",
-          previous: "Previous",
-          today: "Today",
-          week: "Week",
-        }}
-        min={minTime}
-        onDrillDown={(date) => onSelectSubviewDate?.(formatDateIso(date))}
-        onEventDrop={({ event, start, end }: EventInteractionArgs<CalendarEvent>) => {
-          const nextStart = new Date(start);
-          const nextEnd = new Date(end);
-          const minutesDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
-          // A drop is a MOVE: onMoveEntry already shifts both start and
-          // stop in a single PUT. Do NOT additionally fire onResizeEntry
-          // here — that would issue a second concurrent PUT computed from
-          // the stale pre-move snapshot, and last-write-wins would reset
-          // `start` back to the original.
-          if (minutesDelta !== 0) {
-            void onMoveEntry?.(event.id, minutesDelta);
+      <CalendarStartEntryContext value={onStartEntry}>
+        <DnDCalendar
+          components={calendarComponents}
+          date={calendarDate}
+          defaultView={Views.WEEK}
+          getNow={() => new Date()}
+          draggableAccessor={(event) =>
+            !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
           }
-          (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult = {
-            eventId: event.id,
-            minutesDelta,
-            start: nextStart.toISOString(),
-            end: nextEnd.toISOString(),
-          };
-        }}
-        onEventResize={({ end, event, start }: EventInteractionArgs<CalendarEvent>) => {
-          const nextStart = new Date(start);
-          const nextEnd = new Date(end);
-          const startDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
-          const endDelta = Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000);
-          if (startDelta !== 0) {
-            void onResizeEntry?.(event.id, "start", startDelta);
-          } else if (endDelta !== 0) {
-            void onResizeEntry?.(event.id, "end", endDelta);
+          endAccessor={(event) => event.end}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          dayLayoutAlgorithm={calendarDayLayout as any}
+          eventPropGetter={(event) => ({
+            className: event.resource.isRunning ? "rbc-event-running" : undefined,
+            style: {
+              backgroundColor: "transparent",
+              border: event.resource.isDraft ? "1px dashed var(--track-accent-outline)" : "none",
+              color: "var(--track-text)",
+              opacity: event.resource.isDraft ? 0.7 : undefined,
+            },
+          })}
+          events={events}
+          formats={{
+            timeGutterFormat: (date: Date) => formatClockTime(date, timezone, timeFormat),
+          }}
+          localizer={calendarLocalizer}
+          max={maxTime}
+          messages={{
+            day: "Day",
+            next: "Next",
+            previous: "Previous",
+            today: "Today",
+            week: "Week",
+          }}
+          min={minTime}
+          onDrillDown={(date) => onSelectSubviewDate?.(formatDateIso(date))}
+          onEventDrop={({ event, start, end }: EventInteractionArgs<CalendarEvent>) => {
+            const nextStart = new Date(start);
+            const nextEnd = new Date(end);
+            const minutesDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+            // A drop is a MOVE: onMoveEntry already shifts both start and
+            // stop in a single PUT. Do NOT additionally fire onResizeEntry
+            // here — that would issue a second concurrent PUT computed from
+            // the stale pre-move snapshot, and last-write-wins would reset
+            // `start` back to the original.
+            if (minutesDelta !== 0) {
+              void onMoveEntry?.(event.id, minutesDelta);
+            }
+            (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult = {
+              eventId: event.id,
+              minutesDelta,
+              start: nextStart.toISOString(),
+              end: nextEnd.toISOString(),
+            };
+          }}
+          onEventResize={({ end, event, start }: EventInteractionArgs<CalendarEvent>) => {
+            const nextStart = new Date(start);
+            const nextEnd = new Date(end);
+            const startDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+            const endDelta = Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000);
+            if (startDelta !== 0) {
+              void onResizeEntry?.(event.id, "start", startDelta);
+            } else if (endDelta !== 0) {
+              void onResizeEntry?.(event.id, "end", endDelta);
+            }
+          }}
+          onNavigate={() => undefined}
+          onSelectEvent={(event, nativeEvent) => {
+            const target = nativeEvent.currentTarget;
+            if (target instanceof HTMLElement) {
+              onEditEntry?.(event.entry, target.getBoundingClientRect());
+            }
+          }}
+          onSelectSlot={(slotInfo: SlotInfo) => {
+            if (slotInfo.start && slotInfo.end) {
+              onSelectSlot?.({ end: slotInfo.end, start: slotInfo.start });
+            }
+          }}
+          resizable
+          resizableAccessor={(event) =>
+            !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
           }
-        }}
-        onNavigate={() => undefined}
-        onSelectEvent={(event, nativeEvent) => {
-          const target = nativeEvent.currentTarget;
-          if (target instanceof HTMLElement) {
-            onEditEntry?.(event.entry, target.getBoundingClientRect());
-          }
-        }}
-        onSelectSlot={(slotInfo: SlotInfo) => {
-          if (slotInfo.start && slotInfo.end) {
-            onSelectSlot?.({ end: slotInfo.end, start: slotInfo.start });
-          }
-        }}
-        resizable
-        resizableAccessor={(event) =>
-          !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
-        }
-        scrollToTime={scrollToTime}
-        selectable
-        startAccessor={(event) => event.start}
-        step={30}
-        timeslots={2}
-        toolbar={false}
-        onView={() => undefined}
-        view={currentView}
-        views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
-      />
+          scrollToTime={scrollToTime}
+          selectable
+          startAccessor={(event) => event.start}
+          step={30}
+          timeslots={2}
+          toolbar={false}
+          onView={() => undefined}
+          view={currentView}
+          views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
+        />
+      </CalendarStartEntryContext>
       {contextMenuState ? (
         <CalendarEntryContextMenu
           entry={contextMenuState.entry}

@@ -1,10 +1,18 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { createContext, useContext, useLayoutEffect, useRef } from "react";
+
+export const CalendarStartEntryContext = createContext<(() => void) | undefined>(undefined);
 
 /**
  * Custom day column wrapper matching Toggl's StyledDayColumnWrapper.
  * Uses forwardRef because RBC's DayColumn passes a ref to dayColumnWrapper.
  * On the "today" column, appends a play button next to the RBC-rendered
  * .rbc-current-time-indicator.
+ *
+ * Must stay a module-level component passed directly as
+ * `components.dayColumnWrapper`. RBC's DayColumn binds slot selection
+ * (drag-to-create) to this node once, in componentDidMount; a wrapper type
+ * created during render remounts the node on the next render and silently
+ * kills slot selection. Per-render data comes in via context instead.
  */
 export const CalendarDayColumnWrapper = React.forwardRef<
   HTMLDivElement,
@@ -12,10 +20,10 @@ export const CalendarDayColumnWrapper = React.forwardRef<
     children?: React.ReactNode;
     className?: string;
     style?: React.CSSProperties;
-    isNow?: boolean;
-    onStartEntry?: () => void;
   }
->(function CalendarDayColumnWrapper({ children, className, style, isNow, onStartEntry }, ref) {
+>(function CalendarDayColumnWrapper({ children, className, style }, ref) {
+  const onStartEntry = useContext(CalendarStartEntryContext);
+  const isNow = className?.includes("rbc-now") ?? false;
   const columnRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<SVGSVGElement>(null);
 
