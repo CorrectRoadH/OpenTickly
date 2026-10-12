@@ -123,7 +123,7 @@ func (s *Service) DeleteScheduledReport(ctx context.Context, workspaceID, report
 	return s.scheduledReports.Delete(ctx, workspaceID, reportID)
 }
 
-// BuildWeeklyReportEntries returns the raw time entries matching the query,
+// BuildWeeklyReportEntries returns matching entries with report-rounded durations,
 // used by data trends and other endpoints that need entry-level data.
 func (service *Service) BuildWeeklyReportEntries(
 	ctx context.Context,
@@ -152,7 +152,10 @@ func (service *Service) BuildWeeklyReportEntries(
 		if duration <= 0 {
 			continue
 		}
-		entry.Duration = duration
+		entry.Duration, err = query.Rounding.Apply(duration)
+		if err != nil {
+			return nil, err
+		}
 		filtered = append(filtered, entry)
 	}
 	return filtered, nil
@@ -219,7 +222,10 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 			continue
 		}
 
-		duration := resolveDurationSeconds(entry, service.now())
+		duration, err := query.Rounding.Apply(resolveDurationSeconds(entry, service.now()))
+		if err != nil {
+			return WeeklyReport{}, err
+		}
 		if duration <= 0 {
 			continue
 		}

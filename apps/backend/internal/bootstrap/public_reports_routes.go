@@ -26,6 +26,11 @@ func newPublicReportsRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, er
 	swagger.Components.SecuritySchemes["BasicAuth"] = &openapi3.SecuritySchemeRef{
 		Value: openapi3.NewSecurityScheme().WithType("http").WithScheme("basic"),
 	}
+	// The upstream export operations reference this undeclared scheme. Both
+	// names use the existing public Track authentication below.
+	swagger.Components.SecuritySchemes["APIKeyAuth"] = &openapi3.SecuritySchemeRef{
+		Value: openapi3.NewSecurityScheme().WithType("http").WithScheme("basic"),
+	}
 	validator := echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {

@@ -1,12 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  AppButton,
-  CheckboxFilterDropdown,
-  PageLayout,
-  pageLayoutTabClass,
-} from "@opentickly/web-ui";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { PageLayout, pageLayoutTabClass } from "@opentickly/web-ui";
+import { Link } from "@tanstack/react-router";
 
 import type { ReportsTab } from "../../shared/lib/workspace-routing.ts";
 import { copyToClipboard } from "../../shared/lib/clipboard.ts";
@@ -15,23 +10,17 @@ import {
   useProjectsQuery,
   useTagsQuery,
   useWorkspaceWeeklyReportQuery,
+  useWorkspaceSettingsQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { ReportsBreakdownPanel } from "./ReportsBreakdownPanel.tsx";
-import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
-import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
-import {
-  formatTrackQueryDate,
-  REPORTS_SHORTCUTS,
-  resolveShortcutRange,
-} from "../../features/tracking/week-range.ts";
-import { ReportsSurfaceMessage, SummaryMetrics, ToolbarButton } from "./ReportsSharedWidgets.tsx";
+import { ReportsSurfaceMessage, SummaryMetrics } from "./ReportsSharedWidgets.tsx";
 import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
 import { ReportsWorkloadView } from "./ReportsWorkloadView.tsx";
 import { ReportsProfitabilityView } from "./ReportsProfitabilityView.tsx";
 import { ReportsCustomView } from "./ReportsCustomView.tsx";
-import { exportReportCsv } from "./reports-export.ts";
+import { ReportsActions } from "./ReportsActions.tsx";
 import {
   buildReportsPageModel,
   extractUniqueClients,
@@ -40,90 +29,12 @@ import {
   regroupByClient,
   regroupByEntry,
   regroupByMember,
-  type ReportsBreakdownRow,
-  type ReportsPageModel,
 } from "./reports-page-data.ts";
 import { useReportsPageState } from "./useReportsPageState.ts";
-import { type DurationFormat, formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";
-import { SearchIcon } from "../../shared/ui/icons.tsx";
-import { ReportsProjectFilter, type ReportsProjectOption } from "./ReportsProjectFilter.tsx";
-
-/** Round seconds up to the nearest 15-minute block (900 seconds). */
-function roundTo15Min(seconds: number): number {
-  if (seconds <= 0) return 0;
-  return Math.ceil(seconds / 900) * 900;
-}
-
-function applyRoundingToModel(
-  model: ReportsPageModel,
-  durationFormat?: DurationFormat,
-): ReportsPageModel {
-  const roundedBreakdownRows: ReportsBreakdownRow[] = model.breakdownRows.map((row) => {
-    const rounded = roundTo15Min(row.seconds);
-    return {
-      ...row,
-      duration: formatClockDuration(rounded, durationFormat),
-      members: row.members.map((m) => ({
-        ...m,
-        duration: formatClockDuration(roundTo15Min(m.seconds), durationFormat),
-      })),
-      seconds: rounded,
-    };
-  });
-  const roundedTotal = roundedBreakdownRows.reduce((sum, r) => sum + r.seconds, 0);
-  const recalculated = roundedBreakdownRows.map((row) => ({
-    ...row,
-    shareLabel: `${roundedTotal > 0 ? ((row.seconds / roundedTotal) * 100).toFixed(2) : "0.00"}%`,
-    shareValue: roundedTotal > 0 ? (row.seconds / roundedTotal) * 100 : 0,
-  }));
-  const roundedWeekRows = model.weekRows.map((r) => {
-    const rs = roundTo15Min(r.seconds);
-    return { ...r, seconds: rs, value: formatClockDuration(rs, durationFormat) };
-  });
-  const billableMetric = model.metrics.find((m) => m.titleKey === "billableHours");
-  const billableSeconds = billableMetric ? parseDurationToSeconds(billableMetric.value) : 0;
-  const trackedDays = roundedWeekRows.filter((r) => r.seconds > 0).length;
-  const avgDaily = trackedDays > 0 ? roundedTotal / 3600 / trackedDays : 0;
-
-  return {
-    ...model,
-    breakdownRows: recalculated,
-    distributionSegments: recalculated.slice(0, 10).map((r) => ({
-      color: r.color,
-      duration: r.duration,
-      label: r.name,
-      value: r.shareValue,
-    })),
-    metrics: [
-      { titleKey: "totalHours", value: formatClockDuration(roundedTotal, durationFormat) },
-      {
-        titleKey: "billableHours",
-        value: formatClockDuration(roundTo15Min(billableSeconds), durationFormat),
-      },
-      {
-        titleKey: "amount",
-        value: model.metrics.find((m) => m.titleKey === "amount")?.value ?? "-",
-      },
-      { titleKey: "averageDailyHours", value: avgDaily.toFixed(2) },
-    ],
-    totalDuration: formatClockDuration(roundedTotal, durationFormat),
-    totalSeconds: roundedTotal,
-    weekRows: roundedWeekRows,
-  };
-}
-
-function parseDurationToSeconds(value: string): number {
-  const parts = value.split(":");
-  if (parts.length === 3) {
-    return Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2]);
-  }
-  if (parts.length === 2) {
-    return Number(parts[0]) * 3600 + Number(parts[1]) * 60;
-  }
-  return 0;
-}
+import type { ReportsProjectOption } from "./ReportsProjectFilter.tsx";
+import { ReportsFilterBar } from "./ReportsFilterBar.tsx";
 
 const REPORTS_TABS: Array<{ labelKey: string; slug: ReportsTab }> = [
   { labelKey: "summary", slug: "summary" },
@@ -150,7 +61,9 @@ export function WorkspaceReportsPage({
   const timezone = session.user.timezone ?? "UTC";
   const weekStartsOn = beginningOfWeek;
   const workspaceId = session.currentWorkspace.id;
-  const navigate = useNavigate();
+  const settingsQuery = useWorkspaceSettingsQuery(workspaceId);
+  const rounding = settingsQuery.data?.workspace.rounding ?? 0;
+  const roundingMinutes = settingsQuery.data?.workspace.rounding_minutes ?? 0;
 
   const initialProjectIds = initialProjectId != null ? [initialProjectId] : undefined;
   const state = useReportsPageState(timezone, weekStartsOn, initialProjectIds);
@@ -159,6 +72,8 @@ export function WorkspaceReportsPage({
   const tagsQuery = useTagsQuery(workspaceId);
 
   const weeklyReportQuery = useWorkspaceWeeklyReportQuery(workspaceId, {
+    rounding,
+    roundingMinutes: roundingEnabled ? roundingMinutes : 0,
     description: state.filters.description,
     endDate: state.dateRange.endDate,
     projectIds: state.filters.projectIds,
@@ -176,17 +91,14 @@ export function WorkspaceReportsPage({
     state.clientFilter,
   );
 
-  const liveModel = buildReportsPageModel({
+  const displayModel = buildReportsPageModel({
+    durationFormat,
     endDate: state.dateRange.endDate,
     report: filteredReport,
     startDate: state.dateRange.startDate,
     timezone,
     weekStartsOn,
   });
-
-  const displayModel = roundingEnabled
-    ? applyRoundingToModel(liveModel, durationFormat)
-    : liveModel;
 
   const handleShareReport = () => {
     const url = window.location.href;
@@ -228,82 +140,24 @@ export function WorkspaceReportsPage({
     .filter((t) => t.id != null && t.name)
     .map((t) => ({ id: t.id!, label: t.name! }));
 
-  const headerActions =
-    tab === "custom" ? (
-      <ToolbarButton
-        onClick={() =>
-          void navigate({
-            to: buildWorkspaceReportsPath(workspaceId, "summary"),
-          })
-        }
-      >
-        {t("newReport")}
-      </ToolbarButton>
-    ) : (
-      <div className="flex flex-wrap items-center gap-2">
-        <AppButton
-          className={
-            roundingEnabled
-              ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-text)] shadow-[var(--track-depth-shadow-rest)] hover:border-[var(--track-accent)] hover:bg-[var(--track-accent-soft)] hover:shadow-[var(--track-depth-shadow-hover)]"
-              : ""
-          }
-          data-testid="reports-rounding-toggle"
-          disabled={tab === "profitability"}
-          onClick={() => setRoundingEnabled((prev) => !prev)}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {roundingEnabled ? t("roundingOn") : t("roundingOff")}
-        </AppButton>
-        {tab === "summary" || tab === "detailed" ? (
-          <ToolbarButton
-            onClick={() => {
-              const projectsParam = displayModel.breakdownRows
-                .filter((r) => r.seconds > 0)
-                .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
-                .join(",");
-              const search = projectsParam
-                ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
-                : "";
-              void navigate({
-                to: `/workspaces/${workspaceId}/invoices/new${search}`,
-              });
-            }}
-          >
-            {t("createInvoice")}
-          </ToolbarButton>
-        ) : null}
-        <AppButton
-          data-testid="reports-export"
-          onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {t("export")}
-        </AppButton>
-        <ToolbarButton onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}>
-          {t("settings")}
-        </ToolbarButton>
-        <AppButton
-          className={shareToast ? "" : "text-[var(--track-text)]"}
-          data-testid="reports-save-share"
-          onClick={handleShareReport}
-          size="sm"
-          type="button"
-          variant={shareToast ? "primary" : "secondary"}
-        >
-          {t("saveAndShare")}
-        </AppButton>
-      </div>
-    );
-
   return (
     <PageLayout
       data-testid="reports-page"
       title={t("reports")}
-      headerActions={headerActions}
+      headerActions={
+        <ReportsActions
+          tab={tab}
+          workspaceId={workspaceId}
+          roundingEnabled={roundingEnabled}
+          roundingMinutes={roundingMinutes}
+          onToggleRounding={() => setRoundingEnabled((previous) => !previous)}
+          displayModel={displayModel}
+          displayBreakdownRows={displayBreakdownRows}
+          shareToast={shareToast}
+          onShare={handleShareReport}
+          isPending={weeklyReportQuery.isFetching || weeklyReportQuery.isError}
+        />
+      }
       data-tabs-testid="reports-tabs"
       tabs={REPORTS_TABS.map((tabItem) => (
         <Link
@@ -324,7 +178,7 @@ export function WorkspaceReportsPage({
         tab !== "custom" ? (
           <ReportsFilterBar
             clientOptions={clientOptions}
-            liveModel={liveModel}
+            liveModel={displayModel}
             memberOptions={memberOptions}
             projectOptions={projectOptions}
             state={state}
@@ -367,6 +221,8 @@ export function WorkspaceReportsPage({
           </>
         ) : tab === "detailed" ? (
           <ReportsDetailedView
+            rounding={rounding}
+            roundingMinutes={roundingEnabled ? roundingMinutes : 0}
             clientFilter={state.clientFilter}
             dateRange={state.dateRange}
             filters={state.filters}
@@ -378,7 +234,6 @@ export function WorkspaceReportsPage({
             isError={weeklyReportQuery.isError}
             isPending={weeklyReportQuery.isPending}
             report={weeklyReportQuery.data}
-            roundingEnabled={roundingEnabled}
           />
         ) : tab === "profitability" ? (
           <ReportsProfitabilityView
@@ -397,194 +252,5 @@ export function WorkspaceReportsPage({
         </div>
       ) : null}
     </PageLayout>
-  );
-}
-
-function ReportsFilterBar({
-  clientOptions,
-  liveModel,
-  memberOptions,
-  projectOptions,
-  state,
-  tagOptions,
-  weekStartsOn,
-}: {
-  clientOptions: string[];
-  liveModel: ReturnType<typeof buildReportsPageModel>;
-  memberOptions: string[];
-  projectOptions: ReportsProjectOption[];
-  state: ReturnType<typeof useReportsPageState>;
-  tagOptions: { id: number; label: string }[];
-  weekStartsOn: number;
-}) {
-  const { t } = useTranslation("reports");
-  const selectedDate = new Date(`${state.dateRange.startDate}T00:00:00`);
-
-  const handleSelectDate = (date: Date) => {
-    state.selectDateRange(resolveShortcutRange("this-week", weekStartsOn, date));
-  };
-
-  return (
-    <div className="flex flex-wrap items-center gap-2" data-testid="reports-filter-bar">
-      <ReportsRangePicker
-        label={liveModel.rangeLabel}
-        onSelectDate={handleSelectDate}
-        selectedDate={selectedDate}
-        state={state}
-        weekStartsOn={weekStartsOn}
-      />
-      <CheckboxFilterDropdown
-        clearLabel={t("clearAll")}
-        emptyMessage={t("noMembersFound")}
-        label={t("member")}
-        onClear={() => state.setMemberFilter([])}
-        onToggle={(key: string) =>
-          state.setMemberFilter(
-            state.memberFilter.includes(key)
-              ? state.memberFilter.filter((m) => m !== key)
-              : [...state.memberFilter, key],
-          )
-        }
-        options={memberOptions.map((m) => ({ key: m, label: m }))}
-        searchIcon={<SearchIcon className="size-4" />}
-        searchPlaceholder={t("searchMembers")}
-        selected={new Set(state.memberFilter)}
-        testId="reports-filter-member"
-      />
-      <CheckboxFilterDropdown
-        clearLabel={t("clearAll")}
-        emptyMessage={t("noClientsFound")}
-        label={t("client")}
-        onClear={() => state.setClientFilter([])}
-        onToggle={(key: string) =>
-          state.setClientFilter(
-            state.clientFilter.includes(key)
-              ? state.clientFilter.filter((c) => c !== key)
-              : [...state.clientFilter, key],
-          )
-        }
-        options={clientOptions.map((c) => ({ key: c, label: c }))}
-        searchIcon={<SearchIcon className="size-4" />}
-        searchPlaceholder={t("searchClients")}
-        selected={new Set(state.clientFilter)}
-        testId="reports-filter-client"
-      />
-      <ReportsProjectFilter
-        onClear={() => state.updateFilters({ projectIds: [] })}
-        onToggle={(id: number) =>
-          state.updateFilters({
-            projectIds: state.filters.projectIds.includes(id)
-              ? state.filters.projectIds.filter((pid) => pid !== id)
-              : [...state.filters.projectIds, id],
-          })
-        }
-        options={projectOptions}
-        selected={new Set(state.filters.projectIds)}
-      />
-      <CheckboxFilterDropdown
-        clearLabel={t("clearAll")}
-        emptyMessage={t("noTagsFound")}
-        label={t("tag")}
-        onClear={() => state.updateFilters({ tagIds: [] })}
-        onToggle={(key: number) =>
-          state.updateFilters({
-            tagIds: state.filters.tagIds.includes(key)
-              ? state.filters.tagIds.filter((id) => id !== key)
-              : [...state.filters.tagIds, key],
-          })
-        }
-        options={tagOptions.map((t) => ({ key: t.id, label: t.label }))}
-        searchIcon={<SearchIcon className="size-4" />}
-        searchPlaceholder={t("searchTags")}
-        selected={new Set(state.filters.tagIds)}
-        testId="reports-filter-tag"
-      />
-      <ReportsDescriptionFilter
-        onChange={(value) => state.updateFilters({ description: value })}
-        value={state.filters.description}
-      />
-    </div>
-  );
-}
-
-function ReportsRangePicker({
-  label,
-  onSelectDate,
-  selectedDate,
-  state,
-  weekStartsOn,
-}: {
-  label: string;
-  onSelectDate: (date: Date) => void;
-  selectedDate: Date;
-  state: ReturnType<typeof useReportsPageState>;
-  weekStartsOn: number;
-}): ReactElement {
-  const rangeStart = new Date(`${state.dateRange.startDate}T00:00:00`);
-  const rangeEnd = new Date(`${state.dateRange.endDate}T00:00:00`);
-
-  const handleSelectRange = (start: Date, end: Date) => {
-    state.selectDateRange({
-      startDate: formatTrackQueryDate(start),
-      endDate: formatTrackQueryDate(end),
-    });
-  };
-
-  return (
-    <WeekRangePicker
-      label={label}
-      mode="range"
-      onNext={state.goNext}
-      onPrev={state.goPrev}
-      onSelectDate={onSelectDate}
-      onSelectRange={handleSelectRange}
-      rangeStart={rangeStart}
-      rangeEnd={rangeEnd}
-      selectedDate={selectedDate}
-      sidebar={<ReportsDateShortcuts state={state} weekStartsOn={weekStartsOn} />}
-      weekStartsOn={weekStartsOn}
-    />
-  );
-}
-
-function ReportsDateShortcuts({
-  state,
-  weekStartsOn,
-}: {
-  state: ReturnType<typeof useReportsPageState>;
-  weekStartsOn: number;
-}): ReactElement {
-  const { t } = useTranslation("tracking");
-  const close = useRangePickerClose();
-
-  return (
-    <>
-      {REPORTS_SHORTCUTS.map((shortcut) => {
-        const isActive = state.activeShortcut === shortcut.id;
-
-        return (
-          <button
-            aria-pressed={isActive}
-            className={`w-full rounded-[8px] border-2 px-3 py-2 text-left text-[14px] font-semibold shadow-[var(--track-depth-shadow-rest)] transition-all duration-[var(--duration-press)] hover:-translate-y-px hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-0.5 active:shadow-[var(--track-depth-shadow-active)] ${
-              isActive
-                ? "border-[var(--track-accent-strong)] bg-[var(--track-accent)] text-white"
-                : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-overlay-text-muted)] hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
-            }`}
-            key={shortcut.id}
-            onClick={() => {
-              state.selectShortcutRange(
-                shortcut.id,
-                resolveShortcutRange(shortcut.id, weekStartsOn),
-              );
-              close();
-            }}
-            style={{ transitionTimingFunction: "var(--ease-press)" }}
-            type="button"
-          >
-            {t(shortcut.label)}
-          </button>
-        );
-      })}
-    </>
   );
 }

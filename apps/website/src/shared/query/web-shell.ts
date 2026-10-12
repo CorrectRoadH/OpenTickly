@@ -52,6 +52,8 @@ export type WorkspacePermissionsEnvelopeDto = {
 };
 
 export type WeeklyReportQueryOptions = {
+  rounding?: number;
+  roundingMinutes?: number;
   description?: string;
   endDate: string;
   projectIds?: number[];

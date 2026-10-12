@@ -24,7 +24,6 @@ type ReportsWorkloadViewProps = {
   isPending: boolean;
   isError: boolean;
   report: SavedWeeklyReportData | undefined;
-  roundingEnabled: boolean;
 };
 
 function buildMemberWorkloads(report: SavedWeeklyReportData | undefined): MemberWorkload[] {
@@ -61,39 +60,17 @@ function buildMemberWorkloads(report: SavedWeeklyReportData | undefined): Member
     .sort((a, b) => b.totalSeconds - a.totalSeconds);
 }
 
-/** Round seconds up to the nearest 15-minute block. */
-function roundTo15Min(seconds: number): number {
-  if (seconds <= 0) return 0;
-  return Math.ceil(seconds / 900) * 900;
-}
-
 export function ReportsWorkloadView({
   isPending,
   isError,
   report,
-  roundingEnabled,
 }: ReportsWorkloadViewProps): ReactElement {
   const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const [metric, setMetric] = useState<WorkloadMetric>("utilization");
   const [target] = useState(80);
 
-  const members = (() => {
-    const raw = buildMemberWorkloads(report);
-    if (!roundingEnabled) return raw;
-    return raw.map((m) => {
-      const totalSeconds = roundTo15Min(m.totalSeconds);
-      const billableSeconds = roundTo15Min(m.billableSeconds);
-      return {
-        ...m,
-        billableHours: billableSeconds / 3600,
-        billableSeconds,
-        totalHours: totalSeconds / 3600,
-        totalSeconds,
-        utilization: totalSeconds > 0 ? (billableSeconds / totalSeconds) * 100 : 0,
-      };
-    });
-  })();
+  const members = buildMemberWorkloads(report);
 
   const totalSeconds = members.reduce((s, m) => s + m.totalSeconds, 0);
   const billableSeconds = members.reduce((s, m) => s + m.billableSeconds, 0);

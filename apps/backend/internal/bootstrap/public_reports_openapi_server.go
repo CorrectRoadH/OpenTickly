@@ -19,6 +19,7 @@ func newPublicReportsOpenAPIServer(handlers *routeHandlers) publicreportsapi.Ser
 			handlers.catalogApp,
 			handlers.membershipApp,
 			handlers.trackingApp,
+			handlers.tenantApp,
 		),
 	}
 }

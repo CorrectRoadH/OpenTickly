@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import type { DurationFormat, TimeFormat } from "./overview-data.ts";
+import { useEditorPosition } from "./useEditorPosition.ts";
 import { useEditorKeyboard } from "./useEditorKeyboard.ts";
 import { useEditorUIState } from "./useEditorUIState.ts";
 import { useEditorSideEffects } from "./useEditorSideEffects.ts";
@@ -12,11 +13,7 @@ import type {
   TimeEntryEditorTag,
   TimeEntryEditorWorkspace,
 } from "./time-entry-editor-types.ts";
-import {
-  buildSuggestionEntries,
-  resolveDescriptionMode,
-  resolveEditorPosition,
-} from "./time-entry-editor-utils.ts";
+import { buildSuggestionEntries, resolveDescriptionMode } from "./time-entry-editor-utils.ts";
 import { type EditorContextValue, EditorContextProvider } from "./TimeEntryEditorContext.tsx";
 import { EditorHeader } from "./EditorHeader.tsx";
 import { EditorDescriptionField } from "./EditorDescriptionField.tsx";
@@ -138,7 +135,7 @@ export function TimeEntryEditorDialog({
   const selectedTags = tags.filter((tag) => selectedTagIds.includes(tag.id));
   const descriptionMode = resolveDescriptionMode(description);
   const descriptionQuery = description.slice(1).trim().toLowerCase();
-  const position = resolveEditorPosition(anchor, picker);
+  const { ref, position } = useEditorPosition(anchor, picker);
 
   const filteredProjects = (() => {
     const query =
@@ -234,6 +231,7 @@ export function TimeEntryEditorDialog({
         aria-modal="false"
         aria-labelledby="time-entry-editor-title"
         style={position}
+        ref={ref}
       >
         <EditorHeader />
 

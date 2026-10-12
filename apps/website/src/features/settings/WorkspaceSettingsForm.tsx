@@ -19,6 +19,10 @@ import {
   ToggleSection,
 } from "./WorkspaceSettingsFormPrimitives.tsx";
 
+import { WorkspaceReportingSettings } from "./WorkspaceReportingSettings.tsx";
+import { WorkspaceTimesheetSettings } from "./WorkspaceTimesheetSettings.tsx";
+import { WorkspaceRoundingSettings } from "./WorkspaceRoundingSettings.tsx";
+
 type WorkspaceSettingsFormProps = {
   initialValues: WorkspaceSettingsFormValues;
   onSubmit: (request: ReturnType<typeof mapWorkspaceSettingsFormToRequest>) => Promise<void> | void;
@@ -109,10 +113,7 @@ export function WorkspaceSettingsForm({
     <form className="space-y-5" data-testid="workspace-settings-form">
       <HiddenField type="hidden" {...form.register("defaultCurrency")} />
       <HiddenField type="hidden" {...form.register("defaultHourlyRate", { valueAsNumber: true })} />
-      <HiddenField type="hidden" {...form.register("rounding", { valueAsNumber: true })} />
-      <HiddenField type="hidden" {...form.register("roundingMinutes", { valueAsNumber: true })} />
       <HiddenField type="hidden" {...form.register("logoUrl")} />
-
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <LogoCard
           logoUrl={form.watch("logoUrl")}
@@ -130,7 +131,7 @@ export function WorkspaceSettingsForm({
           />
         </div>
       </div>
-
+      <WorkspaceRoundingSettings form={form} />
       <SettingsCard description={t("teamMemberRightsDescription")} title={t("teamMemberRights")}>
         <div className="grid gap-6 xl:grid-cols-3">
           <RadioGroup label={t("whoCanSeeTeamActivity")}>
@@ -183,7 +184,6 @@ export function WorkspaceSettingsForm({
           </RadioGroup>
         </div>
       </SettingsCard>
-
       <SettingsCard
         description={t("projectAndBillingDefaultsDescription")}
         title={t("projectAndBillingDefaults")}
@@ -222,7 +222,6 @@ export function WorkspaceSettingsForm({
           </div>
         </div>
       </SettingsCard>
-
       <SettingsCard
         description={t("timeEntryAndTimesheetRestrictionsDescription")}
         title={t("timeEntryAndTimesheetRestrictions")}
@@ -261,7 +260,6 @@ export function WorkspaceSettingsForm({
           ) : null}
         </ToggleSection>
       </SettingsCard>
-
       <SettingsCard description={t("timeEntrySettingsDescription")} title={t("timeEntrySettings")}>
         <div className="space-y-4 py-5">
           <SectionCaption>{t("defaultMode")}</SectionCaption>
@@ -283,40 +281,8 @@ export function WorkspaceSettingsForm({
           </div>
         </div>
       </SettingsCard>
-
-      <SettingsCard
-        description={t("timesheetViewSettingsDescription")}
-        title={t("timesheetViewSettings")}
-      >
-        <div className="space-y-2 py-5">
-          <RadioOption
-            checked={!form.watch("showTimesheetView")}
-            label={t("hideTimesheetView")}
-            onChange={() => {
-              form.setValue("showTimesheetView", false, { shouldDirty: true });
-            }}
-          />
-          <RadioOption
-            checked={form.watch("showTimesheetView")}
-            label={t("showTimesheetView")}
-            onChange={() => {
-              form.setValue("showTimesheetView", true, { shouldDirty: true });
-            }}
-          />
-        </div>
-      </SettingsCard>
-
-      <SettingsCard description={t("reportingDescription")} title={t("reporting")}>
-        <ToggleSection
-          checked={form.watch("reportsCollapse")}
-          description={t("collapseSmallEntriesDescription")}
-          title={t("collapseSmallEntriesInPdfExports")}
-          onChange={(checked) => {
-            form.setValue("reportsCollapse", checked, { shouldDirty: true });
-          }}
-        />
-      </SettingsCard>
-
+      <WorkspaceTimesheetSettings form={form} />
+      <WorkspaceReportingSettings form={form} />
       <div className="pt-1 text-center text-[12px] font-medium text-[var(--track-text-muted)]">
         <div className="mx-auto mb-4 h-px w-[200px] bg-[var(--track-overlay-border)]" />
         {t("needHelpMakingTogglFitYourTeam")}{" "}

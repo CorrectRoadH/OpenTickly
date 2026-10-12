@@ -1,4 +1,13 @@
 {
+  "timeRounding": "Time rounding",
+  "timeRoundingDescription": "Round each entry in reports, exports and invoices without changing tracked time.",
+  "roundingDirection": "Rounding direction",
+  "roundingNearest": "Nearest",
+  "roundingUp": "Up",
+  "roundingDown": "Down",
+  "roundingInterval": "Rounding interval",
+  "roundingDisabled": "Disabled",
+  "roundingMinutes": "{{count}} minutes",
   "general": "General",
   "alerts": "Alerts",
   "reminders": "Reminders",

@@ -6,6 +6,7 @@ import (
 )
 
 type Query struct {
+	Rounding    DurationRounding
 	Description string
 	EndDate     time.Time
 	ProjectIDs  []int64

@@ -1,4 +1,13 @@
 {
+  "timeRounding": "Arrondi du temps",
+  "timeRoundingDescription": "Arrondit chaque entrée dans les rapports, exports et factures sans modifier le temps enregistré.",
+  "roundingDirection": "Sens de l’arrondi",
+  "roundingNearest": "Au plus proche",
+  "roundingUp": "Vers le haut",
+  "roundingDown": "Vers le bas",
+  "roundingInterval": "Intervalle d’arrondi",
+  "roundingDisabled": "Désactivé",
+  "roundingMinutes": "{{count}} minutes",
   "general": "Général",
   "alerts": "Alertes",
   "reminders": "Rappels",

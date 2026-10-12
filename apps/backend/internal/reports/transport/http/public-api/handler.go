@@ -16,6 +16,7 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
+	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
@@ -29,6 +30,7 @@ type ScopeAuthorizer interface {
 }
 
 type Handler struct {
+	tenant     *tenantapplication.Service
 	catalog    *catalogapplication.Service
 	membership *membershipapplication.Service
 	reports    *reportsapplication.Service
@@ -51,8 +53,10 @@ func NewHandler(
 	catalog *catalogapplication.Service,
 	membership *membershipapplication.Service,
 	tracking *trackingapplication.Service,
+	tenant *tenantapplication.Service,
 ) *Handler {
 	return &Handler{
+		tenant:     tenant,
 		catalog:    catalog,
 		membership: membership,
 		reports:    reports,
@@ -385,6 +389,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 		return err
 	}
 	applyNullableIDFilters(&query, filters)
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
+	}
 	if request.Description != nil {
 		query.Description = *request.Description
 	}
@@ -442,6 +449,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 		return err
 	}
 	applyNullableIDFilters(&query, filters)
+	if err := handler.applyRounding(ctx, &query, request.Rounding, request.RoundingMinutes); err != nil {
+		return err
+	}
 	if request.Description != nil {
 		query.Description = *request.Description
 	}
