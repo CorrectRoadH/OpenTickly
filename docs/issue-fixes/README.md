@@ -73,3 +73,19 @@ CSV validation also required a runtime schema adapter for the upstream exports'
 undeclared `APIKeyAuth` security scheme. It uses the existing public Track
 identity check; no authentication bypass was added. No production deployment
 or GitHub issue closure is included in this verification.
+
+## Integration verification — 2026-10-12
+
+- Refreshed `go test ./apps/backend/internal/reports/...` and the real PostgreSQL
+  `go test ./apps/backend/internal/bootstrap -run TestReportRounding -count=1`:
+  passed against an isolated local database and Redis service.
+- Refreshed the three focused browser specs above: 4 tests passed, with screenshots
+  confirming editor bounds, light appearance and rounded report totals.
+- `vp test run apps/website/src packages/web-ui/src`: 55 files, 204 tests passed.
+  Explicit matcher registration in the shared setup is needed by this Vite+
+  installation; without it, DOM matcher assertions fail with Invalid Chai property.
+- `vp check`: zero errors, the same two existing landing warnings.
+- `harness-lint check --changed`: no diagnostics; `vp staged --no-stash` passed.
+- Contributor PRs #103 and #105 supply the original calendar wrapper and time-row
+  fixes. The integration must preserve those changes and their regression tests.
+- These checks are local/CI integration evidence, not production acceptance.
