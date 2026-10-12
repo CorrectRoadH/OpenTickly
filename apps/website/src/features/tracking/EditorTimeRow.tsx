@@ -63,7 +63,7 @@ export function EditorTimeRow(): ReactElement {
   return (
     <div className="mt-5">
       <div className="relative min-w-0 overflow-visible">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <TimeDisplay
             dialogRootTestId="time-entry-editor-dialog"
             dateAriaLabel="Edit start date"
