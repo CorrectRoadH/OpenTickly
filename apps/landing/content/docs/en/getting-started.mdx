@@ -3,16 +3,16 @@ title: Getting Started with OpenTickly
 description: "Start tracking time with OpenTickly: try the hosted demo or self-host with Docker, create your first workspace, run a timer, and review the result."
 ---
 
-This guide takes you from a blank account to a useful first report. You can explore the hosted demo first or run the same application on infrastructure you control.
+This guide takes you from a new account to your first report. Try the hosted demo first, or run OpenTickly on your own server.
 
 ## Choose how to run OpenTickly
 
 | Option      | Best for                                                | What to do                                                                    |
 | ----------- | ------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Hosted demo | Evaluating the interface before installing              | Open [track.opentoggl.com](https://track.opentoggl.com) and create an account |
+| Hosted demo | Trying it out before installing anything                | Open [track.opentoggl.com](https://track.opentoggl.com) and create an account |
 | Self-hosted | Keeping the application and database on your own server | Follow the [Docker self-hosting guide](/docs/self-hosting)                    |
 
-The demo and self-hosted editions use the same core workflows. A self-hosted instance gives you control of the application, PostgreSQL database, backups, network access, and upgrade schedule.
+Both run the same app. Self-hosting means your data stays on your machine, and you handle backups and upgrades yourself.
 
 ## Create your account and workspace
 
@@ -21,7 +21,7 @@ The demo and self-hosted editions use the same core workflows. A self-hosted ins
 3. Check the workspace time zone before recording team activity.
 4. Add a project if you want the first entry to appear in project reports.
 
-A workspace is the reporting and collaboration boundary. Projects, clients, tags, members, billable rates, and time entries belong to a workspace.
+Everything lives inside a workspace: projects, clients, tags, members, billable rates, and time entries. Reports and team sharing also work per workspace.
 
 ## Record your first time entry
 
@@ -30,13 +30,13 @@ A workspace is the reporting and collaboration boundary. Projects, clients, tags
 3. Select a project and optional tags.
 4. Start the timer, then stop it when the work is complete.
 
-Use manual mode when you already know the start and end times. The calendar and list views show the same underlying entries, so you can choose the editing style that fits the task.
+If you already know the start and end times, use manual mode. The calendar and list views show the same entries, so edit in whichever one you like.
 
 ## Review where the time went
 
-Open **Reports** and choose a date range. Start with the summary view, then group or filter by project, client, user, tag, billable state, or description when you need a narrower answer.
+Open **Reports** and pick a date range. Start with the summary, then filter or group by project, client, user, tag, billable, or description when you want more detail.
 
-Useful checks for a new workspace:
+A few things worth checking early on:
 
 - Does the total match the time you expected to record?
 - Are entries assigned to the correct project and client?
@@ -51,9 +51,9 @@ Useful checks for a new workspace:
 
 ## Recommended next steps
 
-1. Create clients and projects that match how you report work.
-2. Invite teammates and verify their workspace roles.
-3. Decide how the self-hosted database will be backed up.
-4. Add one repeatable review habit, such as a daily timer check or weekly project report.
+1. Set up clients and projects the way you want to see them in reports.
+2. Invite teammates and check their roles.
+3. If you self-host, set up database backups.
+4. Build one review habit, like checking the timer daily or looking at the project report weekly.
 
-OpenTickly becomes more useful when descriptions, projects, and tags answer real questions. Start with the smallest structure you can apply consistently, then add detail only when a report needs it.
+Start with as few projects and tags as you can stick with. Add more only when a report you actually want needs them.

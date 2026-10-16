@@ -1,24 +1,26 @@
 ---
 title: Journal des modifications
-description: Historique des versions d'OpenTickly — nouveautés, correctifs et changements incompatibles. Suit les GitHub Releases publiques pour que les agents IA et les humains puissent voir l'évolution du projet dans le temps.
+description: Où trouver les notes de version d'OpenTickly, comment sortent les versions et comment mettre à jour.
 ---
 
-OpenTickly sort en continu. La source autoritaire de chaque version — avec diffs, plages de commits et notes de mise à niveau — est GitHub Releases.
+Les notes de version sont sur GitHub Releases. Cette page explique comment sortent les versions et comment mettre à jour.
 
-- Versions, actuelles et historiques : [github.com/CorrectRoadH/OpenTickly/releases](https://github.com/CorrectRoadH/OpenTickly/releases)
+- Versions récentes et anciennes : [github.com/CorrectRoadH/OpenTickly/releases](https://github.com/CorrectRoadH/OpenTickly/releases)
 - Historique complet des commits : [github.com/CorrectRoadH/OpenTickly/commits/main](https://github.com/CorrectRoadH/OpenTickly/commits/main)
 - Images Docker : [hub.docker.com/r/correctroad/opentickly](https://hub.docker.com/r/correctroad/opentickly)
 
-## Comment les versions sont publiées
+## Comment sortent les versions
 
-OpenTickly est développé au grand jour sur GitHub. Chaque version correspond à un commit tagué sur `main`, publié automatiquement sur Docker Hub et synchronisé avec la démo hébergée sur [track.opentoggl.com](https://track.opentoggl.com). Les utilisateurs auto-hébergés n'ont qu'à récupérer la nouvelle image et relancer `docker compose up -d` pour mettre à jour.
+Chaque version est un tag git sur `main`. Poser le tag publie automatiquement une nouvelle image Docker et met à jour la démo sur [track.opentoggl.com](https://track.opentoggl.com). Pour mettre à jour une instance auto-hébergée, lancez `docker compose pull && docker compose up -d`.
 
-## Notes de mise à niveau
+## Notes de mise à jour
 
-La plupart des versions sont compatibles sans friction : la surface d'API Toggl Track reste stable et le schéma Postgres est migré en avant automatiquement au démarrage. Les changements incompatibles — s'il y en a — sont signalés dans la GitHub Release correspondante via une section **"Upgrade"** explicite accompagnée d'un plan de migration.
+En général, il suffit de mettre à jour, sans rien faire d'autre. La base de données est mise à jour automatiquement au démarrage du serveur, et l'API compatible Toggl ne change pas : vos intégrations continuent de fonctionner.
 
-Si une mise à niveau échoue, ouvrez une issue sur [github.com/CorrectRoadH/OpenTickly/issues](https://github.com/CorrectRoadH/OpenTickly/issues) en joignant le tag de la version et le log d'erreur.
+Si une version demande des étapes en plus, sa GitHub Release contient une section **Upgrade** qui les explique. Pas de section, pas d'étape en plus : c'est une mise à jour normale.
 
-## Engagement de compatibilité API
+Si une mise à jour échoue, [ouvrez une issue](https://github.com/CorrectRoadH/OpenTickly/issues) avec la version, l'étape qui a échoué et le log complet.
 
-OpenTickly s'aligne sur les contrats publics de Toggl Track v9, Reports v3 et Webhooks v1. Les intégrations Toggl, CLI et outils MCP existants doivent continuer à fonctionner d'une version à l'autre sans modification. Quand un endpoint Toggl est ajouté ou ajusté en amont, OpenTickly vise à s'aligner dès le cycle de publication suivant.
+## Rester compatible avec Toggl
+
+OpenTickly suit les API publiques de Toggl : Track v9, Reports v3 et Webhooks v1. Les CLI, outils MCP et intégrations qui fonctionnent avec Toggl devraient continuer à fonctionner après chaque mise à jour. Quand Toggl ajoute ou modifie un endpoint, on essaie de suivre dès la version suivante.

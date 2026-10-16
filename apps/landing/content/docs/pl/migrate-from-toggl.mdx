@@ -1,29 +1,61 @@
 ---
 title: Migracja z Toggl do OpenTickly
-description: Zaimportuj do OpenTickly archiwum ZIP konta Toggl i szczegółowe pliki CSV czasu, a potem zweryfikuj obszary, projekty, tagi i sumy.
+description: Przenieś dane z Toggl Track do OpenTickly. Zaimportuj archiwum ZIP z eksportu konta i pliki CSV z wpisami czasu, a potem sprawdź, czy wszystko dotarło.
 ---
 
-OpenTickly potrafi zaimportować strukturę konta Toggl i wpisy czasu bez ręcznego odtwarzania każdego obszaru roboczego.
+Konto Toggl Track możesz przenieść bez ręcznego odtwarzania czegokolwiek. Robisz to w dwóch krokach: najpierw importujesz archiwum ZIP z eksportu konta, żeby przenieść obszary robocze, projekty, klientów, tagi i członków, a potem pliki CSV z wpisami czasu, żeby przenieść same wpisy.
 
 <Callout type="info">
-  Zachowaj oryginalne eksporty do czasu sprawdzenia raportów. Import nie zastępuje kopii zapasowej.
+  Zachowaj oryginalne pliki eksportu, dopóki nie sprawdzisz, że sumy się zgadzają. Import nie
+  zastępuje kopii zapasowej konta Toggl.
 </Callout>
 
-## Zaimportuj konto
+## Zanim zaczniesz
 
-1. W [ustawieniach Toggl Track](https://track.toggl.com/settings) poproś o eksport danych i pobierz ZIP bez modyfikacji.
-2. W OpenTickly otwórz **Import**.
-3. Wpisz nazwę nowej organizacji, wybierz ZIP i uruchom import.
-4. Zaczekaj na wynik zadania przed ponownym wysłaniem pliku.
+1. Załóż konto docelowe w OpenTickly albo się na nie zaloguj.
+2. Jeśli hostujesz sam, upewnij się, że na serwerze jest dość miejsca na dysku.
+3. Wybierz moment przejścia i przestań rejestrować czas w Toggl, żeby wpisy nie powstawały w dwóch miejscach naraz.
+4. Zapisz sobie, którego obszaru roboczego i zakresu dat dotyczy każdy plik CSV.
 
-## Zaimportuj szczegółowy czas
+## Krok 1: wyeksportuj archiwum konta Toggl
 
-Wyeksportuj z Toggl potrzebne zakresy czasu jako CSV. W **Import** wybierz organizację i obszar docelowy, dodaj jeden lub więcej plików CSV i zaczekaj na zakończenie każdego zadania.
+Otwórz [ustawienia Toggl Track](https://track.toggl.com/settings) i poproś o eksport danych. Pobierz plik ZIP i niczego w nim nie zmieniaj.
 
-Umieść nazwę obszaru i zakres dat w nazwie pliku, aby łatwiej znaleźć braki lub duplikaty.
+Import tworzy w OpenTickly nową organizację. W aplikacji webowej OpenTickly:
 
-## Sprawdź przed przełączeniem
+1. Otwórz **Import**.
+2. Wpisz nazwę importowanej organizacji.
+3. Wybierz plik ZIP z eksportu Toggl.
+4. Uruchom import i poczekaj, aż pokaże, czy się udał, czy nie.
 
-Porównaj organizacje, obszary, klientów, projekty, tagi i członków. W **Raportach** sprawdź znany dzień, tydzień i miesiąc oraz próbkę czasu, opisów, projektów, użytkowników, tagów i statusów rozliczenia.
+Import działa w tle. Nie wysyłaj tego samego pliku ZIP ponownie, dopóki trwa.
 
-Gdy sumy się zgadzają, poinformuj zespół, gdzie tworzyć nowe wpisy, i zachowaj eksporty oraz kopię PostgreSQL. Następnie przeczytaj [Pierwsze kroki](/pl/docs/getting-started) lub [Zgodność API](/pl/docs/api-compatibility).
+## Krok 2: zaimportuj szczegółowe wpisy czasu
+
+W Toggl wyeksportuj szczegółowy raport wpisów czasu jako CSV dla potrzebnych zakresów dat. Potem wróć do **Import**:
+
+1. Wybierz organizację i obszar roboczy, do którego chcesz importować.
+2. Wybierz jeden lub kilka plików CSV.
+3. Wyślij je i poczekaj, aż każdy się zaimportuje.
+4. Zanim zaimportujesz dane do innego obszaru, upewnij się, że wybrany jest właściwy.
+
+Gdy nazwiesz pliki według obszaru i zakresu dat, np. `consulting-2025-q4.csv`, łatwiej zauważysz luki i duplikaty.
+
+## Sprawdź wynik
+
+Zanim zaczniesz na dobre mierzyć czas w OpenTickly:
+
+- Porównaj nazwy organizacji i obszarów roboczych.
+- Sprawdź wyrywkowo kilku klientów, projekty, tagi i członków.
+- Porównaj w **Raportach** sumy za dzień, tydzień i miesiąc z tymi w Toggl.
+- Sprawdź uruchomione wpisy i wpisy, które przechodzą przez północ.
+- Na kilku wpisach sprawdź rozliczalność, czas trwania, opis, projekt, osobę i tagi.
+- Jeśli import się nie uda, skopiuj komunikat błędu, zanim spróbujesz ponownie albo zgłosisz problem.
+
+Porównanie sum w raportach to najszybszy sposób na wyłapanie problemów: brakujących zakresów dat, wpisów w złym obszarze albo tego samego pliku CSV zaimportowanego dwa razy.
+
+## Przejdź na OpenTickly
+
+Gdy liczby się zgadzają, powiedz zespołowi, żeby od teraz rejestrował czas w OpenTickly. Zachowaj na jakiś czas pliki eksportu z Toggl i kopię zapasową bazy OpenTickly, na wypadek gdybyś musiał wrócić.
+
+Dalej: [Pierwsze kroki](/pl/docs/getting-started), czyli codzienne korzystanie, albo [Zgodność API](/pl/docs/api-compatibility), jeśli chcesz przenieść skrypty i integracje.

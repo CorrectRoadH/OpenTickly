@@ -1,9 +1,9 @@
 ---
 title: 셀프호스팅
-description: OpenTickly을 자체 장비에 배포하세요 — Docker Compose 명령어 하나로 Web + API + Postgres + Redis를 띄우고 5분 안에 서비스를 시작할 수 있습니다. Toggl API와 100% 호환되므로 공식 클라이언트에서 바로 연결할 수 있습니다.
+description: Docker Compose로 내 장비에서 OpenTickly를 실행하세요. 명령어 하나로 앱, PostgreSQL, Redis가 함께 뜹니다. CasaOS, ZimaOS, Synology, fnOS 등 NAS 설치 방법도 담았습니다.
 ---
 
-OpenTickly을 자체 장비에서 운영하는 데 필요한 것은 `docker-compose.yml` 하나뿐입니다. 아래에서 처음부터 동작하는 상태까지 전 과정을 함께 따라가 봅시다.
+OpenTickly를 직접 운영하는 데 필요한 건 `docker-compose.yml` 파일 하나입니다. 처음부터 실제로 쓸 수 있을 때까지 순서대로 따라가 보세요.
 
 ## 시스템 요구 사항
 
@@ -19,7 +19,7 @@ Docker가 설치되어 있지 않다면, 먼저 [공식 가이드](https://docs.
 
 ### 1단계 — `docker-compose.yml` 다운로드
 
-새 디렉터리를 만들고 공식 compose 파일을 가져옵니다.
+새 폴더를 만들고 compose 파일을 내려받습니다.
 
 ```bash
 mkdir -p opentickly && cd opentickly
@@ -28,31 +28,31 @@ wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
-이 compose 파일에는 컨테이너 세 개가 정의되어 있습니다.
+컨테이너 세 개가 실행됩니다.
 
 - **OpenTickly** — Web UI + REST API (`8080` 포트를 외부에 노출)
 - **`postgres`** — 데이터베이스 (내부 네트워크 전용, 외부에 노출하지 않음)
-- **`redis`** — 캐시 및 백그라운드 작업 큐 (내부 네트워크 전용, 외부에 노출하지 않음)
+- **`redis`** — 캐시와 백그라운드 작업 (내부 네트워크 전용, 외부에 노출하지 않음)
 
 ### 2단계 — (선택) `.env` 설정
 
-기본값만으로도 바로 동작합니다. 포트나 비밀번호를 변경해야 한다면 같은 디렉터리에 `.env` 파일을 하나 만드세요.
+기본값 그대로 써도 됩니다. 포트나 비밀번호를 바꾸고 싶다면 같은 폴더에 `.env` 파일을 만드세요.
 
 ```bash
 # Web UI 와 API 의 외부 노출 포트
 OPENTOGGL_PORT=8080
 
-# 운영 배포 전에는 반드시 강력한 비밀번호로 바꾸세요
+# 실제로 쓰기 전에 강력한 비밀번호로 바꾸세요
 OPENTOGGL_POSTGRES_PASSWORD=postgres
 OPENTOGGL_REDIS_PASSWORD=opentoggl
 ```
 
-이 세 변수가 compose 파일 전체에서 **유일하게** 덮어쓸 수 있는 설정입니다. 나머지(데이터베이스 이름, 사용자, 이미지, 내부 연결 문자열 등)는 모두 파일에 고정되어 있어 설정 드리프트를 방지합니다. 더 깊이 있는 커스터마이즈가 필요하면 `docker-compose.yml`을 직접 편집하세요.
+`.env`로 바꿀 수 있는 건 이 세 가지**뿐**입니다. 나머지(데이터베이스 이름, 사용자, 이미지, 연결 주소)는 설치를 단순하고 일관되게 유지하려고 compose 파일에 일부러 고정해 두었습니다. 더 바꾸고 싶다면 `docker-compose.yml`을 직접 수정하세요.
 
 <Callout type="warn">
-  운영 환경에서는 두 비밀번호를 반드시 모두 교체하세요. 기본값은 로컬에서 잠깐 써 보는 용도에만
-  적합합니다. Postgres와 Redis가 호스트 포트에 노출되지 않더라도, 내부망 침해 시 피해를 줄이기 위해
-  비밀번호를 설정하는 것은 기본기입니다.
+  실제로 쓰기 전에 두 비밀번호를 꼭 바꾸세요. 기본값은 로컬에서 잠깐 써 볼 때만 괜찮습니다.
+  Postgres와 Redis는 Docker 밖에서 접근할 수 없지만, 같은 네트워크의 다른 장비나 컨테이너가
+  해킹당하면 강력한 비밀번호가 데이터를 지켜 줍니다.
 </Callout>
 
 ### 3단계 — 컨테이너 시작
@@ -69,13 +69,13 @@ docker compose up -d
 
 ### 모바일
 
-현재 공식 모바일 앱은 없지만, 웹 UI를 휴대폰 홈 화면에 추가해 PWA로 사용할 수 있습니다. timery 같은 서드파티 Toggl 클라이언트는 OpenTickly 지원을 위해 개발자에게 연락 중입니다.
+아직 모바일 앱은 없지만, 웹 앱을 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있습니다(PWA). Timery 같은 서드파티 Toggl 앱 개발자들과도 OpenTickly 지원을 이야기하고 있습니다.
 
 ---
 
 ## AI 에이전트 연동
 
-OpenTickly에는 시간당 30회 API 제한이 없습니다. 즉 Claude, Cursor 같은 에이전트를 마음껏 사용할 수 있다는 뜻입니다. [`toggl-cli`](/ko/docs/ai-integration)와 스킬 팩을 에이전트 환경에 설치하면, 몇 분 안에 AI가 타이머를 시작·정지하고 프로젝트를 정리하도록 만들 수 있습니다.
+OpenTickly에는 Toggl처럼 시간당 30회로 API를 제한하지 않아서, Claude나 Cursor 같은 에이전트가 필요한 만큼 쓸 수 있습니다. [`toggl-cli`](/ko/docs/ai-integration)를 설정하면 몇 분 만에 에이전트가 타이머를 켜고 끄고 프로젝트를 정리해 줍니다.
 
 ## 업그레이드
 
@@ -88,7 +88,7 @@ docker compose up -d
 
 ## NAS / 홈랩에 배포
 
-OpenTickly은 Docker Compose를 지원하는 어떤 플랫폼에서도 실행할 수 있습니다. 아래 항목들은 위 과정을 각 플랫폼의 UI에 맞춰 적용한 것일 뿐, 내부적으로 실행되는 명령은 완전히 동일합니다.
+Docker Compose가 돌아가는 곳이면 어디서든 OpenTickly를 실행할 수 있습니다. 아래는 같은 설치를 각 플랫폼 화면에서 하는 방법입니다.
 
 ### CasaOS
 
@@ -140,7 +140,7 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 
 ## 설정 참고
 
-전체 compose 파일에서 덮어쓸 수 있는 설정은 세 개뿐입니다.
+`.env`로 바꿀 수 있는 설정은 세 가지입니다.
 
 | 변수                          | 기본값      | 설명                             |
 | ----------------------------- | ----------- | -------------------------------- |
@@ -148,19 +148,19 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 | `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Postgres 비밀번호 (운영 시 필수) |
 | `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Redis 비밀번호 (운영 시 필수)    |
 
-그 외 모든 설정(데이터베이스 이름, 사용자, 이미지 태그, 내부 연결 문자열, 볼륨 이름 등)은 `docker-compose.yml`에 그대로 고정되어 있습니다. 변경이 필요하면 파일을 직접 수정하세요.
+나머지(데이터베이스 이름, 사용자, 이미지 태그, 연결 주소, 볼륨 이름)는 `docker-compose.yml`에 직접 적혀 있습니다. 바꾸려면 이 파일을 수정하세요.
 
 ### 헬스 체크 엔드포인트
 
-| 경로       | 용도                             |
-| ---------- | -------------------------------- |
-| `/readyz`  | 준비 상태 확인 (DB + Redis 의존) |
-| `/healthz` | 생존 확인 (프로세스 동작 여부)   |
+| 경로       | 용도                                     |
+| ---------- | ---------------------------------------- |
+| `/readyz`  | 서비스할 준비가 됐는지 (DB와 Redis 확인) |
+| `/healthz` | 프로세스가 실행 중인지                   |
 
 ---
 
 ## 다음 단계
 
-- [AI 연동](/ko/docs/ai-integration) — Claude, Cursor를 자신의 인스턴스에 연결하기
+- [AI 연동](/ko/docs/ai-integration) — Claude, Cursor 같은 에이전트를 내 인스턴스에 연결하기
 - [GitHub 저장소](https://github.com/CorrectRoadH/OpenTickly) — 소스 코드, Issues, Discussions
 - 배포 중 문제가 생겼나요? [Issues](https://github.com/CorrectRoadH/OpenTickly/issues)에서 알려주세요

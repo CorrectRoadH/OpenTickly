@@ -1,18 +1,64 @@
 ---
 title: Configurar e-mail SMTP e SAML SSO
-description: Configure envio SMTP, verificação, convites, recuperação de senha e SAML 2.0 SSO em uma instância OpenTickly auto-hospedada.
+description: Configure o e-mail (para convites, recuperação de senha e verificação) e o login único via SAML em uma instância do OpenTickly auto-hospedada.
 ---
 
-Primeiro defina a **URL do site** pública em **Administração da instância → Configuração**. Links de e-mail e URLs do Service Provider SAML dependem dela.
+O e-mail (SMTP) é configurado uma vez só, para a instância inteira. Já o login único (SAML 2.0) é configurado separadamente em cada espaço de trabalho. Comece pela URL do site, porque os links dos e-mails e os endereços do SSO são montados a partir dela.
 
-## SMTP
+## Configure a URL pública do site
 
-Em **E-mail / SMTP**, informe nome e endereço do remetente, host, porta, usuário e senha. A porta 465 usa TLS implícito; outras portas mudam para STARTTLS quando o servidor oferece suporte.
+Entre como administrador da instância e abra **Administração da instância → Configuração**. Em **URL do site**, coloque o endereço que seus usuários digitam no navegador, por exemplo `https://time.example.com`.
 
-Salve e envie um e-mail de teste. SMTP é obrigatório para convites, recuperação de senha e verificação de e-mail. Ative a verificação somente depois de receber o teste.
+Não use um hostname interno do Docker e não acrescente `/api` nem nenhum outro caminho. Se mudar o domínio depois, confira se os links dos e-mails continuam funcionando e atualize as configurações de SSO no seu provedor de identidade.
 
-## SAML SSO
+## Configure o envio de e-mail por SMTP
 
-Em **Configurações do espaço → Single Sign-On**, defina nome e domínio de e-mail. Copie Entity ID, ACS URL, URL de login e Metadata URL para o provedor de identidade. Prefira os metadados do IdP; se não houver, informe URL de login, Entity ID e certificado X.509.
+Em **Administração da instância → Configuração → E-mail / SMTP**, preencha:
 
-Execute o teste de configuração e o teste de login antes de ativar o SSO. Mantenha uma sessão administrativa autenticada por senha e não remova o acesso alternativo até outro administrador entrar com sucesso.
+| Campo               | O que é                                                                    |
+| ------------------- | -------------------------------------------------------------------------- |
+| Nome do Remetente   | Nome que aparece nas mensagens                                             |
+| E-mail do Remetente | Endereço de envio que o seu provedor de e-mail permite usar                |
+| Host SMTP           | Endereço do servidor de e-mail                                             |
+| Porta SMTP          | Porta do provedor; geralmente `587` para STARTTLS ou `465` para TLS direto |
+| Usuário SMTP        | Login no servidor de e-mail                                                |
+| Senha SMTP          | Senha ou senha de app gerada pelo provedor                                 |
+
+Na porta 465, o OpenTickly já conecta com TLS desde o início. Nas outras portas, ele passa para STARTTLS se o servidor oferecer.
+
+Salve, coloque um endereço em **Enviar E-mail de Teste** e envie um teste. Se der erro, a mensagem diz se não conseguiu conectar, se o login estava errado, se o destinatário foi recusado ou se o tempo esgotou. Assim você sabe se o problema está nas configurações do provedor ou no firewall.
+
+Convites, recuperação de senha e verificação de e-mail dependem do SMTP. Quando o e-mail de teste chegar, você pode ativar a **Verificação de E-mail** para que novos usuários confirmem o endereço.
+
+<Callout type="warn">
+  Não deixe a senha do SMTP aparecer em prints, issues, no git ou no histórico de um terminal
+  compartilhado. Se ela vazar, troque.
+</Callout>
+
+## Configure o SAML SSO do espaço de trabalho
+
+O provedor de identidade (IdP) é o serviço que sua equipe já usa para fazer login, como Okta, Microsoft Entra ID, Google Workspace ou Keycloak.
+
+Como administrador do espaço de trabalho, abra **Configurações do espaço → Single Sign-On**.
+
+1. Dê um nome e informe o domínio de e-mail da empresa (por exemplo `example.com`).
+2. No seu IdP, crie um novo app SAML e cole o **ID da entidade**, a **URL do ACS**, a **URL de login** e a **URL de metadados** que o OpenTickly mostra.
+3. De volta ao OpenTickly, cole a URL de metadados do IdP. Se o seu IdP não fornecer uma, informe manualmente a URL de login, o ID da entidade e o certificado de assinatura X.509 dele.
+4. Clique em **Testar configuração** antes de ativar o SSO.
+5. Clique em **Testar início de sessão** e entre com alguém desse domínio de e-mail. Confira se o e-mail, o nome e os outros dados voltam corretos.
+6. Salve e ative o login único.
+
+Quando alguém usa o botão **SSO** na tela de login, o OpenTickly olha o domínio do e-mail da pessoa para decidir para qual espaço de trabalho mandá-la. Por isso, cada domínio só pode ser usado por um espaço de trabalho. O IdP precisa enviar o e-mail do usuário, seja como atributo de e-mail, seja como NameID.
+
+## Antes de liberar para todo mundo
+
+Para não ficar trancado do lado de fora:
+
+- Mantenha uma sessão de administrador aberta (entrando com senha) em outra aba enquanto testa.
+- Teste primeiro com um usuário de teste, não com a equipe inteira.
+- Confira se o ID da entidade e a URL do ACS no IdP são exatamente iguais aos que o OpenTickly mostra.
+- Garanta que tanto os usuários quanto o IdP consigam acessar o OpenTickly por HTTPS.
+- Teste de novo depois de mudar a URL do site, o proxy reverso, o certificado ou as configurações do IdP.
+- Mantenha o login com senha disponível até pelo menos outro administrador conseguir entrar com SSO.
+
+Para implantação e proxy reverso, veja [Auto-hospedagem](/pt/docs/self-hosting). Para tokens de API e scripts, veja [Compatibilidade com a API Toggl](/pt/docs/api-compatibility).

@@ -1,9 +1,9 @@
 ---
 title: Self-Hosting
-description: Deploy OpenTickly on your own machine — Docker Compose brings up Web + API + Postgres + Redis in one command, online in 5 minutes. 100% Toggl API compatible, works with the official clients out of the box.
+description: Run OpenTickly on your own machine with Docker Compose. One command starts the app, PostgreSQL, and Redis. Also covers CasaOS, ZimaOS, Synology, fnOS, and other NAS platforms.
 ---
 
-Running OpenTickly on your own machine only takes a single `docker-compose.yml`. Here's the full path from zero to working.
+All you need to run OpenTickly yourself is one `docker-compose.yml` file. Here's how to go from nothing to a working instance.
 
 ## System Requirements
 
@@ -19,7 +19,7 @@ If you don't have Docker yet, follow the [official install guide](https://docs.d
 
 ### Step 1 — Download `docker-compose.yml`
 
-Create a new directory and pull down the official compose file:
+Make a new folder and download the compose file:
 
 ```bash
 mkdir -p opentickly && cd opentickly
@@ -28,31 +28,31 @@ wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
-This compose file defines three containers:
+It starts three containers:
 
 - **OpenTickly** — Web UI + REST API (exposed on `8080`)
 - **`postgres`** — Database (internal network only, not exposed)
-- **`redis`** — Cache and background task queue (internal network only, not exposed)
+- **`redis`** — Cache and background jobs (internal network only, not exposed)
 
 ### Step 2 — (Optional) Configure `.env`
 
-Defaults work out of the box. To change the port or passwords, create a `.env` in the same directory:
+The defaults work as-is. To change the port or passwords, create a `.env` file in the same folder:
 
 ```bash
 # Exposed port for the web UI and API
 OPENTOGGL_PORT=8080
 
-# Strongly recommend switching to strong passwords before going to production
+# Change these to strong passwords before real use
 OPENTOGGL_POSTGRES_PASSWORD=postgres
 OPENTOGGL_REDIS_PASSWORD=opentoggl
 ```
 
-These three variables are the **only** overridable settings in the entire compose file — everything else (database name, user, images, internal connection strings) is hard-coded to avoid config drift. If you need deeper customization, edit `docker-compose.yml` directly.
+These three are the **only** settings you can change through `.env`. Everything else (database name, user, images, connection strings) is fixed in the compose file on purpose, to keep setups simple and alike. To change more, edit `docker-compose.yml` directly.
 
 <Callout type="warn">
-  Always change both passwords in production. The defaults are only suitable for local tinkering.
-  Even though Postgres/Redis don't expose ports to the host, setting passwords is basic hygiene
-  against lateral movement inside your network.
+  Change both passwords before real use. The defaults are only fine for trying it out locally.
+  Postgres and Redis aren't reachable from outside Docker, but if another machine or container on
+  your network gets compromised, strong passwords stop it from reading your data.
 </Callout>
 
 ### Step 3 — Start the Containers
@@ -69,13 +69,13 @@ Open `http://<your-ip>:8080` in a browser, register the first account, and start
 
 ### Mobile
 
-There's no official mobile app yet, but you can add the web UI to your phone's home screen (PWA). Third-party Toggl clients such as timery — we're currently reaching out to their developers about OpenTickly support.
+There's no mobile app yet, but you can add the web app to your phone's home screen and use it like one (PWA). We're also talking to developers of third-party Toggl apps, such as Timery, about supporting OpenTickly.
 
 ---
 
 ## Hook Up AI Agents
 
-OpenTickly has no 30 requests/hour rate limit, which means Claude, Cursor, and similar agents can go all-in. Pair it with [`toggl-cli`](/docs/ai-integration) to install the skill pack into an agent environment, and in a few minutes you can have AI start/stop timers and tidy up projects for you.
+OpenTickly doesn't have Toggl's 30 requests/hour limit, so Claude, Cursor, and other agents can use it as much as they need. Set up [`toggl-cli`](/docs/ai-integration) and in a few minutes your agent can start and stop timers and organize projects for you.
 
 ## Upgrade
 
@@ -88,7 +88,7 @@ docker compose up -d
 
 ## Deploy to NAS / Homelab
 
-OpenTickly runs on anything that supports Docker Compose. The flows below are just the same steps wrapped in each platform's UI — the underlying commands are identical.
+OpenTickly runs anywhere Docker Compose does. The steps below are the same setup, done through each platform's UI.
 
 ### CasaOS
 
@@ -140,7 +140,7 @@ The following platforms follow the same Docker Compose flow:
 
 ## Configuration Reference
 
-The entire compose file only has three overridable settings:
+You can change three settings through `.env`:
 
 | Variable                      | Default     | Description                                   |
 | ----------------------------- | ----------- | --------------------------------------------- |
@@ -148,19 +148,19 @@ The entire compose file only has three overridable settings:
 | `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Postgres password (must change in production) |
 | `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Redis password (must change in production)    |
 
-Everything else (database name, user, image tags, internal connection strings, volume names) is hard-coded in `docker-compose.yml`. If you need to change it, edit the file.
+Everything else (database name, user, image tags, connection strings, volume names) is set directly in `docker-compose.yml`. To change it, edit the file.
 
 ### Health Check Endpoints
 
-| Path       | Purpose                                 |
-| ---------- | --------------------------------------- |
-| `/readyz`  | Readiness check (depends on DB + Redis) |
-| `/healthz` | Liveness check (is the process running) |
+| Path       | Purpose                             |
+| ---------- | ----------------------------------- |
+| `/readyz`  | Ready to serve? (checks DB + Redis) |
+| `/healthz` | Is the process running?             |
 
 ---
 
 ## Next Steps
 
-- [AI Integration](/docs/ai-integration) — Connect Claude, Cursor, and friends to your own instance
+- [AI Integration](/docs/ai-integration) — Connect Claude, Cursor, and other agents to your instance
 - [GitHub Repository](https://github.com/CorrectRoadH/OpenTickly) — Source, Issues, Discussions
 - Hitting issues during deployment? Let us know in [Issues](https://github.com/CorrectRoadH/OpenTickly/issues)

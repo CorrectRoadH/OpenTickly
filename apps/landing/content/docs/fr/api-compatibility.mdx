@@ -1,9 +1,13 @@
 ---
 title: Compatibilité avec l'API Toggl
-description: Connectez les outils compatibles Toggl aux API Track v9, Reports v3 et Webhooks v1 d'OpenTickly avec un jeton d'API.
+description: Branchez vos scripts, CLI et agents Toggl sur OpenTickly. Quelles URL utiliser, comment s'authentifier avec un jeton d'API, et quoi tester avant de basculer.
 ---
 
-OpenTickly expose des interfaces publiques compatibles Toggl pour les scripts, CLI et agents.
+OpenTickly parle la même API que Toggl. Les scripts, CLI et agents écrits pour Toggl peuvent dialoguer avec votre instance OpenTickly dès que vous changez l'URL et le jeton. Nous suivons trois API de Toggl : Track v9, Reports v3 et Webhooks v1.
+
+## URL de base
+
+Remplacez `https://votre-instance.example` par l'URL publique de votre serveur OpenTickly.
 
 | API         | URL de base                                      |
 | ----------- | ------------------------------------------------ |
@@ -11,15 +15,49 @@ OpenTickly expose des interfaces publiques compatibles Toggl pour les scripts, C
 | Reports v3  | `https://votre-instance.example/reports/api/v3`  |
 | Webhooks v1 | `https://votre-instance.example/webhooks/api/v1` |
 
-Récupérez le jeton dans **Profil → API Token** et protégez-le comme un mot de passe. L'authentification Basic compatible utilise le jeton comme nom d'utilisateur et `api_token` comme mot de passe :
+Si des clients accèdent à votre instance par Internet, passez-la en HTTPS. Le conteneur Docker ne sert que du HTTP simple : le HTTPS est donc généralement géré par un reverse proxy comme Nginx ou Caddy.
+
+## Obtenir un jeton d'API
+
+Connectez-vous à l'application web d'OpenTickly, ouvrez le menu de votre avatar, choisissez **Profil** et cherchez **Jeton API**. Traitez ce jeton comme un mot de passe : ne le mettez pas dans git, ne le collez pas dans une issue et ne l'affichez pas dans des logs.
+
+L'authentification fonctionne comme chez Toggl : HTTP Basic, avec le jeton comme nom d'utilisateur et la chaîne `api_token` telle quelle comme mot de passe :
 
 ```bash
 curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
   https://votre-instance.example/api/v9/me
 ```
 
-Pour migrer une intégration, remplacez l'hôte Toggl officiel par l'URL de base correspondante et fournissez le jeton OpenTickly. Un client dont l'hôte est figé ne peut pas être redirigé par simple configuration.
+Définissez d'abord `OPENTICKLY_API_TOKEN` dans votre shell. Si vous récupérez vos informations d'utilisateur, le jeton fonctionne.
 
-Avant la production, testez `GET /api/v9/me`, les listes de projets et tags, la création et l'arrêt d'une entrée, la requête de rapport réelle et un webhook jetable si nécessaire. Vérifiez pagination, dates, fuseaux horaires et rotation du jeton.
+## Faire passer un outil existant sur OpenTickly
 
-Les fichiers OpenAPI upstream du dépôt servent de référence. Signalez tout écart reproductible dans [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues).
+La plupart des outils n'ont besoin que de deux changements :
+
+1. Remplacer l'adresse de l'API Toggl par votre adresse OpenTickly (voir le tableau ci-dessus).
+2. Utiliser votre jeton d'API OpenTickly à la place de celui de Toggl.
+
+Pour [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) :
+
+```bash
+toggl auth <YOUR_API_TOKEN> \
+  --api-type opentoggl \
+  --api-url https://votre-instance.example/api/v9
+```
+
+Si une application tierce a l'adresse de Toggl codée en dur, sans réglage pour la changer, elle ne pourra pas être redirigée vers OpenTickly.
+
+## Tester avant de basculer
+
+Testez les requêtes que votre outil fait vraiment, pas toute l'API. Avant de compter dessus :
+
+1. Récupérez l'utilisateur courant avec `GET /api/v9/me`.
+2. Listez votre espace de travail, vos projets, vos tags et vos entrées de temps récentes.
+3. Créez puis arrêtez une entrée de temps de test.
+4. Lancez la même requête de rapport que votre script.
+5. Si vous utilisez les webhooks, créez un abonnement de test puis supprimez-le.
+6. Vérifiez la gestion des erreurs, la pagination, les dates et les fuseaux horaires.
+
+Tous les endpoints de Toggl ne se comportent pas encore exactement de la même façon. Si quelque chose marche sur Toggl mais pas sur OpenTickly, ouvrez une [issue GitHub](https://github.com/CorrectRoadH/OpenTickly/issues) avec la requête et la réponse obtenue.
+
+Pour les scripts qui tournent tout seuls, gardez l'URL et le jeton hors du code, utilisez un compte qui n'a accès qu'aux espaces de travail nécessaires, et régénérez le jeton s'il fuite.

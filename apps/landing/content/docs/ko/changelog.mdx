@@ -1,24 +1,26 @@
 ---
 title: 변경 로그
-description: OpenTickly 릴리스 기록 — 추가된 기능, 수정 사항, 호환성을 깨는 변경 사항. 공개된 GitHub Releases를 권위 있는 출처로 추적해 AI 어시스턴트와 사람이 모두 프로젝트의 진화를 따라갈 수 있게 합니다.
+description: OpenTickly 릴리스 노트를 어디서 볼 수 있는지, 릴리스가 어떻게 나오는지, 어떻게 업그레이드하는지 안내합니다.
 ---
 
-OpenTickly은 지속적으로 릴리스됩니다. 각 릴리스의 권위 있는 출처는 GitHub Releases이며, 여기에 diff·커밋 범위·업그레이드 노트가 모두 정리되어 있습니다.
+릴리스 노트는 GitHub Releases에 있습니다. 이 페이지에서는 릴리스가 나오는 방식과 업그레이드 방법을 설명합니다.
 
 - 최신 및 이전 릴리스: [github.com/CorrectRoadH/OpenTickly/releases](https://github.com/CorrectRoadH/OpenTickly/releases)
-- 전체 커밋 히스토리: [github.com/CorrectRoadH/OpenTickly/commits/main](https://github.com/CorrectRoadH/OpenTickly/commits/main)
+- 전체 커밋 기록: [github.com/CorrectRoadH/OpenTickly/commits/main](https://github.com/CorrectRoadH/OpenTickly/commits/main)
 - Docker 이미지: [hub.docker.com/r/correctroad/opentickly](https://hub.docker.com/r/correctroad/opentickly)
 
-## 릴리스 절차
+## 릴리스가 나오는 방식
 
-OpenTickly은 GitHub에서 공개적으로 개발됩니다. 각 릴리스는 `main`의 태그된 커밋에 대응하며 자동으로 Docker Hub에 게시되고, 호스팅 데모 [track.opentoggl.com](https://track.opentoggl.com)에도 함께 배포됩니다. 셀프호스팅 사용자는 새 이미지를 pull 하고 `docker compose up -d`를 다시 실행하면 업그레이드됩니다.
+릴리스마다 `main`에 git 태그가 하나씩 붙습니다. 태그를 붙이면 새 Docker 이미지가 자동으로 올라가고, 데모 사이트 [track.opentoggl.com](https://track.opentoggl.com)도 함께 업데이트됩니다. 셀프 호스팅 중이라면 `docker compose pull && docker compose up -d`로 업그레이드하세요.
 
-## 업그레이드 유의사항
+## 업그레이드 안내
 
-대부분의 릴리스는 드롭인 업그레이드가 가능합니다. Toggl Track API 표면은 안정적이고, Postgres 스키마는 시작 시 자동으로 앞으로 마이그레이션됩니다. 호환성을 깨는 변경이 있다면 해당 GitHub Release 안에 별도의 **"Upgrade"** 섹션과 마이그레이션 계획이 명시됩니다.
+보통은 업그레이드만 하면 끝입니다. 데이터베이스는 서버가 시작될 때 자동으로 업데이트되고, Toggl 호환 API는 바뀌지 않으니 연동해 둔 도구도 그대로 동작합니다.
 
-업그레이드에 실패하면 [github.com/CorrectRoadH/OpenTickly/issues](https://github.com/CorrectRoadH/OpenTickly/issues)에 릴리스 태그와 실패 로그를 함께 올려 이슈를 열어 주세요.
+추가 작업이 필요한 릴리스라면 해당 GitHub Release에 **Upgrade** 섹션을 두고 무엇을 해야 하는지 설명합니다. 이 섹션이 없으면 평소처럼 업그레이드하면 됩니다.
 
-## API 호환성 약속
+업그레이드에 실패하면 버전, 실패한 단계, 전체 로그를 담아 [이슈를 열어](https://github.com/CorrectRoadH/OpenTickly/issues) 주세요.
 
-OpenTickly은 Toggl Track v9, Reports v3, Webhooks v1의 공개 계약을 따라갑니다. 기존 Toggl 연동, CLI, MCP 도구는 릴리스가 바뀌어도 수정 없이 계속 동작해야 합니다. 상류 Toggl에서 엔드포인트가 추가되거나 조정되면, OpenTickly은 다음 릴리스 사이클 안에 따라가는 것을 목표로 합니다.
+## Toggl과의 호환성 유지
+
+OpenTickly는 Toggl의 공개 API인 Track v9, Reports v3, Webhooks v1을 따릅니다. Toggl에서 동작하는 CLI, MCP 도구, 연동은 업그레이드 후에도 계속 동작해야 합니다. Toggl이 엔드포인트를 추가하거나 바꾸면 다음 릴리스에서 따라잡는 것을 목표로 합니다.

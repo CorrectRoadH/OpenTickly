@@ -23,7 +23,7 @@ description: OpenTickly 的发布记录 —— 每个版本带了哪些能力、
 一般直接升就行，不用额外做什么：
 
 - Toggl Track 的 API 行为一直没变，原来接好的集成继续能跑。
-- 服务一启动 goose 会自动把 Postgres schema 往前迁，不用你手动跑 SQL。
+- 服务启动时会自动升级数据库结构，不用你手动跑 SQL。
 
 如果哪一版真的有不兼容改动，对应的 GitHub Release 里会专门有一段 **Upgrade**，写清楚要怎么迁。没看到这段就是平滑升级。
 

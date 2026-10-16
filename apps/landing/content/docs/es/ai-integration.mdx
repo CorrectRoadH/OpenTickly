@@ -1,12 +1,14 @@
 ---
 title: Integración con IA
-description: Permite que Claude, Cursor y otros agentes de IA registren tiempo automáticamente, inicien y detengan temporizadores y gestionen proyectos y etiquetas mediante toggl-cli y paquetes de habilidades instalables. Time tracking open source pensado para flujos de IA.
+description: Deja que Claude, Cursor y otros agentes de IA registren tu tiempo, inicien y paren temporizadores y gestionen proyectos y etiquetas con toggl-cli.
 ---
 
-Usa [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) para conectar Claude Code, OpenClaw, Hermes Agent, Codex, Cursor y otros agentes de IA, de modo que operen tu instancia de OpenTickly directamente desde la línea de comandos: registran tiempo automáticamente, arrancan y detienen el temporizador y gestionan proyectos y etiquetas.
+[`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) permite que Claude Code, OpenClaw, Hermes Agent, Codex, Cursor y otros agentes de IA usen OpenTickly desde la línea de comandos. Pueden registrar tiempo, iniciar y parar temporizadores y gestionar proyectos y etiquetas por ti.
 
-- CLI `toggl` — operación directa desde la línea de comandos
-- Paquete de habilidades `SKILL.md` — se instala en el entorno del agente y está listo para usar
+Tiene dos partes:
+
+- `toggl`: la herramienta de línea de comandos en sí
+- `SKILL.md`: un archivo de habilidad que le enseña a tu agente a usarla
 
 ## Instalación
 
@@ -18,17 +20,19 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## Configuración
 
-El CLI es compatible tanto con Toggl como con OpenTickly y apunta por defecto a la API oficial de Toggl. Para cambiar a tu propia instancia, añade `--api-type opentoggl` y `--api-url` al autenticarte:
+El CLI funciona tanto con Toggl como con OpenTickly, y por defecto se conecta a Toggl. Toggl solo permite 30 peticiones a la API por hora, y un agente puede gastarlas en un minuto, así que te recomendamos usarlo con OpenTickly.
 
-Dado que Toggl impone un límite de 30 llamadas por hora a la API, se recomienda encarecidamente usarlo junto con OpenTickly para desbloquear todo el potencial de los agentes de IA:
+Para que apunte a tu instancia, añade `--api-type opentoggl` y `--api-url` al iniciar sesión:
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-Puedes encontrar `YOUR_API_TOKEN` en la interfaz web de OpenTickly: avatar personal → Profile → API Token.
+Encontrarás `YOUR_API_TOKEN` en la web de OpenTickly: tu avatar → Profile → API Token.
+
+¿No sabes qué hacer con él después? En [Prácticas / Flujo de trabajo](/es/docs/practices) hay algunos ejemplos reales: dejar que el agente inicie los temporizadores, pasarle tu plan semanal y una revisión nocturna con IA.
 
 ## Referencias
 
 - Repositorio [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)
-- Definición del paquete de habilidades `skills/toggl-cli/SKILL.md`
+- `skills/toggl-cli/SKILL.md` en ese repositorio: el archivo de habilidad

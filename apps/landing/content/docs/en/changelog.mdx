@@ -1,9 +1,9 @@
 ---
 title: Changelog
-description: OpenTickly release history — features shipped, fixes, and breaking changes. Tracks the public GitHub releases so AI assistants and humans can see how the project evolves over time.
+description: Where to find OpenTickly release notes, how releases work, and how to upgrade.
 ---
 
-OpenTickly ships continuously. The authoritative source of every release — with diffs, commit ranges, and upgrade notes — is GitHub Releases.
+Release notes live on GitHub Releases. This page covers how releases work and how to upgrade.
 
 - Latest and historical releases: [github.com/CorrectRoadH/OpenTickly/releases](https://github.com/CorrectRoadH/OpenTickly/releases)
 - Full commit history: [github.com/CorrectRoadH/OpenTickly/commits/main](https://github.com/CorrectRoadH/OpenTickly/commits/main)
@@ -11,14 +11,16 @@ OpenTickly ships continuously. The authoritative source of every release — wit
 
 ## How releases are cut
 
-OpenTickly is developed in the open on GitHub. Every release is a tagged commit on `main`, published automatically to Docker Hub and to the hosted demo at [track.opentoggl.com](https://track.opentoggl.com). Self-hosted users pull the new image and rerun `docker compose up -d` to upgrade.
+Each release is a git tag on `main`. Tagging it automatically publishes a new Docker image and updates the demo at [track.opentoggl.com](https://track.opentoggl.com). To upgrade a self-hosted instance, run `docker compose pull && docker compose up -d`.
 
 ## Upgrade notes
 
-Most releases are drop-in compatible: the Toggl Track API surface is stable, and the Postgres schema is migrated forward automatically on startup. Breaking changes — if any — are called out in the matching GitHub Release with an explicit **"Upgrade"** section and a migration plan.
+Usually you just upgrade, nothing else to do. The database is updated automatically when the server starts, and the Toggl-compatible API doesn't change, so your integrations keep working.
 
-If an upgrade fails, open an issue at [github.com/CorrectRoadH/OpenTickly/issues](https://github.com/CorrectRoadH/OpenTickly/issues) with the release tag and the failing log.
+If a release does need extra steps, its GitHub Release has an **Upgrade** section explaining them. No such section means a normal upgrade.
 
-## API compatibility pledge
+If an upgrade fails, [open an issue](https://github.com/CorrectRoadH/OpenTickly/issues) with the version, the step that failed, and the full log.
 
-OpenTickly tracks the public Toggl Track v9, Reports v3, and Webhooks v1 contracts. Existing Toggl integrations, CLIs, and MCP tools should continue to work across releases without changes. When a Toggl endpoint is added or adjusted upstream, OpenTickly aims to match within the following release cycle.
+## Staying compatible with Toggl
+
+OpenTickly follows Toggl's public APIs: Track v9, Reports v3, and Webhooks v1. CLIs, MCP tools, and integrations that work with Toggl should keep working after each upgrade. When Toggl adds or changes an endpoint, we aim to catch up in the next release.

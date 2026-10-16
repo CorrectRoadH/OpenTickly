@@ -13,67 +13,67 @@
 
 OpenTickly is a free, private-first, AI-friendly alternative to Toggl.
 
-Toggl is a great product, but it's expensive and your data doesn't really belong to you. On top of that, the 30 requests/hour API limit is painful — an AI agent can burn through an hour's quota in a single minute.
+Toggl is a great product, but it's expensive and your data doesn't really belong to you. Its API is also limited to 30 requests per hour, which an AI agent can use up in a minute.
 
-OpenTickly aims to stay aligned with Toggl, so you can move your data in and out between the two without any loss. Keep every workflow and habit you already have. Nothing changes — it just gets better, cheaper, and more private.
+OpenTickly works like Toggl, so you can move your data over and back again without losing anything. Your workflows and habits stay the same. It's just cheaper, more private, and friendlier to AI.
 
 ![Screenshot](apps/landing/public/hero/opentickly-calendar-view.webp)
 
 ## AI Integration
 
-OpenTickly works directly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so AI can help you record, manage, and review your time. Apply the Lyubishchev time management method to find the black holes in your day.
+Use OpenTickly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) and your AI agent can track, organize, and review your time for you. Combine it with the Lyubishchev time-tracking method to see where your day actually goes.
 
 Read the full docs [here](https://opentoggl.com/docs/ai-integration).
 
 ## Self-Hosting
 
-Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synology, TrueNAS, and more.
+Run it with Docker Compose on your own server or NAS: CasaOS/ZimaOS, Synology, TrueNAS, Unraid, and more.
 
 [Read the self-hosting docs](https://opentoggl.com/docs/self-hosting)
 
 [![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/0272TO)
 
-### Unraid Community Apps
+### Unraid
 
-This repository includes Community Apps metadata for an Unraid Docker template:
+There's an Unraid template at `templates/opentickly.xml`. It doesn't include a database, so set up PostgreSQL and Redis containers first, then fill in `DATABASE_URL` and `REDIS_URL` in the template.
 
-- Repository profile: `ca_profile.xml`
-- Docker template: `templates/opentickly.xml`
-- App icon: the canonical product icon `apps/website/public/favicon.svg` (referenced by raw URL; no separate copy)
+<details>
+<summary>Maintainers: updating the Community Apps listing</summary>
 
-Before submitting or updating the app in Community Apps:
+Files: `ca_profile.xml` (repository profile), `templates/opentickly.xml` (Docker template). The icon is `apps/website/public/favicon.svg`, referenced by its raw URL.
 
-1. Keep `TemplateURL` pointed at the raw GitHub URL for `templates/opentickly.xml`.
-2. Keep `ca_profile.xml` in the repository root with a non-empty `Profile`.
-3. Confirm the template image matches the published Docker image.
-4. Run XML validation locally:
+1. `TemplateURL` must point at the raw GitHub URL of `templates/opentickly.xml`.
+2. `ca_profile.xml` must stay in the repository root with a non-empty `Profile`.
+3. The image in the template must match the published Docker image.
+4. Validate the XML locally:
 
    ```sh
    xmllint --noout ca_profile.xml templates/opentickly.xml apps/website/public/favicon.svg
    ```
 
-5. Run **Validate** and **Scan** in the Unraid Community Apps submit flow.
+5. Run **Validate** and **Scan** in the Community Apps submit flow.
 
-The Unraid template expects PostgreSQL and Redis to be reachable from the OpenTickly container. Create those services first, then set `DATABASE_URL` and `REDIS_URL` in the template.
+</details>
 
 ## Mobile PWA Support
 
-The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Android) you can add it to your home screen and use it like a native app.
+There's no mobile app yet, but on iOS and Android you can add the web app to your home screen and use it like one (PWA).
 
 ## Roadmap
 
-- [x] Full API compatibility with Track v9 and Reports v3
-- [ ] Full parity with Toggl Track web
-- [x] Mobile PWA with offline support
+- [x] Same API as Toggl Track v9 and Reports v3
+- [ ] Every feature of the Toggl Track web app
+- [x] Installable mobile web app that works offline
 
 ## Get Started
 
-- Repository: `https://github.com/CorrectRoadH/OpenTickly`
-- Self-hosting docs: `./docs/self-hosting/docker-compose.md`
-- CLI: `https://github.com/CorrectRoadH/toggl-cli`
+- Try the demo: [track.opentoggl.com](https://track.opentoggl.com)
+- [Getting started](https://opentoggl.com/docs/getting-started)
+- [Move from Toggl](https://opentoggl.com/docs/migrate-from-toggl)
+- [toggl-cli](https://github.com/CorrectRoadH/toggl-cli)
 
 ## Acknowledgments
 
-OpenTickly's design is inspired by [Toggl](https://toggl.com), and we aim to stay compatible with their product surface so you can keep your existing workflow.
+OpenTickly's design is inspired by [Toggl](https://toggl.com). We keep it compatible with Toggl so you can keep the way you already work.
 
 We also thank [Linux Do](https://linux.do) for their support and feedback during the project's early development.

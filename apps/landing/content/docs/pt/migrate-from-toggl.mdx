@@ -1,29 +1,61 @@
 ---
 title: Migrar do Toggl para o OpenTickly
-description: Importe no OpenTickly o ZIP da conta Toggl e os CSVs detalhados de tempo; depois valide espaços, projetos, tags, integrantes e totais.
+description: Traga seus dados do Toggl Track para o OpenTickly. Importe o ZIP de exportação da conta e os CSVs de registros de tempo, depois confira se tudo chegou.
 ---
 
-O OpenTickly importa a estrutura da conta Toggl e seus registros de tempo sem recriar manualmente cada espaço de trabalho.
+Você pode trazer sua conta do Toggl Track sem recriar nada à mão. São duas etapas: importar o ZIP de exportação da conta, que traz espaços de trabalho, projetos, clientes, tags e integrantes, e depois importar os CSVs de registros de tempo, que trazem as horas registradas de fato.
 
 <Callout type="info">
-  Guarde os arquivos originais até validar os relatórios. Uma importação não substitui um backup.
+  Guarde os arquivos de exportação originais até conferir que os totais batem. A importação não
+  substitui um backup da sua conta do Toggl.
 </Callout>
 
-## Importe a conta
+## Antes de migrar
 
-1. Solicite a exportação em [Toggl Track](https://track.toggl.com/settings) e baixe o ZIP sem modificá-lo.
-2. No OpenTickly, abra **Importar**.
-3. Informe o nome da nova organização, selecione o ZIP e inicie.
-4. Aguarde o resultado antes de reenviar o mesmo arquivo.
+1. Crie a conta do OpenTickly que vai receber os dados, ou entre nela.
+2. Se você hospeda o OpenTickly, confira se o servidor tem espaço em disco suficiente.
+3. Escolha um momento para a troca e pare de registrar no Toggl, para não acabar com registros nos dois lugares.
+4. Anote qual espaço de trabalho e qual período cada CSV cobre.
 
-## Importe os registros detalhados
+## Etapa 1: exporte o arquivo da sua conta do Toggl
 
-Exporte do Toggl os períodos necessários em CSV. Em **Importar**, selecione a organização e o espaço de destino, envie um ou mais CSVs e aguarde cada tarefa terminar.
+Abra as [configurações do Toggl Track](https://track.toggl.com/settings) e peça uma exportação de dados. Baixe o ZIP e não mude nada dentro dele.
 
-Inclua espaço e período no nome do arquivo para localizar intervalos ausentes ou duplicados.
+A importação cria uma nova organização no OpenTickly. No app web do OpenTickly:
 
-## Valide antes da mudança
+1. Abra **Importar**.
+2. Dê um nome para a organização importada.
+3. Selecione o ZIP exportado do Toggl.
+4. Inicie a importação e espere até aparecer se deu certo ou falhou.
 
-Compare organizações, espaços, clientes, projetos, tags e integrantes. Em **Relatórios**, confira um dia, uma semana e um mês conhecidos e examine duração, descrição, projeto, pessoa, tags e situação faturável de uma amostra.
+A importação roda em segundo plano. Não envie o mesmo ZIP de novo enquanto ela ainda estiver rodando.
 
-Quando os totais coincidirem, avise a equipe onde criar novos registros e guarde as exportações e um backup do PostgreSQL. Continue com [Primeiros passos](/pt/docs/getting-started) ou [Compatibilidade da API](/pt/docs/api-compatibility).
+## Etapa 2: importe os registros de tempo detalhados
+
+No Toggl, exporte em CSV o relatório detalhado de registros de tempo dos períodos que você precisa. Depois, de volta em **Importar**:
+
+1. Escolha a organização e o espaço de trabalho de destino.
+2. Selecione um ou mais arquivos CSV.
+3. Envie e espere cada um terminar.
+4. Antes de importar para outro espaço de trabalho, confira de novo se o espaço certo está selecionado.
+
+Dar nome aos arquivos por espaço de trabalho e período, como `consultoria-2025-t4.csv`, facilita achar buracos ou duplicados.
+
+## Confira o resultado
+
+Antes de começar a usar o OpenTickly para valer:
+
+- Compare os nomes das organizações e dos espaços de trabalho.
+- Confira por amostragem alguns clientes, projetos, tags e integrantes.
+- Em **Relatórios**, compare com o Toggl os totais de um dia, de uma semana e de um mês.
+- Confira registros em andamento e registros que passam da meia-noite.
+- Em alguns registros, confira faturável, duração, descrição, projeto, pessoa e tags.
+- Se uma importação falhar, copie a mensagem de erro antes de tentar de novo ou abrir uma issue.
+
+Comparar os totais dos relatórios é o jeito mais rápido de achar problemas: períodos faltando, registros no espaço de trabalho errado ou o mesmo CSV importado duas vezes.
+
+## Faça a troca
+
+Quando os números baterem, avise a equipe que, daqui para frente, o tempo é registrado no OpenTickly. Guarde por um tempo os arquivos exportados do Toggl e um backup do banco de dados do OpenTickly, caso precise voltar.
+
+Próximos passos: [Primeiros passos](/pt/docs/getting-started) para o uso do dia a dia, ou [Compatibilidade com a API Toggl](/pt/docs/api-compatibility) para trazer seus scripts e integrações.

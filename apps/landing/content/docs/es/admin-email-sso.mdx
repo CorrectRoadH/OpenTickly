@@ -1,18 +1,64 @@
 ---
 title: Configurar correo SMTP y SAML SSO
-description: Configura correo saliente, verificación, invitaciones, recuperación de contraseña y SAML 2.0 SSO en OpenTickly autoalojado.
+description: Configura el correo (para invitaciones, recuperar contraseñas y verificar cuentas) y el inicio de sesión único SAML en una instancia autoalojada de OpenTickly.
 ---
 
-Configura primero la **URL del sitio** pública en **Administración de la instancia → Configuración**. Los enlaces de correo y las URL del proveedor de servicio SAML dependen de ella.
+El correo (SMTP) se configura una sola vez para toda la instancia. El inicio de sesión único (SAML 2.0) se configura aparte en cada espacio de trabajo. Empieza por la URL del sitio, porque los enlaces de los correos y las direcciones de SSO se generan a partir de ella.
 
-## SMTP
+## Configura la URL pública del sitio
 
-En **Correo / SMTP**, introduce nombre y dirección del remitente, host, puerto, usuario y contraseña. El puerto 465 usa TLS implícito; otros puertos actualizan a STARTTLS cuando el servidor lo anuncia.
+Inicia sesión como administrador de la instancia y abre **Administración de la instancia → Configuración**. En **URL del sitio**, pon la dirección que tus usuarios escriben en el navegador, por ejemplo `https://time.example.com`.
 
-Guarda y envía un correo de prueba. SMTP es necesario para invitaciones, recuperación de contraseña y verificación de correo. Activa la verificación solo después de recibir la prueba.
+No uses un nombre de host interno de Docker ni añadas `/api` ni ninguna otra ruta. Si más adelante cambias de dominio, comprueba que los enlaces de los correos siguen funcionando y actualiza los ajustes de SSO en tu proveedor de identidad.
 
-## SAML SSO
+## Configura el correo saliente (SMTP)
 
-En **Ajustes del espacio → Inicio de sesión único**, define nombre y dominio. Copia Entity ID, ACS URL, URL de inicio y Metadata URL al proveedor de identidad. Usa preferentemente los metadatos del IdP; como alternativa, introduce URL de acceso, Entity ID y certificado X.509.
+En **Administración de la instancia → Configuración → Correo / SMTP**, rellena:
 
-Ejecuta **Probar configuración** y **Probar inicio de sesión** antes de activar SSO. Mantén abierta una sesión de administrador con contraseña durante la prueba y no elimines el acceso alternativo hasta que otro administrador haya iniciado sesión correctamente.
+| Campo                | Qué poner                                                               |
+| -------------------- | ----------------------------------------------------------------------- |
+| Nombre del remitente | El nombre que verán los destinatarios                                   |
+| Correo del remitente | Una dirección desde la que tu proveedor de correo te deje enviar        |
+| Host SMTP            | El nombre del servidor de correo                                        |
+| Puerto SMTP          | El que indique tu proveedor; normalmente `587` (STARTTLS) o `465` (TLS) |
+| Usuario SMTP         | El usuario para entrar en el servidor de correo                         |
+| Contraseña SMTP      | La contraseña, o la contraseña de aplicación que te dé el proveedor     |
+
+Con el puerto 465, OpenTickly se conecta con TLS desde el principio. Con cualquier otro puerto, pasa a STARTTLS si el servidor lo admite.
+
+Guarda, escribe una dirección en **Enviar correo de prueba** y manda una prueba. Si falla, el error te dice si no pudo conectar, si el usuario o la contraseña no son correctos, si rechazaron al destinatario o si se agotó el tiempo de espera. Así sabes si tienes que revisar los ajustes del proveedor o el firewall.
+
+Las invitaciones, la recuperación de contraseña y la verificación de correo necesitan SMTP. Cuando te llegue el correo de prueba, puedes activar **Verificación de correo electrónico** para que los usuarios nuevos tengan que confirmar su dirección.
+
+<Callout type="warn">
+  No dejes que la contraseña SMTP aparezca en capturas de pantalla, issues, git ni en el historial
+  de una terminal compartida. Si se filtra, cámbiala.
+</Callout>
+
+## Configura SAML SSO en el espacio de trabajo
+
+Tu proveedor de identidad (IdP) es el servicio con el que tu equipo ya inicia sesión, como Okta, Microsoft Entra ID, Google Workspace o Keycloak.
+
+Como administrador del espacio de trabajo, abre **Ajustes del espacio → Inicio de sesión único**.
+
+1. Escribe un nombre y el dominio de correo de tu empresa (por ejemplo `example.com`).
+2. En tu IdP, crea una aplicación SAML nueva y pega el **Entity ID**, la **ACS URL**, la **URL de inicio** y la **Metadata URL** que te muestra OpenTickly.
+3. De vuelta en OpenTickly, pega la URL de metadatos del IdP. Si tu IdP no te da una, introduce a mano su URL de acceso, su Entity ID y su certificado de firma X.509.
+4. Pulsa **Probar configuración** antes de activar el SSO.
+5. Pulsa **Probar inicio de sesión** y entra con alguien que tenga ese dominio de correo. Comprueba que el correo, el nombre y los demás datos llegan bien.
+6. Guarda y activa el inicio de sesión único.
+
+Cuando alguien pulsa el botón **SSO** en la pantalla de inicio de sesión, OpenTickly mira el dominio de su correo para saber a qué espacio de trabajo mandarlo. Por eso cada dominio solo puede usarlo un espacio de trabajo. Tu IdP tiene que enviar la dirección de correo del usuario, ya sea como atributo de correo o como NameID.
+
+## Antes de activarlo para todo el equipo
+
+Para no quedarte sin acceso:
+
+- Mantén una sesión de administrador abierta (con contraseña) en otra pestaña mientras pruebas.
+- Pruébalo primero con un usuario de prueba, no con todo el equipo.
+- Comprueba que el Entity ID y la ACS URL de tu IdP coinciden exactamente con lo que muestra OpenTickly.
+- Asegúrate de que tanto tus usuarios como tu IdP pueden llegar a OpenTickly por HTTPS.
+- Vuelve a probar después de cambiar la URL del sitio, el proxy inverso, el certificado o los ajustes del IdP.
+- No quites el inicio de sesión con contraseña hasta que al menos otro administrador haya entrado con SSO.
+
+Para el despliegue y los proxies inversos, consulta [Autoalojamiento](/es/docs/self-hosting). Para tokens de API y scripts, consulta [Compatibilidad con la API de Toggl](/es/docs/api-compatibility).

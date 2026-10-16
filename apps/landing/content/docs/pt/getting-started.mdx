@@ -1,29 +1,59 @@
 ---
 title: Primeiros passos com o OpenTickly
-description: Experimente o OpenTickly ou hospede com Docker, crie um espaço de trabalho, registre o primeiro tempo e confira o resultado nos relatórios.
+description: "Comece a registrar seu tempo com o OpenTickly: experimente a demo ou hospede você mesmo com Docker, crie seu primeiro espaço de trabalho, rode o cronômetro e veja o resultado."
 ---
 
-Este guia vai de uma conta vazia ao primeiro relatório útil. Use [a demonstração](https://track.opentoggl.com) ou siga o guia de [auto-hospedagem com Docker](/pt/docs/self-hosting).
+Este guia leva você de uma conta nova até o seu primeiro relatório. Experimente primeiro a demo, ou rode o OpenTickly no seu próprio servidor.
 
-## Prepare o espaço de trabalho
+## Escolha como usar o OpenTickly
 
-1. Crie a conta e abra o espaço criado no onboarding.
-2. Confira o fuso horário antes de registrar a atividade da equipe.
-3. Crie um cliente e um projeto se precisar de relatórios por projeto.
-4. Convide integrantes e revise suas funções.
+| Opção           | Indicado para                                           | O que fazer                                                              |
+| --------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Demo            | Experimentar antes de instalar qualquer coisa           | Abra [track.opentoggl.com](https://track.opentoggl.com) e crie uma conta |
+| Auto-hospedagem | Manter o app e o banco de dados no seu próprio servidor | Siga o [guia de auto-hospedagem com Docker](/pt/docs/self-hosting)       |
 
-Um espaço de trabalho reúne projetos, clientes, tags, integrantes, taxas e registros de tempo.
+Os dois rodam o mesmo app. Hospedar você mesmo significa que seus dados ficam na sua máquina, e os backups e as atualizações ficam por sua conta.
 
-## Registre e revise o tempo
+## Crie sua conta e seu espaço de trabalho
 
-Abra **Timer**, informe uma descrição concreta, selecione projeto e tags, inicie e pare ao concluir. Use o modo manual se já souber os horários de início e fim.
+1. Cadastre-se com nome, e-mail e senha.
+2. Abra o espaço de trabalho criado durante o onboarding.
+3. Confira o fuso horário do espaço antes de registrar o tempo da equipe.
+4. Crie um projeto se quiser que o primeiro registro já apareça nos relatórios por projeto.
 
-Depois abra **Relatórios**, escolha um período e confira o total. Agrupe ou filtre por projeto, cliente, pessoa, tag, situação faturável ou descrição.
+Tudo fica dentro de um espaço de trabalho: projetos, clientes, tags, integrantes, valores por hora e registros de tempo. Relatórios e compartilhamento com a equipe também funcionam por espaço de trabalho.
 
-## Continue
+## Faça seu primeiro registro de tempo
 
-- [Migre dados do Toggl](/pt/docs/migrate-from-toggl).
-- [Conecte uma ferramenta compatível com a API Toggl](/pt/docs/api-compatibility).
-- [Use toggl-cli com um agente de IA](/pt/docs/ai-integration).
+1. Abra **Timer**.
+2. Escreva uma descrição concreta, como `Escrever guia de onboarding`.
+3. Escolha um projeto e, se quiser, algumas tags.
+4. Inicie o cronômetro e pare quando terminar o trabalho.
 
-Comece com poucos projetos e tags que possam ser usados de forma consistente. Acrescente estrutura apenas quando ela responder a uma pergunta real do relatório.
+Se você já sabe o horário de início e de fim, use o modo manual. As visões de calendário e de lista mostram os mesmos registros, então edite na que preferir.
+
+## Veja para onde foi o seu tempo
+
+Abra **Relatórios** e escolha um período. Comece pelo resumo e, quando quiser mais detalhe, filtre ou agrupe por projeto, cliente, pessoa, tag, faturável ou descrição.
+
+Algumas coisas que vale conferir logo no começo:
+
+- O total bate com o tempo que você esperava ter registrado?
+- Os registros estão no projeto e no cliente certos?
+- O que é faturável e o que não é está separado corretamente?
+- As pessoas da equipe usam as mesmas tags para o mesmo tipo de trabalho?
+
+## Traga dados ou integrações que você já tem
+
+- Vindo do Toggl Track: siga [Migrar do Toggl para o OpenTickly](/pt/docs/migrate-from-toggl).
+- Quer reaproveitar uma CLI, um script ou um agente: leia [Compatibilidade com a API Toggl](/pt/docs/api-compatibility).
+- Quer que um agente registre o tempo por você: conecte o [toggl-cli a um agente de IA](/pt/docs/ai-integration).
+
+## Próximos passos sugeridos
+
+1. Organize clientes e projetos do jeito que você quer vê-los nos relatórios.
+2. Convide as pessoas da equipe e confira as funções de cada uma.
+3. Se você hospeda o OpenTickly, configure backups do banco de dados.
+4. Crie um hábito de revisão, como conferir o cronômetro todo dia ou olhar o relatório por projeto toda semana.
+
+Comece com o mínimo de projetos e tags que você consegue manter. Só acrescente mais quando um relatório que você realmente quer precisar deles.

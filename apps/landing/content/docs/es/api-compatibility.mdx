@@ -1,9 +1,13 @@
 ---
 title: Compatibilidad con la API de Toggl
-description: Conecta herramientas compatibles con Toggl a las API Track v9, Reports v3 y Webhooks v1 de OpenTickly mediante un token de API.
+description: Conecta a OpenTickly los scripts, CLI y agentes que ya usas con Toggl. Qué URL usar, cómo autenticarte con un token de API y qué probar antes de cambiarte.
 ---
 
-OpenTickly expone superficies públicas compatibles con Toggl para scripts, CLI y agentes.
+OpenTickly habla la misma API que Toggl. Los scripts, CLI y agentes hechos para Toggl pueden conectarse a tu instancia de OpenTickly con solo cambiar la URL y el token. Seguimos tres API de Toggl: Track v9, Reports v3 y Webhooks v1.
+
+## URL base
+
+Cambia `https://tu-instancia.example` por la URL pública de tu servidor OpenTickly.
 
 | API         | URL base                                       |
 | ----------- | ---------------------------------------------- |
@@ -11,15 +15,49 @@ OpenTickly expone superficies públicas compatibles con Toggl para scripts, CLI 
 | Reports v3  | `https://tu-instancia.example/reports/api/v3`  |
 | Webhooks v1 | `https://tu-instancia.example/webhooks/api/v1` |
 
-Obtén el token en **Perfil → API Token**. Trátalo como una contraseña. La autenticación Basic compatible usa el token como usuario y `api_token` como contraseña:
+Si los clientes se conectan a tu instancia por internet, ponla detrás de HTTPS. El contenedor Docker solo sirve HTTP, así que lo normal es que el HTTPS lo gestione un proxy inverso como Nginx o Caddy.
+
+## Consigue un token de API
+
+Entra en la web de OpenTickly, abre el menú de tu avatar, elige **Perfil** y busca **API Token**. Trata el token como una contraseña: no lo subas a git, no lo pegues en issues y no lo saques en los logs.
+
+La autenticación funciona igual que en Toggl: HTTP Basic, con el token como usuario y el texto literal `api_token` como contraseña:
 
 ```bash
 curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
   https://tu-instancia.example/api/v9/me
 ```
 
-Para migrar una integración, cambia el host oficial por la URL base adecuada y usa el token del usuario OpenTickly. Un cliente que no permita cambiar el host no puede redirigirse solo mediante configuración.
+Define antes `OPENTICKLY_API_TOKEN` en tu terminal. Si te devuelve tus datos de usuario, el token funciona.
 
-Antes de producción, prueba `GET /api/v9/me`, listas de proyectos y etiquetas, creación y parada de una entrada, la consulta de informe real y un webhook desechable si lo necesitas. Comprueba también paginación, fechas, zonas horarias y rotación del token.
+## Cambia una herramienta que ya usas a OpenTickly
 
-Los OpenAPI upstream del repositorio son la referencia contractual. Si una operación concreta difiere, publica pasos reproducibles en [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues).
+Casi todas las herramientas solo necesitan dos cambios:
+
+1. Sustituir la dirección de la API de Toggl por la de tu OpenTickly (la de la tabla de arriba).
+2. Usar tu token de API de OpenTickly en lugar del de Toggl.
+
+Para [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli):
+
+```bash
+toggl auth <YOUR_API_TOKEN> \
+  --api-type opentoggl \
+  --api-url https://tu-instancia.example/api/v9
+```
+
+Si una aplicación de terceros lleva la dirección de Toggl fija y no tiene ningún ajuste para cambiarla, no se puede conectar a OpenTickly.
+
+## Prueba antes de cambiarte
+
+Prueba las peticiones que hace de verdad tu herramienta, no toda la API. Antes de fiarte de ella:
+
+1. Lee el usuario actual con `GET /api/v9/me`.
+2. Lista tu espacio de trabajo, proyectos, etiquetas y entradas de tiempo recientes.
+3. Crea y para una entrada de tiempo de prueba.
+4. Lanza la misma consulta de informe que usa tu script.
+5. Si usas webhooks, crea una suscripción de prueba y bórrala después.
+6. Revisa el manejo de errores, la paginación, las fechas y las zonas horarias.
+
+Todavía no todos los endpoints de Toggl se comportan exactamente igual. Si algo funciona en Toggl pero no en OpenTickly, abre un [issue en GitHub](https://github.com/CorrectRoadH/OpenTickly/issues) con la petición y la respuesta que recibiste.
+
+Para scripts que se ejecutan solos, deja la URL y el token fuera del código, usa una cuenta que solo tenga acceso a los espacios de trabajo que necesita y cambia el token si se filtra.

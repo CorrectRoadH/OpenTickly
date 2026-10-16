@@ -1,29 +1,59 @@
 ---
 title: Primeros pasos con OpenTickly
-description: Prueba OpenTickly o alójalo con Docker, crea un espacio de trabajo, registra tu primera entrada de tiempo y revisa el resultado en Informes.
+description: "Empieza a registrar tu tiempo con OpenTickly: prueba la demo o alójalo tú mismo con Docker, crea tu primer espacio de trabajo, lanza un temporizador y revisa el resultado."
 ---
 
-Esta guía te lleva desde una cuenta vacía hasta un primer informe útil. Puedes probar [la demo](https://track.opentoggl.com) o seguir la guía de [autoalojamiento con Docker](/es/docs/self-hosting).
+Esta guía te lleva de una cuenta nueva a tu primer informe. Puedes probar antes la demo o instalar OpenTickly en tu propio servidor.
 
-## Configura tu espacio de trabajo
+## Elige cómo usar OpenTickly
 
-1. Regístrate y abre el espacio creado durante la incorporación.
-2. Comprueba la zona horaria antes de registrar actividad del equipo.
-3. Crea un cliente y un proyecto si necesitas informes por proyecto.
-4. Invita a miembros y revisa sus permisos.
+| Opción      | Ideal para                                                   | Qué hacer                                                                 |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Demo        | Probarlo antes de instalar nada                              | Abre [track.opentoggl.com](https://track.opentoggl.com) y crea una cuenta |
+| Autoalojado | Tener la aplicación y la base de datos en tu propio servidor | Sigue la [guía de autoalojamiento con Docker](/es/docs/self-hosting)      |
 
-Un espacio de trabajo contiene proyectos, clientes, etiquetas, miembros, tarifas y entradas de tiempo.
+Las dos opciones usan la misma aplicación. Si lo alojas tú, tus datos se quedan en tu máquina y las copias de seguridad y las actualizaciones corren de tu cuenta.
 
-## Registra y revisa tiempo
+## Crea tu cuenta y tu espacio de trabajo
 
-Abre **Temporizador**, escribe una descripción concreta, elige un proyecto y etiquetas, inicia el contador y detenlo al terminar. Usa el modo manual si ya conoces las horas de inicio y fin.
+1. Regístrate con tu nombre, tu correo y una contraseña.
+2. Abre el espacio de trabajo que se crea durante la bienvenida.
+3. Revisa la zona horaria del espacio antes de que el equipo empiece a registrar tiempo.
+4. Crea un proyecto si quieres que tu primera entrada aparezca en los informes por proyecto.
 
-Después abre **Informes**, selecciona un intervalo y comprueba el total. Agrupa o filtra por proyecto, cliente, persona, etiqueta, estado facturable o descripción.
+Todo vive dentro de un espacio de trabajo: proyectos, clientes, etiquetas, miembros, tarifas facturables y entradas de tiempo. Los informes y el trabajo en equipo también van por espacio de trabajo.
 
-## Continúa
+## Registra tu primera entrada de tiempo
 
-- [Migra desde Toggl](/es/docs/migrate-from-toggl) si ya tienes datos.
-- [Configura una integración compatible con la API de Toggl](/es/docs/api-compatibility).
-- [Conecta toggl-cli y agentes de IA](/es/docs/ai-integration).
+1. Abre **Temporizador**.
+2. Escribe una descripción concreta, por ejemplo `Escribir la guía de bienvenida`.
+3. Elige un proyecto y, si quieres, etiquetas.
+4. Inicia el temporizador y páralo cuando termines.
 
-Empieza con pocos proyectos y etiquetas que puedas aplicar de forma coherente. Añade estructura solo cuando responda a una pregunta real del informe.
+Si ya sabes la hora de inicio y de fin, usa el modo manual. El calendario y la lista muestran las mismas entradas, así que edita en la vista que prefieras.
+
+## Mira en qué se te ha ido el tiempo
+
+Abre **Informes** y elige un intervalo de fechas. Empieza por el resumen y, cuando quieras más detalle, filtra o agrupa por proyecto, cliente, usuario, etiqueta, facturable o descripción.
+
+Al principio conviene revisar algunas cosas:
+
+- ¿El total coincide con el tiempo que esperabas haber registrado?
+- ¿Las entradas están en el proyecto y el cliente correctos?
+- ¿Las entradas facturables y no facturables están bien separadas?
+- ¿Todo el equipo usa las mismas etiquetas para el mismo tipo de trabajo?
+
+## Trae tus datos o integraciones
+
+- Si vienes de Toggl Track: sigue [Migrar de Toggl a OpenTickly](/es/docs/migrate-from-toggl).
+- Si quieres reutilizar un CLI, un script o un agente: lee [Compatibilidad con la API de Toggl](/es/docs/api-compatibility).
+- Si quieres que un agente registre el tiempo por ti: conecta [toggl-cli y un agente de IA](/es/docs/ai-integration).
+
+## Siguientes pasos
+
+1. Organiza clientes y proyectos tal y como quieras verlos en los informes.
+2. Invita a tu equipo y revisa sus roles.
+3. Si lo alojas tú, configura copias de seguridad de la base de datos.
+4. Crea un hábito de revisión, como mirar el temporizador cada día o el informe de proyectos cada semana.
+
+Empieza con los menos proyectos y etiquetas posibles que vayas a usar de verdad. Añade más solo cuando un informe que quieras ver los necesite.

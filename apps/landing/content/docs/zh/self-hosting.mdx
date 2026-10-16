@@ -1,9 +1,9 @@
 ---
 title: 自托管
-description: 在自己的机器上部署 OpenTickly — Docker Compose 一条命令拉起 Web + API + Postgres + Redis，5 分钟上线。100% Toggl API 兼容，官方客户端直连即可。
+description: 用 Docker Compose 在自己的机器上部署 OpenTickly，一条命令启动应用、PostgreSQL 和 Redis。也包括 CasaOS、ZimaOS、群晖、飞牛等 NAS 的部署步骤。
 ---
 
-把 OpenTickly 跑在自己的机器上只需要一个 `docker-compose.yml`。下面走一遍从零到能用的完整流程。
+自己部署 OpenTickly 只需要一个 `docker-compose.yml` 文件。下面从头走一遍。
 
 ## 系统要求
 
@@ -19,7 +19,7 @@ description: 在自己的机器上部署 OpenTickly — Docker Compose 一条命
 
 ### 步骤 1 — 下载 `docker-compose.yml`
 
-新建一个目录，把官方 compose 文件拉下来：
+新建一个文件夹，把 compose 文件下载下来：
 
 ```bash
 mkdir -p opentickly && cd opentickly
@@ -28,7 +28,7 @@ wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
-这份 compose 定义了三个容器：
+它会启动三个容器：
 
 - **OpenTickly** — Web UI + REST API（对外暴露 `8080`）
 - **`postgres`** — 数据库（只在内部网络，不对外暴露）
@@ -36,22 +36,22 @@ wget -O docker-compose.yml \
 
 ### 步骤 2 — （可选）配置 `.env`
 
-默认值开箱即用。需要改端口或密码时，在同目录下建一个 `.env`：
+不改也能直接用。想改端口或密码的话，在同一个文件夹里建一个 `.env` 文件：
 
 ```bash
 # Web UI 和 API 的对外端口
 OPENTOGGL_PORT=8080
 
-# 生产部署前强烈建议改成强密码
+# 正式使用前请改成强密码
 OPENTOGGL_POSTGRES_PASSWORD=postgres
 OPENTOGGL_REDIS_PASSWORD=opentoggl
 ```
 
-这三个变量是整个 compose 文件**仅有的**可覆盖配置 — 其他一切（数据库名、用户、镜像、内部连接串）都直接写死，避免配置漂移。需要更深度定制就直接编辑 `docker-compose.yml`。
+能通过 `.env` 改的**只有**这三项。其他的（数据库名、用户名、镜像、连接地址）都故意写死在 compose 文件里，让大家的部署保持简单一致。要改更多东西，直接编辑 `docker-compose.yml`。
 
 <Callout type="warn">
-  生产环境一定要把两个密码都换掉。默认值只适合本地试玩。即便 Postgres/Redis
-  不对主机暴露端口，设密码也是防内网被入侵的基本功。
+  正式使用前一定要把两个密码都改掉，默认值只适合本地试一试。Postgres 和 Redis 虽然不对外开放端口，
+  但万一你内网里别的机器或容器被入侵，强密码能防止数据被直接读走。
 </Callout>
 
 ### 步骤 3 — 启动容器
@@ -68,13 +68,13 @@ docker compose up -d
 
 ### 手机端
 
-目前没有官方移动应用，但你可以把 Web UI 加到手机主屏幕上(PWA)。第三方 toggl 客户端如 timery，正在联系开发者适配 OpenTickly 中。
+目前还没有手机 App，不过可以把网页添加到手机主屏幕，当 App 用（PWA）。我们也在联系 Timery 等第三方 Toggl 客户端的开发者，争取支持 OpenTickly。
 
 ---
 
 ## 接入 AI Agent
 
-OpenTickly 没有 30 次/小时的 API 限流，这意味着 Claude、Cursor 这类 Agent 可以大胆用。配合 [`toggl-cli`](/zh/docs/ai-integration) 把技能包装进 Agent 环境，几分钟就能让 AI 帮你启停计时器、整理项目。
+OpenTickly 没有 Toggl 那种每小时 30 次的 API 限制，Claude、Cursor 这类 Agent 想调多少次都行。装好 [`toggl-cli`](/zh/docs/ai-integration)，几分钟就能让 AI 帮你开始、停止计时，整理项目。
 
 ## 升级
 
@@ -87,7 +87,7 @@ docker compose up -d
 
 ## 部署到 NAS / Homelab
 
-OpenTickly 能跑在任何支持 Docker Compose 的平台上。下面这些只是把上面的流程套进各家的 UI 而已 — 底层命令没有任何差别。
+只要支持 Docker Compose 就能跑 OpenTickly。下面这些其实是同一套部署，只是换成在各家的界面里操作。
 
 ### CasaOS
 
@@ -138,7 +138,7 @@ ZimaOS（Zimablade / Zimacube 的官方系统）和 CasaOS 共用同一套应用
 
 ## 配置参考
 
-整个 compose 文件只有三个可覆盖配置：
+能通过 `.env` 修改的配置只有三项：
 
 | 变量                          | 默认值      | 说明                      |
 | ----------------------------- | ----------- | ------------------------- |
@@ -146,14 +146,14 @@ ZimaOS（Zimablade / Zimacube 的官方系统）和 CasaOS 共用同一套应用
 | `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Postgres 密码（生产必改） |
 | `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Redis 密码（生产必改）    |
 
-其他所有配置（数据库名、用户、镜像 tag、内部连接串、卷名）都直接写死在 `docker-compose.yml` 里。需要改就编辑文件。
+其他配置（数据库名、用户名、镜像版本、连接地址、数据卷名）都直接写在 `docker-compose.yml` 里，要改就编辑这个文件。
 
 ### 健康检查端点
 
-| 路径       | 用途                        |
-| ---------- | --------------------------- |
-| `/readyz`  | 就绪检查（依赖 DB + Redis） |
-| `/healthz` | 存活检查（进程是否在跑）    |
+| 路径       | 用途                                 |
+| ---------- | ------------------------------------ |
+| `/readyz`  | 能否正常服务（会检查数据库和 Redis） |
+| `/healthz` | 进程是否在运行                       |
 
 ---
 

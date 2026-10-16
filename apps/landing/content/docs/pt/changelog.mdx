@@ -1,9 +1,9 @@
 ---
 title: Registro de alterações
-description: Histórico de versões do OpenTickly — recursos lançados, correções e mudanças incompatíveis. Espelha as GitHub Releases públicas para que assistentes de IA e humanos possam acompanhar a evolução do projeto.
+description: Onde encontrar as notas de versão do OpenTickly, como as versões são lançadas e como atualizar.
 ---
 
-O OpenTickly é publicado de forma contínua. A fonte autoritativa de cada versão — com diffs, intervalos de commits e notas de atualização — é o GitHub Releases.
+As notas de versão ficam no GitHub Releases. Esta página explica como as versões são lançadas e como atualizar.
 
 - Versões atuais e anteriores: [github.com/CorrectRoadH/OpenTickly/releases](https://github.com/CorrectRoadH/OpenTickly/releases)
 - Histórico completo de commits: [github.com/CorrectRoadH/OpenTickly/commits/main](https://github.com/CorrectRoadH/OpenTickly/commits/main)
@@ -11,14 +11,16 @@ O OpenTickly é publicado de forma contínua. A fonte autoritativa de cada vers�
 
 ## Como as versões são lançadas
 
-O OpenTickly é desenvolvido abertamente no GitHub. Cada versão corresponde a um commit com tag em `main`, publicado automaticamente no Docker Hub e sincronizado com a demo hospedada em [track.opentoggl.com](https://track.opentoggl.com). Usuários que fazem auto-hospedagem baixam a nova imagem e rodam `docker compose up -d` de novo para atualizar.
+Cada versão é uma tag do git em `main`. Ao criar a tag, uma nova imagem Docker é publicada automaticamente e a demo em [track.opentoggl.com](https://track.opentoggl.com) é atualizada. Para atualizar uma instância auto-hospedada, rode `docker compose pull && docker compose up -d`.
 
 ## Notas de atualização
 
-A maior parte das versões é compatível sem ajustes: a superfície da API do Toggl Track se mantém estável e o schema do Postgres é migrado para frente automaticamente no arranque. Mudanças incompatíveis — quando existem — são sinalizadas na GitHub Release correspondente, com uma seção **"Upgrade"** dedicada e um plano de migração.
+Normalmente é só atualizar, sem fazer mais nada. O banco de dados é atualizado automaticamente quando o servidor inicia, e a API compatível com o Toggl não muda, então suas integrações continuam funcionando.
 
-Se uma atualização falhar, abra uma issue em [github.com/CorrectRoadH/OpenTickly/issues](https://github.com/CorrectRoadH/OpenTickly/issues) informando a tag da versão e o log de erro.
+Se uma versão precisar de passos extras, a GitHub Release dela traz uma seção **Upgrade** explicando o que fazer. Se não houver essa seção, é uma atualização normal.
 
-## Compromisso de compatibilidade da API
+Se uma atualização falhar, [abra uma issue](https://github.com/CorrectRoadH/OpenTickly/issues) com a versão, o passo que falhou e o log completo.
 
-O OpenTickly acompanha os contratos públicos do Toggl Track v9, Reports v3 e Webhooks v1. Integrações, CLIs e ferramentas MCP existentes para o Toggl devem continuar funcionando entre versões sem alterações. Quando um endpoint do Toggl é adicionado ou ajustado na origem, o OpenTickly busca convergir dentro do ciclo de publicação seguinte.
+## Compatibilidade com o Toggl
+
+O OpenTickly segue as APIs públicas do Toggl: Track v9, Reports v3 e Webhooks v1. CLIs, ferramentas MCP e integrações que funcionam com o Toggl devem continuar funcionando depois de cada atualização. Quando o Toggl adiciona ou muda um endpoint, a ideia é acompanhar na versão seguinte.

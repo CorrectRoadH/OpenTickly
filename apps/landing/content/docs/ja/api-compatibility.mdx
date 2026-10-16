@@ -1,9 +1,13 @@
 ---
 title: Toggl API 互換性
-description: API トークンを使い、Toggl 互換ツールを OpenTickly の Track v9、Reports v3、Webhooks v1 API に接続します。
+description: Toggl 向けのスクリプト、CLI、エージェントを OpenTickly につなぎ替える方法。使う URL、API トークンでの認証、切り替え前に確認しておくこと。
 ---
 
-OpenTickly は、スクリプト、CLI、エージェント向けに Toggl 互換の公開 API を提供します。
+OpenTickly は Toggl と同じ API を話します。Toggl 向けに作ったスクリプト、CLI、エージェントは、URL とトークンを変えるだけで OpenTickly のインスタンスとやり取りできます。対応しているのは Toggl の 3 つの API、Track v9、Reports v3、Webhooks v1 です。
+
+## ベース URL
+
+`https://your-instance.example` は、自分の OpenTickly サーバーの公開 URL に置き換えてください。
 
 | API         | ベース URL                                      |
 | ----------- | ----------------------------------------------- |
@@ -11,15 +15,49 @@ OpenTickly は、スクリプト、CLI、エージェント向けに Toggl 互�
 | Reports v3  | `https://your-instance.example/reports/api/v3`  |
 | Webhooks v1 | `https://your-instance.example/webhooks/api/v1` |
 
-**プロフィール → API Token** でトークンを取得し、パスワードと同様に保護してください。互換 Basic 認証では、ユーザー名にトークン、パスワードに `api_token` を使います。
+インターネット越しにアクセスするなら HTTPS にしてください。Docker コンテナ自体は HTTP しか話さないので、HTTPS はふつう Nginx や Caddy などのリバースプロキシで用意します。
+
+## API トークンを取得する
+
+OpenTickly の Web アプリにサインインし、アバターのメニューから **プロフィール** を開いて **APIトークン** を探します。トークンはパスワードと同じように扱ってください。git にコミットしない、Issue に貼らない、ログに出さない、が基本です。
+
+認証方法は Toggl と同じです。HTTP Basic 認証で、ユーザー名にトークン、パスワードに `api_token` という文字列をそのまま使います。
 
 ```bash
 curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
   https://your-instance.example/api/v9/me
 ```
 
-既存の連携では、Toggl 公式ホストを対応するベース URL に変更し、OpenTickly ユーザーのトークンを設定します。ホストを変更できないクライアントは、設定だけでは接続先を変えられません。
+先にシェルで `OPENTICKLY_API_TOKEN` を設定しておきます。自分のユーザー情報が返ってくれば、トークンは使えています。
 
-本番移行前に `GET /api/v9/me`、プロジェクトとタグの一覧、時間エントリの作成・停止、実際のレポートクエリ、必要なら破棄可能な Webhook を試してください。ページネーション、日付、タイムゾーン、トークン更新も確認します。
+## 既存のツールを OpenTickly に切り替える
 
-リポジトリの upstream OpenAPI が契約の基準です。再現可能な差異は [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues) に報告してください。
+たいていのツールは、変えるところが 2 つだけです。
+
+1. Toggl の API アドレスを、上の表にある OpenTickly のアドレスに置き換える。
+2. Toggl のトークンの代わりに、OpenTickly の API トークンを使う。
+
+[`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) の場合：
+
+```bash
+toggl auth <YOUR_API_TOKEN> \
+  --api-type opentoggl \
+  --api-url https://your-instance.example/api/v9
+```
+
+Toggl のアドレスがアプリに埋め込まれていて変更する設定がないサードパーティ製アプリは、OpenTickly に向けることができません。
+
+## 切り替える前に試す
+
+API 全体ではなく、自分のツールが実際に送るリクエストを試してください。本格的に使う前に：
+
+1. `GET /api/v9/me` で現在のユーザーを取得する。
+2. ワークスペース、プロジェクト、タグ、最近の時間エントリを一覧する。
+3. テスト用の時間エントリを作って、停止する。
+4. スクリプトで使っているのと同じレポートのクエリを実行する。
+5. Webhook を使うなら、テスト用のサブスクリプションを作って、終わったら削除する。
+6. エラー処理、ページネーション、日付、タイムゾーンを確認する。
+
+Toggl のすべてのエンドポイントが、まだ完全に同じ動きをするわけではありません。Toggl では動くのに OpenTickly では動かないものがあれば、リクエストと返ってきたレスポンスを添えて [GitHub Issue](https://github.com/CorrectRoadH/OpenTickly/issues) を立ててください。
+
+自動で動くスクリプトでは、URL とトークンをコードに書かず、必要なワークスペースにだけアクセスできるアカウントを使い、トークンが漏れたらリセットしましょう。

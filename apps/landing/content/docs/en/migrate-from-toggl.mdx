@@ -1,61 +1,61 @@
 ---
 title: Migrate from Toggl to OpenTickly
-description: Move Toggl Track data to OpenTickly with an account export archive and detailed time-entry CSV files, then validate workspaces, projects, tags, members, and report totals.
+description: Move your Toggl Track data to OpenTickly. Import the account export ZIP and time-entry CSVs, then check that everything arrived.
 ---
 
-OpenTickly provides an import workflow for moving an existing Toggl Track account without rebuilding every workspace by hand. Use the account export archive for account structure, then add detailed time-entry CSV files to the target workspace.
+You can bring your Toggl Track account over without recreating anything by hand. It takes two steps: import the account export ZIP to get your workspaces, projects, clients, tags, and members, then import time-entry CSVs to get the actual time records.
 
 <Callout type="info">
-  Keep the original export files until you have checked the imported workspaces and report totals.
-  An import is not a backup of the source Toggl account.
+  Keep the original export files until you've checked that the totals match. The import doesn't
+  replace a backup of your Toggl account.
 </Callout>
 
 ## Before you migrate
 
 1. Create or sign in to the destination OpenTickly account.
-2. Confirm the destination instance has enough storage for the uploaded files and PostgreSQL data.
-3. Pick a cutover time so new entries are not created in both systems during validation.
-4. Keep a record of the date range and workspace covered by every CSV export.
+2. If you self-host, make sure the server has enough disk space.
+3. Pick a switch-over time and stop tracking in Toggl, so you don't end up with entries in both places.
+4. Note which workspace and date range each CSV covers.
 
 ## Step 1: export your Toggl account archive
 
-Open [Toggl Track settings](https://track.toggl.com/settings) and request the account data export. Download the resulting ZIP file without changing its internal files.
+Open [Toggl Track settings](https://track.toggl.com/settings) and request a data export. Download the ZIP and don't change anything inside it.
 
-The archive import creates a new organization in OpenTickly. In the OpenTickly web app:
+Importing it creates a new organization in OpenTickly. In the OpenTickly web app:
 
 1. Open **Import**.
 2. Enter a name for the imported organization.
 3. Select the Toggl export ZIP.
-4. Start the import and wait for the success or failure message.
+4. Start the import and wait until it says it succeeded or failed.
 
-OpenTickly processes imports as jobs. Do not close the workflow or upload the same archive again while the first job is still running.
+The import runs in the background. Don't upload the same ZIP again while it's still running.
 
 ## Step 2: import detailed time entries
 
-Export detailed time entries from Toggl as CSV for the date ranges you need. Back in **Import**:
+In Toggl, export the detailed time-entry report as CSV for the date ranges you need. Then, back in **Import**:
 
-1. Select the destination organization and workspace.
+1. Pick the organization and workspace to import into.
 2. Choose one or more CSV files.
-3. Upload them and wait for each import job to finish.
-4. Repeat for another workspace only after confirming the destination selector.
+3. Upload them and wait for each one to finish.
+4. Before importing for another workspace, double-check that the right workspace is selected.
 
-Naming files by workspace and date range, such as `consulting-2025-q4.csv`, makes missing or repeated ranges easier to spot.
+Naming files by workspace and date range, like `consulting-2025-q4.csv`, makes it easy to spot gaps or duplicates.
 
-## Validate the result
+## Check the result
 
-Check the migration before treating OpenTickly as the system of record:
+Before you start tracking in OpenTickly for real:
 
 - Compare organization and workspace names.
-- Open representative clients, projects, tags, and members.
-- Compare a known day, week, and month in **Reports**.
+- Spot-check a few clients, projects, tags, and members.
+- Compare the totals for a day, a week, and a month in **Reports** against Toggl.
 - Check running entries and entries that cross midnight.
-- Check billable state, duration, description, project, user, and tags on a sample of entries.
-- Record any failed job message before retrying or opening an issue.
+- On a few entries, check billable, duration, description, project, user, and tags.
+- If an import fails, copy the error message before retrying or opening an issue.
 
-Report totals are the strongest end-to-end check because they reveal missing ranges, wrong workspace targets, and entries that were exported twice.
+Comparing report totals is the quickest way to catch problems: missing date ranges, entries in the wrong workspace, or the same CSV imported twice.
 
-## Cut over safely
+## Switch over
 
-Once validation passes, tell team members which system should receive new entries. Keep the Toggl exports and a database backup of the new OpenTickly instance for a rollback window that fits your organization.
+Once the numbers match, tell your team to track in OpenTickly from now on. Keep the Toggl export files and a backup of the OpenTickly database for a while, in case you need to go back.
 
-Next, read [Getting started](/docs/getting-started) for workspace habits or [API compatibility](/docs/api-compatibility) to repoint scripts and integrations.
+Next: [Getting started](/docs/getting-started) for day-to-day use, or [API compatibility](/docs/api-compatibility) to move your scripts and integrations over.

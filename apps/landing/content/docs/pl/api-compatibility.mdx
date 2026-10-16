@@ -1,9 +1,13 @@
 ---
 title: Zgodność z API Toggl
-description: Połącz narzędzia zgodne z Toggl z interfejsami OpenTickly Track v9, Reports v3 i Webhooks v1 za pomocą tokenu API.
+description: Przełącz swoje skrypty, CLI i agentów napisanych dla Toggl na OpenTickly. Jakich adresów użyć, jak logować się tokenem API i co sprawdzić przed przejściem.
 ---
 
-OpenTickly udostępnia publiczne interfejsy zgodne z Toggl dla skryptów, CLI i agentów.
+OpenTickly mówi tym samym API co Toggl. Skrypty, CLI i agenci napisani dla Toggl mogą rozmawiać z Twoją instancją OpenTickly, gdy zmienisz im adres i token. Trzymamy się trzech API Toggl: Track v9, Reports v3 i Webhooks v1.
+
+## Adresy bazowe
+
+Zamień `https://twoja-instancja.example` na publiczny adres swojego serwera OpenTickly.
 
 | API         | Bazowy URL                                        |
 | ----------- | ------------------------------------------------- |
@@ -11,15 +15,49 @@ OpenTickly udostępnia publiczne interfejsy zgodne z Toggl dla skryptów, CLI i 
 | Reports v3  | `https://twoja-instancja.example/reports/api/v3`  |
 | Webhooks v1 | `https://twoja-instancja.example/webhooks/api/v1` |
 
-Pobierz token w **Profil → API Token** i chroń go jak hasło. Zgodne uwierzytelnianie Basic używa tokenu jako nazwy użytkownika i `api_token` jako hasła:
+Jeśli klienci łączą się z instancją przez internet, postaw ją za HTTPS. Sam kontener Dockera obsługuje tylko zwykły HTTP, więc HTTPS zwykle zapewnia reverse proxy, np. Nginx albo Caddy.
+
+## Zdobądź token API
+
+Zaloguj się do aplikacji webowej OpenTickly, otwórz menu pod awatarem, wybierz **Profil** i znajdź **API Token**. Traktuj token jak hasło: nie commituj go do gita, nie wklejaj do zgłoszeń i nie wypisuj w logach.
+
+Logowanie działa tak samo jak w Toggl: HTTP Basic auth, gdzie token jest nazwą użytkownika, a hasłem jest dosłownie tekst `api_token`:
 
 ```bash
 curl --user "${OPENTICKLY_API_TOKEN}:api_token" \
   https://twoja-instancja.example/api/v9/me
 ```
 
-Aby przenieść integrację, zamień oficjalny host Toggl na odpowiedni bazowy URL i ustaw token użytkownika OpenTickly. Klienta z hostem zapisanym na stałe nie da się przekierować samą konfiguracją.
+Najpierw ustaw `OPENTICKLY_API_TOKEN` w powłoce. Jeśli dostaniesz z powrotem dane swojego konta, token działa.
 
-Przed produkcją przetestuj `GET /api/v9/me`, listy projektów i tagów, utworzenie oraz zatrzymanie wpisu, rzeczywiste zapytanie raportowe i testowy webhook, jeśli jest potrzebny. Sprawdź paginację, daty, strefy czasowe i rotację tokenu.
+## Przełącz istniejące narzędzie na OpenTickly
 
-Pliki upstream OpenAPI w repozytorium są odniesieniem dla kontraktu. Powtarzalne różnice zgłaszaj w [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues).
+Większość narzędzi wymaga tylko dwóch zmian:
+
+1. Zamień adres API Toggl na adres OpenTickly z tabeli powyżej.
+2. Użyj tokenu API z OpenTickly zamiast tokenu z Toggl.
+
+Dla [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli):
+
+```bash
+toggl auth <YOUR_API_TOKEN> \
+  --api-type opentoggl \
+  --api-url https://twoja-instancja.example/api/v9
+```
+
+Jeśli zewnętrzna aplikacja ma adres Toggl wpisany na sztywno i nie da się go zmienić w ustawieniach, nie przełączysz jej na OpenTickly.
+
+## Sprawdź przed przejściem
+
+Testuj te zapytania, które Twoje narzędzie faktycznie wysyła, a nie całe API. Zanim zaczniesz na nim polegać:
+
+1. Pobierz dane bieżącego użytkownika przez `GET /api/v9/me`.
+2. Wylistuj obszar roboczy, projekty, tagi i ostatnie wpisy czasu.
+3. Utwórz i zatrzymaj testowy wpis czasu.
+4. Uruchom to samo zapytanie o raport, którego używa Twój skrypt.
+5. Jeśli korzystasz z webhooków, utwórz testową subskrypcję, a potem ją usuń.
+6. Sprawdź obsługę błędów, stronicowanie, daty i strefy czasowe.
+
+Nie każdy endpoint Toggl działa jeszcze identycznie. Jeśli coś działa w Toggl, a w OpenTickly nie, zgłoś to w [GitHub Issues](https://github.com/CorrectRoadH/OpenTickly/issues), dołączając zapytanie i odpowiedź, którą dostałeś.
+
+W skryptach działających samodzielnie nie wpisuj adresu ani tokenu do kodu, używaj konta, które ma dostęp tylko do potrzebnych obszarów roboczych, i wygeneruj nowy token, jeśli stary wycieknie.

@@ -1,12 +1,14 @@
 ---
 title: AI 集成
-description: 让 Claude、Cursor 等 AI Agent 通过 toggl-cli 和可安装的技能包，自动记录时间、启停计时器、管理项目与标签。为 AI 工作流设计的开源时间追踪。
+description: 通过 toggl-cli，让 Claude、Cursor 等 AI Agent 帮你记录时间、开始和停止计时、管理项目与标签。
 ---
 
-使用 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 接入 Claude Code、OpenClaw、Hermes Agent、 Codex、Cursor 等 AI Agent，让它们直接通过命令行操作你的 OpenTickly 实例，自动记录时间、启停计时器、管理项目与标签。
+[`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 可以让 Claude Code、OpenClaw、Hermes Agent、Codex、Cursor 等 AI Agent 在命令行里操作 OpenTickly，帮你记录时间、开始和停止计时、管理项目与标签。
 
-- `toggl` CLI — 命令行直接操作
-- `SKILL.md` 技能包 — 装进 Agent 环境一键使用
+它包含两部分：
+
+- `toggl`：命令行工具本身
+- `SKILL.md`：技能文件，告诉 Agent 怎么用这个工具
 
 ## 安装
 
@@ -18,19 +20,19 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## 配置
 
-该 CLI 是同时兼容 Toggl 和 OpenTickly 的，默认指向官方 Toggl API。要改成自己的实例，认证时加上 `--api-type opentoggl` 和 `--api-url`：
+这个 CLI 同时支持 Toggl 和 OpenTickly，默认连的是 Toggl。但 Toggl 每小时只允许调用 30 次 API，Agent 一分钟就能用完，所以推荐配合 OpenTickly 使用。
 
-不过由于 Toggl 有 30 次/小时的 API 限制，强烈建议配合 OpenTickly 使用，解锁 AI Agent 的全部潜力：
+要连到你自己的实例，登录时加上 `--api-type opentoggl` 和 `--api-url`：
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-`YOUR_API_TOKEN` 可以在 OpenTickly Web UI 的个人头像 → Profile → API Token 里找到。
+`YOUR_API_TOKEN` 在 OpenTickly 网页里点头像 → Profile → API Token 就能找到。
 
-装好之后怎么用？看[实践 / 工作流](/zh/docs/practices)里的几个具体例子：让 Agent 帮你开计时、把周计划塞给 Agent、每晚 cron 让 AI 做时间复盘。
+装好之后怎么用？[实践 / 工作流](/zh/docs/practices)里有几个真实例子：让 Agent 帮你开计时、把周计划交给 Agent、每晚让 AI 做时间复盘。
 
 ## 参考
 
 - [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 仓库
-- `skills/toggl-cli/SKILL.md` 技能包定义
+- 仓库里的 `skills/toggl-cli/SKILL.md`：技能文件

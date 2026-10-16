@@ -1,17 +1,17 @@
 ---
 title: セルフホスト
-description: OpenTickly を自分のマシンにデプロイ — Docker Compose 一発で Web + API + Postgres + Redis を起動、5 分で稼働。Toggl API 互換 100%、公式クライアントからそのまま接続できます。
+description: Docker Compose で OpenTickly を自分のマシンで動かします。コマンド 1 つでアプリ、PostgreSQL、Redis が起動します。CasaOS、ZimaOS、Synology、fnOS などの NAS での手順も紹介します。
 ---
 
-OpenTickly を自分のマシンで動かすのに必要なのは `docker-compose.yml` 一つだけです。以下で、ゼロから動作するまでの一連の流れを一通り進めます。
+OpenTickly を自分で動かすのに必要なのは `docker-compose.yml` ファイル 1 つだけです。何もない状態から、実際に使えるところまでの手順を紹介します。
 
 ## システム要件
 
 - **Docker Engine 20.10+** と **Docker Compose v2** が入った Linux、macOS、Windows のいずれかのマシン
-- 約 1 GB のメモリと 1 GB のディスク容量
+- メモリ約 1 GB、ディスク約 1 GB
 - 空いている TCP ポート 1 つ（デフォルトは `8080`）
 
-Docker が未インストールの場合は、まず[公式ガイド](https://docs.docker.com/engine/install/)に沿ってインストールしてから戻ってきてください。
+Docker がまだ入っていない場合は、先に[公式のインストールガイド](https://docs.docker.com/engine/install/)に沿ってインストールしてください。
 
 ---
 
@@ -19,7 +19,7 @@ Docker が未インストールの場合は、まず[公式ガイド](https://do
 
 ### ステップ 1 — `docker-compose.yml` をダウンロード
 
-新しいディレクトリを作成し、公式の compose ファイルを取得します。
+新しいフォルダを作り、compose ファイルをダウンロードします。
 
 ```bash
 mkdir -p opentickly && cd opentickly
@@ -28,30 +28,31 @@ wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
-この compose ファイルは 3 つのコンテナを定義します。
+起動するコンテナは 3 つです。
 
-- **OpenTickly** — Web UI + REST API（`8080` を外部に公開）
-- **`postgres`** — データベース（内部ネットワーク専用、外部非公開）
-- **`redis`** — キャッシュとバックグラウンドタスクキュー（内部ネットワーク専用、外部非公開）
+- **OpenTickly** — Web UI + REST API（`8080` で公開）
+- **`postgres`** — データベース（内部ネットワークのみ、外部には公開しない）
+- **`redis`** — キャッシュとバックグラウンド処理（内部ネットワークのみ、外部には公開しない）
 
 ### ステップ 2 —（任意）`.env` の設定
 
-デフォルト値はそのままで動きます。ポートやパスワードを変えたいときは、同じディレクトリに `.env` を作成してください。
+デフォルトのままでも動きます。ポートやパスワードを変えたいときは、同じフォルダに `.env` ファイルを作ってください。
 
 ```bash
-# Web UI と API の外部公開ポート
+# Web UI と API を公開するポート
 OPENTOGGL_PORT=8080
 
-# 本番デプロイの前に必ず強いパスワードに変更してください
+# 本格的に使う前に強いパスワードに変えてください
 OPENTOGGL_POSTGRES_PASSWORD=postgres
 OPENTOGGL_REDIS_PASSWORD=opentoggl
 ```
 
-この 3 つの変数は、compose ファイル全体で**唯一**上書き可能な設定です。それ以外（データベース名、ユーザー、イメージ、内部接続文字列など）はすべて直書きされており、設定のドリフトを防いでいます。さらに細かくカスタマイズしたい場合は、`docker-compose.yml` を直接編集してください。
+`.env` で変えられるのは、この 3 つ**だけ**です。それ以外（データベース名、ユーザー、イメージ、接続文字列）は、どの環境でもシンプルで同じ構成になるよう、あえて compose ファイルに直接書いてあります。もっと変えたい場合は `docker-compose.yml` を直接編集してください。
 
 <Callout type="warn">
-  本番環境では必ず両方のパスワードを変更してください。デフォルト値はローカルでのお試し用途のみです。Postgres/Redis
-  がホストにポートを公開していなくても、パスワードを設定しておくことは内部ネットワークからの侵入に備える基本です。
+  本格的に使う前に、両方のパスワードを必ず変えてください。デフォルト値はローカルで試すとき専用です。Postgres
+  と Redis には Docker
+  の外からはアクセスできませんが、同じネットワーク内の別のマシンやコンテナが乗っ取られたとき、強いパスワードがあればデータを読まれずに済みます。
 </Callout>
 
 ### ステップ 3 — コンテナの起動
@@ -68,13 +69,13 @@ docker compose up -d
 
 ### モバイル
 
-現時点では公式モバイルアプリはありませんが、Web UI をスマートフォンのホーム画面に追加（PWA）できます。timery のようなサードパーティ製 Toggl クライアントについては、開発者に OpenTickly 対応を打診中です。
+モバイルアプリはまだありませんが、Web アプリをスマートフォンのホーム画面に追加すれば、アプリのように使えます（PWA）。Timery など、サードパーティ製 Toggl アプリの開発者とも OpenTickly への対応について話をしています。
 
 ---
 
-## AI エージェントを接続
+## AI エージェントをつなぐ
 
-OpenTickly には 1 時間あたり 30 回の API レート制限がありません。つまり、Claude や Cursor のようなエージェントを思い切り使えます。[`toggl-cli`](/ja/docs/ai-integration) と組み合わせて、スキルパックをエージェント環境にインストールすれば、数分で AI にタイマーの開始・停止やプロジェクト整理を任せられます。
+OpenTickly には Toggl のような 1 時間 30 回の制限がないので、Claude や Cursor などのエージェントを好きなだけ使えます。[`toggl-cli`](/ja/docs/ai-integration) を設定すれば、数分でエージェントがタイマーの開始・停止やプロジェクトの整理をしてくれるようになります。
 
 ## アップグレード
 
@@ -87,25 +88,25 @@ docker compose up -d
 
 ## NAS / Homelab へのデプロイ
 
-OpenTickly は Docker Compose に対応するあらゆるプラットフォームで動作します。以下はそれぞれの UI に上記の流れをあてはめたものにすぎず、根底のコマンド自体は一切変わりません。
+OpenTickly は Docker Compose が動く環境ならどこでも動きます。以下は、上と同じ構成を各プラットフォームの画面から行う手順です。
 
 ### CasaOS
 
 1. CasaOS ダッシュボードを開く
 2. **App Store** → **カスタムインストール** → **docker-compose をインポート** に進む
 3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml) の内容を貼り付ける
-4. **Web UI** ポートを `8080` に設定して保存
+4. **Web UI** のポートを `8080` にして保存
 5. ダッシュボードから起動する
 
 `http://<CasaOS の IP>:8080` でアクセスできます。
 
 ### ZimaOS
 
-ZimaOS（Zimablade / Zimacube の公式 OS）は CasaOS と同じ App Store を共有しているため、手順も完全に同じです。**App Store** → **カスタムインストール** → **docker-compose をインポート** から compose ファイルを貼り付けるだけで OK です。
+ZimaOS（Zimablade / Zimacube の公式 OS）は CasaOS と同じ App Store を使っているので、手順もまったく同じです。**App Store** → **カスタムインストール** → **docker-compose をインポート** から compose ファイルを貼り付けてください。
 
 ### Synology
 
-Synology DSM 7.2+ は **Container Manager** 経由で Docker Compose に対応しています。
+Synology DSM 7.2 以降は、**Container Manager** で Docker Compose が使えます。
 
 1. **Container Manager** → **プロジェクト** → **作成** を開く
 2. プロジェクト名を入力（例：`opentickly`）
@@ -113,53 +114,53 @@ Synology DSM 7.2+ は **Container Manager** 経由で Docker Compose に対応�
 4. ウィザードを最後まで進めて完了
 
 <Callout type="info">
-  `8080` が DSM と競合する場合は、プロジェクト作成前に環境設定で
-  `OPENTOGGL_PORT=9090`（または任意の空きポート）を追加してください。
+  `8080` が DSM と重なる場合は、プロジェクトを作る前に環境変数の設定で
+  `OPENTOGGL_PORT=9090`（または空いている別のポート）を追加してください。
 </Callout>
 
 ### fnOS
 
-[fnOS](https://www.fnnas.com) は Docker 管理パネルを標準搭載しています。
+[fnOS](https://www.fnnas.com) には Docker の管理画面が最初から入っています。
 
 1. fnOS デスクトップの **Docker** アプリを開く
-2. 左サイドバーで **Compose** → **新規プロジェクト** を選択
+2. 左サイドバーで **Compose** → **新規プロジェクト** を選ぶ
 3. プロジェクト名に `opentickly` を入力し、保存先パスはデフォルトのまま
 4. **Compose 内容** に [compose ファイル](https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml) を貼り付ける
-5. **デプロイ** を押し、3 つのコンテナがすべて緑になるのを待つ
+5. **デプロイ** を押し、3 つのコンテナがすべて緑になるまで待つ
 
 ### その他のプラットフォーム
 
-以下のプラットフォームはいずれも同じ Docker Compose の手順で対応できます。
+以下のプラットフォームも、同じ Docker Compose の手順で動かせます。
 
 - **Unraid** — Community Applications または Compose Manager プラグイン
 - **TrueNAS SCALE** — カスタムアプリ + Docker Compose
-- **Proxmox LXC** — LXC コンテナ内に Docker をインストールし、[サーバーのデプロイ](#サーバーのデプロイ) の手順に従う
+- **Proxmox LXC** — LXC コンテナ内に Docker を入れてから、[サーバーのデプロイ](#サーバーのデプロイ) の手順に従う
 
 ---
 
 ## 設定リファレンス
 
-compose ファイル全体で上書き可能な設定は 3 つだけです。
+`.env` で変えられる設定は 3 つです。
 
-| 変数                          | デフォルト値 | 説明                            |
-| ----------------------------- | ------------ | ------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`       | Web UI と API の外部公開ポート  |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`   | Postgres パスワード（本番必須） |
-| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl`  | Redis パスワード（本番必須）    |
+| 変数                          | デフォルト値 | 説明                                      |
+| ----------------------------- | ------------ | ----------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`       | Web UI と API を公開するポート            |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`   | Postgres のパスワード（本番では必ず変更） |
+| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl`  | Redis のパスワード（本番では必ず変更）    |
 
-それ以外のすべての設定（データベース名、ユーザー、イメージタグ、内部接続文字列、ボリューム名）は `docker-compose.yml` に直書きされています。変更したい場合はファイルを直接編集してください。
+それ以外（データベース名、ユーザー、イメージタグ、接続文字列、ボリューム名）は `docker-compose.yml` に直接書いてあります。変えたい場合はファイルを編集してください。
 
-### ヘルスチェックエンドポイント
+### ヘルスチェック用エンドポイント
 
-| パス       | 用途                                    |
-| ---------- | --------------------------------------- |
-| `/readyz`  | Readiness チェック（DB + Redis に依存） |
-| `/healthz` | Liveness チェック（プロセスが動作中か） |
+| パス       | 用途                                               |
+| ---------- | -------------------------------------------------- |
+| `/readyz`  | リクエストを受けられる状態か（DB と Redis も確認） |
+| `/healthz` | プロセスが動いているか                             |
 
 ---
 
 ## 次のステップ
 
-- [AI 連携](/ja/docs/ai-integration) — Claude や Cursor を自分のインスタンスに接続する
+- [AI 連携](/ja/docs/ai-integration) — Claude や Cursor などのエージェントを自分のインスタンスにつなぐ
 - [GitHub リポジトリ](https://github.com/CorrectRoadH/OpenTickly) — ソース、Issues、Discussions
-- デプロイで問題に当たったら [Issues](https://github.com/CorrectRoadH/OpenTickly/issues) でお知らせください
+- デプロイでつまずいたら [Issues](https://github.com/CorrectRoadH/OpenTickly/issues) で教えてください

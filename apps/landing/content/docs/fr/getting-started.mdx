@@ -1,29 +1,59 @@
 ---
 title: Bien démarrer avec OpenTickly
-description: Essayez OpenTickly ou auto-hébergez-le avec Docker, créez un espace de travail, enregistrez votre premier temps et vérifiez le résultat dans les rapports.
+description: "Commencez à suivre votre temps avec OpenTickly : essayez la démo en ligne ou auto-hébergez-le avec Docker, créez votre premier espace de travail, lancez un minuteur et regardez le résultat."
 ---
 
-Ce guide vous mène d'un compte vide à un premier rapport utile. Testez [la démo](https://track.opentoggl.com) ou suivez le guide d'[auto-hébergement Docker](/fr/docs/self-hosting).
+Ce guide vous accompagne de la création du compte jusqu'à votre premier rapport. Essayez d'abord la démo en ligne, ou installez OpenTickly sur votre propre serveur.
 
-## Préparer l'espace de travail
+## Choisir comment utiliser OpenTickly
 
-1. Inscrivez-vous et ouvrez l'espace créé pendant l'accueil.
-2. Vérifiez le fuseau horaire avant de suivre l'activité d'une équipe.
-3. Créez un client et un projet si vos rapports doivent les distinguer.
-4. Invitez les membres et vérifiez leurs rôles.
+| Option           | Idéal pour                                                   | Que faire                                                                    |
+| ---------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Démo en ligne    | Essayer avant d'installer quoi que ce soit                   | Ouvrez [track.opentoggl.com](https://track.opentoggl.com) et créez un compte |
+| Auto-hébergement | Garder l'application et la base de données sur votre serveur | Suivez le [guide d'auto-hébergement Docker](/fr/docs/self-hosting)           |
 
-Un espace de travail regroupe projets, clients, tags, membres, tarifs et entrées de temps.
+C'est la même application dans les deux cas. En auto-hébergement, vos données restent chez vous, mais les sauvegardes et les mises à jour sont à votre charge.
 
-## Enregistrer puis analyser
+## Créer votre compte et votre espace de travail
 
-Ouvrez **Minuteur**, saisissez une description précise, choisissez un projet et des tags, démarrez puis arrêtez le minuteur. Utilisez le mode manuel si les heures de début et de fin sont déjà connues.
+1. Inscrivez-vous avec votre nom, votre adresse e-mail et un mot de passe.
+2. Ouvrez l'espace de travail créé pendant l'accueil.
+3. Vérifiez le fuseau horaire de l'espace avant d'y enregistrer l'activité de l'équipe.
+4. Ajoutez un projet si vous voulez que votre première entrée apparaisse dans les rapports par projet.
 
-Ouvrez ensuite **Rapports**, choisissez une période et vérifiez le total. Regroupez ou filtrez par projet, client, membre, tag, statut facturable ou description.
+Tout se passe dans un espace de travail : projets, clients, tags, membres, tarifs facturables et entrées de temps. Les rapports et le partage en équipe fonctionnent aussi par espace de travail.
 
-## Continuer
+## Enregistrer votre première entrée de temps
 
-- [Migrer depuis Toggl](/fr/docs/migrate-from-toggl).
-- [Configurer un outil compatible avec l'API Toggl](/fr/docs/api-compatibility).
-- [Connecter toggl-cli et un agent IA](/fr/docs/ai-integration).
+1. Ouvrez **Minuteur**.
+2. Saisissez une description concrète, par exemple `Rédiger le guide d'accueil`.
+3. Choisissez un projet et, si vous voulez, des tags.
+4. Démarrez le minuteur, puis arrêtez-le quand le travail est terminé.
 
-Commencez avec peu de projets et de tags, appliqués de manière cohérente. Ajoutez de la structure seulement lorsqu'elle répond à une vraie question de rapport.
+Si vous connaissez déjà l'heure de début et de fin, passez en mode manuel. Les vues calendrier et liste affichent les mêmes entrées : modifiez-les dans celle que vous préférez.
+
+## Voir où est passé votre temps
+
+Ouvrez **Rapports** et choisissez une période. Commencez par le résumé, puis filtrez ou regroupez par projet, client, utilisateur, tag, statut facturable ou description quand vous voulez plus de détails.
+
+Quelques points à vérifier dès le début :
+
+- Le total correspond-il au temps que vous pensiez avoir enregistré ?
+- Les entrées sont-elles rattachées au bon projet et au bon client ?
+- Les entrées facturables et non facturables sont-elles bien séparées ?
+- Les membres de l'équipe utilisent-ils les mêmes tags pour le même type de travail ?
+
+## Reprendre vos données ou vos intégrations
+
+- Vous venez de Toggl Track : suivez [Migrer de Toggl vers OpenTickly](/fr/docs/migrate-from-toggl).
+- Vous voulez réutiliser un CLI, un script ou un agent : lisez [Compatibilité avec l'API Toggl](/fr/docs/api-compatibility).
+- Vous voulez qu'un agent enregistre votre temps : branchez [toggl-cli et un agent IA](/fr/docs/ai-integration).
+
+## Et ensuite
+
+1. Organisez vos clients et projets comme vous voulez les voir dans les rapports.
+2. Invitez vos collègues et vérifiez leurs rôles.
+3. Si vous êtes en auto-hébergement, mettez en place des sauvegardes de la base de données.
+4. Prenez une habitude de suivi, par exemple jeter un œil au minuteur chaque jour ou au rapport par projet chaque semaine.
+
+Commencez avec aussi peu de projets et de tags que possible, juste ce que vous arriverez à tenir. N'en ajoutez que lorsqu'un rapport dont vous avez vraiment besoin l'exige.

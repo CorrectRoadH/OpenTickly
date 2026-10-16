@@ -1,15 +1,15 @@
 ---
 title: Configure SMTP Email and SAML SSO
-description: Configure outgoing SMTP email, email verification, invitations, password resets, and workspace SAML 2.0 single sign-on for a self-hosted OpenTickly instance.
+description: Set up email (for invites, password resets, and verification) and SAML single sign-on on a self-hosted OpenTickly instance.
 ---
 
-Self-hosted OpenTickly stores SMTP settings at the instance level and SAML 2.0 single sign-on settings at the workspace level. Configure the public Site URL first because email links and SAML Service Provider URLs depend on it.
+Email (SMTP) is set up once for the whole instance. Single sign-on (SAML 2.0) is set up separately for each workspace. Set the Site URL first, because links in emails and the SSO addresses are built from it.
 
 ## Configure the public Site URL
 
-Sign in as an instance administrator and open **Instance Admin → Configuration**. Set **Site URL** to the public HTTPS origin users open, for example `https://time.example.com`.
+Sign in as an instance admin and open **Instance Admin → Configuration**. Set **Site URL** to the address your users type into the browser, for example `https://time.example.com`.
 
-Do not use an internal container hostname or append an API path. After changing the public domain, recheck email links and the SAML values shown to your identity provider.
+Don't use an internal Docker hostname, and don't add `/api` or any other path. If you change the domain later, check that email links still work and update the SSO settings in your identity provider.
 
 ## Configure outgoing SMTP email
 
@@ -18,43 +18,47 @@ In **Instance Admin → Configuration → Email / SMTP**, enter:
 | Field         | Meaning                                                              |
 | ------------- | -------------------------------------------------------------------- |
 | Sender Name   | Display name shown on messages                                       |
-| Sender Email  | From address accepted by your mail provider                          |
+| Sender Email  | From address your mail provider allows you to send as                |
 | SMTP Host     | Mail server hostname                                                 |
 | SMTP Port     | Provider port; commonly `587` for STARTTLS or `465` for implicit TLS |
-| SMTP Username | Account used to authenticate                                         |
+| SMTP Username | Login for the mail server                                            |
 | SMTP Password | Password or provider-issued app password                             |
 
-OpenTickly uses implicit TLS on port 465. On other ports it upgrades with STARTTLS when the server advertises support.
+On port 465 OpenTickly connects with TLS from the start. On other ports it switches to STARTTLS if the server supports it.
 
-Save the settings, enter a recipient under **Send Test Email**, and send a test. The result distinguishes connection, authentication, rejected-recipient, and timeout failures so you can check the relevant provider setting or firewall rule.
+Save, enter an address under **Send Test Email**, and send a test. If it fails, the error tells you whether it couldn't connect, the login was wrong, the recipient was rejected, or it timed out, so you know whether to look at your provider settings or your firewall.
 
-SMTP is required for member invitations, password resets, and email verification. After a test message arrives, enable **Email Verification** if every newly registered user should confirm their address.
+Invites, password resets, and email verification all need SMTP. Once the test email arrives, you can turn on **Email Verification** to make new users confirm their email address.
 
 <Callout type="warn">
-  Keep SMTP credentials out of screenshots, support tickets, source control, and shared shell
-  history. Rotate the credential if it is exposed.
+  Keep your SMTP password out of screenshots, issues, git, and shared shell history. If it leaks,
+  change it.
 </Callout>
 
 ## Configure workspace SAML SSO
 
-Open **Workspace Settings → Single Sign-On** as a workspace administrator.
+Your identity provider (IdP) is the service your team already logs in with, such as Okta, Microsoft Entra ID, Google Workspace, or Keycloak.
 
-1. Enter a profile name and the email domain that should route to this workspace.
-2. Copy the generated **Entity ID**, **ACS URL**, **Sign-in URL**, and **Metadata URL** into a new SAML application at your identity provider.
-3. Prefer the identity provider's metadata URL. If it is unavailable, enter the IdP sign-in URL, entity ID, and X.509 signing certificate manually.
-4. Run **Test configuration** before enabling SSO.
-5. Run **Test login** with a user from the claimed domain and inspect the returned email, name, domain match, and assertion attributes.
-6. Save the configuration, then enable single sign-on.
+As a workspace admin, open **Workspace Settings → Single Sign-On**.
 
-The email domain is the routing key on the public **SSO** login screen. An enabled domain can belong to only one workspace. The SAML assertion must return an email address, either through a recognized email attribute or an email-formatted NameID.
+1. Enter a name and your company's email domain (for example `example.com`).
+2. In your IdP, create a new SAML app and paste in the **Entity ID**, **ACS URL**, **Sign-in URL**, and **Metadata URL** that OpenTickly shows.
+3. Back in OpenTickly, paste the IdP's metadata URL. If your IdP doesn't give you one, enter its sign-in URL, entity ID, and X.509 signing certificate by hand.
+4. Click **Test configuration** before turning SSO on.
+5. Click **Test login** and sign in as someone with that email domain. Check that the email, name, and other details come back correctly.
+6. Save, then turn on single sign-on.
 
-## Safe rollout checklist
+When someone uses the **SSO** button on the login page, OpenTickly looks at their email domain to decide which workspace to send them to. So each domain can only be used by one workspace. Your IdP must send the user's email address, either as an email attribute or as the NameID.
 
-- Keep an existing password-authenticated administrator session open while testing.
-- Test with a non-critical user before directing the whole domain to SSO.
-- Confirm the IdP uses the exact generated Entity ID and ACS URL.
-- Confirm the instance is reachable over HTTPS from users and the identity provider.
-- Retest after changing the public Site URL, reverse proxy, certificate, or identity-provider metadata.
-- Do not disable your fallback login method until another administrator has completed SSO successfully.
+## Before you turn it on for everyone
 
-For general deployment and reverse-proxy context, see [Self-Hosting](/docs/self-hosting). For scripts and tokens, see [Toggl API Compatibility](/docs/api-compatibility).
+So you don't lock yourself out:
+
+- Stay logged in as an admin (with your password) in another tab while you test.
+- Try it with a test user first, not the whole team.
+- Make sure the Entity ID and ACS URL in your IdP match exactly what OpenTickly shows.
+- Make sure both your users and your IdP can reach OpenTickly over HTTPS.
+- Test again after changing the Site URL, reverse proxy, certificate, or IdP settings.
+- Keep password login available until at least one other admin has signed in with SSO.
+
+For deployment and reverse proxies, see [Self-Hosting](/docs/self-hosting). For API tokens and scripts, see [Toggl API Compatibility](/docs/api-compatibility).

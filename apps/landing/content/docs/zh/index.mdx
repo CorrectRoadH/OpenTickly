@@ -1,23 +1,21 @@
 ---
 title: OpenTickly 是什么
-description: OpenTickly 开源文档：快速上手、Docker 自托管部署、Toggl API 兼容性说明，以及 AI Agent 集成指南。覆盖从安装到接入 Claude、Cursor 的完整参考。
+description: OpenTickly 使用文档：快速上手、用 Docker 自己部署、从 Toggl 搬过来，以及接入 Claude、Cursor 等 AI Agent。
 ---
 
 OpenTickly 是一个免费、隐私优先、AI 友好的 Toggl 替代方案。
 
-OpenTickly 之前叫 OpenToggl，现在已经 rebrand 为 OpenTickly。旧文档、链接或讨论里提到的 OpenToggl，指的就是同一个项目。
+OpenTickly 以前叫 OpenToggl，后来改了名。旧链接或讨论里看到的 OpenToggl，就是这个项目。
 
 Toggl 是个很棒的产品，但是太贵，而且数据并不真的属于你。更头疼的是 30 次/小时的 API 限制 —— AI Agent 能在一分钟里把一个小时的额度全部用掉。
 
-OpenTickly 的目标是跟 Toggl 一模一样 —— 你可以零损失地把数据从 Toggl 迁进来，也可以随时带着数据迁回去。工作流和使用习惯一个都不用改，只是更便宜、更隐私、对 AI 更友好。
+OpenTickly 的用法和 Toggl 保持一致：数据可以完整地从 Toggl 搬过来，也可以随时再搬回去，一条都不丢。原来的工作流和习惯都不用改，只是更便宜、更隐私、对 AI 更友好。
 
-## 功能开发边界
+## 我们做哪些功能
 
-OpenTickly 的开发计划只会考虑开发 Toggl 原有的功能，然后补充与用户数据无关的扩展功能。这样做的好处是：
+我们只做 Toggl 已经有的功能，再加上不改变用户数据的扩展，比如实例管理、AI 相关的工具。这样你随时都能带着数据回到 Toggl，不会被绑死。
 
-- 随时能带着数据回 Toggl，不存在 vendor lock-in。
-
-比如实例管理、AI 相关的功能扩展。如果某些功能改进尽管会实用或者受到欢迎，只要会导致用户数据与 toggl 分叉了，就不会被接受。
+如果某个功能会让数据变成 Toggl 存不下的样子，哪怕它很实用、很多人想要，也不会被接受。
 
 <Cards>
   <Card title="快速上手" href="/zh/docs/getting-started" />

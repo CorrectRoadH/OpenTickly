@@ -1,12 +1,14 @@
 ---
 title: AI Integration
-description: Let Claude, Cursor, and other AI agents auto-track time, start and stop timers, and manage projects and tags through toggl-cli and installable skill packs. Open-source time tracking built for AI workflows.
+description: Let Claude, Cursor, and other AI agents track your time, start and stop timers, and manage projects and tags through toggl-cli.
 ---
 
-Use [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) to hook up Claude Code, OpenClaw, Hermes Agent, Codex, Cursor and other AI agents — letting them drive your OpenTickly instance directly from the command line to auto-track time, start and stop timers, and manage projects and tags.
+[`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) lets Claude Code, OpenClaw, Hermes Agent, Codex, Cursor, and other AI agents use OpenTickly from the command line. They can track time, start and stop timers, and manage projects and tags for you.
 
-- `toggl` CLI — operate directly from the command line
-- `SKILL.md` skill pack — install into an agent environment, one-command use
+It comes in two parts:
+
+- `toggl`: the command-line tool itself
+- `SKILL.md`: a skill file that teaches your agent how to use it
 
 ## Install
 
@@ -18,17 +20,19 @@ npx skills add CorrectRoadH/toggl-cli
 
 ## Configure
 
-The CLI is compatible with both Toggl and OpenTickly, and defaults to the official Toggl API. To point it at your own instance, pass `--api-type opentoggl` and `--api-url` during auth:
+The CLI works with both Toggl and OpenTickly, and talks to Toggl by default. Toggl only allows 30 API requests per hour, which an agent can use up in a minute, so we recommend using it with OpenTickly.
 
-Because Toggl has a 30 requests/hour API limit, we strongly recommend pairing the CLI with OpenTickly to unlock the full potential of AI agents:
+To point it at your instance, add `--api-type opentoggl` and `--api-url` when you log in:
 
 ```bash
 toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-You can find `YOUR_API_TOKEN` in the OpenTickly web UI under your avatar → Profile → API Token.
+You can find `YOUR_API_TOKEN` in the OpenTickly web app under your avatar → Profile → API Token.
+
+Not sure what to do with it next? [Practices & Workflow](/docs/practices) has a few real examples: letting the agent start timers, giving it your weekly plan, and a nightly AI review.
 
 ## References
 
 - [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) repository
-- `skills/toggl-cli/SKILL.md` skill pack definition
+- `skills/toggl-cli/SKILL.md` in that repo: the skill file

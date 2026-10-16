@@ -1,9 +1,9 @@
 ---
 title: Auto-hospedagem
-description: Implante o OpenTickly na sua própria máquina — um único comando do Docker Compose sobe Web + API + Postgres + Redis e você está no ar em 5 minutos. 100% compatível com a API do Toggl; os clientes oficiais se conectam diretamente.
+description: Rode o OpenTickly na sua própria máquina com Docker Compose. Um único comando sobe o app, o PostgreSQL e o Redis. Também cobre CasaOS, ZimaOS, Synology, fnOS e outras plataformas de NAS.
 ---
 
-Rodar o OpenTickly na sua própria máquina exige apenas um `docker-compose.yml`. Abaixo, um passeio completo do zero até o sistema funcionando.
+Para rodar o OpenTickly você mesmo, basta um arquivo `docker-compose.yml`. Veja abaixo como sair do zero até uma instância funcionando.
 
 ## Requisitos do sistema
 
@@ -19,7 +19,7 @@ Se ainda não tem o Docker, siga o [guia oficial](https://docs.docker.com/engine
 
 ### Passo 1 — Baixar o `docker-compose.yml`
 
-Crie um novo diretório e baixe o arquivo compose oficial:
+Crie uma pasta nova e baixe o arquivo compose:
 
 ```bash
 mkdir -p opentickly && cd opentickly
@@ -28,31 +28,31 @@ wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/OpenTickly/main/docker-compose.yml
 ```
 
-Esse compose define três containers:
+Ele sobe três containers:
 
 - **OpenTickly** — Interface web + REST API (exposto externamente na porta `8080`)
 - **`postgres`** — Banco de dados (apenas na rede interna, não exposto)
-- **`redis`** — Cache e fila de tarefas em segundo plano (apenas na rede interna, não exposto)
+- **`redis`** — Cache e tarefas em segundo plano (apenas na rede interna, não exposto)
 
 ### Passo 2 — (Opcional) Configurar o `.env`
 
-Os valores padrão funcionam imediatamente. Para alterar a porta ou as senhas, crie um `.env` no mesmo diretório:
+Os valores padrão já funcionam. Para mudar a porta ou as senhas, crie um arquivo `.env` na mesma pasta:
 
 ```bash
 # Porta externa da interface web e da API
 OPENTOGGL_PORT=8080
 
-# Antes de colocar em produção, recomendamos fortemente trocar por senhas fortes
+# Troque por senhas fortes antes de usar para valer
 OPENTOGGL_POSTGRES_PASSWORD=postgres
 OPENTOGGL_REDIS_PASSWORD=opentoggl
 ```
 
-Essas três variáveis são as **únicas** configurações sobrescrevíveis em todo o arquivo compose — todo o resto (nome do banco, usuário, imagem, strings de conexão internas) é fixado diretamente no arquivo para evitar desvios de configuração. Para personalizações mais profundas, edite o `docker-compose.yml` diretamente.
+Essas três são as **únicas** configurações que você pode mudar pelo `.env`. Todo o resto (nome do banco, usuário, imagens, strings de conexão) fica fixo no arquivo compose de propósito, para manter as instalações simples e parecidas entre si. Para mudar mais coisas, edite o `docker-compose.yml` diretamente.
 
 <Callout type="warn">
-  Em produção, sempre troque as duas senhas. Os valores padrão servem apenas para testes locais.
-  Mesmo que o Postgres/Redis não exponham portas ao host, definir uma senha é o mínimo de defesa
-  contra invasões na rede interna.
+  Troque as duas senhas antes de usar para valer. Os valores padrão só servem para testar
+  localmente. O Postgres e o Redis não ficam acessíveis de fora do Docker, mas se outra máquina ou
+  outro container da sua rede for invadido, senhas fortes impedem que ele leia os seus dados.
 </Callout>
 
 ### Passo 3 — Iniciar os containers
@@ -69,13 +69,13 @@ Abra `http://<seu IP>:8080` no navegador, registre a primeira conta e já pode c
 
 ### Mobile
 
-Por enquanto não há aplicativo móvel oficial, mas você pode adicionar a interface web à tela inicial do celular (PWA). Clientes Toggl de terceiros, como o timery, já estão em contato com os desenvolvedores para oferecer suporte ao OpenTickly.
+Ainda não há aplicativo para celular, mas você pode adicionar o app web à tela inicial do celular e usá-lo como um app (PWA). Também estamos conversando com desenvolvedores de apps de terceiros para o Toggl, como o Timery, sobre suporte ao OpenTickly.
 
 ---
 
 ## Conectar agentes de IA
 
-O OpenTickly não tem o limite de 30 chamadas de API por hora, o que significa que agentes como Claude e Cursor podem ser usados à vontade. Combine com o [`toggl-cli`](/pt/docs/ai-integration), instale o pacote de habilidades no ambiente do agente e, em poucos minutos, a IA já pode iniciar e parar temporizadores e organizar projetos por você.
+O OpenTickly não tem o limite de 30 requisições por hora do Toggl, então Claude, Cursor e outros agentes podem usá-lo o quanto precisarem. Configure o [`toggl-cli`](/pt/docs/ai-integration) e, em poucos minutos, o seu agente já pode iniciar e parar o cronômetro e organizar projetos para você.
 
 ## Atualização
 
@@ -88,7 +88,7 @@ docker compose up -d
 
 ## Implantar em NAS / Homelab
 
-O OpenTickly roda em qualquer plataforma que suporte Docker Compose. Os guias abaixo apenas encaixam o fluxo acima na interface de cada sistema — os comandos por baixo dos panos são exatamente os mesmos.
+O OpenTickly roda em qualquer lugar que rode Docker Compose. Os passos abaixo são a mesma instalação, feita pela interface de cada plataforma.
 
 ### CasaOS
 
@@ -140,7 +140,7 @@ As plataformas abaixo seguem exatamente o mesmo fluxo de Docker Compose:
 
 ## Referência de configuração
 
-O arquivo compose inteiro tem apenas três configurações sobrescrevíveis:
+Você pode mudar três configurações pelo `.env`:
 
 | Variável                      | Padrão      | Descrição                                          |
 | ----------------------------- | ----------- | -------------------------------------------------- |
@@ -148,19 +148,19 @@ O arquivo compose inteiro tem apenas três configurações sobrescrevíveis:
 | `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Senha do Postgres (obrigatório trocar em produção) |
 | `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Senha do Redis (obrigatório trocar em produção)    |
 
-Todas as outras configurações (nome do banco, usuário, tag da imagem, strings de conexão internas, nomes de volume) estão fixadas diretamente no `docker-compose.yml`. Para alterá-las, edite o arquivo.
+Todo o resto (nome do banco, usuário, tags das imagens, strings de conexão, nomes de volume) é definido direto no `docker-compose.yml`. Para mudar, edite o arquivo.
 
 ### Endpoints de health check
 
-| Caminho    | Finalidade                                     |
-| ---------- | ---------------------------------------------- |
-| `/readyz`  | Checagem de prontidão (depende de DB + Redis)  |
-| `/healthz` | Checagem de liveness (se o processo está vivo) |
+| Caminho    | Finalidade                                 |
+| ---------- | ------------------------------------------ |
+| `/readyz`  | Pronto para atender? (verifica DB + Redis) |
+| `/healthz` | O processo está rodando?                   |
 
 ---
 
 ## Próximos passos
 
-- [Integração com IA](/pt/docs/ai-integration) — conecte Claude, Cursor e outros à sua própria instância
+- [Integração com IA](/pt/docs/ai-integration) — conecte Claude, Cursor e outros agentes à sua instância
 - [Repositório no GitHub](https://github.com/CorrectRoadH/OpenTickly) — código-fonte, Issues, Discussions
 - Teve problemas na implantação? Relate em [Issues](https://github.com/CorrectRoadH/OpenTickly/issues)

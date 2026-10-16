@@ -1,29 +1,59 @@
 ---
 title: Pierwsze kroki z OpenTickly
-description: Wypróbuj OpenTickly lub uruchom go przez Docker, utwórz obszar roboczy, zapisz pierwszy czas i sprawdź wynik w raportach.
+description: "Zacznij mierzyć czas w OpenTickly: wypróbuj demo albo uruchom własną instancję przez Docker, utwórz pierwszy obszar roboczy, włącz timer i sprawdź wynik."
 ---
 
-Ten przewodnik prowadzi od pustego konta do pierwszego użytecznego raportu. Skorzystaj z [wersji demonstracyjnej](https://track.opentoggl.com) albo wykonaj instrukcję [samodzielnego hostingu przez Docker](/pl/docs/self-hosting).
+Ten przewodnik prowadzi od nowego konta do pierwszego raportu. Możesz najpierw wypróbować demo albo od razu uruchomić OpenTickly na własnym serwerze.
 
-## Przygotuj obszar roboczy
+## Wybierz, jak chcesz korzystać z OpenTickly
 
-1. Zarejestruj konto i otwórz obszar utworzony podczas wdrożenia.
-2. Sprawdź strefę czasową przed rejestrowaniem pracy zespołu.
-3. Utwórz klienta i projekt, jeśli potrzebujesz raportów według projektów.
-4. Zaproś członków i sprawdź ich role.
+| Opcja         | Dla kogo                                         | Co zrobić                                                               |
+| ------------- | ------------------------------------------------ | ----------------------------------------------------------------------- |
+| Demo          | Chcesz wypróbować, zanim cokolwiek zainstalujesz | Otwórz [track.opentoggl.com](https://track.opentoggl.com) i załóż konto |
+| Własny serwer | Chcesz trzymać aplikację i bazę danych u siebie  | Skorzystaj z [instrukcji hostingu przez Docker](/pl/docs/self-hosting)  |
 
-Obszar roboczy zawiera projekty, klientów, tagi, członków, stawki i wpisy czasu.
+To ta sama aplikacja. Na własnym serwerze dane zostają u Ciebie, ale kopie zapasowe i aktualizacje robisz sam.
 
-## Rejestruj i analizuj czas
+## Załóż konto i obszar roboczy
 
-Otwórz **Timer**, wpisz konkretny opis, wybierz projekt i tagi, uruchom pomiar, a po pracy go zatrzymaj. Gdy znasz czas rozpoczęcia i zakończenia, użyj trybu ręcznego.
+1. Zarejestruj się, podając imię, adres e-mail i hasło.
+2. Otwórz obszar roboczy utworzony przy pierwszym logowaniu.
+3. Zanim zespół zacznie rejestrować czas, sprawdź strefę czasową obszaru.
+4. Dodaj projekt, jeśli chcesz, żeby pierwszy wpis pojawił się w raportach projektów.
 
-Następnie otwórz **Raporty**, wybierz okres i sprawdź sumę. Grupuj lub filtruj według projektu, klienta, osoby, tagu, statusu rozliczenia albo opisu.
+Wszystko znajduje się w obszarze roboczym: projekty, klienci, tagi, członkowie, stawki i wpisy czasu. Raporty i współdzielenie w zespole też działają w ramach obszaru.
 
-## Następne kroki
+## Zapisz pierwszy wpis czasu
 
-- [Przenieś dane z Toggl](/pl/docs/migrate-from-toggl).
-- [Podłącz narzędzie zgodne z API Toggl](/pl/docs/api-compatibility).
-- [Połącz toggl-cli z agentem AI](/pl/docs/ai-integration).
+1. Otwórz **Timer**.
+2. Wpisz konkretny opis, np. `Napisać przewodnik dla nowych osób`.
+3. Wybierz projekt i opcjonalnie tagi.
+4. Włącz timer, a gdy skończysz pracę, zatrzymaj go.
 
-Zacznij od niewielu projektów i tagów, które potrafisz stosować konsekwentnie. Dodawaj strukturę, gdy pomaga odpowiedzieć na rzeczywiste pytanie w raporcie.
+Jeśli znasz już godzinę rozpoczęcia i zakończenia, użyj trybu ręcznego. Widok kalendarza i widok listy pokazują te same wpisy, więc edytuj w tym, który wolisz.
+
+## Zobacz, na co poszedł czas
+
+Otwórz **Raporty** i wybierz zakres dat. Zacznij od podsumowania, a gdy chcesz więcej szczegółów, filtruj lub grupuj według projektu, klienta, osoby, tagu, rozliczalności albo opisu.
+
+Na początku warto sprawdzić:
+
+- Czy suma zgadza się z tym, ile czasu chciałeś zapisać?
+- Czy wpisy mają przypisany właściwy projekt i klienta?
+- Czy wpisy rozliczalne i nierozliczalne są poprawnie rozdzielone?
+- Czy wszyscy w zespole używają tych samych tagów do tego samego rodzaju pracy?
+
+## Przenieś dane lub integracje
+
+- Przechodzisz z Toggl Track: skorzystaj z [Migracji z Toggl do OpenTickly](/pl/docs/migrate-from-toggl).
+- Chcesz dalej używać CLI, skryptu albo agenta: przeczytaj [Zgodność z API Toggl](/pl/docs/api-compatibility).
+- Chcesz, żeby agent rejestrował czas za Ciebie: połącz [toggl-cli z agentem AI](/pl/docs/ai-integration).
+
+## Co dalej
+
+1. Ułóż klientów i projekty tak, jak chcesz je widzieć w raportach.
+2. Zaproś współpracowników i sprawdź ich role.
+3. Jeśli hostujesz sam, ustaw kopie zapasowe bazy danych.
+4. Wyrób sobie jeden nawyk przeglądania czasu, np. codzienne zerknięcie na timer albo cotygodniowy raport projektów.
+
+Zacznij od tak małej liczby projektów i tagów, jaką dasz radę konsekwentnie stosować. Dodawaj kolejne dopiero wtedy, gdy potrzebuje ich raport, który naprawdę chcesz oglądać.
