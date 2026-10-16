@@ -1,0 +1,49 @@
+---
+title: "Kopie zapasowe i aktualizacje"
+description: "Zapisz kopię PostgreSQL, sprawdź odtwarzanie i przygotuj się do aktualizacji."
+---
+
+PostgreSQL przechowuje dane aplikacji, przesłane pliki i archiwa importu. Compose używa bazy `opentoggl`, użytkownika `postgres`, usługi `postgres` i wolumenu `opentoggl-postgres-data`. Redis nie zapisuje danych trwale, więc nie wymaga kopii.
+
+## Utwórz kopię
+
+Uruchom w katalogu z `docker-compose.yml`:
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+Przechowuj dodatkową kopię poza serwerem. Zachowaj też w bezpiecznym miejscu `docker-compose.yml`, `.env` i konfigurację proxy — zrzut bazy ich nie zawiera.
+
+Aby wykonywać kopię codziennie, utwórz `/srv/backups`, dostosuj ścieżki i dodaj poniższą linię do crontaba użytkownika z dostępem do Dockera:
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+Sprawdzaj wynik zadania i regularnie testuj odtwarzanie. Samo istnienie pliku nie oznacza, że da się go użyć.
+
+## Odtwórz dane
+
+Najpierw przetestuj to na osobnej instancji. Odtwarzanie zastępuje obiekty zapisane w kopii i usuwa ich późniejsze zmiany. Użyj wersji aplikacji z dnia wykonania kopii; PostgreSQL musi działać:
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+Jeśli `pg_restore` zgłosi błąd, nie uruchamiaj aplikacji, dopóki go nie rozwiążesz. Po odtworzeniu zaloguj się i sprawdź wpisy czasu oraz pliki. Nie usuwaj wolumenu bazy.
+
+## Zaktualizuj lub wróć do poprzedniej wersji
+
+1. Wykonaj kopię i zapisz wersję lub digest aktualnego obrazu. `latest` może się zmienić.
+2. Uruchom:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. Serwer automatycznie aktualizuje strukturę bazy przy starcie. Sprawdź `docker compose logs opentoggl`, zaloguj się i zweryfikuj dane.
+
+Aby wrócić, zatrzymaj `opentoggl`, ustaw poprzedni tag lub digest obrazu w `docker-compose.yml`, pobierz go i odtwórz kopię sprzed aktualizacji według powyższych kroków. Nie podłączaj starszego obrazu bezpośrednio do zaktualizowanej bazy. Zmiany wprowadzone po wykonaniu kopii zostaną utracone.

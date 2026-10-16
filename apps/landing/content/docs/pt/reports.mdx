@@ -1,0 +1,28 @@
+---
+title: "Relatórios"
+description: "Confira o tempo registrado, aplique arredondamento e exporte os totais."
+---
+
+## Escolha a visualização e o período
+
+Abra **Relatórios**. **Resumo** mostra totais e agrupamentos; **Detalhado**, registros individuais; **Carga de Trabalho**, tempo por membro; e **Rentabilidade**, valores, custos e lucro quando esses dados estão disponíveis.
+
+Os custos são tratados como zero atualmente, então o lucro exibido é igual ao valor. Não use isso como um cálculo completo de custos.
+
+1. Selecione **Esta semana**, **Semana passada**, **Este mês** ou um período personalizado.
+2. Filtre por **Membro**, **Cliente**, **Projeto**, **Tag** ou **Descrição**.
+3. No resumo, use **Detalhar por** para escolher o agrupamento.
+
+A visualização detalhada mostra se cada registro é faturável. Não há um filtro separado de faturamento na barra.
+
+## Arredondamento
+
+Em **Configurações** → **Geral** do workspace, configure **Arredondamento de tempo**: escolha **Mais próximo**, **Para cima** ou **Para baixo**, defina **Intervalo de arredondamento** e salve.
+
+No relatório, **Arredondamento desativado** ativa o arredondamento e **Arredondamento ativado** o desativa. Ele começa desligado, não pode ser ativado com intervalo desabilitado e não pode ser alternado na visualização de lucratividade. Cada registro é arredondado antes da soma, sem alterar os dados salvos.
+
+## Exporte ou copie um link
+
+**Exportar** baixa o agrupamento atual em CSV com `Project,Client,Duration,Amount` e uma linha de total. `Amount` fica vazio. Mesmo na aba detalhada, o arquivo contém grupos; para registros individuais, veja [Exporte seus dados](/pt/docs/export-data).
+
+**Salvar e compartilhar** só copia a URL atual. Não salva um relatório nem preserva datas e filtros; quem abrir precisa ter acesso ao workspace. **Meus relatórios** e **Compartilhados comigo** ainda não são uma biblioteca funcional de relatórios. Fixar e agendar envios também não estão disponíveis. Compartilhe o CSV para enviar exatamente o resultado que você está vendo.

@@ -1,0 +1,28 @@
+---
+title: "Informes"
+description: "Revisa tu tiempo, aplica redondeo y descarga los totales agrupados."
+---
+
+## Elige vista y fechas
+
+Abre **Informes**. **Resumen** muestra totales y grupos; **Detallado**, registros individuales; **Carga de trabajo**, tiempo por miembro; y **Rentabilidad**, importes, costes y beneficios cuando hay datos disponibles.
+
+Los costes se consideran cero actualmente, así que el beneficio mostrado coincide con el importe; no lo uses como cálculo completo de costes.
+
+1. Elige **Esta semana**, **Semana pasada**, **Este mes** o un intervalo propio en el selector de fechas.
+2. Filtra por **Miembro**, **Cliente**, **Proyecto**, **Etiqueta** o **Descripción**.
+3. En el resumen, usa **Desglosar por** para agrupar.
+
+La vista detallada muestra si cada registro es facturable. No hay un filtro independiente de facturación en la barra.
+
+## Redondeo
+
+En **Configuración** → **General** del espacio, configura **Redondeo de tiempo**: elige **Al más cercano**, **Hacia arriba** o **Hacia abajo**, establece **Intervalo de redondeo** y guarda.
+
+En el informe, **Redondeo desactivado** activa el redondeo y **Redondeo activado** lo desactiva. Empieza desactivado; no se puede activar si el intervalo está deshabilitado ni cambiar en rentabilidad. Se redondea cada registro antes de sumar, sin modificar los datos guardados.
+
+## Exporta o copia un enlace
+
+**Exportar** descarga el desglose actual en CSV con `Project,Client,Duration,Amount` y una fila total. `Amount` queda vacío. Incluso desde la pestaña detallada se exportan grupos; para registros individuales, consulta [Exporta tus datos](/es/docs/export-data).
+
+**Guardar y compartir** solo copia la URL actual: no guarda un informe ni conserva fechas y filtros. Quien la abra necesita acceso al espacio. **Mis informes** y **Compartidos conmigo** aún no ofrecen una biblioteca de informes funcional; tampoco funcionan los pines ni el envío programado. Comparte el CSV para conservar el resultado exacto.

@@ -1,0 +1,35 @@
+---
+title: "Eksport danych"
+description: "Pobierz archiwum przestrzeni i przygotuj wpisy czasu do Toggl Track."
+---
+
+## Pobierz ZIP
+
+1. W przestrzeni roboczej otwórz **Ustawienia** → **Eksport danych**.
+2. Wybierz dane w **Wybierz elementy do eksportu:**.
+3. Kliknij **Export**.
+
+ZIP zawiera `manifest.json` oraz pliki JSON wybranych kategorii: projekty, członków projektów, zadania, klientów, tagi, członków przestrzeni, grupy organizacji, ustawienia i zapisane definicje raportów. Niektóre pola pokazują klucze **projects_users**, **project_tasks**, **team**, **teams**, **workspace_settings**, **custom_reports** i **scheduled_reports**. Członkowie projektów trafiają do `projects_users/<project-id>.json`, a przestrzeni do `workspace_users.json`. Eksport definicji nie uruchamia cyklicznego wysyłania raportów.
+
+ZIP nie zawiera wpisów czasu i nie zastępuje [kopii bazy danych](/pl/docs/backup-and-upgrade).
+
+## Pobierz wpisy czasu
+
+1. W **Eksportuj wpisy czasu** ustaw **Data rozpoczęcia** i **Data zakończenia**.
+2. W **Format eksportu** wybierz **CSV** lub **PDF**.
+3. Kliknij **Eksportuj**.
+
+Eksport obejmuje wpisy zalogowanego konta z podanego okresu ze wszystkich jego przestrzeni, a nie całego zespołu. Zmiana przestrzeni nie ogranicza tego eksportu. Sprawdź projekty i klientów. Działające timery są pomijane. Kolumny CSV to `Description,Project,Client,Start,Stop,Duration,Billable,Tags`, a czas ma format `HH:MM:SS`. PDF służy do czytania. Sprawdź liczbę wpisów i podziel długie okresy na mniejsze.
+
+## Wróć do Toggl Track
+
+CSV trzeba najpierw dostosować w arkuszu:
+
+1. Dodaj `Email` z adresem Toggl właściciela każdego wpisu.
+2. Rozdziel `Start` na `Start date` i `Start time` we właściwej strefie czasowej. Usuń `Start` i `Stop`.
+3. Zachowaj opis, projekt, klienta, czas, status rozliczania i tagi. Zapisz CSV w UTF-8 i skorzystaj z [instrukcji importu Toggl](https://support.toggl.com/en-us/article/editing-and-uploading-a-csv-file-bk155h/).
+4. Jako administrator przestrzeni Toggl zaimportuj próbkę i porównaj daty oraz sumy przed importem reszty.
+
+Toggl nie odtworzy tego ZIP-a. CSV nie przenosi uprawnień, ustawień, raportów ani załączników; w tym eksporcie czasu nie ma też zadań i stawek. Import statusu rozliczania zależy od planu Toggl. Każda osoba powinna wyeksportować własne wpisy.
+
+**Eksportuj** w [raportach](/pl/docs/reports) pobiera zagregowane sumy, nie wpisy gotowe do importu.

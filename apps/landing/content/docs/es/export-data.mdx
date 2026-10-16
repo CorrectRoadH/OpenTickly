@@ -1,0 +1,35 @@
+---
+title: "Exporta tus datos"
+description: "Descarga archivos del espacio de trabajo y prepara tus registros para Toggl Track."
+---
+
+## Descarga el ZIP
+
+1. Abre **Configuración** → **Exportación de datos** en el espacio de trabajo.
+2. Elige los datos en **Seleccionar elementos para exportar:**.
+3. Pulsa **Export**.
+
+El ZIP incluye `manifest.json` y archivos JSON de las categorías elegidas: proyectos, miembros de proyectos, tareas, clientes, etiquetas, miembros del espacio, grupos de la organización, ajustes y definiciones de informes guardadas. Algunas casillas muestran claves como **projects_users**, **project_tasks**, **team**, **teams**, **workspace_settings**, **custom_reports** y **scheduled_reports**. Los miembros de cada proyecto van en `projects_users/<project-id>.json`; los del espacio, en `workspace_users.json`. Exportar definiciones no activa el envío programado.
+
+El ZIP no contiene registros de tiempo ni sustituye una [copia de la base de datos](/es/docs/backup-and-upgrade).
+
+## Descarga tus registros
+
+1. En **Exportar entradas de tiempo**, elige **Fecha de inicio** y **Fecha de fin**.
+2. Selecciona **CSV** o **PDF** en **Formato de exportación**.
+3. Pulsa **Exportar**.
+
+Se exportan los registros de tu cuenta en ese período, de todos tus espacios, no los de todo el equipo. Cambiar de espacio no limita esta exportación. Comprueba los proyectos y clientes. Se omiten los temporizadores en marcha. Las columnas CSV son `Description,Project,Client,Start,Stop,Duration,Billable,Tags`; la duración usa `HH:MM:SS`. El PDF es para leer. Revisa el número de registros y divide períodos grandes.
+
+## Vuelve a Toggl Track
+
+El CSV necesita ajustes antes de importarlo:
+
+1. Añade `Email` con el correo de Toggl del propietario de cada registro.
+2. Divide `Start` en `Start date` y `Start time` usando la zona horaria correcta. Elimina `Start` y `Stop`.
+3. Conserva descripción, proyecto, cliente, duración, facturable y etiquetas. Guarda como CSV UTF-8 y sigue la [guía de importación de Toggl](https://support.toggl.com/en-us/article/editing-and-uploading-a-csv-file-bk155h/).
+4. Como administrador de Toggl, importa una muestra y compara fechas y totales antes de continuar.
+
+Toggl no restaura este ZIP. El CSV no traslada permisos, ajustes, informes ni adjuntos; tampoco incluye tareas o tarifas. La importación del estado facturable depende del plan de Toggl. Cada persona debe exportar sus registros por separado.
+
+**Exportar** en [Informes](/es/docs/reports) descarga totales agrupados, no registros importables.

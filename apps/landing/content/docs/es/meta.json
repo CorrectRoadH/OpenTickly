@@ -3,10 +3,15 @@
   "pages": [
     "index",
     "getting-started",
+    "timer-and-calendar",
+    "reports",
+    "export-data",
     "migrate-from-toggl",
     "api-compatibility",
     "admin-email-sso",
     "self-hosting",
+    "reverse-proxy",
+    "backup-and-upgrade",
     "ai-integration",
     "practices",
     "changelog"

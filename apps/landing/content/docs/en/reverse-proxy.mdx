@@ -1,0 +1,54 @@
+---
+title: "HTTPS and reverse proxy"
+description: "Put Caddy or Nginx in front of OpenTickly and use your own HTTPS address."
+---
+
+The container serves HTTP on port `8080`. `OPENTOGGL_PORT` changes the published host port; it does not enable HTTPS. A reverse proxy accepts HTTPS and forwards requests to OpenTickly.
+
+## Use Caddy
+
+1. Follow [Self-Hosting](/docs/self-hosting) and confirm the app opens over HTTP.
+2. Point your domain's DNS records to the server. Allow incoming ports 80 and 443.
+3. Install Caddy on the same host and put this in its Caddyfile, replacing the domain:
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Reload Caddy. It obtains and renews the certificate automatically. Keep its data directory persistent. See [Caddy's HTTPS guide](https://caddyserver.com/docs/automatic-https).
+
+## Or use Nginx
+
+Obtain a certificate for your domain first and arrange renewal. On the same host, add this configuration with your domain and certificate paths, then run `nginx -t` and reload Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+See the [Nginx proxy documentation](https://nginx.org/en/docs/http/ngx_http_proxy_module.html). Choose one proxy, not both. If you changed `OPENTOGGL_PORT`, change the upstream port too. These examples run the proxy on the host; inside a container, `127.0.0.1` points to that container. Restrict direct access to port 8080 so visitors use HTTPS.
+
+## Finish setup
+
+1. Open `https://time.example.com` and check that signing in works without a certificate warning.
+2. In **Instance Admin** → **Config**, set **Site URL** to that HTTPS address, without `/api` or another path.
+3. Follow [email and SSO setup](/docs/admin-email-sso).
+
+Use HTTPS for phone PWA installation and SSO. Changing the Site URL alone does not create a certificate or enable HTTPS.

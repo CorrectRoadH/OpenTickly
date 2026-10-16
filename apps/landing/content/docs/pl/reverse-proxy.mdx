@@ -1,0 +1,54 @@
+---
+title: "HTTPS i odwrotne proxy"
+description: "Udostępnij OpenTickly pod adresem HTTPS za pomocą Caddy lub Nginx."
+---
+
+Kontener obsługuje HTTP na porcie `8080`. `OPENTOGGL_PORT` zmienia port udostępniony na hoście, ale nie włącza HTTPS. Proxy przyjmuje połączenia HTTPS i przekazuje je do OpenTickly.
+
+## Caddy
+
+1. Wykonaj kroki z [instrukcji samodzielnego hostingu](/pl/docs/self-hosting) i sprawdź dostęp przez HTTP.
+2. Skieruj DNS domeny na serwer i otwórz porty 80 oraz 443.
+3. Zainstaluj Caddy na tym samym hoście i dodaj poniższy wpis do Caddyfile, zastępując domenę własną:
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Przeładuj Caddy. Certyfikat zostanie pobrany i będzie odnawiany automatycznie. Zachowaj katalog danych Caddy. Więcej informacji znajdziesz w [dokumentacji HTTPS](https://caddyserver.com/docs/automatic-https).
+
+## Nginx
+
+Najpierw uzyskaj certyfikat i skonfiguruj jego odnawianie. Na tym samym hoście dodaj poniższą konfigurację, zmień domenę i ścieżki certyfikatów, uruchom `nginx -t`, a następnie przeładuj Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+Zobacz [dokumentację Nginx](https://nginx.org/en/docs/http/ngx_http_proxy_module.html). Wybierz tylko jedno proxy. Jeśli zmieniono `OPENTOGGL_PORT`, zmień też port docelowy. Przykłady zakładają proxy na hoście; wewnątrz kontenera `127.0.0.1` oznacza sam kontener. Ogranicz bezpośredni dostęp do portu 8080.
+
+## Dokończ konfigurację
+
+1. Otwórz `https://time.example.com` i sprawdź logowanie bez ostrzeżeń o certyfikacie.
+2. W **Administracja instancji** → **Konfiguracja** ustaw **Adres URL witryny** na ten adres HTTPS, bez `/api` i innych ścieżek.
+3. Przejdź do [konfiguracji poczty i SSO](/pl/docs/admin-email-sso).
+
+Instalacja PWA na telefonie i SSO wymagają HTTPS. Sama zmiana adresu witryny nie tworzy certyfikatu.

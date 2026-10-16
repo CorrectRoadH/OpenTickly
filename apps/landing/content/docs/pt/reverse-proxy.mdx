@@ -1,0 +1,54 @@
+---
+title: "HTTPS e proxy reverso"
+description: "Use Caddy ou Nginx para acessar o OpenTickly pelo seu endereço HTTPS."
+---
+
+O contêiner serve HTTP na porta `8080`. `OPENTOGGL_PORT` altera a porta publicada no host, mas não habilita HTTPS. O proxy recebe as conexões HTTPS e encaminha as requisições ao OpenTickly.
+
+## Com Caddy
+
+1. Siga o [guia de hospedagem própria](/pt/docs/self-hosting) e confirme o acesso por HTTP.
+2. Aponte o DNS do domínio para o servidor e libere as portas 80 e 443.
+3. Instale o Caddy no mesmo host e coloque isto no Caddyfile, trocando o domínio:
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Recarregue o Caddy. Ele obtém e renova o certificado automaticamente. Mantenha o diretório de dados persistente. Veja o [guia de HTTPS do Caddy](https://caddyserver.com/docs/automatic-https).
+
+## Com Nginx
+
+Primeiro obtenha um certificado e configure a renovação. No mesmo host, adicione esta configuração com seu domínio e os caminhos dos certificados. Execute `nginx -t` e recarregue o Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+Consulte a [documentação do Nginx](https://nginx.org/en/docs/http/ngx_http_proxy_module.html). Escolha apenas um dos proxies. Se mudou `OPENTOGGL_PORT`, ajuste também a porta de destino. Os exemplos executam o proxy no host; dentro de um contêiner, `127.0.0.1` aponta para o próprio contêiner. Restrinja o acesso direto à porta 8080.
+
+## Finalize
+
+1. Abra `https://time.example.com` e confirme que consegue entrar sem avisos de certificado.
+2. Em **Admin da Instância** → **Configuração**, defina **URL do Site** com esse endereço HTTPS, sem `/api` ou outro caminho.
+3. Continue com a [configuração de e-mail e SSO](/pt/docs/admin-email-sso).
+
+A instalação como PWA no celular e o SSO precisam de HTTPS. Alterar a URL do site não cria um certificado.

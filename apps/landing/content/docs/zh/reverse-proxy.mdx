@@ -1,0 +1,54 @@
+---
+title: "配置 HTTPS 和反向代理"
+description: "用 Caddy 或 Nginx 为 OpenTickly 配置自己的 HTTPS 地址。"
+---
+
+容器只在 `8080` 端口提供 HTTP。`OPENTOGGL_PORT` 改的是宿主机端口，不会开启 HTTPS。要用 HTTPS，需要让反向代理接收请求，再转发给 OpenTickly。
+
+## 用 Caddy
+
+1. 先按[自托管指南](/zh/docs/self-hosting)部署，确认 HTTP 能打开。
+2. 把域名的 DNS 记录指向服务器，放行 80 和 443 端口。
+3. 在同一台宿主机安装 Caddy，把下面配置写入 Caddyfile，并换成自己的域名：
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+重新加载 Caddy 后，它会自动申请和续期证书。保留好 Caddy 的数据目录。详细说明见 [Caddy HTTPS 文档](https://caddyserver.com/docs/automatic-https)。
+
+## 或者用 Nginx
+
+先为域名申请证书并安排续期。在同一台宿主机上加入以下配置，替换域名和证书路径，再运行 `nginx -t` 检查并重新加载 Nginx：
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+配置说明见 [Nginx 代理文档](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)。两个代理选一个即可。改过 `OPENTOGGL_PORT` 的话，上游端口也要改。示例中的代理运行在宿主机；如果放在容器里，`127.0.0.1` 指的是代理容器自己。限制外部直接访问 8080，让用户走 HTTPS。
+
+## 完成设置
+
+1. 打开 `https://time.example.com`，确认没有证书警告，且能正常登录。
+2. 到 **实例管理** → **配置**，把 **站点 URL** 改成这个 HTTPS 地址，不要加 `/api` 等路径。
+3. 按[邮件和 SSO 指南](/zh/docs/admin-email-sso)继续配置。
+
+手机安装 PWA 和使用 SSO 都需要 HTTPS。只改站点 URL 不会自动生成证书或开启 HTTPS。

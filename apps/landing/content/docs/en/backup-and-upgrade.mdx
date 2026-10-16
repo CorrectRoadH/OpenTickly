@@ -1,0 +1,49 @@
+---
+title: "Backups, restore, and upgrades"
+description: "Back up PostgreSQL, test a restore, and upgrade with a way back."
+---
+
+PostgreSQL holds the application data, uploaded files, and import archives. The Compose setup uses database `opentoggl`, user `postgres`, service `postgres`, and volume `opentoggl-postgres-data`. Redis has persistence disabled; there is no Redis backup to keep.
+
+## Make a backup
+
+Run this from the folder containing `docker-compose.yml`:
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+Keep a copy off the server. Also keep `docker-compose.yml`, your `.env`, and proxy configuration somewhere private; they are not in the database dump.
+
+For a daily backup, create `/srv/backups`, adjust both paths and the Docker executable, and add this to the crontab of a user who can run Docker:
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+Check the job's exit status and test restores regularly. A file's existence alone does not prove it is usable.
+
+## Restore
+
+Test on a separate instance first. Restoring replaces the backed-up database objects and discards changes made to them since the backup. Use the same application version as the backup, with PostgreSQL running:
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+If `pg_restore` fails, keep the app stopped and fix the error before starting it. Sign in afterward and check entries and uploaded files. Do not delete the database volume.
+
+## Upgrade or roll back
+
+1. Make a backup and record the current image version or digest. A moving `latest` tag is not a rollback version.
+2. Run:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. The server updates the database schema automatically at startup. Check `docker compose logs opentoggl`, sign in, and check your data.
+
+To roll back, stop `opentoggl`, pin its previous image tag or digest in `docker-compose.yml`, pull that image, and restore the backup taken before the upgrade using the steps above. Starting an older image against an upgraded database is not a safe rollback. Changes made after the backup will be lost.

@@ -1,0 +1,54 @@
+---
+title: "HTTPS とリバースプロキシ"
+description: "Caddy または Nginx で OpenTickly を HTTPS に対応させます。"
+---
+
+コンテナはポート `8080` で HTTP を提供します。`OPENTOGGL_PORT` を変更しても、ホスト側の公開ポートが変わるだけで HTTPS にはなりません。HTTPS の接続をプロキシで受け、OpenTickly に転送します。
+
+## Caddy を使う
+
+1. [セルフホストの手順](/ja/docs/self-hosting)に従い、HTTP で開けることを確認します。
+2. ドメインの DNS をサーバーに向け、80 番と 443 番ポートを開放します。
+3. 同じホストに Caddy をインストールし、ドメインを置き換えて Caddyfile に記載します。
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Caddy を再読み込みすると、証明書が自動で取得・更新されます。Caddy のデータディレクトリは永続化してください。詳しくは [Caddy の HTTPS ガイド](https://caddyserver.com/docs/automatic-https)を参照してください。
+
+## Nginx を使う場合
+
+先に証明書を取得し、更新方法も用意します。同じホストに以下の設定を追加し、ドメインと証明書のパスを変更してください。`nginx -t` で確認してから Nginx を再読み込みします。
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+詳細は [Nginx のドキュメント](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)を参照してください。プロキシはどちらか一方で十分です。`OPENTOGGL_PORT` を変更した場合は転送先のポートも変更します。この例はホスト上でプロキシを動かす想定です。コンテナ内の `127.0.0.1` は、そのコンテナ自身を指します。8080 番への直接アクセスは制限してください。
+
+## 仕上げ
+
+1. `https://time.example.com` を開き、証明書の警告なしでログインできるか確認します。
+2. **インスタンス管理** → **設定** で、**サイトURL** をその HTTPS アドレスにします。`/api` などのパスは付けません。
+3. [メールと SSO の設定](/ja/docs/admin-email-sso)に進みます。
+
+スマートフォンへの PWA インストールと SSO には HTTPS が必要です。サイト URL の変更だけでは、証明書は発行されません。

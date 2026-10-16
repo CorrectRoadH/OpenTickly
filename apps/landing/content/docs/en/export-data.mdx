@@ -1,0 +1,35 @@
+---
+title: "Export your data"
+description: "Download workspace archives or your time entries, and prepare a CSV for Toggl Track."
+---
+
+## Download a workspace ZIP
+
+1. Open the workspace's **Settings** → **Data Export**.
+2. Under **Select items for export:**, select the data you need.
+3. Click **Export** to download the ZIP.
+
+The archive contains `manifest.json` plus JSON files for the selected categories. You can select projects, project members, tasks, clients, tags, workspace members, organization groups, workspace settings, and stored report definitions. Some checkboxes currently show keys such as **projects_users**, **project_tasks**, **team**, **teams**, **workspace_settings**, **custom_reports**, and **scheduled_reports**. Project members are grouped into `projects_users/<project-id>.json`; workspace members go into `workspace_users.json`. Selecting report definitions does not enable report scheduling.
+
+This ZIP contains no time entries and is not a complete instance backup. Use [database backups](/docs/backup-and-upgrade) for recovery.
+
+## Download time entries
+
+1. In **Export time entries**, choose **Start date** and **End date**.
+2. Choose **CSV** or **PDF** under **Export format**.
+3. Click **Export**.
+
+This exports your signed-in account's entries in the date range across your workspaces, not everyone's entries. Choosing a workspace does not restrict this time-entry export; check project and client names before moving data. Running timers are omitted. CSV columns are `Description,Project,Client,Start,Stop,Duration,Billable,Tags`; duration uses `HH:MM:SS`. PDF is for reading, not importing. Check the count and split large date ranges into smaller exports.
+
+## Take time back to Toggl Track
+
+The CSV is not ready for Toggl Track's importer as-is. In a spreadsheet:
+
+1. Add an `Email` column with each entry owner's Toggl email.
+2. Convert `Start` into `Start date` and `Start time`, using the intended time zone. Remove `Start` and `Stop`.
+3. Keep description, project, client, duration, billable, and tags. Save as UTF-8 CSV and follow [Toggl's CSV import guide](https://support.toggl.com/en-us/article/editing-and-uploading-a-csv-file-bk155h/).
+4. Import a small sample as a Toggl workspace admin and compare dates and totals before importing the rest.
+
+The ZIP is not a Toggl restore file. CSV does not transfer permissions, workspace settings, report definitions, or attachments; tasks and rates are not in this time-entry export either. Billable import depends on your Toggl plan. Export each person's entries separately rather than assigning everyone to one email.
+
+The **Export** button in [Reports](/docs/reports) downloads grouped totals, not an importable time-entry CSV.

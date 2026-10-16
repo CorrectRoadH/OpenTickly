@@ -1,0 +1,28 @@
+---
+title: "Raporty"
+description: "Przeglądaj czas, włączaj zaokrąglanie i eksportuj podsumowania."
+---
+
+## Wybierz widok i daty
+
+Otwórz **Raporty**. **Podsumowanie** pokazuje sumy i podziały, **Szczegółowy** pojedyncze wpisy, **Obciążenie** czas członków zespołu, a **Rentowność** dostępne kwoty, koszty i zysk.
+
+Koszty są obecnie liczone jako zero, więc wyświetlany zysk równa się kwocie. Nie traktuj tego jako pełnego rachunku kosztów.
+
+1. Wybierz **Ten tydzień**, **Zeszły tydzień**, **Ten miesiąc** lub własny zakres dat.
+2. Zawęź wyniki przez **Członek**, **Klient**, **Projekt**, **Tag** lub **Opis**.
+3. W podsumowaniu ustaw grupowanie przez **Podział wg**.
+
+Widok szczegółowy pokazuje status rozliczania wpisów. Na pasku nie ma osobnego filtra tego statusu.
+
+## Zaokrąglanie
+
+W **Ustawienia** → **Ogólne** przestrzeni ustaw **Zaokrąglanie czasu**: wybierz **Do najbliższej**, **W górę** lub **W dół**, określ **Interwał zaokrąglania** i zapisz.
+
+W raporcie **Zaokrąglanie wyłączone** włącza zaokrąglanie, a **Zaokrąglanie włączone** je wyłącza. Początkowo jest wyłączone. Nie można go włączyć przy wyłączonym interwale ani przełączać w widoku rentowności. Zaokrąglany jest każdy wpis przed zsumowaniem; zapisane wpisy pozostają bez zmian.
+
+## Eksport i linki
+
+**Eksportuj** pobiera bieżący podział jako CSV z kolumnami `Project,Client,Duration,Amount` i wierszem sumy. `Amount` pozostaje puste. Nawet z zakładki szczegółowej eksportowane są grupy. Pojedyncze wpisy pobierzesz zgodnie z [instrukcją eksportu](/pl/docs/export-data).
+
+**Zapisz i udostępnij** tylko kopiuje bieżący URL. Nie zapisuje raportu, dat ani filtrów; odbiorca nadal potrzebuje dostępu do przestrzeni. **Moje raporty** i **Udostępnione mi** nie są jeszcze działającą biblioteką raportów. Przypinanie i cykliczna wysyłka też nie są dostępne. Aby przekazać dokładnie ten wynik, udostępnij CSV.

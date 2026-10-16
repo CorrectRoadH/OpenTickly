@@ -1,0 +1,49 @@
+---
+title: "バックアップ・復元・アップグレード"
+description: "PostgreSQL をバックアップし、復元を試してから更新します。"
+---
+
+アプリのデータ、アップロードしたファイル、インポート用アーカイブは PostgreSQL に保存されます。Compose のデータベース名は `opentoggl`、ユーザーとサービス名は `postgres`、ボリューム名は `opentoggl-postgres-data` です。Redis は永続化しないため、バックアップは不要です。
+
+## バックアップする
+
+`docker-compose.yml` のあるディレクトリで実行します。
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+別のサーバーにもコピーを保存してください。`docker-compose.yml`、`.env`、プロキシ設定はダンプに含まれないため、安全な場所に別途保存します。
+
+毎日のバックアップには、`/srv/backups` を作成し、パスと Docker の場所を調整して、Docker を実行できるユーザーの crontab に次の行を追加します。
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+終了ステータスを確認し、定期的に復元を試してください。ファイルがあるだけでは、復元できるとは限りません。
+
+## 復元する
+
+まず別のインスタンスで試します。復元すると、バックアップされたデータベースのオブジェクトが置き換わり、それ以降の変更は失われます。バックアップ時と同じアプリのバージョンを使い、PostgreSQL を起動した状態で実行します。
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+`pg_restore` が失敗したら、問題を解決するまでアプリを停止したままにします。復元後はログインし、時間記録とファイルを確認してください。データベースのボリュームは削除しません。
+
+## 更新とロールバック
+
+1. バックアップし、現在のイメージのバージョンまたは digest を控えます。`latest` は内容が変わるため、戻すバージョンの目印にはなりません。
+2. 次を実行します。
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. 起動時にデータベース構造が自動更新されます。`docker compose logs opentoggl` を確認し、ログインしてデータを点検します。
+
+戻す場合は `opentoggl` を停止し、`docker-compose.yml` のイメージを以前のタグまたは digest に固定して取得し、更新前のバックアップを上記手順で復元します。更新済みデータベースに古いイメージをそのまま接続しないでください。バックアップ後の変更は失われます。

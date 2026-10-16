@@ -1,0 +1,49 @@
+---
+title: "Backups, restauração e atualizações"
+description: "Faça backup do PostgreSQL e teste a restauração antes de atualizar."
+---
+
+O PostgreSQL guarda os dados, arquivos enviados e arquivos de importação. O Compose usa o banco `opentoggl`, o usuário `postgres`, o serviço `postgres` e o volume `opentoggl-postgres-data`. A persistência do Redis está desativada; não é preciso fazer backup dele.
+
+## Faça um backup
+
+Na pasta do `docker-compose.yml`, execute:
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+Guarde uma cópia fora do servidor. Salve também `docker-compose.yml`, `.env` e a configuração do proxy em um local privado: eles não estão no dump do banco.
+
+Para um backup diário, crie `/srv/backups`, ajuste os caminhos e adicione esta linha ao crontab de um usuário com acesso ao Docker:
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+Confira se a tarefa terminou sem erros e teste a restauração regularmente. Um arquivo existir não garante que seja utilizável.
+
+## Restaure
+
+Teste primeiro em outra instância. A restauração substitui os objetos do banco incluídos no backup e perde as alterações posteriores. Use a mesma versão do aplicativo da época do backup, com o PostgreSQL em execução:
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+Se `pg_restore` falhar, mantenha o aplicativo parado até resolver o erro. Depois, entre e confira os registros e arquivos. Não apague o volume do banco.
+
+## Atualize ou volte à versão anterior
+
+1. Faça um backup e anote a versão ou o digest da imagem atual. `latest` muda e não identifica a versão anterior.
+2. Execute:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. O servidor atualiza a estrutura do banco automaticamente ao iniciar. Confira `docker compose logs opentoggl`, entre e verifique os dados.
+
+Para voltar, pare `opentoggl`, fixe a tag ou o digest anterior em `docker-compose.yml`, baixe essa imagem e restaure o backup feito antes da atualização seguindo os passos acima. Não inicie uma imagem antiga diretamente com o banco já atualizado. As alterações posteriores ao backup serão perdidas.

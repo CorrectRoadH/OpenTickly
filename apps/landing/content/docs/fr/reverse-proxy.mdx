@@ -1,0 +1,54 @@
+---
+title: "HTTPS et proxy inverse"
+description: "Utilisez votre propre adresse HTTPS avec Caddy ou Nginx."
+---
+
+Le conteneur sert du HTTP sur le port `8080`. `OPENTOGGL_PORT` change le port publié sur l'hôte, sans activer HTTPS. Le proxy reçoit les connexions HTTPS et les transmet à OpenTickly.
+
+## Avec Caddy
+
+1. Suivez le guide d'[auto-hébergement](/fr/docs/self-hosting) et vérifiez l'accès HTTP.
+2. Faites pointer le DNS du domaine vers le serveur et ouvrez les ports 80 et 443.
+3. Installez Caddy sur le même hôte et ajoutez ceci au Caddyfile en remplaçant le domaine :
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Rechargez Caddy. Il obtient et renouvelle le certificat automatiquement. Conservez son répertoire de données. Voir le [guide HTTPS de Caddy](https://caddyserver.com/docs/automatic-https).
+
+## Avec Nginx
+
+Obtenez d'abord un certificat et prévoyez son renouvellement. Sur le même hôte, ajoutez cette configuration avec votre domaine et vos chemins de certificats, puis lancez `nginx -t` et rechargez Nginx :
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+Voir la [documentation Nginx](https://nginx.org/en/docs/http/ngx_http_proxy_module.html). Choisissez un seul proxy. Si vous avez changé `OPENTOGGL_PORT`, adaptez aussi le port de destination. Ces exemples supposent un proxy sur l'hôte ; dans un conteneur, `127.0.0.1` désigne le conteneur lui-même. Limitez l'accès direct au port 8080.
+
+## Terminer
+
+1. Ouvrez `https://time.example.com` et connectez-vous sans avertissement de certificat.
+2. Dans **Administration de l'instance** → **Configuration**, définissez **URL du site** avec cette adresse HTTPS, sans `/api` ni autre chemin.
+3. Poursuivez avec la [configuration du courrier et du SSO](/fr/docs/admin-email-sso).
+
+L'installation en PWA sur téléphone et le SSO nécessitent HTTPS. Changer l'URL du site ne crée pas de certificat.
