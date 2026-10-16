@@ -1,0 +1,54 @@
+---
+title: "HTTPS y proxy inverso"
+description: "Configura una dirección HTTPS para OpenTickly con Caddy o Nginx."
+---
+
+El contenedor sirve HTTP en el puerto `8080`. `OPENTOGGL_PORT` cambia el puerto publicado en el servidor, pero no activa HTTPS. El proxy recibe las conexiones HTTPS y las reenvía a OpenTickly.
+
+## Con Caddy
+
+1. Sigue la guía de [alojamiento propio](/es/docs/self-hosting) y comprueba que HTTP funciona.
+2. Apunta el DNS del dominio al servidor y abre los puertos 80 y 443.
+3. Instala Caddy en ese mismo servidor y añade esto al Caddyfile, cambiando el dominio:
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Recarga Caddy: solicitará y renovará el certificado automáticamente. Conserva su directorio de datos. Consulta la [guía HTTPS de Caddy](https://caddyserver.com/docs/automatic-https).
+
+## Con Nginx
+
+Primero consigue un certificado y configura su renovación. En el mismo servidor, añade esta configuración con tu dominio y las rutas de tus certificados. Ejecuta `nginx -t` y recarga Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+Consulta la [documentación de Nginx](https://nginx.org/en/docs/http/ngx_http_proxy_module.html). Elige solo uno de los dos proxies. Si cambiaste `OPENTOGGL_PORT`, cambia también el puerto de destino. Estos ejemplos ejecutan el proxy en el servidor; dentro de un contenedor, `127.0.0.1` apunta al propio contenedor. Restringe el acceso directo al puerto 8080.
+
+## Termina la configuración
+
+1. Abre `https://time.example.com` y comprueba que puedes iniciar sesión sin avisos de certificado.
+2. En **Administración de instancia** → **Configuración**, cambia **URL del sitio** a esa dirección HTTPS, sin `/api` ni otras rutas.
+3. Continúa con [correo y SSO](/es/docs/admin-email-sso).
+
+La instalación como PWA en el teléfono y el SSO necesitan HTTPS. Cambiar la URL del sitio no instala un certificado.

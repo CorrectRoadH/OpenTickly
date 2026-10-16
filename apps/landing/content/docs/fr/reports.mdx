@@ -1,0 +1,28 @@
+---
+title: "Rapports"
+description: "Consultez vos heures, appliquez un arrondi et exportez les totaux."
+---
+
+## Choisir une vue et des dates
+
+Ouvrez **Rapports**. **Résumé** présente les totaux et regroupements, **Détaillé** les saisies individuelles, **Charge de travail** le temps par membre et **Rentabilité** les montants, coûts et bénéfices disponibles.
+
+Les coûts sont actuellement considérés comme nuls : le bénéfice affiché est donc égal au montant. Ce n’est pas un calcul complet des coûts.
+
+1. Choisissez **Cette semaine**, **Semaine dernière**, **Ce mois-ci** ou une période personnalisée.
+2. Filtrez avec **Membre**, **Client**, **Projet**, **Étiquette** ou **Description**.
+3. Dans le résumé, choisissez le regroupement avec **Détailler par**.
+
+La vue détaillée indique si chaque saisie est facturable. La barre d'outils n'a pas de filtre distinct sur ce statut.
+
+## Arrondir
+
+Dans **Paramètres** → **Général** de l'espace, configurez **Arrondi du temps** : choisissez **Au plus proche**, **Vers le haut** ou **Vers le bas**, puis **Intervalle d’arrondi** et enregistrez.
+
+Dans le rapport, **Arrondi désactivé** active l'arrondi et **Arrondi activé** le désactive. Il est désactivé au départ, indisponible si l'intervalle est désactivé, et ne peut pas être basculé dans la vue de rentabilité. Chaque durée est arrondie avant le calcul des totaux, sans changer les saisies enregistrées.
+
+## Exporter ou copier un lien
+
+**Exporter** télécharge le regroupement actuel en CSV avec `Project,Client,Duration,Amount` et une ligne de total. `Amount` reste vide. Même depuis l'onglet détaillé, l'export est regroupé ; pour les saisies individuelles, voir [Exporter vos données](/fr/docs/export-data).
+
+**Enregistrer et partager** copie uniquement l'URL actuelle, sans enregistrer de rapport ni conserver les dates et filtres. Le destinataire doit avoir accès à l'espace. **Mes rapports** et **Partagés avec moi** ne constituent pas encore une bibliothèque fonctionnelle ; l'épinglage et l'envoi planifié ne sont pas disponibles. Partagez le CSV pour transmettre le résultat exact.

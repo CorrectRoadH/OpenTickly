@@ -1,0 +1,28 @@
+---
+title: "Reports"
+description: "Review recorded time, apply rounding, and export grouped totals."
+---
+
+## Choose a view and dates
+
+Open **Reports**. **Summary** shows totals and breakdowns, **Detailed** shows individual entries, **Workload** shows time by member, and **Profitability** shows amounts, costs, and profit where that data is available.
+
+Costs are currently treated as zero, so the displayed profit equals the amount; do not use it as a complete cost calculation.
+
+1. Open the date picker and choose **This week**, **Last week**, **This month**, or a custom range.
+2. Narrow the data with **Member**, **Client**, **Project**, **Tag**, or **Description**.
+3. Use **Breakdown by** in the summary to group the result.
+
+The detailed view shows each entry's billable status. There is currently no separate billable filter in the report toolbar.
+
+## Round reported time
+
+In workspace **Settings** → **General**, set **Time rounding**: choose **Nearest**, **Up**, or **Down**, then a **Rounding interval** and save.
+
+Back in Reports, click **Rounding off** to turn rounding on; **Rounding on** turns it off again. It starts off, is unavailable with a disabled interval, and cannot be toggled in the profitability view. Rounding applies to each entry before totals are added. It does not change the saved entries.
+
+## Export or copy a link
+
+**Export** downloads the current breakdown as CSV with `Project,Client,Duration,Amount` columns and a total row. `Amount` is currently blank. This is a grouped export even from the detailed tab; use [Export your data](/docs/export-data) for individual entries.
+
+**Save and share** currently copies the page URL only. It does not save a report or preserve your selected dates and filters, and recipients still need access to the workspace. **My reports** and **Shared with me** do not yet provide a working saved-report library; pinning and scheduled delivery are not available. Use an exported CSV when you need to share the exact result.

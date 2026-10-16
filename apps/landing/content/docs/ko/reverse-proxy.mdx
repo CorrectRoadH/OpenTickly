@@ -1,0 +1,54 @@
+---
+title: "HTTPS와 리버스 프록시"
+description: "Caddy나 Nginx로 OpenTickly에 HTTPS 주소를 연결하세요."
+---
+
+컨테이너는 `8080` 포트에서 HTTP를 제공합니다. `OPENTOGGL_PORT`는 호스트의 공개 포트만 바꾸며 HTTPS를 켜지는 않습니다. 프록시가 HTTPS 요청을 받은 뒤 OpenTickly로 전달하도록 설정합니다.
+
+## Caddy 사용하기
+
+1. [셀프 호스팅 안내](/ko/docs/self-hosting)에 따라 설치하고 HTTP 접속을 확인합니다.
+2. 도메인의 DNS를 서버로 연결하고 80, 443 포트를 엽니다.
+3. 같은 호스트에 Caddy를 설치하고 도메인을 바꿔 Caddyfile에 다음을 넣습니다.
+
+```text
+time.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Caddy 설정을 다시 불러오면 인증서를 자동으로 발급하고 갱신합니다. Caddy 데이터 디렉터리는 유지해야 합니다. 자세한 내용은 [Caddy HTTPS 안내](https://caddyserver.com/docs/automatic-https)를 참고하세요.
+
+## Nginx 사용하기
+
+먼저 인증서를 발급받고 갱신 방법을 마련합니다. 같은 호스트에 다음 설정을 추가하고 도메인과 인증서 경로를 바꿉니다. `nginx -t`로 검사한 뒤 Nginx 설정을 다시 불러옵니다.
+
+```nginx
+server {
+    listen 80;
+    server_name time.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name time.example.com;
+    ssl_certificate /etc/letsencrypt/live/time.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/time.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+[Nginx 문서](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)도 참고하세요. 프록시는 둘 중 하나만 사용합니다. `OPENTOGGL_PORT`를 바꿨다면 전달 대상 포트도 바꿔야 합니다. 이 예시는 프록시를 호스트에서 실행합니다. 컨테이너 안의 `127.0.0.1`은 해당 컨테이너 자신입니다. 외부에서 8080 포트로 직접 접속하지 못하도록 제한하세요.
+
+## 마무리
+
+1. `https://time.example.com`을 열어 인증서 경고 없이 로그인되는지 확인합니다.
+2. **인스턴스 관리** → **설정**에서 **사이트 URL**을 해당 HTTPS 주소로 바꿉니다. `/api` 같은 경로는 넣지 않습니다.
+3. [이메일과 SSO 설정](/ko/docs/admin-email-sso)을 진행합니다.
+
+휴대폰에 PWA를 설치하거나 SSO를 사용하려면 HTTPS가 필요합니다. 사이트 URL만 바꾼다고 인증서가 생기지는 않습니다.

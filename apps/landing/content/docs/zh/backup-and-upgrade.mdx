@@ -1,0 +1,49 @@
+---
+title: "备份、恢复与升级"
+description: "备份 PostgreSQL，验证恢复，再放心升级。"
+---
+
+应用数据、上传的文件和导入压缩包都在 PostgreSQL 里。Compose 中的数据库名是 `opentoggl`，用户是 `postgres`，服务名是 `postgres`，数据卷是 `opentoggl-postgres-data`。Redis 没有开启持久化，不需要备份。
+
+## 备份数据库
+
+在 `docker-compose.yml` 所在目录运行：
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+另存一份到其他机器。`docker-compose.yml`、`.env` 和代理配置不在数据库备份里，也要单独妥善保存。
+
+建议每天备份。先创建 `/srv/backups`，修改下面的目录和 Docker 路径，再把这行加到有 Docker 权限的用户的 crontab 中：
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+检查任务是否成功，并定期试恢复。光有备份文件不代表一定能用。
+
+## 恢复备份
+
+先在独立实例试一遍。恢复会覆盖备份中的数据库对象，这些对象在备份之后的改动会丢失。使用备份时的应用版本，并确保 PostgreSQL 正在运行：
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+如果 `pg_restore` 报错，先保持应用停止，解决错误后再启动。恢复后登录，检查时间记录和上传文件。不要删除数据库数据卷。
+
+## 升级和回退
+
+1. 先备份，并记下当前镜像的版本或 digest。一直变化的 `latest` 不能用来确定回退版本。
+2. 运行：
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. 服务启动时会自动升级数据库结构。查看 `docker compose logs opentoggl`，登录并检查数据。
+
+需要回退时，先停止 `opentoggl`，在 `docker-compose.yml` 中把应用镜像固定到之前的 tag 或 digest，拉取该镜像，再按上面的步骤恢复升级前的备份。不要直接拿旧镜像启动升级后的数据库。备份之后新增或修改的数据会丢失。

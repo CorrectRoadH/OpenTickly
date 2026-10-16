@@ -1,0 +1,49 @@
+---
+title: "Copias de seguridad y actualizaciones"
+description: "Guarda PostgreSQL, prueba la restauración y actualiza con una forma de volver atrás."
+---
+
+PostgreSQL guarda los datos, los archivos subidos y los archivos de importación. Compose usa la base `opentoggl`, el usuario `postgres`, el servicio `postgres` y el volumen `opentoggl-postgres-data`. Redis no guarda datos de forma persistente y no necesita copia.
+
+## Haz una copia
+
+Desde la carpeta de `docker-compose.yml`, ejecuta:
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+Guarda otra copia fuera del servidor. Conserva también `docker-compose.yml`, `.env` y la configuración del proxy en un lugar privado: no están en el volcado.
+
+Para una copia diaria, crea `/srv/backups`, ajusta las rutas y añade esta línea al crontab de un usuario con acceso a Docker:
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+Comprueba que la tarea termina correctamente y prueba las restauraciones. Que exista un archivo no garantiza que se pueda recuperar.
+
+## Restaura
+
+Prueba primero en otra instancia. La restauración reemplaza los objetos guardados y pierde sus cambios posteriores a la copia. Usa la versión de la aplicación que tenías al hacerla y mantén PostgreSQL en marcha:
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+Si `pg_restore` falla, deja la aplicación detenida hasta resolverlo. Después, inicia sesión y revisa registros y archivos. No borres el volumen de la base de datos.
+
+## Actualiza o vuelve atrás
+
+1. Haz una copia y anota la versión o el digest de la imagen actual. `latest` puede cambiar.
+2. Ejecuta:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. El servidor actualiza la estructura de la base al arrancar. Revisa `docker compose logs opentoggl`, inicia sesión y comprueba los datos.
+
+Para volver atrás, detén `opentoggl`, fija la etiqueta o el digest anterior en `docker-compose.yml`, descarga esa imagen y restaura la copia previa a la actualización. No arranques una imagen antigua con una base ya actualizada. Se perderán los cambios posteriores a la copia.

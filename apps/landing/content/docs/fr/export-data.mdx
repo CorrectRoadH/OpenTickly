@@ -1,0 +1,35 @@
+---
+title: "Exporter vos données"
+description: "Téléchargez vos archives et préparez vos saisies pour Toggl Track."
+---
+
+## Télécharger un ZIP
+
+1. Dans l'espace de travail, ouvrez **Paramètres** → **Export de données**.
+2. Choisissez les données sous **Sélectionnez les éléments à exporter :**.
+3. Cliquez sur **Export**.
+
+Le ZIP contient `manifest.json` et les fichiers JSON des catégories choisies : projets, membres des projets, tâches, clients, étiquettes, membres de l'espace, groupes de l'organisation, paramètres et définitions de rapports stockées. Certaines cases affichent encore les clés **projects_users**, **project_tasks**, **team**, **teams**, **workspace_settings**, **custom_reports** et **scheduled_reports**. Les membres d'un projet sont dans `projects_users/<project-id>.json`, ceux de l'espace dans `workspace_users.json`. Exporter des définitions n'active pas l'envoi planifié.
+
+Ce ZIP ne contient pas les saisies de temps et ne remplace pas une [sauvegarde de la base](/fr/docs/backup-and-upgrade).
+
+## Télécharger les saisies
+
+1. Dans **Exporter les entrées de temps**, choisissez **Date de début** et **Date de fin**.
+2. Sélectionnez **CSV** ou **PDF** sous **Format d'export**.
+3. Cliquez sur **Exporter**.
+
+Vous exportez les saisies de votre compte sur cette période, tous espaces confondus, pas celles de toute l'équipe. Changer d'espace ne limite pas cet export : vérifiez projets et clients. Les chronomètres en cours sont exclus. Le CSV contient `Description,Project,Client,Start,Stop,Duration,Billable,Tags`, avec une durée en `HH:MM:SS`. Le PDF sert à la lecture. Vérifiez le nombre de saisies et découpez les longues périodes.
+
+## Revenir à Toggl Track
+
+Le CSV demande quelques adaptations :
+
+1. Ajoutez `Email` avec l'adresse Toggl du propriétaire de chaque saisie.
+2. Séparez `Start` en `Start date` et `Start time` dans le bon fuseau horaire. Supprimez `Start` et `Stop`.
+3. Gardez description, projet, client, durée, statut facturable et étiquettes. Enregistrez en CSV UTF-8 et suivez le [guide d'import Toggl](https://support.toggl.com/en-us/article/editing-and-uploading-a-csv-file-bk155h/).
+4. En tant qu'administrateur Toggl, importez un échantillon et comparez dates et totaux avant la suite.
+
+Le ZIP n'est pas un fichier de restauration Toggl. Le CSV ne transfère ni permissions, ni paramètres, ni rapports, ni pièces jointes ; tâches et tarifs sont également absents de cet export. L'import du statut facturable dépend de l'offre Toggl. Chaque personne doit exporter ses propres saisies.
+
+Dans les [rapports](/fr/docs/reports), **Exporter** télécharge des totaux regroupés, pas des saisies à importer.

@@ -1,0 +1,49 @@
+---
+title: "Sauvegardes et mises à jour"
+description: "Sauvegardez PostgreSQL et testez la restauration avant de mettre à jour."
+---
+
+PostgreSQL contient les données, les fichiers téléversés et les archives d'import. Compose utilise la base `opentoggl`, l'utilisateur `postgres`, le service `postgres` et le volume `opentoggl-postgres-data`. La persistance de Redis est désactivée : rien à sauvegarder de ce côté.
+
+## Sauvegarder
+
+Depuis le dossier de `docker-compose.yml`, lancez :
+
+```bash
+docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > backup.dump
+```
+
+Gardez une copie hors du serveur. Conservez aussi `docker-compose.yml`, `.env` et la configuration du proxy en lieu sûr : ils ne sont pas dans la sauvegarde de la base.
+
+Pour une sauvegarde quotidienne, créez `/srv/backups`, adaptez les chemins et ajoutez cette ligne au crontab d'un utilisateur ayant accès à Docker :
+
+```text
+0 2 * * * cd /srv/opentickly && umask 077 && /usr/bin/docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > /srv/backups/opentickly-$(date +\%F).dump
+```
+
+Vérifiez que la tâche se termine sans erreur et testez régulièrement la restauration. La présence d'un fichier ne suffit pas.
+
+## Restaurer
+
+Testez d'abord sur une instance séparée. La restauration remplace les objets sauvegardés et efface leurs modifications ultérieures. Utilisez la version de l'application correspondant à la sauvegarde, avec PostgreSQL démarré :
+
+```bash
+docker compose stop opentoggl &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --clean --if-exists --exit-on-error < backup.dump &&
+  docker compose up -d opentoggl
+```
+
+Si `pg_restore` échoue, laissez l'application arrêtée jusqu'à résolution de l'erreur. Ensuite, connectez-vous et vérifiez les saisies et les fichiers. Ne supprimez pas le volume de la base.
+
+## Mettre à jour ou revenir en arrière
+
+1. Faites une sauvegarde et notez la version ou le digest de l'image actuelle. `latest` peut changer.
+2. Lancez :
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+3. Le serveur met automatiquement à jour la structure de la base au démarrage. Consultez `docker compose logs opentoggl`, connectez-vous et vérifiez les données.
+
+Pour revenir en arrière, arrêtez `opentoggl`, fixez l'ancienne étiquette ou le digest dans `docker-compose.yml`, téléchargez cette image et restaurez la sauvegarde faite avant la mise à jour. Ne lancez pas simplement l'ancienne image sur la base mise à jour. Les changements depuis la sauvegarde seront perdus.

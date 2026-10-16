@@ -1,0 +1,35 @@
+---
+title: "导出数据"
+description: "下载工作区压缩包和时间记录，了解导回 Toggl Track 前需要做什么。"
+---
+
+## 导出工作区 ZIP
+
+1. 打开工作区的 **设置** → **数据导出**。
+2. 在 **选择要导出的项目：** 下勾选需要的数据。
+3. 点击 **Export** 下载 ZIP。
+
+压缩包包含 `manifest.json`，以及所选类别的 JSON 文件。可选内容包括项目、项目成员、任务、客户、标签、工作区成员、组织分组、工作区设置和已存储的报表定义。部分选项目前直接显示 **projects_users**、**project_tasks**、**team**、**teams**、**workspace_settings**、**custom_reports**、**scheduled_reports** 等名称。项目成员按项目存放在 `projects_users/<project-id>.json`，工作区成员在 `workspace_users.json`。导出报表定义不代表可以定时发送报表。
+
+ZIP 不含时间记录，也不能替代完整实例备份。需要恢复实例时，请用[数据库备份](/zh/docs/backup-and-upgrade)。
+
+## 导出时间记录
+
+1. 在 **导出时间条目** 中选择 **开始日期** 和 **结束日期**。
+2. 在 **导出格式** 中选 **CSV** 或 **PDF**。
+3. 点击 **导出**。
+
+这里导出的是当前登录账号在所选日期范围内、跨工作区的记录，不是全体成员的数据。切换工作区不会限制这份时间导出的范围；迁移前请核对项目和客户。正在计时的记录不会导出。CSV 列为 `Description,Project,Client,Start,Stop,Duration,Billable,Tags`，时长格式为 `HH:MM:SS`。PDF 适合阅读，不用于导入。检查记录数量；日期跨度大时，分段导出。
+
+## 导回 Toggl Track
+
+这个 CSV 不能原样导入 Toggl Track。先用表格工具整理：
+
+1. 添加 `Email` 列，填上每条记录所属用户的 Toggl 邮箱。
+2. 按所需时区把 `Start` 拆成 `Start date` 和 `Start time`，删掉原来的 `Start`、`Stop` 列。
+3. 保留描述、项目、客户、时长、计费状态和标签，保存为 UTF-8 CSV。具体要求见 [Toggl CSV 导入指南](https://support.toggl.com/en-us/article/editing-and-uploading-a-csv-file-bk155h/)。
+4. 用 Toggl 工作区管理员账号先导入少量记录，对比日期和总时长，确认无误后再导入其余数据。
+
+ZIP 不能直接用于恢复 Toggl。CSV 不会迁移权限、工作区设置、报表定义或附件；这里导出的时间 CSV 也没有任务和费率。计费状态能否导入取决于 Toggl 套餐。团队成员应分别导出自己的记录，不要把所有时间都归到同一个邮箱。
+
+[报表](/zh/docs/reports)里的 **导出** 下载的是分组汇总，不能拿来导入时间记录。
