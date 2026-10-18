@@ -50,6 +50,8 @@ func Open(t *testing.T) *Database {
 	t.Helper()
 
 	baseDSN := requiredDatabaseURL(t)
+	unlock := lockSchema(t, baseDSN, canonicalSchema)
+	defer unlock()
 	adminPool, err := pgxpool.New(context.Background(), baseDSN)
 	if err != nil {
 		t.Fatalf("open admin postgres pool: %v", err)

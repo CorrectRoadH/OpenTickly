@@ -39,3 +39,19 @@ selection, absence of duplicate organizations, and unchanged membership role.
 `organization-deletion-session.spec.ts` exercises the real Danger Zone UI,
 redirect to Timer, reuse of the remaining organization, creation when none
 remains, fresh login and reload, and captures the recovered page.
+
+## CI follow-up
+
+The shared `pgtest.Open` schema must be initialized under a PostgreSQL advisory
+lock, covering both schema creation and all goose migrations. Each initializer
+holds the lock on a dedicated physical connection and closes that connection on
+return, including failure. This serializes setup across Go test processes while
+leaving the tests themselves parallel. The production migration implementation
+and unique ephemeral test schemas are unchanged.
+
+`TestConcurrentOpen` starts eight independent test processes against a new,
+test-owned database and checks successful initialization; the parent waits for
+all children and drops only that database. CI includes this helper package in
+its backend test list. The organization-switcher assertion is scoped to the
+Organization listbox because the same name also appears in its trigger and
+heading. These fix the two failures observed on commit `d902879c`.

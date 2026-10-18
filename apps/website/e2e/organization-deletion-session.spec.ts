@@ -26,7 +26,11 @@ for (const keepOrganization of [false, true]) {
       await page.reload();
       await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
       await page.getByRole("button", { exact: true, name: "Organization" }).click();
-      await expect(page.getByText(retainedName, { exact: true })).toBeVisible();
+      await expect(
+        page
+          .getByRole("listbox", { name: "Organization", exact: true })
+          .getByText(retainedName, { exact: true }),
+      ).toBeVisible();
       await page
         .getByTestId("workspace-switcher-panel")
         .getByText(organizationName, { exact: true })
