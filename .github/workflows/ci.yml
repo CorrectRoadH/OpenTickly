@@ -34,6 +34,15 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -71,6 +80,12 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
         run: |
           go test ./apps/backend/internal/billing/... ./apps/backend/internal/catalog/... ./apps/backend/internal/governance/... ./apps/backend/internal/http/... ./apps/backend/internal/identity/... ./apps/backend/internal/importing/... ./apps/backend/internal/instance-admin/... ./apps/backend/internal/membership/... ./apps/backend/internal/platform/... ./apps/backend/internal/tenant/... ./apps/backend/internal/tracking/... ./apps/backend/internal/web/...
+
+      - name: Run HTTP security regression tests
+        if: steps.changes.outputs.backend_unit == 'true'
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: go test ./apps/backend/internal/bootstrap -run '^TestAuditSecurity' -count=1
 
       - name: Skip backend unit tests
         if: steps.changes.outputs.backend_unit != 'true'

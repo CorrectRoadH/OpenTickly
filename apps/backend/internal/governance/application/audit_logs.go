@@ -38,6 +38,7 @@ func (service *Service) InsertAuditLog(ctx context.Context, command InsertAuditL
 	if command.OrganizationID <= 0 {
 		return ErrInvalidOrganization
 	}
+	command.RequestBody, command.ResponseBody, command.Metadata = sanitizeAuditPayloads(command.Action, command.WorkspaceID, command.RequestBody, command.ResponseBody, command.Metadata)
 	return service.store.InsertAuditLog(ctx, command)
 }
 
@@ -60,5 +61,13 @@ func (service *Service) ListAuditLogs(
 	}
 	filter.EntityType = strings.TrimSpace(filter.EntityType)
 	filter.Action = strings.TrimSpace(filter.Action)
-	return service.store.ListAuditLogs(ctx, organizationID, filter)
+	logs, err := service.store.ListAuditLogs(ctx, organizationID, filter)
+	if err != nil {
+		return nil, err
+	}
+	for i := range logs {
+		entry := &logs[i]
+		entry.RequestBody, entry.ResponseBody, entry.Metadata = sanitizeAuditPayloads(entry.Action, entry.WorkspaceID, entry.RequestBody, entry.ResponseBody, entry.Metadata)
+	}
+	return logs, nil
 }

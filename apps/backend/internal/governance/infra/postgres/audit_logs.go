@@ -56,6 +56,10 @@ func (store *Store) ListAuditLogs(
 			created_at
 		from governance_audit_logs
 		where organization_id = $1
+            and (workspace_id is null or exists (
+                select 1 from tenant_workspaces w
+                where w.id = governance_audit_logs.workspace_id and w.organization_id = $1
+            ))
 			and created_at >= $2
 			and created_at <= $3
 	`

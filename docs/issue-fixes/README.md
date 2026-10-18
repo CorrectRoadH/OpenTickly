@@ -89,3 +89,36 @@ or GitHub issue closure is included in this verification.
 - Contributor PRs #103 and #105 supply the original calendar wrapper and time-row
   fixes. The integration must preserve those changes and their regression tests.
 - These checks are local/CI integration evidence, not production acceptance.
+
+## Audit payload security (v0.4.2)
+
+Audit capture is subject to the same tenant boundary as the mutation. Resolve
+membership before reading previous state; constrain entity snapshots by workspace
+(and time entries by user), and discard all payloads when the mutation fails.
+Workspace audit events belong to the workspace's actual organization, including
+when it differs from the actor's home organization. Foreign workspace paths must
+not create audit records in either tenant. Entity table names remain allowlisted
+and values remain SQL parameters.
+
+The audit body budget is 8 KiB, independent of the request body consumed by the
+handler. Replay the captured prefix followed by the original stream and preserve
+its closer. Omit incomplete, oversized and scalar JSON; recursively remove
+credential fields and omit authentication/SSO/token-rotation payloads. Apply the
+same sanitizer on insert and read/export, including historical rows. Historical
+rows attributed to the wrong workspace organization are excluded, and previous
+snapshots whose workspace differs from the record are omitted. This does not
+rewrite historical database rows or rotate previously exposed credentials.
+
+Audit persistence finishes synchronously with a two-second timeout derived from
+the request context, retaining context values across disconnect cancellation.
+Persistence failure is logged without payloads and does not undo a successful
+business operation. There is no detached per-request audit goroutine.
+
+Verification: `TestAuditSecurity*` exercises the real HTTP router, application
+services, PostgreSQL migrations/stores and Redis. Red runs reproduced cross-tenant
+previous-row disclosure, raw rotated-token storage, truncated large requests and
+historical payload disclosure; the corrected implementation passes the negative
+and positive cases. The suite also checks non-home organization attribution and
+SQL metacharacters round-tripping as ordinary data. CI runs it with isolated
+PostgreSQL and Redis services. `local.audit-snapshot-tenant-scope` prevents
+reintroducing the known unscoped snapshot query.

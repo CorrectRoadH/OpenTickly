@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
@@ -19,7 +20,7 @@ import (
 	"github.com/samber/lo"
 )
 
-const auditLogMaxBodySize = 8192
+const auditLogMaxBodySize = governanceapplication.AuditPayloadMaxSize
 
 func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -31,21 +32,29 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 				return next(ctx)
 			}
 
-			// Capture request body (skip multipart uploads — reading their body
-			// truncates the stream and causes "unexpected EOF" in the handler).
+			// Bound audit capture without consuming the handler's request stream.
 			var requestBody string
 			if req.Body != nil && !isMultipartUploadPath(req.URL.Path) {
-				bodyBytes, err := io.ReadAll(io.LimitReader(req.Body, auditLogMaxBodySize))
-				if err == nil {
-					requestBody = string(bodyBytes)
-					req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+				original := req.Body
+				prefix, err := io.ReadAll(io.LimitReader(original, auditLogMaxBodySize+1))
+				req.Body = struct {
+					io.Reader
+					io.Closer
+				}{io.MultiReader(bytes.NewReader(prefix), original), original}
+				if err != nil {
+					return echo.NewHTTPError(http.StatusBadRequest, "Unable to read request body")
 				}
+				requestBody = governanceapplication.SanitizeAuditPayload(prefix)
 			}
 
-			// Snapshot previous state for PUT/PATCH before the handler modifies it.
+			// Resolve membership before reading any entity; IDs alone are not authority.
+			user := auditUser(ctx, handlers)
 			var metadata string
-			if req.Method == http.MethodPut || req.Method == http.MethodPatch {
-				metadata = snapshotPreviousEntity(ctx.Request().Context(), handlers.pool, req.URL.Path)
+			if user != nil && (req.Method == http.MethodPut || req.Method == http.MethodPatch) {
+				_, workspaceID := resolveOrgWorkspace(ctx, handlers, user)
+				if workspaceID != nil {
+					metadata = snapshotPreviousEntity(req.Context(), handlers.pool, req.URL.Path, *workspaceID, user.ID)
+				}
 			}
 
 			// Wrap response writer to capture response body
@@ -59,23 +68,24 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 			// Execute handler
 			handlerErr := next(ctx)
 
-			// Gather audit data synchronously before goroutine.
-			// Try publicTrackUserContextKey first (set by /api/v9 auth),
-			// then fall back to resolving from session cookie (for /web/v1 routes).
-			user, _ := ctx.Get(publicTrackUserContextKey).(*application.UserSnapshot)
 			if user == nil {
-				if sid := sessionID(ctx); sid != "" {
-					if resolved, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sid); err == nil {
-						user = &resolved
-					}
-				}
+				user = auditUser(ctx, handlers)
 			}
 			if user != nil {
 				source := resolveSource(ctx)
 				action := req.Method + " " + req.URL.Path
 				entityType, entityID := resolveEntity(req.URL.Path)
 				orgID, wsID := resolveOrgWorkspace(ctx, handlers, user)
-				responseBody := recorder.body.String()
+				responseBody := governanceapplication.SanitizeAuditPayload(recorder.body.Bytes())
+				if recorder.overflow {
+					responseBody = ""
+				}
+				if handlerErr != nil || ctx.Response().Status >= http.StatusBadRequest {
+					requestBody, responseBody, metadata = "", "", ""
+				}
+				if governanceapplication.SensitiveAuditPath(req.URL.Path) {
+					requestBody, responseBody, metadata = "", "", ""
+				}
 
 				if orgID > 0 {
 					command := governanceapplication.InsertAuditLogCommand{
@@ -94,9 +104,12 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 						Name:    governancepostgres.AuditLogJobName,
 						Payload: command,
 					}
-					go func() {
-						_ = handlers.platformHandles.Jobs.RunOnce(context.Background(), job)
-					}()
+					// Finish the audit write within a bounded lifecycle, including on disconnect.
+					auditCtx, cancel := context.WithTimeout(context.WithoutCancel(req.Context()), 2*time.Second)
+					if err := handlers.platformHandles.Jobs.RunOnce(auditCtx, job); err != nil {
+						ctx.Logger().Error("audit log persistence failed")
+					}
+					cancel()
 				}
 			}
 
@@ -143,18 +156,37 @@ func resolveEntity(path string) (entityType string, entityID *int64) {
 }
 
 func resolveOrgWorkspace(ctx echo.Context, handlers *routeHandlers, user *application.UserSnapshot) (orgID int64, wsID *int64) {
-	// Try workspace_id from path
-	if wsParam := ctx.Param("workspace_id"); wsParam != "" {
-		if id, err := strconv.ParseInt(wsParam, 10, 64); err == nil {
-			wsID = lo.ToPtr(id)
+	if raw := ctx.Param("workspace_id"); raw != "" {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			return 0, nil
 		}
+		workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
+		if err != nil {
+			return 0, nil
+		}
+		for _, workspace := range workspaces {
+			if int64(workspace.ID) == id {
+				return int64(workspace.OrganizationID), lo.ToPtr(id)
+			}
+		}
+		return 0, nil
 	}
-
-	// Try organization_id from path
-	if orgParam := ctx.Param("organization_id"); orgParam != "" {
-		if id, err := strconv.ParseInt(orgParam, 10, 64); err == nil {
-			return id, wsID
+	if raw := ctx.Param("organization_id"); raw != "" {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			return 0, nil
 		}
+		organizations, err := handlers.tenantApp.ListOrganizationsByUserID(ctx.Request().Context(), user.ID)
+		if err != nil {
+			return 0, nil
+		}
+		for _, organization := range organizations {
+			if int64(organization.ID) == id {
+				return id, nil
+			}
+		}
+		return 0, nil
 	}
 
 	// Fall back to user's home org/workspace
@@ -178,7 +210,11 @@ var entityTableMap = map[string]string{
 }
 
 // snapshotPreviousEntity fetches the current DB row as JSON before a PUT/PATCH modifies it.
-func snapshotPreviousEntity(ctx context.Context, pool *pgxpool.Pool, path string) string {
+func snapshotPreviousEntity(ctx context.Context, pool *pgxpool.Pool, path string, workspaceID, userID int64) string {
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) != 6 || parts[2] != "workspaces" || parts[3] != strconv.FormatInt(workspaceID, 10) {
+		return ""
+	}
 	entityType, entityID := resolveEntity(path)
 	if entityID == nil {
 		return ""
@@ -190,25 +226,32 @@ func snapshotPreviousEntity(ctx context.Context, pool *pgxpool.Pool, path string
 
 	var rowJSON []byte
 	// Safe: table name is from a hardcoded allowlist, not user input.
-	err := pool.QueryRow(ctx,
-		"select row_to_json(t) from "+table+" t where id = $1",
-		*entityID,
-	).Scan(&rowJSON)
+	query := "select row_to_json(t) from " + table + " t where id = $1 and workspace_id = $2"
+	args := []any{*entityID, workspaceID}
+	if entityType == "time_entries" {
+		query += " and user_id = $3"
+		args = append(args, userID)
+	}
+	err := pool.QueryRow(ctx, query, args...).Scan(&rowJSON)
 	if err != nil || len(rowJSON) == 0 {
 		return ""
 	}
 
 	result, _ := json.Marshal(map[string]json.RawMessage{"previous": rowJSON})
-	return string(result)
+	return governanceapplication.SanitizeAuditPayload(result)
 }
 
 type responseRecorder struct {
 	http.ResponseWriter
-	body    *bytes.Buffer
-	maxSize int
+	body     *bytes.Buffer
+	maxSize  int
+	overflow bool
 }
 
 func (r *responseRecorder) Write(b []byte) (int, error) {
+	if len(b) > r.maxSize-r.body.Len() {
+		r.overflow = true
+	}
 	if r.body.Len() < r.maxSize {
 		remaining := r.maxSize - r.body.Len()
 		if len(b) > remaining {
@@ -218,4 +261,16 @@ func (r *responseRecorder) Write(b []byte) (int, error) {
 		}
 	}
 	return r.ResponseWriter.Write(b)
+}
+
+func auditUser(ctx echo.Context, handlers *routeHandlers) *application.UserSnapshot {
+	if user, ok := ctx.Get(publicTrackUserContextKey).(*application.UserSnapshot); ok {
+		return user
+	}
+	if sid := sessionID(ctx); sid != "" {
+		if user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sid); err == nil {
+			return &user
+		}
+	}
+	return nil
 }
