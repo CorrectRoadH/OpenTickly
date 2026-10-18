@@ -10,7 +10,6 @@ import (
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
-	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	"opentoggl/backend/apps/backend/internal/platform"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 )
@@ -21,8 +20,6 @@ const (
 	apiTokenTTL       = 30 * time.Minute
 	billingAccountTTL = 5 * time.Minute
 	workspaceOrgTTL   = 10 * time.Minute
-	userHomeTTL       = 10 * time.Minute
-	sessionShellTTL   = 2 * time.Minute
 	currentTimerTTL   = 15 * time.Second
 	catalogListTTL    = 2 * time.Minute
 	catalogItemTTL    = 5 * time.Minute
@@ -56,7 +53,6 @@ func (c *cachedSessionRepository) UserIDBySession(ctx context.Context, sessionID
 func (c *cachedSessionRepository) Delete(ctx context.Context, sessionID string) error {
 	if userID, err := c.UserIDBySession(ctx, sessionID); err == nil {
 		_ = c.rc.Del(ctx, fmt.Sprintf("user:%d", userID))
-		_ = c.rc.Del(ctx, fmt.Sprintf("session_shell:%d", userID))
 	}
 	_ = c.rc.Del(ctx, fmt.Sprintf("session:%s", sessionID))
 	return c.inner.Delete(ctx, sessionID)
@@ -68,7 +64,6 @@ func (c *cachedSessionRepository) DeleteByUserID(ctx context.Context, userID int
 	// on their TTL. The source-of-truth DELETE below ensures lookups that miss
 	// the cache will not resurrect the session.
 	_ = c.rc.Del(ctx, fmt.Sprintf("user:%d", userID))
-	_ = c.rc.Del(ctx, fmt.Sprintf("session_shell:%d", userID))
 	return c.inner.DeleteByUserID(ctx, userID)
 }
 
@@ -89,15 +84,13 @@ func (c *cachedUserRepository) Save(ctx context.Context, user *identitydomain.Us
 	}
 	_ = c.rc.Del(ctx,
 		fmt.Sprintf("user:%d", user.ID()),
-		fmt.Sprintf("session_shell:%d", user.ID()),
 		fmt.Sprintf("api_token_uid:%d", user.ID()),
 	)
 	return nil
 }
 
 // ByID is not cached — domain.User has unexported fields (DDD entity invariant
-// protection) so json.Marshal produces "{}". The session shell cache covers the
-// hot read path at the UserSnapshot level instead.
+// protection) so json.Marshal produces "{}". Read the authoritative user instead.
 func (c *cachedUserRepository) ByID(ctx context.Context, id int64) (*identitydomain.User, error) {
 	return c.inner.ByID(ctx, id)
 }
@@ -133,23 +126,6 @@ func (c *cachedUserRepository) ByProductEmailsDisableCode(ctx context.Context, c
 
 func (c *cachedUserRepository) ByWeeklyReportDisableCode(ctx context.Context, code string) (*identitydomain.User, error) {
 	return c.inner.ByWeeklyReportDisableCode(ctx, code)
-}
-
-// --- session shell cache ---
-
-type cachedSessionShellProvider struct {
-	inner identityweb.SessionShellProvider
-	rc    *platform.RedisClient
-}
-
-func newCachedSessionShellProvider(inner identityweb.SessionShellProvider, rc *platform.RedisClient) *cachedSessionShellProvider {
-	return &cachedSessionShellProvider{inner: inner, rc: rc}
-}
-
-func (c *cachedSessionShellProvider) SessionShell(ctx context.Context, user identityapplication.UserSnapshot) (identityweb.SessionShellData, error) {
-	return platform.CacheAside(c.rc, ctx, fmt.Sprintf("session_shell:%d", user.ID), sessionShellTTL, func() (identityweb.SessionShellData, error) {
-		return c.inner.SessionShell(ctx, user)
-	})
 }
 
 // --- billing account repository cache ---
@@ -199,39 +175,6 @@ func (c *cachedWorkspaceOwnershipLookup) OrganizationIDForWorkspace(ctx context.
 	return platform.CacheAside(c.rc, ctx, fmt.Sprintf("ws_org:%d", workspaceID), workspaceOrgTTL, func() (int64, error) {
 		return c.inner.OrganizationIDForWorkspace(ctx, workspaceID)
 	})
-}
-
-// --- user home repository cache ---
-
-type cachedUserHome struct {
-	OrganizationID int64 `json:"organization_id"`
-	WorkspaceID    int64 `json:"workspace_id"`
-	Found          bool  `json:"found"`
-}
-
-type cachedUserHomeRepository struct {
-	inner userHomeRepository
-	rc    *platform.RedisClient
-}
-
-func newCachedUserHomeRepository(inner userHomeRepository, rc *platform.RedisClient) *cachedUserHomeRepository {
-	return &cachedUserHomeRepository{inner: inner, rc: rc}
-}
-
-func (c *cachedUserHomeRepository) FindByUserID(ctx context.Context, userID int64) (int64, int64, bool, error) {
-	result, err := platform.CacheAside(c.rc, ctx, fmt.Sprintf("user_home:%d", userID), userHomeTTL, func() (cachedUserHome, error) {
-		orgID, wsID, ok, fetchErr := c.inner.FindByUserID(ctx, userID)
-		return cachedUserHome{OrganizationID: orgID, WorkspaceID: wsID, Found: ok}, fetchErr
-	})
-	return result.OrganizationID, result.WorkspaceID, result.Found, err
-}
-
-func (c *cachedUserHomeRepository) Save(ctx context.Context, userID int64, organizationID int64, workspaceID int64) error {
-	if err := c.inner.Save(ctx, userID, organizationID, workspaceID); err != nil {
-		return err
-	}
-	_ = c.rc.Del(ctx, fmt.Sprintf("user_home:%d", userID), fmt.Sprintf("session_shell:%d", userID))
-	return nil
 }
 
 // --- tracking store cache (current timer only) ---

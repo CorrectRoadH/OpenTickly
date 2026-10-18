@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
@@ -104,29 +104,37 @@ func (provider *billingBackedSessionShell) ensureHome(
 	ctx context.Context,
 	user identityapplication.UserSnapshot,
 ) (sessionHome, error) {
-	if organizationID, workspaceID, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
-		return sessionHome{}, err
-	} else if ok {
-		home := sessionHome{organizationID: organizationID, workspaceID: workspaceID}
-		if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
-			return sessionHome{}, err
-		}
-		if err := provider.ensureDefaultWorkspace(ctx, user, home); err != nil {
-			return sessionHome{}, err
-		}
-		return home, nil
-	}
-
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
-	if organizationID, workspaceID, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
+
+	workspaces, err := provider.tenant.ListWorkspacesByUserID(ctx, user.ID)
+	if err != nil {
 		return sessionHome{}, err
-	} else if ok {
-		home := sessionHome{organizationID: organizationID, workspaceID: workspaceID}
-		if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
-			return sessionHome{}, err
+	}
+	organizationID, workspaceID, found, err := provider.userHomes.FindByUserID(ctx, user.ID)
+	if err != nil {
+		return sessionHome{}, err
+	}
+	if len(workspaces) > 0 {
+		selected := workspaces[0]
+		for _, workspace := range workspaces {
+			if int64(workspace.ID) == user.DefaultWorkspaceID {
+				selected = workspace
+			}
 		}
-		if err := provider.ensureDefaultWorkspace(ctx, user, home); err != nil {
+		for _, workspace := range workspaces {
+			if found && int64(workspace.ID) == workspaceID && int64(workspace.OrganizationID) == organizationID {
+				selected = workspace
+				break
+			}
+		}
+		home := sessionHome{organizationID: int64(selected.OrganizationID), workspaceID: int64(selected.ID)}
+		if !found || home.organizationID != organizationID || home.workspaceID != workspaceID {
+			if err := provider.userHomes.Save(ctx, user.ID, home.organizationID, home.workspaceID); err != nil {
+				return sessionHome{}, err
+			}
+		}
+		if err := provider.ensureDefaultWorkspace(ctx, user, home, workspaces); err != nil {
 			return sessionHome{}, err
 		}
 		return home, nil
@@ -153,7 +161,7 @@ func (provider *billingBackedSessionShell) ensureHome(
 	if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
 		return sessionHome{}, err
 	}
-	if err := provider.ensureDefaultWorkspace(ctx, user, home); err != nil {
+	if err := provider.ensureDefaultWorkspace(ctx, user, home, nil); err != nil {
 		return sessionHome{}, err
 	}
 	return home, nil
@@ -188,9 +196,12 @@ func (provider *billingBackedSessionShell) ensureDefaultWorkspace(
 	ctx context.Context,
 	user identityapplication.UserSnapshot,
 	home sessionHome,
+	workspaces []tenantapplication.WorkspaceView,
 ) error {
-	if user.DefaultWorkspaceID > 0 {
-		return nil
+	for _, workspace := range workspaces {
+		if int64(workspace.ID) == user.DefaultWorkspaceID {
+			return nil
+		}
 	}
 
 	_, err := provider.identity.UpdateProfile(ctx, user.ID, identitydomain.ProfileUpdate{

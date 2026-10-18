@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/samber/lo"
+
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -347,7 +349,10 @@ func (handler *Handler) sessionBootstrap(
 	}
 
 	defaultWorkspaceID := user.DefaultWorkspaceID
-	if defaultWorkspaceID <= 0 && shell.CurrentWorkspaceID != nil {
+	defaultWorkspaceExists := lo.ContainsBy(shell.Workspaces, func(workspace webapi.WorkspaceSettings) bool {
+		return int64(workspace.Id) == defaultWorkspaceID
+	})
+	if !defaultWorkspaceExists && shell.CurrentWorkspaceID != nil {
 		defaultWorkspaceID = int64(*shell.CurrentWorkspaceID)
 	}
 

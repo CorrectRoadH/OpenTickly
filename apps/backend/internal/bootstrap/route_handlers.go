@@ -199,16 +199,9 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		PasswordResetEmailer: passwordResetEmailer,
 		Logger:               appLogger,
 	})
-	userHomes := newCachedUserHomeRepository(tenantpostgres.NewUserHomeRepository(pool), cache)
-	shellProvider := newCachedSessionShellProvider(
-		newBillingBackedSessionShell(
-			tenantService,
-			billingService,
-			identityService,
-			membershipService,
-			userHomes,
-		),
-		cache,
+	userHomes := tenantpostgres.NewUserHomeRepository(pool)
+	shellProvider := newBillingBackedSessionShell(
+		tenantService, billingService, identityService, membershipService, userHomes,
 	)
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, siteURLReader)
 

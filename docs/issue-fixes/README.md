@@ -122,3 +122,8 @@ and positive cases. The suite also checks non-home organization attribution and
 SQL metacharacters round-tripping as ordinary data. CI runs it with isolated
 PostgreSQL and Redis services. `local.audit-snapshot-tenant-scope` prevents
 reintroducing the known unscoped snapshot query.
+
+## Organization deletion session recovery
+
+See [issue #118](organization-deletion-session.md) for deletion recovery, existing
+workspace selection, cache removal and regression coverage.
