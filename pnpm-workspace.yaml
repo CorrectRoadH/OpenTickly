@@ -12,21 +12,21 @@ catalog:
   "@uidotdev/usehooks": ^2.4.1
   babel-plugin-react-compiler: ^1.0.0
   date-fns: ^4.4.0
-  execa: ^10.1.0
-  i18next: ^26.4.2
+  execa: ^10.2.0
+  i18next: ^26.5.2
   i18next-resources-to-backend: ^1.2.3
   immer: ^11.1.21
   jspdf: ^4.2.1
-  jspdf-autotable: ^5.0.8
-  lucide-react: ^1.53.0
-  motion: ^14.0.0
+  jspdf-autotable: ^5.0.9
+  lucide-react: ^1.59.0
+  motion: ^14.3.0
   polished: ^4.3.1
   react: ^18.3.1
   react-big-calendar: ^1.20.0
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.2.0
-  react-hook-form: ^7.89.0
-  react-i18next: ^17.0.16
+  react-hook-form: ^7.90.0
+  react-i18next: ^17.1.0
   react-markdown: ^10.1.0
   sharp: ^0.35.5
   sonner: ^2.0.8
@@ -52,7 +52,7 @@ catalogMode: prefer
 # the app died on boot with "Incompatible React versions", taking the whole e2e
 # suite with it.
 overrides:
-  react: ^19.3.0
+  react: ^19.3.1
   react-dom: ^19.2.8
   dompurify: ^3.4.1
   lodash: ^4.18.1
