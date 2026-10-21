@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 
 describe("filter dropdown clear action", () => {
   test("keeps the clear action mounted so option rows do not shift after selection", () => {

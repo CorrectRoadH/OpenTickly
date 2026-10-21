@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 
 describe("AppSwitch geometry", () => {
   test("uses transform travel instead of separate left positions for checked alignment", () => {

@@ -10,7 +10,7 @@
  * - Special characters and unicode in names/descriptions work
  * - Continuing with no previous entries fails gracefully
  */
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vite-plus/test";
 import { toggl, togglJson, togglExpectFail } from "../helpers/toggl.ts";
 import { provisionUser } from "../helpers/provisioning.ts";
 import type { TestUser } from "../helpers/types.ts";

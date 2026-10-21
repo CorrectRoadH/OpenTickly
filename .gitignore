@@ -64,3 +64,4 @@ research
 .playwright-mcp
 .mcp.json
 .harness/
+.vitest/

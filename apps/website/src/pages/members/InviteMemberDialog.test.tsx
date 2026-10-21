@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { InviteMemberDialog } from "./InviteMemberDialog.tsx";

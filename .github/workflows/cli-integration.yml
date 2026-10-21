@@ -70,18 +70,17 @@ jobs:
               - '.env.example'
               - '.air.toml'
 
-      - uses: pnpm/action-setup@v6
-        if: steps.changes.outputs.cli_integration == 'true'
-
-      - uses: actions/setup-node@v7
+      - uses: voidzero-dev/setup-vp@v1.21.2
         if: steps.changes.outputs.cli_integration == 'true'
         with:
           node-version: 24
-          cache: "pnpm"
+          version: "1.3.0"
+          run-install: false
+          cache: true
 
       - name: Install dependencies
         if: steps.changes.outputs.cli_integration == 'true'
-        run: pnpm install
+        run: vp install --frozen-lockfile
 
       - name: Set up Go
         if: steps.changes.outputs.cli_integration == 'true'
@@ -118,7 +117,7 @@ jobs:
       - name: Install toggl CLI
         if: steps.changes.outputs.cli_integration == 'true'
         run: |
-          npm install -g @correctroadh/toggl-cli
+          vp install -g @correctroadh/toggl-cli
           toggl --help >/dev/null
 
       - name: Run CLI integration tests
@@ -126,7 +125,7 @@ jobs:
         env:
           OPENTOGGL_CLI_TEST_URL: http://127.0.0.1:8080/api/v9
           OPENTOGGL_CLI_TEST_BASE: http://127.0.0.1:8080
-        run: pnpm run test:cli
+        run: vp run test:cli
 
       - name: Setup Python
         if: steps.changes.outputs.cli_integration == 'true'

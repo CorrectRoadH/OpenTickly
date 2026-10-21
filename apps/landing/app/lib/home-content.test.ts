@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { homeContentEn } from "./home-content.en";
 import { homeUseCaseItems } from "./home-use-cases";
 

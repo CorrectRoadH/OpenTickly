@@ -8,7 +8,7 @@
  * - Workspaces can be renamed
  * - Organization details can be viewed by ID
  */
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vite-plus/test";
 import { toggl, togglJson } from "../helpers/toggl.ts";
 import { provisionUser } from "../helpers/provisioning.ts";
 import type { TestUser } from "../helpers/types.ts";

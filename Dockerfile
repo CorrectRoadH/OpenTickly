@@ -1,25 +1,26 @@
-FROM --platform=$BUILDPLATFORM node:22.12.0-bookworm-slim AS website-builder
+FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.3.0 AS website-builder
 
+USER root
+RUN mkdir -p /workspace && chown vp:vp /workspace
+USER vp
 WORKDIR /workspace
 
-RUN npm install -g pnpm@10.32.1
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 
 # Manifests-first: copy every workspace member's package.json so pnpm can resolve
 # the full graph, keeping the install layer cached across source-only edits.
-COPY apps/website/package.json ./apps/website/
-COPY apps/landing/package.json ./apps/landing/
-COPY apps/update-worker/package.json ./apps/update-worker/
-COPY packages/web-ui/package.json ./packages/web-ui/
-COPY packages/shared-contracts/package.json ./packages/shared-contracts/
+COPY --chown=vp:vp apps/website/package.json ./apps/website/
+COPY --chown=vp:vp apps/landing/package.json ./apps/landing/
+COPY --chown=vp:vp apps/update-worker/package.json ./apps/update-worker/
+COPY --chown=vp:vp packages/web-ui/package.json ./packages/web-ui/
+COPY --chown=vp:vp packages/shared-contracts/package.json ./packages/shared-contracts/
 
-RUN pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
+RUN vp install --filter @opentickly/website... --frozen-lockfile --ignore-scripts
 
-COPY apps/website ./apps/website
-COPY packages ./packages
+COPY --chown=vp:vp apps/website ./apps/website
+COPY --chown=vp:vp packages ./packages
 
-RUN pnpm --filter @opentickly/website run build
+RUN vp run @opentickly/website#build
 
 FROM --platform=$BUILDPLATFORM golang:1.26.9-alpine AS builder
 

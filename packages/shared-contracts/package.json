@@ -8,7 +8,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "build": "vp exec tsc -p tsconfig.json --noEmit",
     "test": "vp test run --passWithNoTests",
     "check": "vp check"
   },

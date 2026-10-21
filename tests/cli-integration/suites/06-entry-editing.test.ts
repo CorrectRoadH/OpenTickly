@@ -13,7 +13,7 @@
  * Note: The CLI subcommand is `entry update` (alias `edit`).
  *       JSON output uses `project` (name|null) not `project_id`.
  */
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vite-plus/test";
 import { toggl, togglJson } from "../helpers/toggl.ts";
 import { provisionUser } from "../helpers/provisioning.ts";
 import type { TestUser } from "../helpers/types.ts";

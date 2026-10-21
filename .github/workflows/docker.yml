@@ -72,19 +72,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          node-version: 22
-          cache: "pnpm"
+          node-version: 24
+          version: "1.3.0"
+          run-install: false
+          cache: true
 
       - name: Build frontend
         run: |
-          pnpm install --filter @opentickly/website... --no-frozen-lockfile --ignore-scripts
-          pnpm --filter @opentickly/website run build
+          vp install --filter @opentickly/website... --frozen-lockfile --ignore-scripts
+          vp run website#build
 
       - name: Upload frontend dist
         uses: actions/upload-artifact@v7
