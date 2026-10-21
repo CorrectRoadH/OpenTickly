@@ -6,13 +6,13 @@ Always apply these standards to all code you write.
 
 Run all source processes from the repository root. `docker compose` is reserved for self-hosted packaging only.
 
-| What             | Command                                         |
-| ---------------- | ----------------------------------------------- |
-| Frontend         | `vp run website#dev`                            |
-| Landing          | `vp run landing#dev`                            |
-| Backend          | `air`                                           |
-| All E2E tests    | `vp run test:e2e:website`                       |
-| Real-runtime E2E | `vp run test:e2e:website:real-runtime`          |
+| What             | Command                                      |
+| ---------------- | -------------------------------------------- |
+| Frontend         | `vp run website#dev`                         |
+| Landing          | `vp run landing#dev`                         |
+| Backend          | `air`                                        |
+| All E2E tests    | `vp run test:e2e:website`                    |
+| Real-runtime E2E | `vp run test:e2e:website:real-runtime`       |
 | Single E2E file  | `vp run test:e2e:website e2e/<file>.spec.ts` |
 
 Rules:
