@@ -90,3 +90,18 @@ jobs:
       - name: Skip backend unit tests
         if: steps.changes.outputs.backend_unit != 'true'
         run: echo "Skipping backend unit tests because this change does not touch backend, shared runtime, OpenAPI, dependency, or CI files."
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: voidzero-dev/setup-vp@v1.21.2
+        with:
+          version: "1.4.0"
+          node-version: "24"
+          run-install: false
+          cache: true
+      - run: vp install --frozen-lockfile
+      - run: vp run check
+      - run: vp run test:unit
+      - run: vp run build

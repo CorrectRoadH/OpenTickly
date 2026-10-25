@@ -127,3 +127,8 @@ reintroducing the known unscoped snapshot query.
 
 See [issue #118](organization-deletion-session.md) for deletion recovery, existing
 workspace selection, cache removal and regression coverage.
+
+## Dependency security maintenance
+
+See the [October 2026 dependency audit](dependency-security-2026-10.md) for
+upgrades, security overrides, validation and remaining limitations.

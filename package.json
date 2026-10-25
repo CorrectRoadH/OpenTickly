@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "vp run -r build",
-    "check": "vp check && vp run -r check",
-    "test": "vp run -r test",
+    "check": "vp run generate:checks && vp check && vp run -r check",
+    "test": "vp run test:unit && vp run -r test",
     "test:e2e:website": "vp run website#test:e2e",
     "test:e2e:website:real-runtime": "vp run website#test:e2e:real-runtime",
     "test:cli": "vp test run --config tests/cli-integration/vitest.config.ts",
-    "ready": "vp fmt && vp lint && vp run -r test && vp run -r build",
+    "ready": "vp run check && vp run test && vp run build",
     "dev:website": "vp run website#dev",
     "dev:landing": "vp run landing#dev",
     "generate:website-api": "vp run generate:website-api:web && vp run generate:website-api:admin && vp run generate:website-api:import && vp run generate:website-api:public-track && vp run generate:website-api:public-reports && vp run generate:website-api:public-webhooks && vp fmt apps/website/src/shared/api/generated",
@@ -20,7 +20,9 @@
     "generate:website-api:public-track": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-track.config.ts",
     "generate:website-api:public-reports": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-reports.config.ts",
     "generate:website-api:public-webhooks": "vp exec openapi-ts -f openapi/configs/openapi-ts.public-webhooks.config.ts",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "test:unit": "vp run update-worker#build:content && vp test run",
+    "generate:checks": "vp run landing#generate:types && vp run update-worker#build:content"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "catalog:",

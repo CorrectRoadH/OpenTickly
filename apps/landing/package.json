@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "react-router dev",
-    "build": "node scripts/optimize-images.mjs && react-router typegen && fumadocs-mdx && react-router build",
+    "dev": "vp exec react-router dev",
+    "build": "vp exec node scripts/optimize-images.mjs && vp exec react-router typegen && vp exec fumadocs-mdx && vp exec react-router build",
     "postbuild": "cp ./serve.json ./build/client/serve.json && rm -rf ./dist && mkdir -p ./dist && cp -R ./build/client/. ./dist/ && cp ./serve.json ./dist/serve.json && find ./build/client ./dist -path '*/index.html' -type f -print0 | xargs -0 perl -0pi -e 's/<link rel=\"modulepreload\"[^>]*>//g'",
-    "preview": "serve -c serve.json ./build/client",
-    "check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
+    "preview": "vp exec serve -c serve.json ./build/client",
+    "check": "vp run generate:types && vp exec tsc --noEmit",
     "test": "vp test run",
-    "start": "serve -c serve.json ./build/client",
-    "postinstall": "fumadocs-mdx"
+    "start": "vp exec serve -c serve.json ./build/client",
+    "postinstall": "vp exec fumadocs-mdx",
+    "generate:types": "vp exec react-router typegen && vp exec fumadocs-mdx"
   },
   "dependencies": {
     "@opentickly/web-ui": "workspace:*",

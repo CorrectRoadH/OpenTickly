@@ -36,6 +36,6 @@ playwright test
 
 ```text
 vp test
-vp run build -r
+vp run -r build
 vp exec playwright test
 ```

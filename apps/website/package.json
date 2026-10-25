@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "tsc -p tsconfig.json --noEmit && vp build",
+    "build": "vp exec tsc -p tsconfig.json --noEmit && vp build",
     "preview": "vp preview",
     "check": "vp check",
     "test": "vp exec playwright test",
