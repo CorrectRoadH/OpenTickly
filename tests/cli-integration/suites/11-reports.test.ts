@@ -10,7 +10,7 @@
  * Note: Some report endpoints may return 501 (Not Implemented) if the
  *       backend has not yet implemented the reports API surface.
  */
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vite-plus/test";
 import { toggl } from "../helpers/toggl.ts";
 import { provisionUser } from "../helpers/provisioning.ts";
 import type { TestUser } from "../helpers/types.ts";

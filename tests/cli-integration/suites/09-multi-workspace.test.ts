@@ -12,7 +12,7 @@
  * - A workspace the user can see via `workspace list` contributes its
  *   projects and entries to the aggregated /me/* views
  */
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vite-plus/test";
 import { toggl, togglJson } from "../helpers/toggl.ts";
 import {
   provisionUser,

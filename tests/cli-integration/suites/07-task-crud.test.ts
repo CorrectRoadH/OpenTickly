@@ -8,7 +8,7 @@
  * - Tasks can be deleted
  * - Timer can be started with a task association
  */
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vite-plus/test";
 import { toggl, togglJson } from "../helpers/toggl.ts";
 import { provisionUser } from "../helpers/provisioning.ts";
 import type { TestUser } from "../helpers/types.ts";

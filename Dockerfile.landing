@@ -18,7 +18,7 @@ COPY apps/update-worker/package.json ./apps/update-worker/
 COPY packages/web-ui/package.json ./packages/web-ui/
 COPY packages/shared-contracts/package.json ./packages/shared-contracts/
 
-RUN pnpm install --filter @opentickly/landing... --no-frozen-lockfile --ignore-scripts
+RUN pnpm install --filter @opentickly/landing... --frozen-lockfile --ignore-scripts
 
 COPY apps/landing ./apps/landing
 COPY packages ./packages
@@ -34,13 +34,17 @@ ENV NODE_OPTIONS="--dns-result-order=ipv4first"
 # ran with --ignore-scripts).
 RUN pnpm --filter @opentickly/landing run build
 
+# Carry the audited dependency graph into the runtime, including security overrides.
+RUN pnpm --filter @opentickly/landing deploy --prod --legacy /runtime
+
 # ---
 
 FROM node:24-bookworm-slim
 
-RUN npm install -g serve@14
-
 WORKDIR /app
+
+COPY --from=builder --chown=node:node /runtime/node_modules ./node_modules
+ENV PATH="/app/node_modules/.bin:${PATH}"
 
 COPY --from=builder --chown=node:node /workspace/apps/landing/dist ./dist
 COPY --from=builder --chown=node:node /workspace/apps/landing/serve.json ./dist/serve.json

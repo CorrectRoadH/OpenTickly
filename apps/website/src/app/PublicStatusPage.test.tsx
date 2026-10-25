@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { CircleAlert } from "lucide-react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { PublicStatusPage } from "./PublicStatusPage.tsx";
 

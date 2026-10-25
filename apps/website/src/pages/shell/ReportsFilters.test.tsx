@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { ReportsProjectFilter } from "./ReportsProjectFilter.tsx";

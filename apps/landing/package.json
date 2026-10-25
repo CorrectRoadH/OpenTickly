@@ -15,30 +15,31 @@
   },
   "dependencies": {
     "@opentickly/web-ui": "workspace:*",
-    "@react-router/node": "^8.4.0",
-    "fumadocs-core": "16.16.2",
-    "fumadocs-mdx": "15.4.6",
-    "fumadocs-ui": "16.16.2",
-    "isbot": "^5",
+    "@react-router/node": "^8.5.0",
+    "fumadocs-core": "16.17.8",
+    "fumadocs-mdx": "15.4.10",
+    "fumadocs-ui": "16.17.8",
+    "isbot": "^5.2.2",
     "lucide-react": "catalog:",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-router": "^8.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.0",
+    "serve": "^14.2.6",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@react-router/dev": "^8.4.0",
+    "@react-router/dev": "^8.5.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/mdx": "^2.0.14",
     "@types/node": "catalog:",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react-router-devtools": "^6.2.3",
-    "serve": "^14.2.6",
     "sharp": "catalog:",
     "tailwindcss": "^4.3.3",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@10.32.1"
 }

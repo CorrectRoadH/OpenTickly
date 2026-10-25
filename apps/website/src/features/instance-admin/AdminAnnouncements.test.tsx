@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import type React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { InstanceVersionInfo } from "../../shared/api/admin-client.ts";
 import { AnnouncementsSection } from "./AdminAnnouncements.tsx";

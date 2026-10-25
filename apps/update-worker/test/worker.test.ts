@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import worker from "../src/index.ts";
 import type { GithubRelease } from "../src/github.ts";
 import type { WorkerEnv } from "../src/types.ts";

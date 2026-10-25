@@ -22,6 +22,11 @@ export default defineConfig({
     options: { typeAware: true, typeCheck: true },
   },
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     // Vitest replaces its default excludes when `exclude` is set, so keep the built-ins
     // and add the Playwright-owned e2e tree that broke the root JS test gate.
     // tests/cli-integration needs a live backend and has its own entrypoint (test:cli).

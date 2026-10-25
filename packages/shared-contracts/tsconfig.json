@@ -7,7 +7,7 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "types": ["node", "vitest/globals"],
+    "types": ["node", "vite-plus/test/globals"],
     "strict": true,
     "noUnusedLocals": true,
     "isolatedModules": true,
