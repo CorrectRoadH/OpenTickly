@@ -3,7 +3,7 @@
 The workspace uses Vite+ 1.4.0 with its matching Vite alias and Vitest 5.0.5.
 React and React DOM resolve together to 19.3.1. Compatible application packages
 and Go modules were refreshed. Go's minimum version and Docker builder are
-1.26.10, covering the standard-library advisories reported by govulncheck.
+1.27.3, covering the standard-library advisories reported by govulncheck.
 
 Security overrides retain fixed versions of DOMPurify, js-yaml, seroval,
 compression, undici, brace-expansion, serialize-javascript and the CSS selector
@@ -16,9 +16,18 @@ output. A separate global `serve` install bypassed the workspace's compression
 override. The deployed dependency tree resolves compression 1.8.2. This includes
 the landing production libraries but excludes development dependencies.
 
-The React plugin remains on 5.2.0: 6.x changes the React Compiler/Babel plugin
-configuration and is not needed to clear the security audit. The existing pnpm
-10.32.1 package manager remains pinned. This is not an OS/container CVE scan.
+The React plugin is upgraded to 6.1.2 with the official React Compiler preset
+and separate Rolldown Babel plugin. pnpm is upgraded to 12.15.0; its 24-hour
+minimum-release-age check is retained and the lockfile re-resolved under that
+policy. Only the exact daily Cloudflare type package is exempted. Installation
+scripts are explicitly allowed for esbuild and workerd, denied for core-js.
+
+Echo remains on supported 4.16.2 (upstream security support through 2026-12-31).
+Echo 5 removes structured HTTPError messages and changes server shutdown
+ownership. This project uses both for existing error contracts and lifecycle
+management; that migration requires its own contract/lifecycle design and
+regression coverage. It is not required to resolve the observed advisories.
+This audit is not an OS/container CVE scan.
 
 ## Verification
 
@@ -44,4 +53,7 @@ These results do not represent a complete E2E/CLI suite or production acceptance
 
 References: [Vite+ upgrade procedure](https://viteplus.dev/guide/upgrade-project),
 [Vitest 5 migration](https://viteplus.dev/guide/vitest-v5),
-[Go vulnerability database](https://pkg.go.dev/vuln/).
+[Go vulnerability database](https://pkg.go.dev/vuln/),
+[React Compiler installation](https://react.dev/learn/react-compiler/installation),
+[pnpm migration](https://pnpm.io/migration), and
+[Echo support policy](https://github.com/labstack/echo#supported-versions).

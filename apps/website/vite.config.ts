@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import react from "@vitejs/plugin-react";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vite-plus";
@@ -62,11 +63,8 @@ export default defineConfig(() => {
       dedupe: ["react", "react-dom"],
     },
     plugins: [
-      react({
-        babel: {
-          plugins: [["babel-plugin-react-compiler", { target: "19" }]],
-        },
-      }),
+      react(),
+      babel({ presets: [reactCompilerPreset({ target: "19" })] }),
       tailwindcss(),
       VitePWA({
         registerType: "autoUpdate",

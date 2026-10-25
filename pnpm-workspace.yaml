@@ -46,11 +46,20 @@ catalog:
   zustand: ^5.0.16
 
 catalogMode: prefer
-# pnpm 10 no longer reads the "pnpm" field in package.json, so every override
+# pnpm 12 no longer reads the "pnpm" field in package.json, so every override
 # lives here. The react/react-dom pins must track the apps' declared versions:
 # when they drifted apart, react resolved to 19.2.7 against react-dom 19.2.8 and
 # the app died on boot with "Incompatible React versions", taking the whole e2e
 # suite with it.
+# Keep pnpm 12 supply-chain protection; only the daily type package is exempt.
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+allowBuilds:
+  esbuild: true
+  workerd: true
+  core-js: false
+minimumReleaseAgeExclude:
+  - "@cloudflare/workers-types@5.20261025.1"
 overrides:
   js-yaml@4: ^4.3.2
   seroval: ^1.7.2

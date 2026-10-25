@@ -1,6 +1,6 @@
 # JavaScript and TypeScript toolchain
 
-Vite+ is pinned to 1.4.0 in the workspace catalog and build images. The underlying package manager remains pnpm 10.32.1, with one workspace lockfile. CI installs dependencies with `vp install --frozen-lockfile`; it must not regenerate dependency resolution during a build.
+Vite+ is pinned to 1.4.0 in the workspace catalog and build images. The underlying package manager is pnpm 12.15.0, with one workspace lockfile. CI installs dependencies with `vp install --frozen-lockfile`; it must not regenerate dependency resolution during a build.
 
 Run commands from the repository root:
 
@@ -21,3 +21,5 @@ Run commands from the repository root:
 Database, browser and CLI acceptance remain uncached. `vp run check` and `vp run test:unit` do not prove that these runtime flows passed. CI runs the same static, unit and build entrypoints as local development, with separate existing jobs for backend, browser and CLI acceptance.
 
 Docker build stages use the pinned Vite+ image and frozen installs. Runtime images keep their existing deployment behavior; the landing runtime copies the production dependency tree from the audited workspace lockfile, without the development toolchain. This preserves security overrides for the static server instead of resolving an independent global install.
+
+The website uses `@vitejs/plugin-react` 6 and `@rolldown/plugin-babel` with `reactCompilerPreset({ target: "19" })`, following the React Compiler installation guide. pnpm keeps its 24-hour minimum release age; the one exact daily Cloudflare types version is recorded as an exception. Dependency build scripts are allowed only for esbuild and workerd.

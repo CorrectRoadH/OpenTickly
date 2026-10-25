@@ -22,7 +22,7 @@ COPY --chown=vp:vp packages ./packages
 
 RUN vp run @opentickly/website#build
 
-FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS builder
 
 ARG OPENTOGGL_VERSION=dev
 ARG TARGETOS
