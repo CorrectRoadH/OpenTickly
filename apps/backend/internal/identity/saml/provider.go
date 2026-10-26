@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/crewjam/saml"
-	"github.com/crewjam/saml/samlsp"
 )
 
 // Config is a workspace's SAML identity-provider configuration. The IdP can be
@@ -120,6 +119,7 @@ func buildServiceProvider(ctx context.Context, p SPParams) (*saml.ServiceProvide
 		AcsURL:            *acsURL,
 		IDPMetadata:       idpMetadata,
 		AuthnNameIDFormat: saml.EmailAddressNameIDFormat,
+		HTTPClient:        newMetadataClient(),
 	}, nil
 }
 
@@ -127,14 +127,10 @@ func buildServiceProvider(ctx context.Context, p SPParams) (*saml.ServiceProvide
 // (fetched over HTTP) or from the manual sign-in URL + entity id + certificate.
 func ResolveIDPMetadata(ctx context.Context, cfg Config, client *http.Client) (*saml.EntityDescriptor, error) {
 	if trimmed := strings.TrimSpace(cfg.IDPMetadataURL); trimmed != "" {
-		metadataURL, err := url.Parse(trimmed)
-		if err != nil {
-			return nil, err
-		}
 		if client == nil {
-			client = http.DefaultClient
+			client = newMetadataClient()
 		}
-		return samlsp.FetchMetadata(ctx, client, *metadataURL)
+		return fetchMetadata(ctx, trimmed, client)
 	}
 	return manualIDPMetadata(cfg)
 }

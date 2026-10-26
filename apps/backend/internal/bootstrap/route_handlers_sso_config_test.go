@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -41,7 +42,7 @@ func TestUpdateWorkspaceSsoConfigRejectsInvalidEnabledConfig(t *testing.T) {
 			body: withSsoConfig(base, func(body *webapi.WorkspaceSsoConfigUpdate) {
 				body.IdpSsoUrl = "idp.example.com/sso"
 			}),
-			want: "valid http(s) URL",
+			want: "HTTPS URL",
 		},
 		{
 			name: "invalid manual certificate",
@@ -58,7 +59,7 @@ func TestUpdateWorkspaceSsoConfigRejectsInvalidEnabledConfig(t *testing.T) {
 				body.IdpEntityId = ""
 				body.IdpCertificate = ""
 			}),
-			want: "valid http(s) URL",
+			want: "HTTPS URL",
 		},
 	}
 
@@ -130,12 +131,12 @@ func TestUpdateWorkspaceSsoConfigAcceptsValidEnabledManualConfig(t *testing.T) {
 func newSsoConfigRouteTestApp(t *testing.T) (*App, string, int64) {
 	t.Helper()
 
-	database := pgtest.Open(t)
+	database := pgtest.OpenEphemeral(t)
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server:      ServerConfig{ListenAddress: ":0"},
 		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
-		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+		Redis:       RedisConfig{Address: testSSORedisURL(t)},
 	})
 	if err != nil {
 		t.Fatalf("NewApp: %v", err)
@@ -179,4 +180,13 @@ func withSsoConfig(
 ) webapi.WorkspaceSsoConfigUpdate {
 	mutate(&body)
 	return body
+}
+
+func testSSORedisURL(t *testing.T) string {
+	t.Helper()
+	value := os.Getenv("SAML_TEST_REDIS_URL")
+	if value == "" {
+		t.Skip("SAML_TEST_REDIS_URL must name an isolated Redis")
+	}
+	return value
 }

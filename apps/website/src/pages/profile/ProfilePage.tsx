@@ -19,6 +19,7 @@ import {
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { defaultPreferencesFormValues } from "./ProfilePageData.ts";
+import { ProfileSso } from "./ProfileSso.tsx";
 import { ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
 import {
   ApiTokenSection,
@@ -209,6 +210,7 @@ export function ProfilePage(): ReactElement {
             rows={heroRows}
           />
 
+          <ProfileSso workspaceId={session.currentWorkspace.id} />
           <TimerPageSection getValue={readPreference} setValue={writePreference} />
           <TimeAndDateSection getValue={readPreference} setValue={writePreference} />
           <KeyboardShortcutsSection getValue={readPreference} setValue={writePreference} />

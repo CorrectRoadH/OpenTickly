@@ -345,6 +345,104 @@
         }
       }
     },
+    "/web/v1/me/sso-identities": {
+      "get": {
+        "operationId": "list-sso-identities",
+        "summary": "List all SAML bindings owned by the current user",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoIdentityList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/sso-identity": {
+      "get": {
+        "operationId": "get-workspace-sso-identity",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoIdentity"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "link-workspace-sso-identity",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoStartResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unlink-workspace-sso-identity",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SsoUnlinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Unlinked; all sessions revoked"
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/sso-config": {
       "get": {
         "summary": "Read the workspace SAML SSO configuration",
@@ -2115,10 +2213,68 @@
           "role"
         ]
       },
+      "SsoIdentity": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "workspace_name": {
+            "type": "string"
+          },
+          "profile_name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "linked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "workspace_name",
+          "profile_name",
+          "enabled",
+          "linked"
+        ]
+      },
+      "SsoIdentityList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SsoIdentity"
+        }
+      },
+      "SsoStartResponse": {
+        "type": "object",
+        "properties": {
+          "authorization_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorization_url"
+        ]
+      },
+      "SsoUnlinkRequest": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
       "WorkspaceSsoConfig": {
         "type": "object",
         "description": "Workspace SAML SSO configuration plus the generated Service Provider integration details to paste into the identity provider.",
         "properties": {
+          "revision": { "type": "integer", "format": "int64", "minimum": 0 },
           "enabled": { "type": "boolean" },
           "profile_name": { "type": "string" },
           "email_domain": { "type": "string" },
@@ -2132,6 +2288,7 @@
           "metadata_url": { "type": "string" }
         },
         "required": [
+          "revision",
           "enabled", "profile_name", "email_domain", "idp_metadata_url",
           "idp_entity_id", "idp_sso_url", "idp_certificate",
           "sp_entity_id", "acs_url", "sign_in_url", "metadata_url"
@@ -2140,6 +2297,7 @@
       "WorkspaceSsoConfigUpdate": {
         "type": "object",
         "properties": {
+          "revision": { "type": "integer", "format": "int64", "minimum": 0 },
           "enabled": { "type": "boolean" },
           "profile_name": { "type": "string" },
           "email_domain": { "type": "string" },
@@ -2149,6 +2307,7 @@
           "idp_certificate": { "type": "string" }
         },
         "required": [
+          "revision",
           "enabled", "profile_name", "email_domain", "idp_metadata_url",
           "idp_entity_id", "idp_sso_url", "idp_certificate"
         ]

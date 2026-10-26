@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -36,6 +37,7 @@ func (handlers *routeHandlers) updateWorkspaceSsoConfig(ctx echo.Context) error 
 
 	config := samlWorkspaceConfig{
 		WorkspaceID:    workspaceID,
+		Revision:       request.Revision,
 		Enabled:        request.Enabled,
 		ProfileName:    strings.TrimSpace(request.ProfileName),
 		EmailDomain:    strings.ToLower(strings.TrimSpace(request.EmailDomain)),
@@ -48,6 +50,9 @@ func (handlers *routeHandlers) updateWorkspaceSsoConfig(ctx echo.Context) error 
 		return validationErr
 	}
 	if upsertErr := handlers.samlConfig.Upsert(ctx.Request().Context(), config); upsertErr != nil {
+		if errors.Is(upsertErr, errSSOConfigConflict) {
+			return echo.NewHTTPError(http.StatusConflict, upsertErr.Error())
+		}
 		if strings.Contains(upsertErr.Error(), "tenant_workspace_sso_config_domain_key") {
 			return echo.NewHTTPError(http.StatusConflict, "This email domain is already claimed by another workspace.")
 		}
@@ -95,6 +100,7 @@ func (handlers *routeHandlers) authorizeWorkspaceAdmin(ctx echo.Context) (int64,
 func (handlers *routeHandlers) ssoConfigView(ctx echo.Context, config samlWorkspaceConfig) webapi.WorkspaceSsoConfig {
 	base := handlers.samlBaseURL(ctx)
 	return webapi.WorkspaceSsoConfig{
+		Revision:       config.Revision,
 		Enabled:        config.Enabled,
 		ProfileName:    config.ProfileName,
 		EmailDomain:    config.EmailDomain,

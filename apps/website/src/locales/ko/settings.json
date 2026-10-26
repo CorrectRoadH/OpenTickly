@@ -218,5 +218,7 @@
   "columnBillableYesNo": "예 또는 아니오",
   "columnTags": "태그",
   "columnTagsCommaSeparated": "쉼표로 구분된 태그 이름",
-  "goToCsvImport": "CSV 가져오기로 이동"
+  "goToCsvImport": "CSV 가져오기로 이동",
+  "ssoConflict": "Configuration changed. Reload before saving again.",
+  "ssoRelinkWarning": "Changing the domain or identity provider removes existing bindings. Users must sign in locally and link again."
 }

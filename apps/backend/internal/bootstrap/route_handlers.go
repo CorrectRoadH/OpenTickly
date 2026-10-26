@@ -198,6 +198,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		PasswordResetTokens:  identitypostgres.NewPasswordResetTokenRepository(pool),
 		PasswordResetEmailer: passwordResetEmailer,
 		Logger:               appLogger,
+		SSO:                  identitypostgres.NewSSORepository(pool),
 	})
 	userHomes := tenantpostgres.NewUserHomeRepository(pool)
 	shellProvider := newBillingBackedSessionShell(

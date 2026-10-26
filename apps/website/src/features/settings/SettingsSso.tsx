@@ -45,6 +45,7 @@ function SsoConfigForm({
   const updateMutation = useUpdateWorkspaceSsoConfigMutation(workspaceId);
   const testMutation = useTestWorkspaceSsoConfigMutation(workspaceId);
 
+  const [revision, setRevision] = useState(config.revision);
   const [enabled, setEnabled] = useState(config.enabled);
   const [profileName, setProfileName] = useState(config.profile_name);
   const [emailDomain, setEmailDomain] = useState(config.email_domain);
@@ -55,6 +56,7 @@ function SsoConfigForm({
 
   function buildBody(): WorkspaceSsoConfigUpdate {
     return {
+      revision,
       enabled,
       profile_name: profileName,
       email_domain: emailDomain,
@@ -67,9 +69,18 @@ function SsoConfigForm({
 
   function save(): void {
     updateMutation.mutate(buildBody(), {
-      onSuccess: () => toast.success(t("ssoSaved")),
+      onSuccess: (updated) => {
+        setRevision(updated.revision);
+        toast.success(t("ssoSaved"));
+      },
       onError: (err) =>
-        toast.error(err instanceof WebApiError ? err.userMessage : t("ssoSaveError")),
+        toast.error(
+          err instanceof WebApiError && err.status === 409
+            ? t("ssoConflict")
+            : err instanceof WebApiError
+              ? err.userMessage
+              : t("ssoSaveError"),
+        ),
     });
   }
 
@@ -152,7 +163,7 @@ function SsoConfigForm({
               {t("ssoIdpInformation")}
             </h3>
             <p className="text-[12px] leading-5 text-[var(--track-text-muted)]">
-              {t("ssoIdpInformationDescription")}
+              {t("ssoIdpInformationDescription")} {t("ssoRelinkWarning")}
             </p>
           </div>
           <SsoField

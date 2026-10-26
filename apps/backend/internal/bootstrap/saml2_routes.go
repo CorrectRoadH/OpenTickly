@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/xml"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
-	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
@@ -32,11 +32,14 @@ const (
 
 // samlPendingLogin is the per-login state persisted server-side (keyed by the
 // AuthnRequest ID, echoed back as RelayState) between the redirect and the ACS.
-// Test marks a dry-run started from the settings page: the ACS reports the
-// assertion back to the admin instead of creating a session.
+// Purpose separates login, explicit linking, and an administrator dry-run.
 type samlPendingLogin struct {
 	WorkspaceID int64
-	Test        bool
+	Revision    int64
+	BrowserHash string
+	Purpose     string
+	UserID      int64
+	SessionID   string
 }
 
 func samlStateKey(requestID string) string {
@@ -61,15 +64,18 @@ type ssoResolveRequest struct {
 }
 
 // ssoResolveResponse tells the login page whether the typed email's domain is
-// claimed by an enabled workspace, and where to begin its SAML login. It leaks
-// nothing about the identity provider beyond a display name.
+// claimed by an enabled workspace, and where to begin its SAML login. It includes
+// the workspace and actual IdP host for confirmation before navigation.
 type ssoResolveResponse struct {
-	Found       bool   `json:"found"`
-	ProfileName string `json:"profile_name,omitempty"`
-	LoginPath   string `json:"login_path,omitempty"`
+	Found         bool   `json:"found"`
+	ProfileName   string `json:"profile_name,omitempty"`
+	WorkspaceName string `json:"workspace_name,omitempty"`
+	IDPHost       string `json:"idp_host,omitempty"`
+	LoginPath     string `json:"login_path,omitempty"`
 }
 
 func (handlers *routeHandlers) ssoResolve(ctx echo.Context) error {
+	samlResponseHeaders(ctx)
 	var request ssoResolveRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -85,7 +91,20 @@ func (handlers *routeHandlers) ssoResolve(ctx echo.Context) error {
 	if !found || !config.active() {
 		return ctx.JSON(http.StatusOK, ssoResolveResponse{Found: false})
 	}
+	sp, err := handlers.buildSAMLServiceProvider(ctx, config)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadGateway, "SSO provider unavailable")
+	}
+	destination, err := url.Parse(sp.GetSSOBindingLocation(saml.HTTPRedirectBinding))
+	if err != nil || destination.Scheme != "https" {
+		return echo.NewHTTPError(http.StatusBadGateway, "Invalid SSO provider")
+	}
+	var workspaceName string
+	if err := handlers.pool.QueryRow(ctx.Request().Context(), `SELECT name FROM tenant_workspaces WHERE id=$1`, config.WorkspaceID).Scan(&workspaceName); err != nil {
+		return err
+	}
 	return ctx.JSON(http.StatusOK, ssoResolveResponse{
+		WorkspaceName: workspaceName, IDPHost: destination.Host,
 		Found:       true,
 		ProfileName: config.ProfileName,
 		LoginPath:   "/auth/saml2/login/" + strconv.FormatInt(config.WorkspaceID, 10),
@@ -113,114 +132,19 @@ func (handlers *routeHandlers) saml2Metadata(ctx echo.Context) error {
 }
 
 func (handlers *routeHandlers) saml2Login(ctx echo.Context) error {
-	requestCtx := ctx.Request().Context()
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
 	}
-	config, found, err := handlers.samlConfig.Get(requestCtx, workspaceID)
+	config, found, err := handlers.samlConfig.Get(ctx.Request().Context(), workspaceID)
 	if err != nil || !found || !config.active() {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
 	}
-
-	sp, err := handlers.buildSAMLServiceProvider(ctx, config)
+	target, err := handlers.startSAMLFlow(ctx, config, samlPendingLogin{Purpose: "login"})
 	if err != nil {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
 	}
-
-	authnRequest, err := sp.MakeAuthenticationRequest(
-		sp.GetSSOBindingLocation(saml.HTTPRedirectBinding),
-		saml.HTTPRedirectBinding,
-		saml.HTTPPostBinding,
-	)
-	if err != nil {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	// Persist the request ID (echoed back as RelayState) so the ACS can confirm we
-	// issued this login and validate the assertion's InResponseTo. Single-use.
-	if err := handlers.platformHandles.Cache.Set(requestCtx, samlStateKey(authnRequest.ID), samlPendingLogin{WorkspaceID: workspaceID}, samlLoginStateTTL); err != nil {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	redirectURL, err := authnRequest.Redirect(authnRequest.ID, sp)
-	if err != nil {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-	return ctx.Redirect(http.StatusFound, redirectURL.String())
-}
-
-func (handlers *routeHandlers) saml2ACS(ctx echo.Context) error {
-	requestCtx := ctx.Request().Context()
-	workspaceID, ok := parsePathID(ctx, "workspace_id")
-	if !ok {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-	// A usable IdP config is enough to validate an assertion; the enabled check is
-	// deferred so a dry-run test works before SSO is switched on.
-	config, found, err := handlers.samlConfig.Get(requestCtx, workspaceID)
-	if err != nil || !found || !config.providerConfig().Usable() {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	sp, err := handlers.buildSAMLServiceProvider(ctx, config)
-	if err != nil {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	if err := ctx.Request().ParseForm(); err != nil {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-	relayState := ctx.Request().Form.Get("RelayState")
-	if relayState == "" {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	// The RelayState must match a login we issued for this workspace. Consuming it
-	// single-use blocks assertion replay.
-	var pending samlPendingLogin
-	foundState, err := handlers.platformHandles.Cache.Get(requestCtx, samlStateKey(relayState), &pending)
-	if err != nil || !foundState || pending.WorkspaceID != workspaceID {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-	handlers.platformHandles.Cache.Del(requestCtx, samlStateKey(relayState))
-
-	assertion, parseErr := sp.ParseResponse(ctx.Request(), []string{relayState})
-
-	// Dry-run test: report the result to the admin instead of logging in.
-	if pending.Test {
-		return handlers.renderSAMLTestResult(ctx, config, assertion, parseErr)
-	}
-
-	if parseErr != nil || !config.active() {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	email := identitysaml.EmailFromAssertion(assertion)
-	if email == "" {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-	// SECURITY: the asserted email's domain must match the workspace's claimed
-	// domain. Because LoginOrProvisionSSO matches accounts by email, a workspace's
-	// IdP must not be able to assert emails outside its claimed domain.
-	if emailDomain(email) != strings.ToLower(strings.TrimSpace(config.EmailDomain)) {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	result, err := handlers.identityApp.LoginOrProvisionSSO(requestCtx, identityapplication.SSOIdentity{
-		Email:    email,
-		FullName: identitysaml.NameFromAssertion(assertion),
-	})
-	if err != nil {
-		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
-	}
-
-	if err := handlers.joinWorkspaceAfterSSO(requestCtx, workspaceID, result.Session.User.ID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
-	}
-
-	setSessionCookie(ctx, result.Session.SessionID)
-	return ctx.Redirect(http.StatusFound, samlLoginRedirectAfterAuth)
+	return ctx.Redirect(http.StatusFound, target)
 }
 
 // joinWorkspaceAfterSSO joins the authenticated user to the workspace (and its
@@ -273,11 +197,7 @@ func (handlers *routeHandlers) buildSAMLServiceProvider(ctx echo.Context, config
 }
 
 func (handlers *routeHandlers) samlBaseURL(ctx echo.Context) string {
-	base := strings.TrimRight(handlers.siteURL.ReadSiteURL(ctx.Request().Context()), "/")
-	if base == "" {
-		base = ctx.Scheme() + "://" + ctx.Request().Host
-	}
-	return base
+	return strings.TrimRight(handlers.siteURL.ReadSiteURL(ctx.Request().Context()), "/")
 }
 
 func emailDomain(email string) string {

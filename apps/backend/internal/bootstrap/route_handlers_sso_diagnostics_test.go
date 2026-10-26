@@ -6,21 +6,6 @@ import (
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 )
 
-func TestIsValidHTTPURL(t *testing.T) {
-	cases := map[string]bool{
-		"https://idp.example.com/sso": true,
-		"http://localhost:8080/sso":   true,
-		"ftp://idp.example.com":       false,
-		"idp.example.com":             false,
-		"":                            false,
-	}
-	for input, want := range cases {
-		if got := isValidHTTPURL(input); got != want {
-			t.Errorf("isValidHTTPURL(%q) = %v, want %v", input, got, want)
-		}
-	}
-}
-
 func TestEmailDomainPattern(t *testing.T) {
 	valid := []string{"example.com", "sub.acme.io", "a-b.co.uk"}
 	invalid := []string{"example", "@example.com", "exa mple.com", "-bad.com", ""}

@@ -8,136 +8,136 @@ import (
 	"opentoggl/backend/apps/backend/internal/identity/domain"
 )
 
-// SSOIdentity is the verified identity an external OIDC provider asserted.
+var (
+	ErrSSOIdentity             = errors.New("invalid SAML identity")
+	ErrSSOAccountExists        = errors.New("account exists; sign in locally and link SSO")
+	ErrSSOConfigurationChanged = errors.New("SSO configuration changed")
+	ErrSSOBindingTaken         = errors.New("SSO identity is already linked")
+	ErrSSOVerificationRequired = errors.New("complete local registration and email verification before linking SSO")
+	ErrSSOMembershipRequired   = errors.New("active workspace membership is required")
+)
+
+// SSOIdentity contains a protocol-verified, workspace-scoped subject. Email is
+// profile data for a new account, never an authorization key for an existing one.
 type SSOIdentity struct {
-	Email    string
-	FullName string
-	Timezone string
+	WorkspaceID      int64
+	Revision         int64
+	IdentityRevision int64
+	SubjectKey       string
+	Email            string
+	FullName         string
+	Timezone         string
 }
 
-// SSOLoginResult is the outcome of an SSO login. Provisioned reports whether a
-// brand-new account was created, so the caller can run first-user bootstrap.
 type SSOLoginResult struct {
 	Session     AuthenticatedSession
 	Provisioned bool
 }
 
-// LoginOrProvisionSSO authenticates an externally-verified identity. Existing
-// accounts (matched by email) are logged in directly; a pending-verification
-// account is activated because the IdP already proved email ownership. Unknown
-// emails are auto-provisioned as a new account, subject to the registration
-// guard, with a random unguessable password (the user can later set a real one
-// via the password-reset flow to also enable local login).
+type SSOLoginWrite struct {
+	Identity  SSOIdentity
+	NewUser   *domain.User
+	SessionID string
+}
+
+type SSOStoredLogin struct {
+	User        *domain.User
+	Provisioned bool
+}
+
+type SSOLinkWrite struct {
+	Identity  SSOIdentity
+	UserID    int64
+	SessionID string
+}
+
+type SSOUnlinkWrite struct {
+	WorkspaceID int64
+	UserID      int64
+	SessionID   string
+	Password    string
+}
+
+type SSOBinding struct {
+	WorkspaceID   int64
+	WorkspaceName string
+	ProfileName   string
+	Enabled       bool
+}
+
+// SSORepository owns a single transaction for each authorization-sensitive write.
+type SSORepository interface {
+	Bound(context.Context, SSOIdentity) (bool, error)
+	Login(context.Context, SSOLoginWrite) (SSOStoredLogin, error)
+	Link(context.Context, SSOLinkWrite) error
+	Unlink(context.Context, SSOUnlinkWrite) error
+	List(context.Context, int64) ([]SSOBinding, error)
+}
+
 func (service *Service) LoginOrProvisionSSO(ctx context.Context, identity SSOIdentity) (SSOLoginResult, error) {
-	email := strings.ToLower(strings.TrimSpace(identity.Email))
-	if !strings.Contains(email, "@") {
-		return SSOLoginResult{}, domain.ErrInvalidEmail
+	if service.sso == nil || identity.WorkspaceID <= 0 || identity.Revision <= 0 || identity.IdentityRevision <= 0 || len(identity.SubjectKey) != 64 {
+		return SSOLoginResult{}, ErrSSOIdentity
 	}
-
-	user, err := service.users.ByEmail(ctx, email)
-	if err == nil {
-		session, loginErr := service.loginExistingSSOUser(ctx, user)
-		if loginErr != nil {
-			return SSOLoginResult{}, loginErr
-		}
-		return SSOLoginResult{Session: session}, nil
-	}
-	if !errors.Is(err, domain.ErrUserNotFound) {
-		return SSOLoginResult{}, err
-	}
-
-	session, err := service.provisionSSOUser(ctx, email, identity)
+	bound, err := service.sso.Bound(ctx, identity)
 	if err != nil {
 		return SSOLoginResult{}, err
 	}
-	return SSOLoginResult{Session: session, Provisioned: true}, nil
+	var candidate *domain.User
+	if !bound {
+		candidate, err = service.newSSOUser(identity)
+		if err != nil {
+			return SSOLoginResult{}, err
+		}
+	}
+	sid, err := service.ids.NextSessionID()
+	if err != nil {
+		return SSOLoginResult{}, err
+	}
+	stored, err := service.sso.Login(ctx, SSOLoginWrite{Identity: identity, NewUser: candidate, SessionID: sid})
+	if err != nil {
+		return SSOLoginResult{}, err
+	}
+	return SSOLoginResult{Session: AuthenticatedSession{SessionID: sid, User: snapshotFromUser(stored.User)}, Provisioned: stored.Provisioned}, nil
 }
 
-func (service *Service) loginExistingSSOUser(ctx context.Context, user *domain.User) (AuthenticatedSession, error) {
-	if user.State() == domain.UserStatePendingVerification {
-		// The IdP already verified the email, so honour SSO as proof of ownership.
-		if err := user.Activate(); err != nil {
-			return AuthenticatedSession{}, err
-		}
-		if err := service.users.Save(ctx, user); err != nil {
-			return AuthenticatedSession{}, err
-		}
-	}
-	if !user.CanAuthenticate() {
-		// Deactivated or deleted accounts must not be revived via SSO.
-		return AuthenticatedSession{}, user.AuthenticateBasic(domain.BasicCredentials{})
-	}
-
-	session, err := service.issueSession(ctx, user)
+func (service *Service) newSSOUser(identity SSOIdentity) (*domain.User, error) {
+	id, err := service.ids.NextUserID()
 	if err != nil {
-		return AuthenticatedSession{}, err
-	}
-	service.logger.InfoContext(ctx, "sso login successful",
-		"user_id", user.ID(),
-		"session_id", session.SessionID,
-	)
-	return session, nil
-}
-
-func (service *Service) provisionSSOUser(ctx context.Context, email string, identity SSOIdentity) (AuthenticatedSession, error) {
-	if service.registrationGuard != nil {
-		if err := service.registrationGuard.CanRegister(ctx); err != nil {
-			service.logger.WarnContext(ctx, "sso provisioning denied by registration guard",
-				"email", email,
-				"error", err.Error(),
-			)
-			return AuthenticatedSession{}, err
-		}
-	}
-
-	userID, err := service.ids.NextUserID()
-	if err != nil {
-		return AuthenticatedSession{}, err
+		return nil, err
 	}
 	apiToken, err := service.ids.NextAPIToken()
 	if err != nil {
-		return AuthenticatedSession{}, err
+		return nil, err
 	}
-	// SSO accounts have no user-known password. A random 64-char secret keeps
-	// the password-hash column populated without granting a usable login.
-	randomPassword, err := newPasswordResetToken()
+	password, err := newPasswordResetToken()
 	if err != nil {
-		return AuthenticatedSession{}, err
+		return nil, err
 	}
+	email := strings.ToLower(strings.TrimSpace(identity.Email))
+	name := strings.TrimSpace(identity.FullName)
+	if name == "" {
+		name, _, _ = strings.Cut(email, "@")
+	}
+	return domain.RegisterUser(domain.RegisterParams{ID: id, Email: email, FullName: name, Password: password, APIToken: apiToken, Timezone: identity.Timezone})
+}
 
-	fullName := strings.TrimSpace(identity.FullName)
-	if fullName == "" {
-		fullName, _, _ = strings.Cut(email, "@")
+func (service *Service) LinkSSO(ctx context.Context, input SSOLinkWrite) error {
+	if service.sso == nil {
+		return ErrSSOIdentity
 	}
+	return service.sso.Link(ctx, input)
+}
 
-	user, err := domain.RegisterUser(domain.RegisterParams{
-		ID:       userID,
-		Email:    email,
-		FullName: fullName,
-		Password: randomPassword,
-		APIToken: apiToken,
-		Timezone: identity.Timezone,
-		// The OIDC provider already verified the email, so skip our own flow.
-		PendingVerification: false,
-	})
-	if err != nil {
-		service.logger.WarnContext(ctx, "sso provisioning rejected invalid identity",
-			"email", email,
-			"error", err.Error(),
-		)
-		return AuthenticatedSession{}, err
+func (service *Service) UnlinkSSO(ctx context.Context, input SSOUnlinkWrite) error {
+	if service.sso == nil {
+		return ErrSSOIdentity
 	}
-	if err := service.users.Save(ctx, user); err != nil {
-		return AuthenticatedSession{}, err
-	}
+	return service.sso.Unlink(ctx, input)
+}
 
-	session, err := service.issueSession(ctx, user)
-	if err != nil {
-		return AuthenticatedSession{}, err
+func (service *Service) ListSSO(ctx context.Context, userID int64) ([]SSOBinding, error) {
+	if service.sso == nil {
+		return nil, ErrSSOIdentity
 	}
-	service.logger.InfoContext(ctx, "sso user provisioned",
-		"user_id", userID,
-		"session_id", session.SessionID,
-	)
-	return session, nil
+	return service.sso.List(ctx, userID)
 }

@@ -218,5 +218,7 @@
   "columnBillableYesNo": "Yes or No",
   "columnTags": "Tags",
   "columnTagsCommaSeparated": "Comma-separated tag names",
-  "goToCsvImport": "Go to CSV Import"
+  "goToCsvImport": "Go to CSV Import",
+  "ssoConflict": "Configuration changed. Reload before saving again.",
+  "ssoRelinkWarning": "Changing the domain or identity provider removes existing bindings. Users must sign in locally and link again."
 }

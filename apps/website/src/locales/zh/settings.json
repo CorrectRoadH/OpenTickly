@@ -217,5 +217,7 @@
   "columnBillableYesNo": "是或否",
   "columnTags": "标签",
   "columnTagsCommaSeparated": "逗号分隔的标签名称",
-  "goToCsvImport": "前往 CSV 导入"
+  "goToCsvImport": "前往 CSV 导入",
+  "ssoConflict": "配置已被修改，请刷新页面后再保存。",
+  "ssoRelinkWarning": "更改域名或身份提供商会移除现有绑定，用户需要先本地登录再重新绑定。"
 }

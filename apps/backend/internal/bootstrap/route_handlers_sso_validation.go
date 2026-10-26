@@ -22,8 +22,8 @@ func validateWorkspaceSsoConfigForSave(config samlWorkspaceConfig) error {
 
 	provider := config.providerConfig()
 	if strings.TrimSpace(provider.IDPMetadataURL) != "" {
-		if !isValidHTTPURL(provider.IDPMetadataURL) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Provide a valid http(s) URL for the IdP metadata URL.")
+		if err := identitysaml.ValidateMetadataURL(provider.IDPMetadataURL); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 		return nil
 	}
@@ -31,8 +31,8 @@ func validateWorkspaceSsoConfigForSave(config samlWorkspaceConfig) error {
 	if !provider.Usable() {
 		return echo.NewHTTPError(http.StatusBadRequest, "Provide a metadata URL, or a sign-in URL plus entity ID and X.509 certificate before enabling SSO.")
 	}
-	if !isValidHTTPURL(provider.IDPSSOURL) {
-		return echo.NewHTTPError(http.StatusBadRequest, "Provide a valid http(s) URL for the IdP sign-in URL.")
+	if err := identitysaml.ValidateHTTPSURL(provider.IDPSSOURL); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	certificate, err := identitysaml.ParseCertificate(provider.IDPCertificate)

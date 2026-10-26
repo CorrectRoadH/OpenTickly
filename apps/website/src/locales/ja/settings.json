@@ -218,5 +218,7 @@
   "columnBillableYesNo": "YesまたはNo",
   "columnTags": "タグ",
   "columnTagsCommaSeparated": "カンマ区切りのタグ名",
-  "goToCsvImport": "CSVインポートへ移動"
+  "goToCsvImport": "CSVインポートへ移動",
+  "ssoConflict": "Configuration changed. Reload before saving again.",
+  "ssoRelinkWarning": "Changing the domain or identity provider removes existing bindings. Users must sign in locally and link again."
 }

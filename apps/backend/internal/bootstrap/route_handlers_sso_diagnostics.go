@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -63,11 +62,11 @@ func (handlers *routeHandlers) testWorkspaceSsoConfig(ctx echo.Context) error {
 }
 
 func (handlers *routeHandlers) checkSiteURL(ctx context.Context) ssoCheck {
-	if strings.TrimSpace(handlers.siteURL.ReadSiteURL(ctx)) == "" {
+	if identitysaml.ValidateHTTPSURL(handlers.siteURL.ReadSiteURL(ctx)) != nil {
 		return ssoCheck{
 			Code:   "site_url",
-			Status: "warn",
-			Detail: "Instance Site URL is not set; SSO URLs fall back to the request host, which may not match what your identity provider expects.",
+			Status: "error",
+			Detail: "Set an HTTPS Instance Site URL before using SSO. Cross-site SAML callbacks require a Secure browser cookie.",
 		}
 	}
 	return ssoCheck{Code: "site_url", Status: "ok"}
@@ -117,7 +116,7 @@ func (handlers *routeHandlers) checkIdentityProvider(ctx context.Context, cfg id
 	}
 
 	checks := []ssoCheck{}
-	if !isValidHTTPURL(cfg.IDPSSOURL) {
+	if identitysaml.ValidateHTTPSURL(cfg.IDPSSOURL) != nil {
 		checks = append(checks, ssoCheck{Code: "identity_provider", Status: "error", Detail: "The IdP sign-in URL is not a valid http(s) URL."})
 	} else {
 		checks = append(checks, ssoCheck{Code: "identity_provider", Status: "ok"})
@@ -140,12 +139,4 @@ func certificateCheck(certificate string) ssoCheck {
 	default:
 		return ssoCheck{Code: "certificate", Status: "ok", Detail: "Valid until " + cert.NotAfter.Format("2006-01-02") + "."}
 	}
-}
-
-func isValidHTTPURL(raw string) bool {
-	parsed, err := url.ParseRequestURI(strings.TrimSpace(raw))
-	if err != nil {
-		return false
-	}
-	return parsed.Scheme == "http" || parsed.Scheme == "https"
 }

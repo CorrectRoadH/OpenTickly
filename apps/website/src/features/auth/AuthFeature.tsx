@@ -39,7 +39,16 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
     if (params.get("sso_error") === null) {
       return;
     }
-    toast.error(t("ssoSignInFailed"));
+    const code = params.get("sso_error");
+    toast.error(
+      t(
+        code === "account_exists"
+          ? "ssoAccountExists"
+          : code === "verification_required"
+            ? "ssoVerificationRequired"
+            : "ssoSignInFailed",
+      ),
+    );
     params.delete("sso_error");
     const query = params.toString();
     window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));

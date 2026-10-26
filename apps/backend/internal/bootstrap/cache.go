@@ -37,17 +37,12 @@ func newCachedSessionRepository(inner identityapplication.SessionRepository, rc 
 }
 
 func (c *cachedSessionRepository) Put(ctx context.Context, session identityapplication.Session) error {
-	if err := c.inner.Put(ctx, session); err != nil {
-		return err
-	}
-	_ = c.rc.Set(ctx, fmt.Sprintf("session:%s", session.ID), session.UserID, sessionTTL)
-	return nil
+	return c.inner.Put(ctx, session)
 }
 
 func (c *cachedSessionRepository) UserIDBySession(ctx context.Context, sessionID string) (int64, error) {
-	return platform.CacheAside(c.rc, ctx, fmt.Sprintf("session:%s", sessionID), sessionTTL, func() (int64, error) {
-		return c.inner.UserIDBySession(ctx, sessionID)
-	})
+	// Revocation must be immediate, including legacy Redis entries from old replicas.
+	return c.inner.UserIDBySession(ctx, sessionID)
 }
 
 func (c *cachedSessionRepository) Delete(ctx context.Context, sessionID string) error {
@@ -59,10 +54,7 @@ func (c *cachedSessionRepository) Delete(ctx context.Context, sessionID string) 
 }
 
 func (c *cachedSessionRepository) DeleteByUserID(ctx context.Context, userID int64) error {
-	// We cannot target individual session:<id> keys without a secondary index,
-	// so invalidate the per-user keys and let stale session:<id> entries expire
-	// on their TTL. The source-of-truth DELETE below ensures lookups that miss
-	// the cache will not resurrect the session.
+	// Session reads are authoritative; old cache entries cannot authorize requests.
 	_ = c.rc.Del(ctx, fmt.Sprintf("user:%d", userID))
 	return c.inner.DeleteByUserID(ctx, userID)
 }

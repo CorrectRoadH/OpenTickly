@@ -1,6 +1,8 @@
 export type SsoResolveResult = {
   found: boolean;
   profile_name?: string;
+  workspace_name?: string;
+  idp_host?: string;
   login_path?: string;
 };
 

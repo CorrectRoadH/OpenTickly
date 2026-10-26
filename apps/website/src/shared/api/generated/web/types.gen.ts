@@ -358,10 +358,29 @@ export type WorkspaceSettings = {
   role: string;
 };
 
+export type SsoIdentity = {
+  workspace_id: number;
+  workspace_name: string;
+  profile_name: string;
+  enabled: boolean;
+  linked: boolean;
+};
+
+export type SsoIdentityList = Array<SsoIdentity>;
+
+export type SsoStartResponse = {
+  authorization_url: string;
+};
+
+export type SsoUnlinkRequest = {
+  password: string;
+};
+
 /**
  * Workspace SAML SSO configuration plus the generated Service Provider integration details to paste into the identity provider.
  */
 export type WorkspaceSsoConfig = {
+  revision: number;
   enabled: boolean;
   profile_name: string;
   email_domain: string;
@@ -376,6 +395,7 @@ export type WorkspaceSsoConfig = {
 };
 
 export type WorkspaceSsoConfigUpdate = {
+  revision: number;
   enabled: boolean;
   profile_name: string;
   email_domain: string;
@@ -549,6 +569,10 @@ export type ResendVerificationEmailErrors = {
    * Instance email configuration is missing
    */
   422: AuthPreconditionError;
+  /**
+   * Too many email requests from this client
+   */
+  429: AuthPreconditionError;
 };
 
 export type ResendVerificationEmailError =
@@ -576,6 +600,10 @@ export type RequestPasswordResetErrors = {
    * Instance email configuration is missing
    */
   422: AuthPreconditionError;
+  /**
+   * Too many email requests from this client
+   */
+  429: AuthPreconditionError;
 };
 
 export type RequestPasswordResetError =
@@ -700,6 +728,80 @@ export type UpdateWorkspaceSettingsResponses = {
 
 export type UpdateWorkspaceSettingsResponse =
   UpdateWorkspaceSettingsResponses[keyof UpdateWorkspaceSettingsResponses];
+
+export type ListSsoIdentitiesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/web/v1/me/sso-identities";
+};
+
+export type ListSsoIdentitiesResponses = {
+  /**
+   * Success
+   */
+  200: SsoIdentityList;
+};
+
+export type ListSsoIdentitiesResponse =
+  ListSsoIdentitiesResponses[keyof ListSsoIdentitiesResponses];
+
+export type UnlinkWorkspaceSsoIdentityData = {
+  body: SsoUnlinkRequest;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/sso-identity";
+};
+
+export type UnlinkWorkspaceSsoIdentityResponses = {
+  /**
+   * Unlinked; all sessions revoked
+   */
+  204: void;
+};
+
+export type UnlinkWorkspaceSsoIdentityResponse =
+  UnlinkWorkspaceSsoIdentityResponses[keyof UnlinkWorkspaceSsoIdentityResponses];
+
+export type GetWorkspaceSsoIdentityData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/sso-identity";
+};
+
+export type GetWorkspaceSsoIdentityResponses = {
+  /**
+   * Success
+   */
+  200: SsoIdentity;
+};
+
+export type GetWorkspaceSsoIdentityResponse =
+  GetWorkspaceSsoIdentityResponses[keyof GetWorkspaceSsoIdentityResponses];
+
+export type LinkWorkspaceSsoIdentityData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/sso-identity";
+};
+
+export type LinkWorkspaceSsoIdentityResponses = {
+  /**
+   * Success
+   */
+  200: SsoStartResponse;
+};
+
+export type LinkWorkspaceSsoIdentityResponse =
+  LinkWorkspaceSsoIdentityResponses[keyof LinkWorkspaceSsoIdentityResponses];
 
 export type GetWorkspaceSsoConfigData = {
   body?: never;

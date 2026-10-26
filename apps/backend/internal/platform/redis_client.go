@@ -48,6 +48,21 @@ func (rc *RedisClient) Get(ctx context.Context, key string, dest any) (bool, err
 	return true, nil
 }
 
+// Consume atomically retrieves and deletes one-time state. Redis errors fail closed.
+func (rc *RedisClient) Consume(ctx context.Context, key string, dest any) (bool, error) {
+	value, err := rc.client.GetDel(ctx, key).Bytes()
+	if err == redis.Nil {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(value, dest); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Set JSON-marshals value and stores it with the given TTL.
 func (rc *RedisClient) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
 	data, err := json.Marshal(value)

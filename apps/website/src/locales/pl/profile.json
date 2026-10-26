@@ -89,5 +89,15 @@
   "wednesday": "Środa",
   "thursday": "Czwartek",
   "friday": "Piątek",
-  "saturday": "Sobota"
+  "saturday": "Sobota",
+  "ssoTitle": "Single sign-on",
+  "ssoDescription": "Link a workspace identity provider to your account. Only link a provider you trust.",
+  "ssoLoadFailed": "Could not load SSO bindings.",
+  "ssoLinked": "Linked",
+  "ssoNotLinked": "Not linked",
+  "ssoPassword": "Current local password",
+  "ssoUnlinkHelp": "Unlinking signs out all sessions. If you do not know your local password, reset it first.",
+  "ssoUnlink": "Unlink and sign out",
+  "ssoLink": "Link SSO",
+  "ssoActionFailed": "Could not update SSO binding."
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
@@ -43,30 +44,15 @@ func (handlers *routeHandlers) saml2TestLogin(ctx echo.Context) error {
 		})
 	}
 
-	sp, err := handlers.buildSAMLServiceProvider(ctx, config)
+	user, err := handlers.identityApp.ResolveCurrentUser(requestCtx, sessionID(ctx))
 	if err != nil {
-		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{Error: "Could not build the SAML request: " + err.Error()})
+		return err
 	}
-
-	authnRequest, err := sp.MakeAuthenticationRequest(
-		sp.GetSSOBindingLocation(saml.HTTPRedirectBinding),
-		saml.HTTPRedirectBinding,
-		saml.HTTPPostBinding,
-	)
+	target, err := handlers.startSAMLFlow(ctx, config, samlPendingLogin{Purpose: "test", UserID: user.ID, SessionID: sessionID(ctx)})
 	if err != nil {
-		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{Error: "Could not build the SAML request."})
+		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{Error: "Could not start SAML test. Check the HTTPS Site URL and identity-provider configuration."})
 	}
-
-	pending := samlPendingLogin{WorkspaceID: workspaceID, Test: true}
-	if err := handlers.platformHandles.Cache.Set(requestCtx, samlStateKey(authnRequest.ID), pending, samlLoginStateTTL); err != nil {
-		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{Error: "Could not start the test."})
-	}
-
-	redirectURL, err := authnRequest.Redirect(authnRequest.ID, sp)
-	if err != nil {
-		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{Error: "Could not start the test."})
-	}
-	return ctx.Redirect(http.StatusFound, redirectURL.String())
+	return ctx.Redirect(http.StatusFound, target)
 }
 
 // renderSAMLTestResult turns a validated (or rejected) assertion into the report
@@ -74,7 +60,7 @@ func (handlers *routeHandlers) saml2TestLogin(ctx echo.Context) error {
 func (handlers *routeHandlers) renderSAMLTestResult(ctx echo.Context, config samlWorkspaceConfig, assertion *saml.Assertion, parseErr error) error {
 	if parseErr != nil {
 		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{
-			Error: "The assertion could not be validated: " + parseErr.Error(),
+			Error: "The assertion could not be validated.",
 		})
 	}
 
@@ -98,15 +84,20 @@ func (handlers *routeHandlers) renderSAMLTestResult(ctx echo.Context, config sam
 
 // writeSAMLTestPage renders a tiny page that posts the result to the opener (the
 // settings page) and closes. The JSON is HTML-escaped by encoding/json, so it is
-// safe to embed inside the script. The message is posted with target origin "*"
-// so it is delivered regardless of dev port / site-URL differences; the opener
-// re-checks event.origin against its own origin, which is the real trust boundary.
+// safe to embed inside the script. Results are delivered only to the configured
+// application origin, never to an arbitrary opener.
 func (handlers *routeHandlers) writeSAMLTestPage(ctx echo.Context, payload samlTestResultPayload) error {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		data = []byte(`{"ok":false,"error":"internal error"}`)
 	}
-	return ctx.HTML(http.StatusOK, fmt.Sprintf(samlTestResultHTML, string(data)))
+	origin := ""
+	if site, err := url.Parse(handlers.samlBaseURL(ctx)); err == nil {
+		origin = site.Scheme + "://" + site.Host
+	}
+	encodedOrigin, _ := json.Marshal(origin)
+	samlResponseHeaders(ctx)
+	return ctx.HTML(http.StatusOK, fmt.Sprintf(samlTestResultHTML, string(data), string(encodedOrigin)))
 }
 
 const samlTestResultHTML = `<!doctype html>
@@ -119,7 +110,7 @@ const samlTestResultHTML = `<!doctype html>
   var result = %s;
   try {
     if (window.opener) {
-      window.opener.postMessage({ source: "opentickly-sso-test", result: result }, "*");
+      window.opener.postMessage({ source: "opentickly-sso-test", result: result }, %s);
     }
   } catch (e) {}
   setTimeout(function () { window.close(); }, 400);

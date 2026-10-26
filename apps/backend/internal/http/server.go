@@ -315,6 +315,11 @@ func newCookieOriginMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			request := c.Request()
+			// SAML POST binding is cross-origin by design. The ACS independently
+			// verifies its Secure browser-bound, one-time state and signed response.
+			if request.Method == http.MethodPost && c.Path() == "/auth/saml2/acs/:workspace_id" {
+				return next(c)
+			}
 			if !isMutatingMethod(request.Method) || !hasSessionCookie(request) || hasAuthorizationHeader(request) {
 				return next(c)
 			}

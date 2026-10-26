@@ -13,14 +13,16 @@ import (
 
 // samlWorkspaceConfig is a workspace's persisted SAML SSO configuration.
 type samlWorkspaceConfig struct {
-	WorkspaceID    int64
-	Enabled        bool
-	ProfileName    string
-	EmailDomain    string
-	IDPMetadataURL string
-	IDPEntityID    string
-	IDPSSOURL      string
-	IDPCertificate string
+	WorkspaceID      int64
+	Revision         int64
+	IdentityRevision int64
+	Enabled          bool
+	ProfileName      string
+	EmailDomain      string
+	IDPMetadataURL   string
+	IDPEntityID      string
+	IDPSSOURL        string
+	IDPCertificate   string
 }
 
 // providerConfig projects the persisted row onto the SAML package's IdP config.
@@ -48,13 +50,21 @@ type samlConfigStore struct {
 }
 
 func (s *samlConfigStore) Get(ctx context.Context, workspaceID int64) (samlWorkspaceConfig, bool, error) {
+	return readSAMLConfig(ctx, s.pool, workspaceID, false)
+}
+
+type samlConfigQuery interface {
+	QueryRow(context.Context, string, ...any) pgx.Row
+}
+
+func readSAMLConfig(ctx context.Context, query samlConfigQuery, workspaceID int64, lock bool) (samlWorkspaceConfig, bool, error) {
 	config := samlWorkspaceConfig{WorkspaceID: workspaceID}
-	err := s.pool.QueryRow(ctx,
-		`SELECT enabled, profile_name, email_domain, idp_metadata_url, idp_entity_id, idp_sso_url, idp_certificate
-		 FROM tenant_workspace_sso_config WHERE workspace_id = $1`,
-		workspaceID,
-	).Scan(&config.Enabled, &config.ProfileName, &config.EmailDomain,
-		&config.IDPMetadataURL, &config.IDPEntityID, &config.IDPSSOURL, &config.IDPCertificate)
+	sql := `SELECT enabled, profile_name, email_domain, idp_metadata_url, idp_entity_id, idp_sso_url, idp_certificate,revision,identity_revision FROM tenant_workspace_sso_config WHERE workspace_id=$1`
+	if lock {
+		sql += " FOR UPDATE"
+	}
+	err := query.QueryRow(ctx, sql, workspaceID).Scan(&config.Enabled, &config.ProfileName, &config.EmailDomain,
+		&config.IDPMetadataURL, &config.IDPEntityID, &config.IDPSSOURL, &config.IDPCertificate, &config.Revision, &config.IdentityRevision)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return samlWorkspaceConfig{WorkspaceID: workspaceID}, false, nil
 	}
@@ -62,27 +72,6 @@ func (s *samlConfigStore) Get(ctx context.Context, workspaceID int64) (samlWorks
 		return samlWorkspaceConfig{}, false, err
 	}
 	return config, true, nil
-}
-
-func (s *samlConfigStore) Upsert(ctx context.Context, config samlWorkspaceConfig) error {
-	_, err := s.pool.Exec(ctx,
-		`INSERT INTO tenant_workspace_sso_config
-		   (workspace_id, enabled, profile_name, email_domain, idp_metadata_url, idp_entity_id, idp_sso_url, idp_certificate, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
-		 ON CONFLICT (workspace_id) DO UPDATE SET
-		   enabled = excluded.enabled,
-		   profile_name = excluded.profile_name,
-		   email_domain = excluded.email_domain,
-		   idp_metadata_url = excluded.idp_metadata_url,
-		   idp_entity_id = excluded.idp_entity_id,
-		   idp_sso_url = excluded.idp_sso_url,
-		   idp_certificate = excluded.idp_certificate,
-		   updated_at = now()`,
-		config.WorkspaceID, config.Enabled, config.ProfileName,
-		strings.ToLower(strings.TrimSpace(config.EmailDomain)),
-		config.IDPMetadataURL, config.IDPEntityID, config.IDPSSOURL, config.IDPCertificate,
-	)
-	return err
 }
 
 // ResolveByEmailDomain finds the enabled workspace config that claims an email
@@ -95,12 +84,12 @@ func (s *samlConfigStore) ResolveByEmailDomain(ctx context.Context, domain strin
 	}
 	config := samlWorkspaceConfig{}
 	err := s.pool.QueryRow(ctx,
-		`SELECT workspace_id, enabled, profile_name, email_domain, idp_metadata_url, idp_entity_id, idp_sso_url, idp_certificate
+		`SELECT workspace_id, enabled, profile_name, email_domain, idp_metadata_url, idp_entity_id, idp_sso_url, idp_certificate,revision,identity_revision
 		 FROM tenant_workspace_sso_config
 		 WHERE enabled AND lower(email_domain) = $1`,
 		normalized,
 	).Scan(&config.WorkspaceID, &config.Enabled, &config.ProfileName, &config.EmailDomain,
-		&config.IDPMetadataURL, &config.IDPEntityID, &config.IDPSSOURL, &config.IDPCertificate)
+		&config.IDPMetadataURL, &config.IDPEntityID, &config.IDPSSOURL, &config.IDPCertificate, &config.Revision, &config.IdentityRevision)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return samlWorkspaceConfig{}, false, nil
 	}
@@ -113,9 +102,14 @@ func (s *samlConfigStore) ResolveByEmailDomain(ctx context.Context, domain strin
 // ServiceProviderKeypair loads the singleton SP keypair, generating and
 // persisting one on first use so the SP identity stays stable across restarts.
 func (s *samlConfigStore) ServiceProviderKeypair(ctx context.Context) (identitysaml.Keypair, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return identitysaml.Keypair{}, err
+	}
+	defer tx.Rollback(ctx)
 	var keyPEM, certPEM string
-	if err := s.pool.QueryRow(ctx,
-		`SELECT saml_sp_private_key, saml_sp_certificate FROM instance_admin_config WHERE id = 1`,
+	if err := tx.QueryRow(ctx,
+		`SELECT saml_sp_private_key, saml_sp_certificate FROM instance_admin_config WHERE id = 1 FOR UPDATE`,
 	).Scan(&keyPEM, &certPEM); err != nil {
 		return identitysaml.Keypair{}, err
 	}
@@ -128,10 +122,13 @@ func (s *samlConfigStore) ServiceProviderKeypair(ctx context.Context) (identitys
 	if err != nil {
 		return identitysaml.Keypair{}, err
 	}
-	if _, err := s.pool.Exec(ctx,
+	if _, err := tx.Exec(ctx,
 		`UPDATE instance_admin_config SET saml_sp_private_key = $1, saml_sp_certificate = $2, updated_at = now() WHERE id = 1`,
 		keypair.PrivateKeyPEM, keypair.CertificatePEM,
 	); err != nil {
+		return identitysaml.Keypair{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
 		return identitysaml.Keypair{}, err
 	}
 	return keypair, nil
