@@ -144,9 +144,6 @@ export {
   useWorkspaceUsersQuery,
   useAddProjectMemberMutation,
   useDeleteProjectMutation,
-  useProjectGroupsQuery,
-  useAddProjectGroupMutation,
-  useDeleteProjectGroupMutation,
 } from "./web-shell-projects.ts";
 
 export {
@@ -219,3 +216,5 @@ export {
   useWorkspaceTopActivityQuery,
   useWorkspaceWeeklyReportQuery,
 } from "./web-shell-workspaces.ts";
+
+export { useProjectGroupsQuery, useProjectTeamMutation } from "./web-shell-project-groups.ts";

@@ -7,3 +7,5 @@ client.setConfig({
 
 export * from "../../generated/public-track/index.ts";
 export { client } from "../../generated/public-track/client.gen.ts";
+
+export { getProjectGroups } from "./project-groups.ts";

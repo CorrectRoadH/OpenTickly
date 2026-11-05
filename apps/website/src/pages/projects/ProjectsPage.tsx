@@ -21,10 +21,9 @@ import { CloseIcon, PinIcon, PlusIcon, ProjectsIcon, SearchIcon } from "../../sh
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
-  useAddProjectGroupMutation,
+  useProjectTeamMutation,
   useArchiveProjectMutation,
   useClientsQuery,
-  useDeleteProjectGroupMutation,
   useDeleteProjectMutation,
   useGroupsQuery,
   usePinProjectMutation,
@@ -117,9 +116,13 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
   const deleteProjectMutation = useDeleteProjectMutation(workspaceId);
   const groupsQuery = useGroupsQuery(workspaceId);
-  const projectGroupsQuery = useProjectGroupsQuery(workspaceId);
-  const addProjectGroupMutation = useAddProjectGroupMutation(workspaceId);
-  const deleteProjectGroupMutation = useDeleteProjectGroupMutation(workspaceId);
+  const projectGroupsQuery = useProjectGroupsQuery(
+    workspaceId,
+    normalizeProjects(projectsQuery.data).flatMap((project) =>
+      project.id == null ? [] : [project.id],
+    ),
+  );
+  const projectTeamMutation = useProjectTeamMutation(workspaceId);
   const clientsQuery = useClientsQuery(workspaceId);
   // Fetch all project-user mappings for member filtering
   const projectUsersQuery = useQuery({
@@ -279,39 +282,17 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     if (project.id == null) return;
 
     try {
-      // Remove existing project-group association if any
-      const existing = projectGroupsByProject.get(project.id);
-      if (existing) {
-        await deleteProjectGroupMutation.mutateAsync(existing.projectGroupId);
-      }
-
-      if (value === "everyone") {
-        await updateProjectMutation.mutateAsync({
-          color: resolveProjectColor(project),
-          isPrivate: false,
-          name: project.name ?? t("untitledProject"),
-          projectId: project.id,
-        });
-        toast.success(t("teamUpdated", { name: project.name }));
-      } else if (value === "private") {
-        await updateProjectMutation.mutateAsync({
-          color: resolveProjectColor(project),
-          isPrivate: true,
-          name: project.name ?? t("untitledProject"),
-          projectId: project.id,
-        });
-        toast.success(t("teamUpdated", { name: project.name }));
-      } else if (value.startsWith("group:")) {
-        const groupId = Number(value.slice(6));
-        await updateProjectMutation.mutateAsync({
-          color: resolveProjectColor(project),
-          isPrivate: true,
-          name: project.name ?? t("untitledProject"),
-          projectId: project.id,
-        });
-        await addProjectGroupMutation.mutateAsync({ projectId: project.id, groupId });
-        const groupName = workspaceGroups.find((g) => g.id === groupId)?.name;
+      const groupId = value.startsWith("group:") ? Number(value.slice(6)) : null;
+      await projectTeamMutation.mutateAsync({
+        project: { ...project, id: project.id },
+        groupId,
+        isPrivate: value !== "everyone",
+      });
+      if (groupId !== null) {
+        const groupName = workspaceGroups.find((group) => group.id === groupId)?.name;
         toast.success(t("teamUpdatedToGroup", { name: project.name, group: groupName }));
+      } else {
+        toast.success(t("teamUpdated", { name: project.name }));
       }
     } catch (err) {
       toast.error(err instanceof WebApiError ? err.userMessage : t("teamUpdateFailed"));
@@ -517,6 +498,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   <SelectDropdown
                     aria-label={`${t("team")} ${project.name}`}
                     className="w-[132px]"
+                    disabled={
+                      projectTeamMutation.isPending ||
+                      projectGroupsQuery.isPending ||
+                      projectGroupsQuery.isError
+                    }
                     onChange={(value) => void handleTeamChange(project, value)}
                     options={teamOptions}
                     value={(() => {

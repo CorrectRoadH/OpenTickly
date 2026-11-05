@@ -132,3 +132,8 @@ workspace selection, cache removal and regression coverage.
 
 See the [October 2026 dependency audit](dependency-security-2026-10.md) for
 upgrades, security overrides, validation and remaining limitations.
+
+## Team management
+
+See [team membership and project visibility (#130, #131)](team-management.md) for
+existing API contracts, failure handling, TDD evidence and acceptance scope.
