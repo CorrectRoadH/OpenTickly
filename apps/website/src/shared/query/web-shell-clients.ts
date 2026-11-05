@@ -1,3 +1,4 @@
+import { writeEntity } from "./entity-writes.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { unwrapWebApiResult } from "../api/web-client.ts";
@@ -52,17 +53,16 @@ export function useRenameClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: ({ clientId, name }: { clientId: number; name: string }) =>
-      unwrapWebApiResult(
-        putWorkspaceClients({
-          body: { name },
-          path: { workspace_id: workspaceId, client_id: clientId },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["clients", workspaceId],
-      });
-    },
+      writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
+        const result = await unwrapWebApiResult(
+          putWorkspaceClients({
+            body: { name },
+            path: { workspace_id: workspaceId, client_id: clientId },
+          }),
+        );
+        await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
+        return result;
+      }),
   });
 }
 
@@ -71,16 +71,15 @@ export function useDeleteClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (clientId: number) =>
-      unwrapWebApiResult(
-        deleteWorkspaceClient({
-          path: { workspace_id: workspaceId, client_id: clientId },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["clients", workspaceId],
-      });
-    },
+      writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
+        const result = await unwrapWebApiResult(
+          deleteWorkspaceClient({
+            path: { workspace_id: workspaceId, client_id: clientId },
+          }),
+        );
+        await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
+        return result;
+      }),
   });
 }
 
@@ -89,16 +88,15 @@ export function useArchiveClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (clientId: number) =>
-      unwrapWebApiResult(
-        archiveClient({
-          path: { workspace_id: workspaceId, client_id: clientId },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["clients", workspaceId],
-      });
-    },
+      writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
+        const result = await unwrapWebApiResult(
+          archiveClient({
+            path: { workspace_id: workspaceId, client_id: clientId },
+          }),
+        );
+        await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
+        return result;
+      }),
   });
 }
 
@@ -107,15 +105,14 @@ export function useRestoreClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (clientId: number) =>
-      unwrapWebApiResult(
-        restoreClient({
-          path: { workspace_id: workspaceId, client_id: clientId },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["clients", workspaceId],
-      });
-    },
+      writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
+        const result = await unwrapWebApiResult(
+          restoreClient({
+            path: { workspace_id: workspaceId, client_id: clientId },
+          }),
+        );
+        await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
+        return result;
+      }),
   });
 }

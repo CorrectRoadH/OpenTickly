@@ -1,5 +1,5 @@
-import { type ReactElement, useEffect, useRef } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { type ReactElement } from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -18,6 +18,8 @@ import {
   textInputClassName,
   ToggleSection,
 } from "./WorkspaceSettingsFormPrimitives.tsx";
+
+import { useAutosaveForm } from "../../shared/forms/useAutosaveForm.ts";
 
 import { WorkspaceReportingSettings } from "./WorkspaceReportingSettings.tsx";
 import { WorkspaceTimesheetSettings } from "./WorkspaceTimesheetSettings.tsx";
@@ -42,72 +44,14 @@ export function WorkspaceSettingsForm({
   const form = useForm<WorkspaceSettingsFormValues>({
     defaultValues: initialValues,
   });
-  const values = useWatch({
-    control: form.control,
-  });
   const requiredTimeEntryFields = form.watch("requiredTimeEntryFields");
   const lockTimeEntriesEnabled = form.watch("reportLockedAt").trim().length > 0;
-  const lastSavedValuesRef = useRef(JSON.stringify(initialValues));
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveInFlightRef = useRef(false);
-  const pendingRetryRef = useRef(false);
-
-  useEffect(() => {
-    form.reset(initialValues);
-    lastSavedValuesRef.current = JSON.stringify(initialValues);
-  }, [form, initialValues]);
-
-  useEffect(() => {
-    if (!form.formState.isDirty) {
-      return;
-    }
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(() => {
-      void saveLatestValues();
-    }, 900);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [form.formState.isDirty, values]);
-
-  async function saveLatestValues(): Promise<void> {
-    const latestValues = form.getValues();
-    const serializedValues = JSON.stringify(latestValues);
-
-    if (serializedValues === lastSavedValuesRef.current) {
-      return;
-    }
-
-    if (saveInFlightRef.current) {
-      pendingRetryRef.current = true;
-      return;
-    }
-
-    saveInFlightRef.current = true;
-
-    try {
-      await onSubmit(mapWorkspaceSettingsFormToRequest(latestValues));
-      lastSavedValuesRef.current = serializedValues;
-      form.reset(latestValues);
-      onSubmitSuccess?.();
-    } catch (err) {
-      onSubmitError?.(err);
-    } finally {
-      saveInFlightRef.current = false;
-
-      if (pendingRetryRef.current) {
-        pendingRetryRef.current = false;
-        void saveLatestValues();
-      }
-    }
-  }
+  useAutosaveForm(form, {
+    initialValues,
+    save: (values) => onSubmit(mapWorkspaceSettingsFormToRequest(values)),
+    onSuccess: onSubmitSuccess,
+    onError: onSubmitError,
+  });
 
   return (
     <form className="space-y-5" data-testid="workspace-settings-form">

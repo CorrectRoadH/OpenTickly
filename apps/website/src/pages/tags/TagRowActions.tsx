@@ -31,16 +31,15 @@ export function TagRowActions({
 
   useEffect(() => {
     if (editing) {
-      setEditValue(tagName);
       inputRef.current?.focus();
       inputRef.current?.select();
     }
-  }, [editing, tagName]);
+  }, [editing]);
 
   function handleRenameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = editValue.trim();
-    if (trimmed && trimmed !== tagName) {
+    if (trimmed) {
       onRename(tagId, trimmed);
     }
     setEditing(false);
@@ -54,7 +53,7 @@ export function TagRowActions({
           data-testid={`tag-rename-input-${tagId}`}
           onBlur={() => {
             const trimmed = editValue.trim();
-            if (trimmed && trimmed !== tagName) {
+            if (trimmed) {
               onRename(tagId, trimmed);
             }
             setEditing(false);
@@ -82,7 +81,10 @@ export function TagRowActions({
     >
       <TagMenuContent
         onDelete={onDelete}
-        onStartEditing={() => setEditing(true)}
+        onStartEditing={() => {
+          setEditValue(tagName);
+          setEditing(true);
+        }}
         tagId={tagId}
         tagName={tagName}
       />

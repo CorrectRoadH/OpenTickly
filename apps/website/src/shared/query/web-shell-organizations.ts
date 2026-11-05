@@ -1,3 +1,4 @@
+import { writeEntity } from "./entity-writes.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
@@ -54,20 +55,25 @@ export function useUpdateOrganizationUserMutation(organizationId: number) {
       organizationUserId: number;
       payload: GithubComTogglTogglApiInternalServicesOrganizationUserPayload;
     }) =>
-      unwrapWebApiResult(
-        putOrganizationUsers({
-          body: request.payload,
-          path: {
-            organization_id: organizationId,
-            organization_user_id: request.organizationUserId,
-          },
-        }),
+      writeEntity(
+        queryClient,
+        `organization-user:${organizationId}:${request.organizationUserId}`,
+        async () => {
+          const result = await unwrapWebApiResult(
+            putOrganizationUsers({
+              body: request.payload,
+              path: {
+                organization_id: organizationId,
+                organization_user_id: request.organizationUserId,
+              },
+            }),
+          );
+          await queryClient.invalidateQueries({
+            queryKey: ["organization-members", organizationId],
+          });
+          return result;
+        },
       ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["organization-members", organizationId],
-      });
-    },
   });
 }
 

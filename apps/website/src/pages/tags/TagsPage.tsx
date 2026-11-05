@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -167,14 +169,32 @@ export function TagsPage(): ReactElement {
                 tagId={tag.id}
                 tagName={tag.name}
                 onDelete={(tagId) => {
-                  void deleteTagMutation.mutateAsync(tagId).then(() => {
-                    setStatus(t("tagDeleted"));
-                  });
+                  void deleteTagMutation
+                    .mutateAsync(tagId)
+                    .then(() => {
+                      setStatus(t("tagDeleted"));
+                    })
+                    .catch((error: unknown) =>
+                      toast.error(
+                        error instanceof WebApiError
+                          ? error.userMessage
+                          : t("toast:failedToUpdate"),
+                      ),
+                    );
                 }}
                 onRename={(tagId, name) => {
-                  void updateTagMutation.mutateAsync({ tagId, name }).then(() => {
-                    setStatus(t("tagRenamed"));
-                  });
+                  void updateTagMutation
+                    .mutateAsync({ tagId, name })
+                    .then(() => {
+                      setStatus(t("tagRenamed"));
+                    })
+                    .catch((error: unknown) =>
+                      toast.error(
+                        error instanceof WebApiError
+                          ? error.userMessage
+                          : t("toast:failedToUpdate"),
+                      ),
+                    );
                 }}
               />
             </div>

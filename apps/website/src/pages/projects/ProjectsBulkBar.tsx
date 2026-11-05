@@ -1,10 +1,9 @@
 import { AppButton, IconButton } from "@opentickly/web-ui";
-import { type ReactElement, useState } from "react";
+import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 
 import { ArchiveIcon, CloseIcon, EditIcon, TrashIcon } from "../../shared/ui/icons.tsx";
-import { WebApiError } from "../../shared/api/web-client.ts";
+import { useBulkAction } from "../../shared/query/useBulkAction.ts";
 
 type ProjectsBulkBarProps = {
   onArchive: (projectId: number) => Promise<unknown>;
@@ -24,38 +23,13 @@ export function ProjectsBulkBar({
   selectedIds,
 }: ProjectsBulkBarProps): ReactElement {
   const { t } = useTranslation("projects");
-  const [isPending, setIsPending] = useState(false);
+  const { isPending, run } = useBulkAction(onSelectionChange, onStatus);
   const ids = [...selectedIds];
-
-  async function runBulkAction(
-    action: (projectId: number) => Promise<unknown>,
-    successKey: "projectsArchived" | "projectsDeleted",
-    failureKey: "bulkArchiveFailed" | "bulkDeleteFailed",
-  ) {
-    setIsPending(true);
-    try {
-      const results = await Promise.allSettled(
-        ids.map((id) => Promise.resolve().then(() => action(id))),
-      );
-      const failedIds = ids.filter((_, index) => results[index]?.status === "rejected");
-      if (failedIds.length > 0) {
-        if (failedIds.length < ids.length) {
-          onSelectionChange(new Set(failedIds));
-        }
-        const failure = results.find((result) => result.status === "rejected");
-        toast.error(
-          failure?.status === "rejected" && failure.reason instanceof WebApiError
-            ? failure.reason.userMessage
-            : t(failureKey),
-        );
-        return;
-      }
-      onSelectionChange(new Set());
-      onStatus(t(successKey, { count: ids.length }));
-    } finally {
-      setIsPending(false);
-    }
-  }
+  const runBulkAction = (
+    action: (id: number) => Promise<unknown>,
+    success: string,
+    failure: string,
+  ) => run(ids, action, t(success, { count: ids.length }), t(failure));
 
   return (
     <div

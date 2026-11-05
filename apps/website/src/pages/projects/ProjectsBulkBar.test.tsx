@@ -55,7 +55,7 @@ describe("ProjectsBulkBar", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("bulkArchiveFailed"));
     expect(onArchive).toHaveBeenCalledTimes(2);
     expect(onSelectionChange).not.toHaveBeenCalled();
-    expect(onStatus).not.toHaveBeenCalled();
+    expect(onStatus).toHaveBeenCalledExactlyOnceWith("");
   });
 
   test("clears the selection only after every delete succeeds", async () => {

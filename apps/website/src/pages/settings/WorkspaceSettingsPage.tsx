@@ -125,6 +125,7 @@ function SettingsSectionContent(props: {
     case "general":
       return (
         <WorkspaceSettingsForm
+          key={props.workspaceId}
           initialValues={createWorkspaceSettingsFormValues(props.settingsData)}
           onSubmit={props.onSubmit}
           onSubmitError={props.onSubmitError}

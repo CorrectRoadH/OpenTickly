@@ -1,8 +1,8 @@
 import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentickly/web-ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -18,6 +18,7 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { useAutosaveForm } from "../../shared/forms/useAutosaveForm.ts";
 import { defaultPreferencesFormValues } from "./ProfilePageData.ts";
 import { ProfileSso } from "./ProfileSso.tsx";
 import { ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
@@ -43,38 +44,12 @@ export function ProfilePage(): ReactElement {
   const form = useForm<PreferencesFormValues>({
     defaultValues: defaultPreferencesFormValues,
   });
-  const watchedPreferences = useWatch({
-    control: form.control,
+  useAutosaveForm(form, {
+    initialValues: preferenceValues,
+    save: (values) => updatePreferencesMutation.mutateAsync(mapPreferencesFormToRequest(values)),
+    onSuccess: () => toast.success(t("profilePreferencesUpdated")),
+    onError: () => toast.error(t("couldNotSaveChange")),
   });
-  const lastSavedValuesRef = useRef(JSON.stringify(defaultPreferencesFormValues));
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveInFlightRef = useRef(false);
-  const pendingRetryRef = useRef(false);
-
-  useEffect(() => {
-    form.reset(preferenceValues);
-    lastSavedValuesRef.current = JSON.stringify(preferenceValues);
-  }, [form, preferenceValues]);
-
-  useEffect(() => {
-    if (!form.formState.isDirty) {
-      return;
-    }
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(() => {
-      void saveLatestValues();
-    }, 900);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [form.formState.isDirty, watchedPreferences]);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -82,38 +57,6 @@ export function ProfilePage(): ReactElement {
       el?.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
-
-  async function saveLatestValues(): Promise<void> {
-    const latestValues = form.getValues();
-    const serializedValues = JSON.stringify(latestValues);
-
-    if (serializedValues === lastSavedValuesRef.current) {
-      return;
-    }
-
-    if (saveInFlightRef.current) {
-      pendingRetryRef.current = true;
-      return;
-    }
-
-    saveInFlightRef.current = true;
-
-    try {
-      await updatePreferencesMutation.mutateAsync(mapPreferencesFormToRequest(latestValues));
-      lastSavedValuesRef.current = serializedValues;
-      form.reset(latestValues);
-      toast.success(t("profilePreferencesUpdated"));
-    } catch {
-      toast.error(t("couldNotSaveChange"));
-    } finally {
-      saveInFlightRef.current = false;
-
-      if (pendingRetryRef.current) {
-        pendingRetryRef.current = false;
-        void saveLatestValues();
-      }
-    }
-  }
 
   if (profileQuery.isPending || preferencesQuery.isPending) {
     return (

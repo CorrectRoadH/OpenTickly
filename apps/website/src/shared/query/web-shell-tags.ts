@@ -1,3 +1,4 @@
+import { writeEntity } from "./entity-writes.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { unwrapWebApiResult } from "../api/web-client.ts";
@@ -51,22 +52,21 @@ export function useUpdateTagMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: ({ tagId, name }: { tagId: number; name: string }) =>
-      unwrapWebApiResult(
-        putWorkspaceTag({
-          body: {
-            name,
-          },
-          path: {
-            tag_id: tagId,
-            workspace_id: workspaceId,
-          },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["tags", workspaceId],
-      });
-    },
+      writeEntity(queryClient, `tag:${workspaceId}:${tagId}`, async () => {
+        const result = await unwrapWebApiResult(
+          putWorkspaceTag({
+            body: {
+              name,
+            },
+            path: {
+              tag_id: tagId,
+              workspace_id: workspaceId,
+            },
+          }),
+        );
+        await queryClient.invalidateQueries({ queryKey: ["tags", workspaceId] });
+        return result;
+      }),
   });
 }
 
@@ -75,18 +75,17 @@ export function useDeleteTagMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (tagId: number) =>
-      unwrapWebApiResult(
-        deleteWorkspaceTag({
-          path: {
-            tag_id: tagId,
-            workspace_id: workspaceId,
-          },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["tags", workspaceId],
-      });
-    },
+      writeEntity(queryClient, `tag:${workspaceId}:${tagId}`, async () => {
+        const result = await unwrapWebApiResult(
+          deleteWorkspaceTag({
+            path: {
+              tag_id: tagId,
+              workspace_id: workspaceId,
+            },
+          }),
+        );
+        await queryClient.invalidateQueries({ queryKey: ["tags", workspaceId] });
+        return result;
+      }),
   });
 }

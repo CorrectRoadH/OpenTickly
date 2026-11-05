@@ -137,3 +137,8 @@ upgrades, security overrides, validation and remaining limitations.
 
 See [team membership and project visibility (#130, #131)](team-management.md) for
 existing API contracts, failure handling, TDD evidence and acceptance scope.
+
+## Continuous operations
+
+See [autosave, ordered entity writes and bulk retries](continuous-operations.md)
+for the follow-up contracts and regression coverage.

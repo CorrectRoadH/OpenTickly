@@ -33,16 +33,15 @@ export function ClientRowActions({
 
   useEffect(() => {
     if (editing) {
-      setEditValue(clientName);
       inputRef.current?.focus();
       inputRef.current?.select();
     }
-  }, [editing, clientName]);
+  }, [editing]);
 
   function handleRenameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = editValue.trim();
-    if (trimmed && trimmed !== clientName) {
+    if (trimmed) {
       onRename(clientId, trimmed);
     }
     setEditing(false);
@@ -81,7 +80,10 @@ export function ClientRowActions({
         clientName={clientName}
         onArchive={onArchive}
         onDelete={onDelete}
-        onStartEditing={() => setEditing(true)}
+        onStartEditing={() => {
+          setEditValue(clientName);
+          setEditing(true);
+        }}
       />
     </DropdownMenu>
   );
