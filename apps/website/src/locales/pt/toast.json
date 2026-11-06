@@ -48,5 +48,7 @@
   "failedToSaveTimeEntry": "Falha ao salvar registro de tempo. Tente novamente.",
   "failedToDeleteTimeEntry": "Falha ao excluir registro de tempo. Tente novamente.",
   "passwordResetComplete": "Senha atualizada. Entre com a nova senha.",
-  "verificationEmailResent": "E-mail de verificação enviado. Verifique sua caixa de entrada."
+  "verificationEmailResent": "E-mail de verificação enviado. Verifique sua caixa de entrada.",
+  "ssoSettingsUpdated": "Configurações de logon único salvas.",
+  "failedToUpdateSsoSettings": "Falha ao salvar as configurações de logon único."
 }

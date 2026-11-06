@@ -106,7 +106,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["active", "disabled", "all"],
+              "enum": [
+                "active",
+                "disabled",
+                "all"
+              ],
               "default": "all"
             }
           },
@@ -272,7 +276,9 @@
                     "format": "email"
                   }
                 },
-                "required": ["to"]
+                "required": [
+                  "to"
+                ]
               }
             }
           }
@@ -380,6 +386,87 @@
           }
         }
       }
+    },
+    "/admin/v1/sso/oidc": {
+      "get": {
+        "summary": "Read the instance OpenID Connect single sign-on configuration",
+        "operationId": "get-instance-oidc-config",
+        "responses": {
+          "200": {
+            "description": "Instance OIDC configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceOidcConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update the instance OpenID Connect single sign-on configuration",
+        "operationId": "update-instance-oidc-config",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstanceOidcConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated instance OIDC configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceOidcConfig"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed; `message` names the field"
+          },
+          "409": {
+            "description": "Stale revision: the configuration was changed by someone else"
+          }
+        }
+      }
+    },
+    "/admin/v1/sso/oidc/test": {
+      "post": {
+        "summary": "Run OpenID Connect discovery for an issuer",
+        "operationId": "test-instance-oidc-config",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OidcDiscoveryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discovery finished. `ok` reports whether the issuer published usable metadata; a failed discovery is still a 200 so the admin sees the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcDiscoveryResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Issuer URL missing or not https"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -390,7 +477,9 @@
       "TestEmailResult": {
         "type": "object",
         "properties": {
-          "success": { "type": "boolean" },
+          "success": {
+            "type": "boolean"
+          },
           "code": {
             "type": "string",
             "description": "Machine-readable outcome. Clients localise this; `message` is the raw SMTP detail for diagnostics.",
@@ -405,9 +494,15 @@
               "unknown"
             ]
           },
-          "message": { "type": "string" }
+          "message": {
+            "type": "string"
+          }
         },
-        "required": ["success", "code", "message"]
+        "required": [
+          "success",
+          "code",
+          "message"
+        ]
       },
       "BootstrapRequest": {
         "type": "object",
@@ -421,7 +516,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "BootstrapState": {
         "type": "object",
@@ -438,31 +536,46 @@
             "nullable": true
           }
         },
-        "required": ["completed"]
+        "required": [
+          "completed"
+        ]
       },
       "RegistrationPolicy": {
         "type": "object",
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["open", "closed", "invite_only"]
+            "enum": [
+              "open",
+              "closed",
+              "invite_only"
+            ]
           },
           "updated_at": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "required": ["mode", "updated_at"]
+        "required": [
+          "mode",
+          "updated_at"
+        ]
       },
       "UpdateRegistrationPolicyRequest": {
         "type": "object",
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["open", "closed", "invite_only"]
+            "enum": [
+              "open",
+              "closed",
+              "invite_only"
+            ]
           }
         },
-        "required": ["mode"]
+        "required": [
+          "mode"
+        ]
       },
       "InstanceUser": {
         "type": "object",
@@ -479,7 +592,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["active", "disabled"]
+            "enum": [
+              "active",
+              "disabled"
+            ]
           },
           "is_instance_admin": {
             "type": "boolean"
@@ -494,7 +610,13 @@
             "nullable": true
           }
         },
-        "required": ["id", "email", "status", "is_instance_admin", "created_at"]
+        "required": [
+          "id",
+          "email",
+          "status",
+          "is_instance_admin",
+          "created_at"
+        ]
       },
       "InstanceUserList": {
         "type": "object",
@@ -515,14 +637,23 @@
             "type": "integer"
           }
         },
-        "required": ["users", "total_count", "page", "per_page"]
+        "required": [
+          "users",
+          "total_count",
+          "page",
+          "per_page"
+        ]
       },
       "InstanceHealth": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["healthy", "degraded", "unhealthy"]
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
           },
           "database": {
             "$ref": "#/components/schemas/DependencyHealth"
@@ -541,7 +672,14 @@
             "format": "date-time"
           }
         },
-        "required": ["status", "database", "redis", "job_backlog", "user_count", "checked_at"]
+        "required": [
+          "status",
+          "database",
+          "redis",
+          "job_backlog",
+          "user_count",
+          "checked_at"
+        ]
       },
       "InstanceVersion": {
         "type": "object",
@@ -575,7 +713,12 @@
             }
           }
         },
-        "required": ["current_version", "update_available", "changelog_url", "announcements"]
+        "required": [
+          "current_version",
+          "update_available",
+          "changelog_url",
+          "announcements"
+        ]
       },
       "InstanceAnnouncement": {
         "type": "object",
@@ -589,7 +732,11 @@
           },
           "severity": {
             "type": "string",
-            "enum": ["info", "warning", "critical"]
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ]
           },
           "published_at": {
             "type": "string",
@@ -615,7 +762,13 @@
             }
           }
         },
-        "required": ["id", "title", "severity", "published_at", "body_markdown"]
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "published_at",
+          "body_markdown"
+        ]
       },
       "InstanceAnnouncementTranslation": {
         "type": "object",
@@ -638,13 +791,18 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["up", "down"]
+            "enum": [
+              "up",
+              "down"
+            ]
           },
           "latency_ms": {
             "type": "integer"
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "InstanceConfig": {
         "type": "object",
@@ -678,14 +836,26 @@
           },
           "registration_mode": {
             "type": "string",
-            "enum": ["open", "closed", "invite_only"]
+            "enum": [
+              "open",
+              "closed",
+              "invite_only"
+            ]
           },
           "updated_at": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "required": ["site_url", "sender_email", "sender_name", "smtp_configured", "email_verification_required", "registration_mode", "updated_at"]
+        "required": [
+          "site_url",
+          "sender_email",
+          "sender_name",
+          "smtp_configured",
+          "email_verification_required",
+          "registration_mode",
+          "updated_at"
+        ]
       },
       "UpdateInstanceConfigRequest": {
         "type": "object",
@@ -716,7 +886,11 @@
           },
           "registration_mode": {
             "type": "string",
-            "enum": ["open", "closed", "invite_only"]
+            "enum": [
+              "open",
+              "closed",
+              "invite_only"
+            ]
           }
         }
       },
@@ -737,7 +911,12 @@
             "type": "integer"
           }
         },
-        "required": ["id", "name", "workspace_count", "member_count"]
+        "required": [
+          "id",
+          "name",
+          "workspace_count",
+          "member_count"
+        ]
       },
       "OrganizationList": {
         "type": "object",
@@ -752,7 +931,156 @@
             "type": "integer"
           }
         },
-        "required": ["organizations", "total_count"]
+        "required": [
+          "organizations",
+          "total_count"
+        ]
+      },
+      "InstanceOidcConfig": {
+        "type": "object",
+        "description": "Instance-level OpenID Connect provider plus the derived URLs to register at the provider. The client secret is never returned.",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "provider_name": {
+            "type": "string"
+          },
+          "issuer_url": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret_configured": {
+            "type": "boolean"
+          },
+          "allowed_email_domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auto_provision": {
+            "type": "boolean"
+          },
+          "redirect_url": {
+            "type": "string",
+            "description": "`{site_url}/auth/oidc/callback`; empty until a Site URL is configured."
+          },
+          "login_url": {
+            "type": "string"
+          },
+          "site_url_configured": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "revision",
+          "enabled",
+          "provider_name",
+          "issuer_url",
+          "client_id",
+          "client_secret_configured",
+          "allowed_email_domains",
+          "auto_provision",
+          "redirect_url",
+          "login_url",
+          "site_url_configured",
+          "updated_at"
+        ]
+      },
+      "UpdateInstanceOidcConfigRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Optimistic lock: the revision last read. Zero for a fresh instance."
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "provider_name": {
+            "type": "string"
+          },
+          "issuer_url": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string",
+            "description": "Omit or send empty to keep the stored secret."
+          },
+          "allowed_email_domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auto_provision": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "revision",
+          "enabled",
+          "provider_name",
+          "issuer_url",
+          "client_id",
+          "allowed_email_domains",
+          "auto_provision"
+        ]
+      },
+      "OidcDiscoveryRequest": {
+        "type": "object",
+        "properties": {
+          "issuer_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "issuer_url"
+        ]
+      },
+      "OidcDiscoveryResult": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "authorization_endpoint": {
+            "type": "string"
+          },
+          "token_endpoint": {
+            "type": "string"
+          },
+          "jwks_uri": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ]
       }
     }
   }

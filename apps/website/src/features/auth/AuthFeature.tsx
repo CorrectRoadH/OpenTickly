@@ -7,8 +7,21 @@ import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-c
 import type { RegistrationPendingVerification } from "../../shared/api/web/index.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
-import { useLoginMutation, useRegisterMutation } from "../../shared/query/web-shell.ts";
-import { AuthForm } from "./AuthForm.tsx";
+import {
+  useLoginMutation,
+  useRegisterMutation,
+  useSsoProvidersQuery,
+} from "../../shared/query/web-shell.ts";
+import { AuthForm, type OidcProviderButton } from "./AuthForm.tsx";
+
+const ssoErrorMessageKeys: Record<string, string> = {
+  account_exists: "ssoAccountExists",
+  verification_required: "ssoVerificationRequired",
+  account_not_found: "ssoAccountNotFound",
+  email_not_allowed: "ssoEmailNotAllowed",
+  email_unverified: "ssoEmailUnverified",
+  identity_taken: "ssoIdentityTaken",
+};
 
 type AuthFeatureProps = {
   mode: "login" | "register";
@@ -28,6 +41,14 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
+  const providersQuery = useSsoProvidersQuery();
+  const oidcProvider: OidcProviderButton | null =
+    mode === "login" && providersQuery.data?.oidc.enabled
+      ? {
+          providerName: providersQuery.data.oidc.provider_name,
+          loginPath: providersQuery.data.oidc.login_path,
+        }
+      : null;
 
   // The SSO callback redirects back to /login?sso_error=1 when the provider
   // flow fails, so surface a single toast and clean the URL.
@@ -39,16 +60,8 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
     if (params.get("sso_error") === null) {
       return;
     }
-    const code = params.get("sso_error");
-    toast.error(
-      t(
-        code === "account_exists"
-          ? "ssoAccountExists"
-          : code === "verification_required"
-            ? "ssoVerificationRequired"
-            : "ssoSignInFailed",
-      ),
-    );
+    const code = params.get("sso_error") ?? "";
+    toast.error(t(ssoErrorMessageKeys[code] ?? "ssoSignInFailed"));
     params.delete("sso_error");
     const query = params.toString();
     window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
@@ -81,6 +94,7 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
     <AuthForm
       isSubmitting={loginMutation.isPending || registerMutation.isPending}
       mode={mode}
+      oidcProvider={oidcProvider}
       onSubmit={handleSubmit}
     />
   );

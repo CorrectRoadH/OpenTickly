@@ -13,7 +13,11 @@ import {
   sendTestEmailApi,
   updateInstanceConfigApi,
   updateRegistrationPolicyApi,
+  fetchInstanceOidcConfig,
+  testInstanceOidcConfigApi,
+  updateInstanceOidcConfigApi,
 } from "../api/admin-client.ts";
+import type { InstanceOidcConfig, UpdateInstanceOidcConfigRequest } from "../api/admin-client.ts";
 import type {
   InstanceConfig,
   InstanceHealth,
@@ -102,6 +106,35 @@ export function useUpdateInstanceConfigMutation() {
       void queryClient.invalidateQueries({ queryKey: ["instance-admin", "config"] });
       void queryClient.invalidateQueries({ queryKey: ["instance-admin", "registration-policy"] });
     },
+  });
+}
+
+export const instanceOidcConfigQueryKey = ["instance-admin", "sso", "oidc"] as const;
+
+export function useInstanceOidcConfigQuery() {
+  return useQuery<InstanceOidcConfig>({
+    queryKey: instanceOidcConfigQueryKey,
+    queryFn: fetchInstanceOidcConfig,
+    retry: false,
+  });
+}
+
+export function useUpdateInstanceOidcConfigMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateInstanceOidcConfigRequest) => updateInstanceOidcConfigApi(body),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(instanceOidcConfigQueryKey, saved);
+    },
+    onError: () => {
+      void queryClient.invalidateQueries({ queryKey: instanceOidcConfigQueryKey });
+    },
+  });
+}
+
+export function useTestInstanceOidcConfigMutation() {
+  return useMutation({
+    mutationFn: (issuerUrl: string) => testInstanceOidcConfigApi(issuerUrl),
   });
 }
 

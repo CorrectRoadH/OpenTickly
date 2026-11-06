@@ -60,6 +60,7 @@ func callSendTestEmail(t *testing.T, sender application.EmailSender, body string
 		RegistrationPolicy: stubStore{},
 		InstanceUsers:      stubStore{},
 		InstanceConfig:     stubStore{},
+		OIDCConfig:         stubStore{},
 		OrgLister:          stubStore{},
 		UserCreator:        stubStore{},
 		EmailSender:        sender,
@@ -147,3 +148,10 @@ func (stubStore) CreateUser(_ context.Context, _ string, _ string, _ string) (in
 func (stubStore) MarkInstanceAdmin(_ context.Context, _ int64) error { return nil }
 
 func (stubStore) Now() time.Time { return time.Unix(0, 0).UTC() }
+
+func (stubStore) GetOIDCConfig(context.Context) (domain.OIDCConfig, error) {
+	return domain.OIDCConfig{}, nil
+}
+func (stubStore) SaveOIDCConfig(_ context.Context, next domain.OIDCConfig) (domain.OIDCConfig, error) {
+	return next, nil
+}
