@@ -4,10 +4,18 @@ import type {
   InstanceVersion,
   RegistrationPolicy,
   InstanceConfig,
+  InstanceOidcConfig,
+  OidcDiscoveryResult,
   OrganizationList,
   TestEmailResult,
+  UpdateInstanceOidcConfigRequest,
 } from "./generated/admin/types.gen.ts";
-export type { TestEmailResult };
+export type {
+  InstanceOidcConfig,
+  OidcDiscoveryResult,
+  TestEmailResult,
+  UpdateInstanceOidcConfigRequest,
+};
 
 class AdminApiError extends Error {
   status: number;
@@ -114,6 +122,26 @@ export type InstanceVersionInfo = InstanceVersion;
 
 export function fetchInstanceVersion(): Promise<InstanceVersionInfo> {
   return adminFetch("/admin/v1/version");
+}
+
+export function fetchInstanceOidcConfig(): Promise<InstanceOidcConfig> {
+  return adminFetch("/admin/v1/sso/oidc");
+}
+
+export function updateInstanceOidcConfigApi(
+  body: UpdateInstanceOidcConfigRequest,
+): Promise<InstanceOidcConfig> {
+  return adminFetch("/admin/v1/sso/oidc", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export function testInstanceOidcConfigApi(issuerUrl: string): Promise<OidcDiscoveryResult> {
+  return adminFetch("/admin/v1/sso/oidc/test", {
+    method: "POST",
+    body: JSON.stringify({ issuer_url: issuerUrl }),
+  });
 }
 
 export function sendTestEmailApi(to: string): Promise<TestEmailResult> {

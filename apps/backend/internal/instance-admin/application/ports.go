@@ -88,6 +88,29 @@ type InstanceConfigUpdate struct {
 	RegistrationMode          *string
 }
 
+// InstanceOIDCConfigStore persists the instance-level OpenID Connect provider.
+type InstanceOIDCConfigStore interface {
+	GetOIDCConfig(ctx context.Context) (domain.OIDCConfig, error)
+	// SaveOIDCConfig writes `next` when its Revision matches the stored row
+	// (zero matches the empty default). It returns domain.ErrOIDCConfigConflict
+	// otherwise, and drops every OIDC binding when the trust inputs changed.
+	SaveOIDCConfig(ctx context.Context, next domain.OIDCConfig) (domain.OIDCConfig, error)
+}
+
+// OIDCDiscovery is what the provider published at its well-known endpoint.
+type OIDCDiscovery struct {
+	Issuer                string
+	AuthorizationEndpoint string
+	TokenEndpoint         string
+	JWKSURI               string
+}
+
+// OIDCDiscoverer fetches provider metadata so an admin can validate an issuer
+// before enabling it. Fulfilled by the bootstrap layer; nil disables the test.
+type OIDCDiscoverer interface {
+	Discover(ctx context.Context, issuerURL string) (OIDCDiscovery, error)
+}
+
 // OrganizationLister lists all organizations for admin overview.
 type OrganizationLister interface {
 	ListOrganizations(ctx context.Context) ([]AdminOrganizationView, error)

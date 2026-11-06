@@ -31,6 +31,8 @@ func newAdminRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
 		RegistrationPolicy: store,
 		InstanceUsers:      store,
 		InstanceConfig:     store,
+		OIDCConfig:         store,
+		OIDCDiscoverer:     handlers.oidcProviders,
 		OrgLister:          store,
 		UserCreator:        userCreator,
 		EmailSender:        emailSender,
@@ -103,6 +105,15 @@ func (s *adminOpenAPIServer) DisableInstanceUser(ctx echo.Context, userId int64)
 }
 func (s *adminOpenAPIServer) RestoreInstanceUser(ctx echo.Context, userId int64) error {
 	return s.handler.RestoreInstanceUser(ctx, userId)
+}
+func (s *adminOpenAPIServer) GetInstanceOidcConfig(ctx echo.Context) error {
+	return s.handler.GetInstanceOidcConfig(ctx)
+}
+func (s *adminOpenAPIServer) UpdateInstanceOidcConfig(ctx echo.Context) error {
+	return s.handler.UpdateInstanceOidcConfig(ctx)
+}
+func (s *adminOpenAPIServer) TestInstanceOidcConfig(ctx echo.Context) error {
+	return s.handler.TestInstanceOidcConfig(ctx)
 }
 
 // --- Adapters ---

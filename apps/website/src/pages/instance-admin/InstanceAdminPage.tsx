@@ -6,10 +6,11 @@ import type { ReactElement } from "react";
 import { AdminConfigTab } from "../../features/instance-admin/AdminConfigTab.tsx";
 import { AdminOrganizationsTab } from "../../features/instance-admin/AdminOrganizationsTab.tsx";
 import { AdminOverviewTab } from "../../features/instance-admin/AdminOverviewTab.tsx";
+import { AdminSsoTab } from "../../features/instance-admin/AdminSsoTab.tsx";
 import { AdminUsersTab } from "../../features/instance-admin/AdminUsersTab.tsx";
 import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";
 
-export type InstanceAdminSection = "overview" | "users" | "organizations" | "config";
+export type InstanceAdminSection = "overview" | "users" | "organizations" | "config" | "sso";
 
 type InstanceAdminPageProps = {
   section: InstanceAdminSection;
@@ -23,6 +24,7 @@ export function InstanceAdminPage({ section }: InstanceAdminPageProps): ReactEle
     { id: "users", label: t("users") },
     { id: "organizations", label: t("organizations") },
     { id: "config", label: t("config") },
+    { id: "sso", label: t("singleSignOn") },
   ];
 
   return (
@@ -69,6 +71,8 @@ function AdminSectionContent({
       return <AdminOrganizationsTab />;
     case "config":
       return <AdminConfigTab />;
+    case "sso":
+      return <AdminSsoTab />;
     default:
       return (
         <SurfaceCard>

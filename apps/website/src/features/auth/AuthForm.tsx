@@ -19,9 +19,15 @@ const registerSchema = z.object({
 
 type AuthMode = "login" | "register";
 
+export type OidcProviderButton = {
+  providerName: string;
+  loginPath: string;
+};
+
 type AuthFormProps = {
   isSubmitting?: boolean;
   mode: AuthMode;
+  oidcProvider?: OidcProviderButton | null;
   onSubmit: (payload: LoginRequestDto | RegisterRequestDto) => Promise<void> | void;
 };
 
@@ -31,7 +37,12 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const fieldClassName =
   "h-9 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-[var(--track-text)] shadow-[0_1px_0_0_var(--track-depth-border)] outline-none transition-[border-color,box-shadow] duration-[var(--duration-fast)] placeholder:text-[var(--track-text-soft)] focus:border-[var(--track-accent)]";
 
-export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps): ReactElement {
+export function AuthForm({
+  isSubmitting = false,
+  mode,
+  oidcProvider = null,
+  onSubmit,
+}: AuthFormProps): ReactElement {
   const { t } = useTranslation("auth");
   const form = useForm<LoginFormValues & RegisterFormValues>({
     defaultValues: {
@@ -110,6 +121,16 @@ export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps
             {t("orDivider")}
             <span className="h-px flex-1 bg-[var(--track-border)]" />
           </div>
+          {oidcProvider ? (
+            <button
+              className="flex h-10 w-full items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] font-semibold text-[var(--track-text)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--track-accent)] hover:bg-[var(--track-surface-hover)]"
+              data-testid="oidc-login-button"
+              onClick={() => window.location.assign(oidcProvider.loginPath)}
+              type="button"
+            >
+              {t("ssoContinueWith", { provider: oidcProvider.providerName })}
+            </button>
+          ) : null}
           <Link
             className="flex h-10 w-full items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] font-semibold text-[var(--track-text)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--track-accent)] hover:bg-[var(--track-surface-hover)]"
             to="/login/sso"

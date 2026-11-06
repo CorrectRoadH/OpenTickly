@@ -25,6 +25,7 @@ import (
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
+	instanceadminpostgres "opentoggl/backend/apps/backend/internal/instance-admin/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/log"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
@@ -75,6 +76,8 @@ type routeHandlers struct {
 	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
 	samlManager     *identitysaml.Manager
 	samlConfig      *samlConfigStore
+	oidcConfig      *instanceadminpostgres.Store
+	oidcProviders   *oidcProviderCache
 	siteURL         *siteURLReaderFromDB
 	// authEmailLimiter caps the unauthenticated endpoints that mail a
 	// caller-supplied address.
@@ -199,6 +202,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		PasswordResetEmailer: passwordResetEmailer,
 		Logger:               appLogger,
 		SSO:                  identitypostgres.NewSSORepository(pool),
+		OIDC:                 identitypostgres.NewOIDCRepository(pool),
 	})
 	userHomes := tenantpostgres.NewUserHomeRepository(pool)
 	shellProvider := newBillingBackedSessionShell(
@@ -229,6 +233,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		telemetryPinger:  telemetryPinger,
 		samlManager:      identitysaml.NewManager(),
 		samlConfig:       &samlConfigStore{pool: pool},
+		oidcConfig:       instanceadminpostgres.NewStore(pool),
+		oidcProviders:    newOIDCProviderCache(),
 		siteURL:          siteURLReader,
 		authEmailLimiter: newAuthEmailRateLimiter(),
 	}, nil

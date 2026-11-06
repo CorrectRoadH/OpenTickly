@@ -465,6 +465,19 @@ export type TimeEntrySearchResult = {
   entries: Array<TimeEntrySearchItem>;
 };
 
+/**
+ * Public, pre-session view of instance single sign-on. Only what the login page needs to render a button; never credentials.
+ */
+export type SsoProviders = {
+  oidc: InstanceOidcProvider;
+};
+
+export type InstanceOidcProvider = {
+  enabled: boolean;
+  provider_name: string;
+  login_path: string;
+};
+
 export type CapabilityContext = {
   organization_id?: number;
   workspace_id?: number;
@@ -1242,3 +1255,19 @@ export type CompleteOnboardingResponses = {
 
 export type CompleteOnboardingResponse =
   CompleteOnboardingResponses[keyof CompleteOnboardingResponses];
+
+export type GetSsoProvidersData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/web/v1/auth/sso-providers";
+};
+
+export type GetSsoProvidersResponses = {
+  /**
+   * Available single sign-on providers
+   */
+  200: SsoProviders;
+};
+
+export type GetSsoProvidersResponse = GetSsoProvidersResponses[keyof GetSsoProvidersResponses];

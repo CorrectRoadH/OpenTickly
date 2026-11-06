@@ -22,6 +22,10 @@ func (server *webOpenAPIServer) LoginWebUser(ctx echo.Context) error {
 	return server.handlers.login(ctx)
 }
 
+func (server *webOpenAPIServer) GetSsoProviders(ctx echo.Context) error {
+	return server.handlers.ssoProviders(ctx)
+}
+
 func (server *webOpenAPIServer) LogoutWebUser(ctx echo.Context) error {
 	return server.handlers.logout(ctx)
 }
