@@ -23,6 +23,8 @@ const navigationHandler = createHandlerBoundToURL("index.html");
 registerRoute(
   new NavigationRoute(navigationHandler, {
     denylist: [
+      // Browser SSO redirects (SAML, OIDC) are server round-trips, never the SPA.
+      /^\/auth\//,
       /^\/api\//,
       /^\/healthz/,
       /^\/web\//,
