@@ -6,8 +6,8 @@ require (
 	github.com/crewjam/saml v0.5.1
 	github.com/getkin/kin-openapi v0.152.0
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v5 v5.11.0
-	github.com/labstack/echo/v4 v4.16.2
+	github.com/jackc/pgx/v5 v5.12.0
+	github.com/labstack/echo/v4 v4.16.3
 	github.com/oapi-codegen/echo-middleware v1.2.1
 	github.com/oapi-codegen/runtime v1.8.0
 	github.com/pressly/goose/v3 v3.29.0
