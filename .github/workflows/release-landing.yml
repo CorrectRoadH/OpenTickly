@@ -1,0 +1,90 @@
+name: Release landing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/landing/**"
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.json"
+      - ".github/workflows/release-landing.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landing-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Check, test and build landing
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/landing/Dockerfile
+          target: release
+          build-args: SOURCE_SHA=${{ github.sha }}
+          outputs: type=local,dest=release
+          cache-from: type=gha,scope=landing-release
+          cache-to: type=gha,mode=max,scope=landing-release
+      - name: Validate and package release
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, stat, tarfile
+          root = pathlib.Path('release')
+          files = []
+          for p in sorted((root / 'app').rglob('*'), key=lambda p: p.relative_to(root / 'app').as_posix().encode()):
+              mode = p.lstat().st_mode
+              assert stat.S_ISDIR(mode) or stat.S_ISREG(mode), f'Non-regular entry: {p}'
+              if p.is_dir():
+                  p.chmod(0o755)
+                  continue
+              name = p.relative_to(root / 'app').as_posix()
+              parts = name.split('/')
+              assert len(name.encode()) <= 1024 and len(parts) <= 32
+              assert all(part not in ('', '.', '..') and len(part.encode()) <= 255 for part in parts)
+              assert '\\' not in name and not any(ord(c) < 32 or 127 <= ord(c) <= 159 for c in name)
+              assert not any(part in ('.git', '.env') or part.startswith('.env.') for part in parts)
+              size = p.stat().st_size
+              assert size <= 256 * 1024**2
+              executable = bool(mode & 0o111)
+              p.chmod(0o755 if executable else 0o644)
+              files.append(dict(path=name, size=size, sha256=hashlib.sha256(p.read_bytes()).hexdigest(), executable=executable))
+          assert files and len(files) <= 100000 and sum(f['size'] for f in files) <= 2 * 1024**3
+          assert (root / 'app/node_modules/serve/build/main.js').is_file()
+          config = json.loads((root / 'app/dist/serve.json').read_text())
+          assert any(h['key'] == 'X-Release-Revision' and h['value'] == os.environ['SOURCE_SHA'] for rule in config['headers'] for h in rule['headers'])
+          runtime = 'node@sha256:067b2d425f1204b5a898ae3d3145f7524c1425a4096a62b0f67dd4344a494440'
+          manifest = dict(schema=1, app='landing', source_sha=os.environ['SOURCE_SHA'], runtime={'landing': runtime}, files=files)
+          (root / 'release.json').write_text(json.dumps(manifest, separators=(',', ':')))
+          (root / 'release.json').chmod(0o644)
+          # Explicit ordinary-file entries: no hardlink deduplication; PAX is limited to long paths.
+          with tarfile.open('bundle.tar.gz', 'w:gz', format=tarfile.PAX_FORMAT) as tar:
+              for p in [root / 'release.json', *[root / 'app' / f['path'] for f in files]]:
+                  info = tar.gettarinfo(str(p), arcname=p.relative_to(root).as_posix())
+                  info.uid = info.gid = info.mtime = 0
+                  info.uname = info.gname = ''
+                  info.type = tarfile.REGTYPE
+                  info.linkname = ''
+                  with p.open('rb') as source:
+                      tar.addfile(info, source)
+          assert pathlib.Path('bundle.tar.gz').stat().st_size <= 512 * 1024**2
+          PY
+      - name: Upload release
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: bundle.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

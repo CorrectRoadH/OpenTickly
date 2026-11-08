@@ -1,25 +1,9 @@
 name: Build and Push Landing Image
 
-# Image publishing for the SaaS landing page on k3s.
-#   main   -> :latest + :sha-<short>
-#   v*.*   -> semver tags (optional; main is the canonical deploy trigger)
-#
-# Deployment is GitOps-owned: argocd-image-updater in it-infra watches GHCR,
-# writes the selected sha-* tag back to k3s/opentoggl-saas/kustomization.yaml,
-# and ArgoCD syncs from Git. This workflow must not call ArgoCD directly.
-
+# Manual recovery packaging for the previous k3s image channel.
+# Automatic delivery is owned by release-landing.yml / deploy-landing.yml.
+# Keep the image/tag/build settings available for an explicitly coordinated rollback.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "apps/landing/**"
-      - "packages/**"
-      - "Dockerfile.landing"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-      - ".github/workflows/docker-landing.yml"
-    tags:
-      - "v*"
   workflow_dispatch:
 
 env:

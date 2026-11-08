@@ -1,0 +1,140 @@
+name: Deploy landing
+
+on:
+  workflow_run:
+    workflows: [Release landing]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: landing-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      vars.NOMAD_DEPLOY_ENABLED == 'true' &&
+      github.event.workflow_run.status == 'completed' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.id == github.event.repository.id
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      # Do not check out or execute files from the triggering build.
+      - uses: tailscale/github-action@v4.4.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Push original artifact and verify receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_KEY: ${{ secrets.NOMAD_LANDING_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.NOMAD_KNOWN_HOSTS }}
+          BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
+          BUILD_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, tempfile, urllib.error, urllib.parse, urllib.request
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          api = urllib.request.build_opener(NoRedirect)
+          repo = os.environ['GITHUB_REPOSITORY']
+          run_id = int(os.environ['BUILD_RUN_ID'])
+          attempt = int(os.environ['BUILD_RUN_ATTEMPT'])
+          prefix = f'https://api.github.com/repos/{repo}'
+          def request(path):
+              return urllib.request.Request(prefix + path, headers={
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'})
+          def metadata(path):
+              with api.open(request(path), timeout=30) as response:
+                  return json.load(response)
+          try:
+              run = metadata(f'/actions/runs/{run_id}')
+              assert run['status'] == 'completed' and run['conclusion'] == 'success'
+              assert run['event'] == 'push' and run['head_branch'] == 'main'
+              assert run['head_sha'] == os.environ['SOURCE_SHA'] and run['run_attempt'] == attempt
+              assert run['repository']['full_name'] == repo and run['head_repository']['full_name'] == repo
+              assert run['path'] == '.github/workflows/release-landing.yml'
+              matches = []
+              for page in range(1, 11):
+                  artifacts = metadata(f'/actions/runs/{run_id}/artifacts?per_page=100&page={page}')['artifacts']
+                  matches.extend(a for a in artifacts if a['name'] == f'release-{run_id}-{attempt}' and not a['expired'])
+                  if len(artifacts) < 100:
+                      break
+              else:
+                  raise ValueError('Artifact pagination limit')
+              assert len(matches) == 1
+              artifact = matches[0]
+              assert 0 < artifact['size_in_bytes'] <= 512 * 1024**2
+              # GitHub returns a signed storage redirect. Never forward API credentials to it.
+              try:
+                  api.open(request(f"/actions/artifacts/{artifact['id']}/zip"), timeout=30)
+                  raise ValueError('Expected artifact redirect')
+              except urllib.error.HTTPError as redirect:
+                  assert redirect.code == 302
+                  location = redirect.headers['Location']
+              parsed = urllib.parse.urlsplit(location)
+              assert parsed.scheme == 'https' and parsed.hostname and not parsed.username and not parsed.password
+              with tempfile.TemporaryDirectory(prefix='landing-deploy-') as temp:
+                  directory = pathlib.Path(temp)
+                  archive = directory / 'artifact.zip'
+                  digest = hashlib.sha256()
+                  total = 0
+                  with api.open(location, timeout=60) as response, archive.open('wb') as output:
+                      while chunk := response.read(1024 * 1024):
+                          total += len(chunk)
+                          assert total <= 512 * 1024**2
+                          digest.update(chunk)
+                          output.write(chunk)
+                  assert total == artifact['size_in_bytes']
+                  assert artifact['digest'] == 'sha256:' + digest.hexdigest()
+                  key = directory / 'identity'
+                  hosts = directory / 'known_hosts'
+                  key.write_text(os.environ.pop('DEPLOY_KEY') + '\n')
+                  key.chmod(0o600)
+                  hosts.write_text(os.environ.pop('KNOWN_HOSTS') + '\n')
+                  hosts.chmod(0o600)
+                  envelope = dict(schema=1, build_run_id=run_id, build_run_attempt=attempt,
+                                  artifact_id=artifact['id'], github_token=os.environ.pop('GH_TOKEN'))
+                  command = ['ssh', '-T', '-p', '2223', '-i', str(key),
+                             '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes',
+                             '-o', 'StrictHostKeyChecking=yes', '-o', f'UserKnownHostsFile={hosts}',
+                             '-o', 'GlobalKnownHostsFile=/dev/null', '-o', 'ConnectTimeout=30',
+                             '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4',
+                             'deploy-landing@100.106.155.56']
+                  # No remote command: the key's ForceCommand owns the receiving entrypoint.
+                  with tempfile.TemporaryFile() as receipt, tempfile.TemporaryFile() as errors:
+                      with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=receipt, stderr=errors) as process:
+                          process.stdin.write((json.dumps(envelope, separators=(',', ':')) + '\n').encode())
+                          del envelope
+                          with archive.open('rb') as source:
+                              while chunk := source.read(1024 * 1024):
+                                  process.stdin.write(chunk)
+                          process.stdin.close()
+                          result = process.wait(timeout=1800)
+                      assert result == 0, 'SSH receive failed'
+                      assert receipt.tell() <= 16384, 'Oversized receipt'
+                      receipt.seek(0)
+                      data = json.load(receipt)
+                  assert data['app'] == 'landing'
+                  phase = data['phase']
+                  if phase == 'superseded':
+                      print('::notice::Landing build superseded; this build is not the running release')
+                      raise SystemExit(0)
+                  assert phase in ('healthy', 'no-op'), 'Release did not become healthy'
+                  assert data['source_sha'] == os.environ['SOURCE_SHA']
+                  print('Landing release: ' + phase + ' ' + data['source_sha'])
+          except Exception:
+              # Do not print HTTP errors, signed URLs, credentials or remote input/output.
+              raise SystemExit('Landing deployment failed; inspect the receiver receipt on the host') from None
+          PY
