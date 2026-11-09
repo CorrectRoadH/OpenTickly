@@ -17,7 +17,7 @@ import {
   WorkspaceSettingsPage,
 } from "./route-tree-lazy-pages.tsx";
 
-type InstanceAdminSection = "overview" | "users" | "organizations" | "config";
+type InstanceAdminSection = "overview" | "users" | "organizations" | "config" | "sso";
 
 /* ---------- workspace settings ---------- */
 
@@ -106,7 +106,13 @@ function LegacyOrganizationSettingsRouteComponent() {
 
 function InstanceAdminRouteComponent() {
   const params = instanceAdminRoute.useParams();
-  const validSections: InstanceAdminSection[] = ["overview", "users", "organizations", "config"];
+  const validSections: InstanceAdminSection[] = [
+    "overview",
+    "users",
+    "organizations",
+    "config",
+    "sso",
+  ];
   const section = validSections.includes(params.section as InstanceAdminSection)
     ? (params.section as InstanceAdminSection)
     : "overview";

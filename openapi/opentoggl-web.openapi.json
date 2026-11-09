@@ -1170,6 +1170,24 @@
           }
         }
       }
+    },
+    "/web/v1/auth/sso-providers": {
+      "get": {
+        "summary": "List the single sign-on entry points the login page may offer",
+        "operationId": "get-sso-providers",
+        "responses": {
+          "200": {
+            "description": "Available single sign-on providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SsoProviders"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1240,7 +1258,9 @@
             "type": "string"
           }
         },
-        "required": ["api_token"]
+        "required": [
+          "api_token"
+        ]
       },
       "LoginRequest": {
         "type": "object",
@@ -1253,7 +1273,10 @@
             "type": "string"
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "OrganizationSettings": {
         "type": "object",
@@ -1301,7 +1324,10 @@
             "nullable": true
           }
         },
-        "required": ["organization", "subscription"]
+        "required": [
+          "organization",
+          "subscription"
+        ]
       },
       "OrganizationSettingsUpdate": {
         "type": "object",
@@ -1310,7 +1336,9 @@
             "$ref": "#/components/schemas/UpdateOrganizationSettingsRequest"
           }
         },
-        "required": ["organization"]
+        "required": [
+          "organization"
+        ]
       },
       "QuotaWindow": {
         "$ref": "./opentoggl-shared.openapi.json#/components/schemas/QuotaWindow"
@@ -1325,7 +1353,9 @@
             }
           }
         },
-        "required": ["projects"]
+        "required": [
+          "projects"
+        ]
       },
       "ProjectCreateRequest": {
         "type": "object",
@@ -1337,7 +1367,10 @@
             "type": "string"
           }
         },
-        "required": ["workspace_id", "name"]
+        "required": [
+          "workspace_id",
+          "name"
+        ]
       },
       "ProjectDetail": {
         "type": "object",
@@ -1420,7 +1453,9 @@
             "nullable": true
           }
         },
-        "required": ["member_id"]
+        "required": [
+          "member_id"
+        ]
       },
       "ProjectMember": {
         "type": "object",
@@ -1435,7 +1470,11 @@
             "type": "string"
           }
         },
-        "required": ["project_id", "member_id", "role"]
+        "required": [
+          "project_id",
+          "member_id",
+          "role"
+        ]
       },
       "ProjectMembersEnvelope": {
         "type": "object",
@@ -1447,7 +1486,9 @@
             }
           }
         },
-        "required": ["members"]
+        "required": [
+          "members"
+        ]
       },
       "ProjectSummary": {
         "type": "object",
@@ -1530,7 +1571,10 @@
             "description": "IANA timezone name detected from the client's browser (e.g. Asia/Shanghai). Validated server-side; invalid values are rejected with 400."
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "RegistrationPendingVerification": {
         "type": "object",
@@ -1543,7 +1587,10 @@
             "format": "email"
           }
         },
-        "required": ["email_verification_required", "email"]
+        "required": [
+          "email_verification_required",
+          "email"
+        ]
       },
       "VerifyEmailRequest": {
         "type": "object",
@@ -1552,7 +1599,9 @@
             "type": "string"
           }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       },
       "ResendVerificationEmailRequest": {
         "type": "object",
@@ -1562,7 +1611,9 @@
             "format": "email"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "ForgotPasswordRequest": {
         "type": "object",
@@ -1572,7 +1623,9 @@
             "format": "email"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "ResetPasswordRequest": {
         "type": "object",
@@ -1584,7 +1637,10 @@
             "type": "string"
           }
         },
-        "required": ["token", "password"]
+        "required": [
+          "token",
+          "password"
+        ]
       },
       "AuthPreconditionError": {
         "type": "object",
@@ -1596,7 +1652,10 @@
             "type": "string"
           }
         },
-        "required": ["error", "message"]
+        "required": [
+          "error",
+          "message"
+        ]
       },
       "SessionBootstrap": {
         "type": "object",
@@ -1672,7 +1731,10 @@
             "nullable": true
           }
         },
-        "required": ["plan_name", "state"]
+        "required": [
+          "plan_name",
+          "state"
+        ]
       },
       "UpdateCurrentUserProfileRequest": {
         "type": "object",
@@ -1721,7 +1783,9 @@
             "type": "string"
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateWebSessionRequest": {
         "type": "object",
@@ -1730,7 +1794,9 @@
             "type": "integer"
           }
         },
-        "required": ["workspace_id"]
+        "required": [
+          "workspace_id"
+        ]
       },
       "UpdateWorkspaceSettingsRequest": {
         "type": "object",
@@ -1971,7 +2037,16 @@
             "description": "Expiry timestamp for the active invite token, if any."
           }
         },
-        "required": ["id", "workspace_id", "email", "name", "role", "status", "hourly_rate", "labor_cost"]
+        "required": [
+          "id",
+          "workspace_id",
+          "email",
+          "name",
+          "role",
+          "status",
+          "hourly_rate",
+          "labor_cost"
+        ]
       },
       "WorkspaceInviteInfo": {
         "type": "object",
@@ -2005,7 +2080,15 @@
             "description": "One of pending | expired | consumed"
           }
         },
-        "required": ["workspace_id", "workspace_name", "organization_id", "organization_name", "email", "inviter_name", "status"]
+        "required": [
+          "workspace_id",
+          "workspace_name",
+          "organization_id",
+          "organization_name",
+          "email",
+          "inviter_name",
+          "status"
+        ]
       },
       "AcceptedWorkspaceInvite": {
         "type": "object",
@@ -2023,7 +2106,12 @@
             "type": "string"
           }
         },
-        "required": ["workspace_id", "workspace_name", "organization_id", "organization_name"]
+        "required": [
+          "workspace_id",
+          "workspace_name",
+          "organization_id",
+          "organization_name"
+        ]
       },
       "WorkspaceInviteSignupRequest": {
         "type": "object",
@@ -2039,7 +2127,10 @@
             "description": "IANA timezone name detected from the client's browser."
           }
         },
-        "required": ["fullname", "password"]
+        "required": [
+          "fullname",
+          "password"
+        ]
       },
       "WorkspaceMemberInvitationRequest": {
         "type": "object",
@@ -2053,7 +2144,9 @@
             "nullable": true
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "WorkspaceInvitationError": {
         "type": "object",
@@ -2076,7 +2169,10 @@
             "description": "Safe failure detail. Clients should localize the error code."
           }
         },
-        "required": ["error", "message"]
+        "required": [
+          "error",
+          "message"
+        ]
       },
       "UpdateWorkspaceMemberRateCostRequest": {
         "type": "object",
@@ -2090,7 +2186,10 @@
             "nullable": true
           }
         },
-        "required": ["hourly_rate", "labor_cost"]
+        "required": [
+          "hourly_rate",
+          "labor_cost"
+        ]
       },
       "WorkspaceMembersEnvelope": {
         "type": "object",
@@ -2102,7 +2201,9 @@
             }
           }
         },
-        "required": ["members"]
+        "required": [
+          "members"
+        ]
       },
       "WorkspacePreferences": {
         "type": "object",
@@ -2274,65 +2375,143 @@
         "type": "object",
         "description": "Workspace SAML SSO configuration plus the generated Service Provider integration details to paste into the identity provider.",
         "properties": {
-          "revision": { "type": "integer", "format": "int64", "minimum": 0 },
-          "enabled": { "type": "boolean" },
-          "profile_name": { "type": "string" },
-          "email_domain": { "type": "string" },
-          "idp_metadata_url": { "type": "string" },
-          "idp_entity_id": { "type": "string" },
-          "idp_sso_url": { "type": "string" },
-          "idp_certificate": { "type": "string" },
-          "sp_entity_id": { "type": "string" },
-          "acs_url": { "type": "string" },
-          "sign_in_url": { "type": "string" },
-          "metadata_url": { "type": "string" }
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "profile_name": {
+            "type": "string"
+          },
+          "email_domain": {
+            "type": "string"
+          },
+          "idp_metadata_url": {
+            "type": "string"
+          },
+          "idp_entity_id": {
+            "type": "string"
+          },
+          "idp_sso_url": {
+            "type": "string"
+          },
+          "idp_certificate": {
+            "type": "string"
+          },
+          "sp_entity_id": {
+            "type": "string"
+          },
+          "acs_url": {
+            "type": "string"
+          },
+          "sign_in_url": {
+            "type": "string"
+          },
+          "metadata_url": {
+            "type": "string"
+          }
         },
         "required": [
           "revision",
-          "enabled", "profile_name", "email_domain", "idp_metadata_url",
-          "idp_entity_id", "idp_sso_url", "idp_certificate",
-          "sp_entity_id", "acs_url", "sign_in_url", "metadata_url"
+          "enabled",
+          "profile_name",
+          "email_domain",
+          "idp_metadata_url",
+          "idp_entity_id",
+          "idp_sso_url",
+          "idp_certificate",
+          "sp_entity_id",
+          "acs_url",
+          "sign_in_url",
+          "metadata_url"
         ]
       },
       "WorkspaceSsoConfigUpdate": {
         "type": "object",
         "properties": {
-          "revision": { "type": "integer", "format": "int64", "minimum": 0 },
-          "enabled": { "type": "boolean" },
-          "profile_name": { "type": "string" },
-          "email_domain": { "type": "string" },
-          "idp_metadata_url": { "type": "string" },
-          "idp_entity_id": { "type": "string" },
-          "idp_sso_url": { "type": "string" },
-          "idp_certificate": { "type": "string" }
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "profile_name": {
+            "type": "string"
+          },
+          "email_domain": {
+            "type": "string"
+          },
+          "idp_metadata_url": {
+            "type": "string"
+          },
+          "idp_entity_id": {
+            "type": "string"
+          },
+          "idp_sso_url": {
+            "type": "string"
+          },
+          "idp_certificate": {
+            "type": "string"
+          }
         },
         "required": [
           "revision",
-          "enabled", "profile_name", "email_domain", "idp_metadata_url",
-          "idp_entity_id", "idp_sso_url", "idp_certificate"
+          "enabled",
+          "profile_name",
+          "email_domain",
+          "idp_metadata_url",
+          "idp_entity_id",
+          "idp_sso_url",
+          "idp_certificate"
         ]
       },
       "SsoConfigCheck": {
         "type": "object",
         "description": "One diagnostic result from validating an unsaved workspace SSO configuration.",
         "properties": {
-          "code": { "type": "string" },
-          "status": { "type": "string", "enum": ["ok", "warn", "error"] },
-          "detail": { "type": "string" }
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "warn",
+              "error"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
         },
-        "required": ["code", "status"]
+        "required": [
+          "code",
+          "status"
+        ]
       },
       "SsoConfigTestResult": {
         "type": "object",
         "description": "Diagnostic results for an unsaved workspace SAML SSO configuration.",
         "properties": {
-          "ok": { "type": "boolean" },
+          "ok": {
+            "type": "boolean"
+          },
           "checks": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/SsoConfigCheck" }
+            "items": {
+              "$ref": "#/components/schemas/SsoConfigCheck"
+            }
           }
         },
-        "required": ["ok", "checks"]
+        "required": [
+          "ok",
+          "checks"
+        ]
       },
       "WorkspaceSettingsEnvelope": {
         "type": "object",
@@ -2356,7 +2535,13 @@
             "nullable": true
           }
         },
-        "required": ["workspace", "preferences", "subscription", "capabilities", "quota"]
+        "required": [
+          "workspace",
+          "preferences",
+          "subscription",
+          "capabilities",
+          "quota"
+        ]
       },
       "WorkspaceSettingsUpdate": {
         "type": "object",
@@ -2376,7 +2561,9 @@
             "type": "boolean"
           }
         },
-        "required": ["completed"]
+        "required": [
+          "completed"
+        ]
       },
       "CompleteOnboardingRequest": {
         "type": "object",
@@ -2388,7 +2575,9 @@
             "type": "string"
           }
         },
-        "required": ["version"]
+        "required": [
+          "version"
+        ]
       },
       "TimeEntrySearchItem": {
         "type": "object",
@@ -2469,7 +2658,40 @@
             }
           }
         },
-        "required": ["entries"]
+        "required": [
+          "entries"
+        ]
+      },
+      "SsoProviders": {
+        "type": "object",
+        "description": "Public, pre-session view of instance single sign-on. Only what the login page needs to render a button; never credentials.",
+        "properties": {
+          "oidc": {
+            "$ref": "#/components/schemas/InstanceOidcProvider"
+          }
+        },
+        "required": [
+          "oidc"
+        ]
+      },
+      "InstanceOidcProvider": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "provider_name": {
+            "type": "string"
+          },
+          "login_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "provider_name",
+          "login_path"
+        ]
       }
     }
   }

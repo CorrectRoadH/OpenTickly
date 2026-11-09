@@ -97,6 +97,7 @@ export {
   useOnboardingQuery,
   useCompleteOnboardingMutation,
   useResetOnboardingMutation,
+  useSsoProvidersQuery,
   useSsoResolveMutation,
   useWorkspaceSsoConfigQuery,
   useUpdateWorkspaceSsoConfigMutation,

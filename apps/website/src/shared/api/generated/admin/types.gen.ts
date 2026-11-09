@@ -151,6 +151,57 @@ export type OrganizationList = {
   total_count: number;
 };
 
+/**
+ * Instance-level OpenID Connect provider plus the derived URLs to register at the provider. The client secret is never returned.
+ */
+export type InstanceOidcConfig = {
+  revision: number;
+  enabled: boolean;
+  provider_name: string;
+  issuer_url: string;
+  client_id: string;
+  client_secret_configured: boolean;
+  allowed_email_domains: Array<string>;
+  auto_provision: boolean;
+  /**
+   * `{site_url}/auth/oidc/callback`; empty until a Site URL is configured.
+   */
+  redirect_url: string;
+  login_url: string;
+  site_url_configured: boolean;
+  updated_at: string;
+};
+
+export type UpdateInstanceOidcConfigRequest = {
+  /**
+   * Optimistic lock: the revision last read. Zero for a fresh instance.
+   */
+  revision: number;
+  enabled: boolean;
+  provider_name: string;
+  issuer_url: string;
+  client_id: string;
+  /**
+   * Omit or send empty to keep the stored secret.
+   */
+  client_secret?: string;
+  allowed_email_domains: Array<string>;
+  auto_provision: boolean;
+};
+
+export type OidcDiscoveryRequest = {
+  issuer_url: string;
+};
+
+export type OidcDiscoveryResult = {
+  ok: boolean;
+  issuer?: string;
+  authorization_endpoint?: string;
+  token_endpoint?: string;
+  jwks_uri?: string;
+  message: string;
+};
+
 export type OpentogglSharedOpenapiFeatureGateDecision = {
   capability_key: string;
   allowed: boolean;
@@ -442,3 +493,72 @@ export type GetInstanceFeatureGateResponses = {
 
 export type GetInstanceFeatureGateResponse =
   GetInstanceFeatureGateResponses[keyof GetInstanceFeatureGateResponses];
+
+export type GetInstanceOidcConfigData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/admin/v1/sso/oidc";
+};
+
+export type GetInstanceOidcConfigResponses = {
+  /**
+   * Instance OIDC configuration
+   */
+  200: InstanceOidcConfig;
+};
+
+export type GetInstanceOidcConfigResponse =
+  GetInstanceOidcConfigResponses[keyof GetInstanceOidcConfigResponses];
+
+export type UpdateInstanceOidcConfigData = {
+  body: UpdateInstanceOidcConfigRequest;
+  path?: never;
+  query?: never;
+  url: "/admin/v1/sso/oidc";
+};
+
+export type UpdateInstanceOidcConfigErrors = {
+  /**
+   * Validation failed; `message` names the field
+   */
+  400: unknown;
+  /**
+   * Stale revision: the configuration was changed by someone else
+   */
+  409: unknown;
+};
+
+export type UpdateInstanceOidcConfigResponses = {
+  /**
+   * Updated instance OIDC configuration
+   */
+  200: InstanceOidcConfig;
+};
+
+export type UpdateInstanceOidcConfigResponse =
+  UpdateInstanceOidcConfigResponses[keyof UpdateInstanceOidcConfigResponses];
+
+export type TestInstanceOidcConfigData = {
+  body: OidcDiscoveryRequest;
+  path?: never;
+  query?: never;
+  url: "/admin/v1/sso/oidc/test";
+};
+
+export type TestInstanceOidcConfigErrors = {
+  /**
+   * Issuer URL missing or not https
+   */
+  400: unknown;
+};
+
+export type TestInstanceOidcConfigResponses = {
+  /**
+   * Discovery finished. `ok` reports whether the issuer published usable metadata; a failed discovery is still a 200 so the admin sees the reason.
+   */
+  200: OidcDiscoveryResult;
+};
+
+export type TestInstanceOidcConfigResponse =
+  TestInstanceOidcConfigResponses[keyof TestInstanceOidcConfigResponses];

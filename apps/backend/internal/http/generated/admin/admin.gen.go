@@ -183,6 +183,24 @@ type InstanceHealth struct {
 // InstanceHealthStatus defines model for InstanceHealth.Status.
 type InstanceHealthStatus string
 
+// InstanceOidcConfig Instance-level OpenID Connect provider plus the derived URLs to register at the provider. The client secret is never returned.
+type InstanceOidcConfig struct {
+	AllowedEmailDomains    []string `json:"allowed_email_domains"`
+	AutoProvision          bool     `json:"auto_provision"`
+	ClientId               string   `json:"client_id"`
+	ClientSecretConfigured bool     `json:"client_secret_configured"`
+	Enabled                bool     `json:"enabled"`
+	IssuerUrl              string   `json:"issuer_url"`
+	LoginUrl               string   `json:"login_url"`
+	ProviderName           string   `json:"provider_name"`
+
+	// RedirectUrl `{site_url}/auth/oidc/callback`; empty until a Site URL is configured.
+	RedirectUrl       string    `json:"redirect_url"`
+	Revision          int64     `json:"revision"`
+	SiteUrlConfigured bool      `json:"site_url_configured"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
 // InstanceUser defines model for InstanceUser.
 type InstanceUser struct {
 	CreatedAt       time.Time          `json:"created_at"`
@@ -214,6 +232,21 @@ type InstanceVersion struct {
 	ReleaseUrl      *string                `json:"release_url"`
 	ReleasedAt      *time.Time             `json:"released_at"`
 	UpdateAvailable bool                   `json:"update_available"`
+}
+
+// OidcDiscoveryRequest defines model for OidcDiscoveryRequest.
+type OidcDiscoveryRequest struct {
+	IssuerUrl string `json:"issuer_url"`
+}
+
+// OidcDiscoveryResult defines model for OidcDiscoveryResult.
+type OidcDiscoveryResult struct {
+	AuthorizationEndpoint *string `json:"authorization_endpoint,omitempty"`
+	Issuer                *string `json:"issuer,omitempty"`
+	JwksUri               *string `json:"jwks_uri,omitempty"`
+	Message               string  `json:"message"`
+	Ok                    bool    `json:"ok"`
+	TokenEndpoint         *string `json:"token_endpoint,omitempty"`
 }
 
 // OrganizationList defines model for OrganizationList.
@@ -258,6 +291,22 @@ type UpdateInstanceConfigRequest struct {
 // UpdateInstanceConfigRequestRegistrationMode defines model for UpdateInstanceConfigRequest.RegistrationMode.
 type UpdateInstanceConfigRequestRegistrationMode string
 
+// UpdateInstanceOidcConfigRequest defines model for UpdateInstanceOidcConfigRequest.
+type UpdateInstanceOidcConfigRequest struct {
+	AllowedEmailDomains []string `json:"allowed_email_domains"`
+	AutoProvision       bool     `json:"auto_provision"`
+	ClientId            string   `json:"client_id"`
+
+	// ClientSecret Omit or send empty to keep the stored secret.
+	ClientSecret *string `json:"client_secret,omitempty"`
+	Enabled      bool    `json:"enabled"`
+	IssuerUrl    string  `json:"issuer_url"`
+	ProviderName string  `json:"provider_name"`
+
+	// Revision Optimistic lock: the revision last read. Zero for a fresh instance.
+	Revision int64 `json:"revision"`
+}
+
 // UpdateRegistrationPolicyRequest defines model for UpdateRegistrationPolicyRequest.
 type UpdateRegistrationPolicyRequest struct {
 	Mode UpdateRegistrationPolicyRequestMode `json:"mode"`
@@ -294,6 +343,12 @@ type SendTestEmailJSONRequestBody SendTestEmailJSONBody
 // UpdateRegistrationPolicyJSONRequestBody defines body for UpdateRegistrationPolicy for application/json ContentType.
 type UpdateRegistrationPolicyJSONRequestBody = UpdateRegistrationPolicyRequest
 
+// UpdateInstanceOidcConfigJSONRequestBody defines body for UpdateInstanceOidcConfig for application/json ContentType.
+type UpdateInstanceOidcConfigJSONRequestBody = UpdateInstanceOidcConfigRequest
+
+// TestInstanceOidcConfigJSONRequestBody defines body for TestInstanceOidcConfig for application/json ContentType.
+type TestInstanceOidcConfigJSONRequestBody = OidcDiscoveryRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get current bootstrap state
@@ -326,6 +381,15 @@ type ServerInterface interface {
 	// Update registration policy
 	// (PUT /admin/v1/registration-policy)
 	UpdateRegistrationPolicy(ctx echo.Context) error
+	// Read the instance OpenID Connect single sign-on configuration
+	// (GET /admin/v1/sso/oidc)
+	GetInstanceOidcConfig(ctx echo.Context) error
+	// Update the instance OpenID Connect single sign-on configuration
+	// (PUT /admin/v1/sso/oidc)
+	UpdateInstanceOidcConfig(ctx echo.Context) error
+	// Run OpenID Connect discovery for an issuer
+	// (POST /admin/v1/sso/oidc/test)
+	TestInstanceOidcConfig(ctx echo.Context) error
 	// List instance users
 	// (GET /admin/v1/users)
 	ListInstanceUsers(ctx echo.Context, params ListInstanceUsersParams) error
@@ -439,6 +503,33 @@ func (w *ServerInterfaceWrapper) UpdateRegistrationPolicy(ctx echo.Context) erro
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateRegistrationPolicy(ctx)
+	return err
+}
+
+// GetInstanceOidcConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) GetInstanceOidcConfig(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetInstanceOidcConfig(ctx)
+	return err
+}
+
+// UpdateInstanceOidcConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateInstanceOidcConfig(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateInstanceOidcConfig(ctx)
+	return err
+}
+
+// TestInstanceOidcConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) TestInstanceOidcConfig(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestInstanceOidcConfig(ctx)
 	return err
 }
 
@@ -560,6 +651,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/admin/v1/organizations", wrapper.ListOrganizations)
 	router.GET(baseURL+"/admin/v1/registration-policy", wrapper.GetRegistrationPolicy)
 	router.PUT(baseURL+"/admin/v1/registration-policy", wrapper.UpdateRegistrationPolicy)
+	router.GET(baseURL+"/admin/v1/sso/oidc", wrapper.GetInstanceOidcConfig)
+	router.PUT(baseURL+"/admin/v1/sso/oidc", wrapper.UpdateInstanceOidcConfig)
+	router.POST(baseURL+"/admin/v1/sso/oidc/test", wrapper.TestInstanceOidcConfig)
 	router.GET(baseURL+"/admin/v1/users", wrapper.ListInstanceUsers)
 	router.POST(baseURL+"/admin/v1/users/:user_id/disable", wrapper.DisableInstanceUser)
 	router.POST(baseURL+"/admin/v1/users/:user_id/restore", wrapper.RestoreInstanceUser)
@@ -570,48 +664,58 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

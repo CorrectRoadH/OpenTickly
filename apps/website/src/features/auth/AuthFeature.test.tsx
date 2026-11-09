@@ -29,9 +29,12 @@ vi.mock("sonner", () => ({
   },
 }));
 
+const mockSsoProvidersQuery = vi.fn();
+
 vi.mock("../../shared/query/web-shell.ts", () => ({
   useLoginMutation: () => mockLoginMutation(),
   useRegisterMutation: () => mockRegisterMutation(),
+  useSsoProvidersQuery: () => mockSsoProvidersQuery(),
 }));
 
 describe("AuthFeature", () => {
@@ -47,6 +50,27 @@ describe("AuthFeature", () => {
       isPending: false,
       mutateAsync: vi.fn(),
     });
+    mockSsoProvidersQuery.mockReturnValue({ data: undefined });
+  });
+
+  it("offers the instance OpenID Connect provider when it is enabled", () => {
+    mockSsoProvidersQuery.mockReturnValue({
+      data: { oidc: { enabled: true, provider_name: "Google", login_path: "/auth/oidc/login" } },
+    });
+
+    render(<AuthFeature mode="login" />);
+
+    expect(screen.getByTestId("oidc-login-button")).toHaveTextContent("ssoContinueWith");
+  });
+
+  it("hides the OpenID Connect button when the provider is disabled", () => {
+    mockSsoProvidersQuery.mockReturnValue({
+      data: { oidc: { enabled: false, provider_name: "", login_path: "/auth/oidc/login" } },
+    });
+
+    render(<AuthFeature mode="login" />);
+
+    expect(screen.queryByTestId("oidc-login-button")).not.toBeInTheDocument();
   });
 
   it("shows login errors in a toast instead of an inline alert", async () => {

@@ -14,6 +14,8 @@ type Service struct {
 	registrationPolicy RegistrationPolicyStore
 	instanceUsers      InstanceUserStore
 	instanceConfig     InstanceConfigStore
+	oidcConfig         InstanceOIDCConfigStore
+	oidcDiscoverer     OIDCDiscoverer
 	orgLister          OrganizationLister
 	userCreator        UserCreator
 	emailSender        EmailSender
@@ -26,6 +28,8 @@ type Config struct {
 	RegistrationPolicy RegistrationPolicyStore
 	InstanceUsers      InstanceUserStore
 	InstanceConfig     InstanceConfigStore
+	OIDCConfig         InstanceOIDCConfigStore
+	OIDCDiscoverer     OIDCDiscoverer
 	OrgLister          OrganizationLister
 	UserCreator        UserCreator
 	EmailSender        EmailSender
@@ -45,6 +49,9 @@ func NewService(cfg Config) (*Service, error) {
 	if cfg.InstanceConfig == nil {
 		return nil, errors.New("instance-admin: instance config store is required")
 	}
+	if cfg.OIDCConfig == nil {
+		return nil, errors.New("instance-admin: oidc config store is required")
+	}
 	if cfg.OrgLister == nil {
 		return nil, errors.New("instance-admin: organization lister is required")
 	}
@@ -62,6 +69,8 @@ func NewService(cfg Config) (*Service, error) {
 		registrationPolicy: cfg.RegistrationPolicy,
 		instanceUsers:      cfg.InstanceUsers,
 		instanceConfig:     cfg.InstanceConfig,
+		oidcConfig:         cfg.OIDCConfig,
+		oidcDiscoverer:     cfg.OIDCDiscoverer,
 		orgLister:          cfg.OrgLister,
 		userCreator:        cfg.UserCreator,
 		emailSender:        cfg.EmailSender,

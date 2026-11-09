@@ -55,6 +55,7 @@ type Config struct {
 	PasswordResetEmailer PasswordResetEmailer
 	Logger               log.Logger
 	SSO                  SSORepository
+	OIDC                 OIDCRepository
 }
 
 type UserRepository interface {
@@ -219,6 +220,7 @@ type Service struct {
 	now                  func() time.Time
 	logger               log.Logger
 	sso                  SSORepository
+	oidc                 OIDCRepository
 }
 
 func NewService(cfg Config) *Service {
@@ -248,6 +250,7 @@ func NewService(cfg Config) *Service {
 		now:                  time.Now,
 		logger:               logger,
 		sso:                  cfg.SSO,
+		oidc:                 cfg.OIDC,
 	}
 }
 

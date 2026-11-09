@@ -149,6 +149,7 @@ func newTestService(t *testing.T) (*Service, *memBootstrapStore, *memRegistratio
 		RegistrationPolicy: rps,
 		InstanceUsers:      us,
 		InstanceConfig:     &memInstanceConfigStore{},
+		OIDCConfig:         &memOIDCStore{},
 		OrgLister:          &memOrgLister{},
 		UserCreator:        uc,
 		EmailSender:        &memEmailSender{configured: true},

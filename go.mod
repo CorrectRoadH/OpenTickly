@@ -3,6 +3,7 @@ module opentoggl/backend
 go 1.27.3
 
 require (
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/crewjam/saml v0.5.1
 	github.com/getkin/kin-openapi v0.152.0
 	github.com/google/uuid v1.6.0
@@ -13,6 +14,7 @@ require (
 	github.com/pressly/goose/v3 v3.29.0
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/samber/lo v1.53.0
+	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.24.0
 	golang.org/x/text v0.43.0
 	golang.org/x/time v0.16.0
@@ -22,6 +24,7 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beevik/etree v1.7.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect

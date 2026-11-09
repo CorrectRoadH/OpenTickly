@@ -18,6 +18,7 @@ import {
   completeOnboarding,
   getOnboarding,
   getWebSession,
+  getSsoProviders,
   getWorkspaceSsoConfig,
   loginWebUser,
   logoutWebUser,
@@ -140,6 +141,19 @@ export function useUpdateWebSessionMutation() {
 
 export type { SsoResolveResult } from "../api/auth-client.ts";
 export type { SsoConfigCheck, SsoConfigTestResult } from "../api/web/index.ts";
+
+export const ssoProvidersQueryKey = ["sso-providers"] as const;
+
+// useSsoProvidersQuery tells the login page which instance-level single
+// sign-on buttons to render. It is public and never carries credentials.
+export function useSsoProvidersQuery() {
+  return useQuery({
+    queryKey: ssoProvidersQueryKey,
+    queryFn: () => unwrapWebApiResult(getSsoProviders()),
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
 
 // useSsoResolveMutation looks up the workspace SAML2 profile for an email so
 // the dedicated SSO login screen can redirect the browser to the IdP.
