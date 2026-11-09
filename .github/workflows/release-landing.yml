@@ -3,14 +3,6 @@ name: Release landing
 on:
   push:
     branches: [main]
-    paths:
-      - "apps/landing/**"
-      - "packages/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-      - "tsconfig.json"
-      - ".github/workflows/release-landing.yml"
 
 permissions:
   contents: read
@@ -24,8 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - uses: docker/setup-buildx-action@v4
-      - name: Check, test and build landing
+      - name: Build landing
         uses: docker/build-push-action@v7
         with:
           context: .

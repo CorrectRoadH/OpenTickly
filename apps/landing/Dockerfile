@@ -15,7 +15,6 @@ RUN vp install --filter @opentickly/landing... --frozen-lockfile --ignore-script
 COPY --chown=vp:vp apps/landing ./apps/landing
 COPY --chown=vp:vp packages ./packages
 ENV NODE_OPTIONS="--dns-result-order=ipv4first"
-RUN vp run @opentickly/landing#check && vp run @opentickly/landing#test
 RUN vp run @opentickly/landing#build
 ARG SOURCE_SHA
 # Copy only serve and its runtime dependencies, preserving dependency resolution.

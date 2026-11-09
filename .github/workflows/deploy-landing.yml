@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 permissions:
+  id-token: write
   actions: read
   contents: read
 
@@ -29,8 +30,8 @@ jobs:
       # Do not check out or execute files from the triggering build.
       - uses: tailscale/github-action@v4.4.0
         with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          oauth-client-id: ${{ vars.NOMAD_TS_CLIENT_ID }}
+          audience: ${{ vars.NOMAD_TS_AUDIENCE }}
           tags: tag:ci
       - name: Push original artifact and verify receipt
         env:
