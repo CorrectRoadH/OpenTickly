@@ -1,5 +1,4 @@
 import { dateFnsLocalizer } from "react-big-calendar";
-import { mix } from "polished";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { TimeFormat } from "./overview-data.ts";
@@ -119,24 +118,7 @@ export function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTi
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 }
 
-/** Lighten the project color for use as a readable label on dark backgrounds.
- *  Mix 60% project color with white to get a pastel-ish tint. */
-export function vividColor(color: string): string {
-  if (!color?.startsWith("#")) return color ?? "var(--track-accent)";
-  return mix(0.6, color, "#ffffff");
-}
-
-/** Surface color for the current theme (dark). Toggl mixes projectColor with the
- *  theme background; we use the design-token value so it stays in sync. */
-const SURFACE_BG = "#1b1b1b";
-
-/**
- * Mix the project color with the surface background, matching Toggl's polished.mix
- * algorithm.  weight 0 -> pure background, 1 -> pure project color.
- *
- * Toggl constants: normal=0.5, hover=0.8, running-stripe=0.08.
- */
-export function colorToOverlay(color: string, weight = 0.5): string {
-  if (!color?.startsWith("#")) return color ?? SURFACE_BG;
-  return mix(weight, color, SURFACE_BG);
+/** Blend with the active theme surface; CSS updates immediately on theme changes. */
+export function colorToOverlay(color: string, weight = 0.15): string {
+  return `color-mix(in srgb, ${color || "var(--track-accent)"} ${weight * 100}%, var(--track-surface))`;
 }

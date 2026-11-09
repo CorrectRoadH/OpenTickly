@@ -142,3 +142,7 @@ existing API contracts, failure handling, TDD evidence and acceptance scope.
 
 See [autosave, ordered entity writes and bulk retries](continuous-operations.md)
 for the follow-up contracts and regression coverage.
+
+## Timer readability and recent entries
+
+See [#136/#137 behavior and acceptance](timer-readability-and-recent-entries.md).

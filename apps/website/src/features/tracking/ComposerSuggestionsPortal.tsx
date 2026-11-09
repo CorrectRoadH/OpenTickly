@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
+import { toast } from "sonner";
 import { TimerComposerSuggestionsDialog } from "./TimerComposerSuggestionsDialog.tsx";
 import type { useTimerComposer } from "./useTimerComposer.ts";
 import type { useWorkspaceData } from "./useWorkspaceData.ts";
@@ -53,11 +53,9 @@ export function ComposerSuggestionsPortal({
         composer.closeComposerSuggestions();
       }}
       onTimeEntrySelect={(entry) => {
-        composer.setDraftDescription(entry.description ?? "");
-        composer.setDraftProjectId(resolveTimeEntryProjectId(entry));
-        composer.setDraftTaskId(entry.task_id ?? null);
-        composer.setDraftTagIds(entry.tag_ids ?? []);
-        composer.closeComposerSuggestions();
+        void composer.handleSuggestedEntry(entry).catch((error: unknown) => {
+          toast.error(error instanceof Error ? error.message : composer.timerErrorMessage);
+        });
       }}
       onWorkspaceSelect={(nextWorkspaceId) => {
         composer.switchWorkspace(nextWorkspaceId);

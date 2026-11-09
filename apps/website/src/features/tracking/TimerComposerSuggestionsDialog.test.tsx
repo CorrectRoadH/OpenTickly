@@ -48,3 +48,46 @@ describe("TimerComposerSuggestionsDialog", () => {
     expect(screen.queryByRole("listbox", { name: "workspaceFallback" })).not.toBeInTheDocument();
   });
 });
+
+describe("recent entry metadata", () => {
+  it("preserves task and billable metadata when selecting a search result", () => {
+    const onSelect = vi.fn();
+    render(
+      <TimerComposerSuggestionsDialog
+        anchor={{ height: 40, left: 16, top: 16, width: 520 }}
+        currentWorkspaceId={1}
+        onClose={vi.fn()}
+        onProjectSelect={vi.fn()}
+        onTimeEntrySelect={onSelect}
+        onWorkspaceSelect={vi.fn()}
+        projects={[]}
+        timeEntries={[]}
+        workspaces={[]}
+        query="Review"
+        searchResults={[
+          {
+            id: 10,
+            workspace_id: 1,
+            description: "Review",
+            project_id: 2,
+            task_id: 3,
+            task_name: "Design",
+            tag_ids: [4],
+            tags: ["Work"],
+            billable: true,
+            start: "2026-11-07T10:00:00Z",
+            duration: 60,
+          },
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Review/ }));
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        task_id: 3,
+        tag_ids: [4],
+        billable: true,
+      }),
+    );
+  });
+});

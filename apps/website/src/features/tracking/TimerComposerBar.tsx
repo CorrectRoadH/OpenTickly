@@ -83,7 +83,7 @@ export function TimerComposerBar({
           Time entry description
         </label>
         <input
-          className="h-10 w-full bg-transparent text-[14px] font-medium text-white outline-none placeholder:text-[var(--track-text-muted)]"
+          className="h-10 w-full bg-transparent text-[14px] font-medium text-[var(--track-text)] outline-none placeholder:text-[var(--track-text-muted)]"
           id="timer-description"
           ref={composer.timerDescriptionInputRef as unknown as React.LegacyRef<HTMLInputElement>}
           onBlur={() => {
@@ -232,7 +232,7 @@ export function TimerComposerBar({
               : composer.draftBillable
           )
             ? "text-[var(--track-accent)]"
-            : "text-[var(--track-text-muted)] hover:text-white"
+            : "text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
         }`}
         onClick={() => {
           if (composer.runningEntry?.id != null) {

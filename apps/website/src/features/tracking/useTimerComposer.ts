@@ -60,6 +60,8 @@ export function useTimerComposer() {
     return "We could not load or update time entries right now.";
   })();
 
+  const suggestionPending = useRef(false);
+
   // Ref
   const timerDescriptionInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -147,6 +149,29 @@ export function useTimerComposer() {
     setRunningDescription(continuedDescription);
   };
 
+  const handleSuggestedEntry = async (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    if (suggestionPending.current || timerMutationPending || runningEntry) return;
+    const fillDraft = () => {
+      setDraftDescription(entry.description ?? "");
+      setDraftProjectId(resolveTimeEntryProjectId(entry));
+      setDraftTaskId(entry.task_id ?? entry.tid ?? null);
+      setDraftTagIds(entry.tag_ids ?? []);
+      setDraftBillable(entry.billable ?? false);
+    };
+    fillDraft();
+    closeComposerSuggestions();
+    if (useTimerViewStore.getState().timerInputMode !== "automatic") return;
+    suggestionPending.current = true;
+    try {
+      await handleContinueEntry(entry);
+    } catch (error) {
+      fillDraft();
+      throw error;
+    } finally {
+      suggestionPending.current = false;
+    }
+  };
+
   const handleStartFromUrl = async (params: {
     description?: string;
     projectId?: number;
@@ -167,7 +192,6 @@ export function useTimerComposer() {
 
   const handleIdleDescriptionFocus = () => {
     if (runningEntry?.id != null) return;
-    if (draftProjectId != null || draftTagIds.length > 0) return;
     openComposerSuggestions();
   };
 
@@ -210,6 +234,7 @@ export function useTimerComposer() {
     handleTimerAction,
     handleRunningDescriptionCommit,
     handleContinueEntry,
+    handleSuggestedEntry,
     handleStartFromUrl,
     handleIdleDescriptionFocus,
     closeComposerSuggestions,

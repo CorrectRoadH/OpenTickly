@@ -9,7 +9,7 @@ import { useRenderCount } from "@uidotdev/usehooks";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { PlayIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import type { CalendarEvent } from "./calendar-types.ts";
-import { colorToOverlay, vividColor } from "./calendar-types.ts";
+import { colorToOverlay } from "./calendar-types.ts";
 
 // react-big-calendar re-invokes `components.event(props)` multiple times
 // per click (its internal selection/DnD state updates). Those invocations
@@ -75,7 +75,7 @@ function CalendarEventCardImpl({
           durationSeconds >= 900 ? "px-1.5 py-1" : "px-0 py-0"
         }`}
         style={{
-          backgroundColor: isRunning ? colorToOverlay(color, 0.08) : colorToOverlay(color, 0.5),
+          backgroundColor: isRunning ? colorToOverlay(color, 0.08) : colorToOverlay(color),
           backgroundImage: isRunning
             ? `repeating-linear-gradient(-45deg, transparent 0 0.5em, ${transparentize(0.92, color)} 0.5em 0.6em)`
             : undefined,
@@ -98,7 +98,7 @@ function CalendarEventCardImpl({
           {entry.project_name ? (
             <span
               className="truncate text-[12px] font-medium leading-tight"
-              style={{ color: vividColor(color) }}
+              style={{ color: "var(--track-text)" }}
             >
               {entry.project_name}
               {entry.task_name ? (
