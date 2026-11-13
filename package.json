@@ -26,8 +26,8 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "catalog:",
-    "@playwright/test": "^1.64.1",
-    "@vitejs/plugin-react": "^6.1.2",
+    "@playwright/test": "^1.65.0",
+    "@vitejs/plugin-react": "^6.3.0",
     "execa": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
