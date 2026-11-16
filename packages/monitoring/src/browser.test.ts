@@ -16,6 +16,45 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 describe("browser SDK", () => {
+  it("sends v2 spans with DSC for a sampled parent without baggage", async () => {
+    const envelopes: Envelope[] = [];
+    Sentry.init({
+      ...privacyOptions("web", config),
+      defaultIntegrations: false,
+      tracesSampleRate: 1,
+      integrations: [envelopePrivacy(config)],
+      transport: () => ({
+        send: async (envelope) => {
+          envelopes.push(envelope);
+          return { statusCode: 200 };
+        },
+        flush: async () => true,
+      }),
+    });
+    const traceId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    Sentry.continueTrace({ sentryTrace: `${traceId}-bbbbbbbbbbbbbbbb-1`, baggage: undefined }, () =>
+      Sentry.startSpan({ name: "navigation", op: "navigation" }, () => {
+        Sentry.startSpan({ name: "child", op: "http.client" }, () => {});
+      }),
+    );
+    await Sentry.flush(2000);
+    const spans = [];
+    for (const [header, entries] of envelopes) {
+      for (const [item, body] of entries) {
+        if (item.type !== "span") continue;
+        const payload = body as SerializedStreamedSpanContainer;
+        expect(item).toEqual({
+          type: "span",
+          content_type: "application/vnd.sentry.items.span.v2+json",
+          item_count: payload.items.length,
+        });
+        expect(header.trace).toMatchObject({ trace_id: traceId, public_key: "public" });
+        expect(payload.items.every((span) => span.trace_id === traceId)).toBe(true);
+        spans.push(...payload.items);
+      }
+    }
+    expect(spans).toHaveLength(2);
+  });
   it("does not create a client without DSN", () => {
     initBrowser(
       "web",
