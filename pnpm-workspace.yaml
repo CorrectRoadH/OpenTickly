@@ -48,6 +48,7 @@ catalog:
   workbox-strategies: ^7.4.1
   workbox-window: ^7.4.1
   zustand: ^5.0.16
+  "@babel/parser": ^8.1.2
 
 catalogMode: prefer
 # pnpm 12 no longer reads the "pnpm" field in package.json, so every override
