@@ -9,8 +9,12 @@ export function envelopePrivacy(config: TelemetryConfig): Integration {
         const trace = envelope[0].trace;
         let spanTraceId: unknown;
         for (let index = envelope[1].length - 1; index >= 0; index--) {
-          const item = envelope[1][index],
-            payload = item[1];
+          const item = envelope[1][index];
+          if (!item) {
+            envelope[1].splice(index, 1);
+            continue;
+          }
+          const payload = item[1];
           if (
             item[0].type === "span" &&
             payload &&
