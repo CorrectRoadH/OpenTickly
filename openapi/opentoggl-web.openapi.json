@@ -5,6 +5,32 @@
     "version": "0.0.0"
   },
   "paths": {
+    "/web/v1/telemetry/config": {
+      "get": {
+        "summary": "Read explicitly configured browser monitoring settings",
+        "operationId": "get-browser-telemetry-config",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "No-store public configuration; empty values disable monitoring",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserTelemetryConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/auth/login": {
       "post": {
         "summary": "Login through the web app shell",
@@ -1174,6 +1200,41 @@
   },
   "components": {
     "schemas": {
+      "BrowserTelemetryConfig": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sentry"
+        ],
+        "properties": {
+          "sentry": {
+            "$ref": "#/components/schemas/BrowserSentryConfig"
+          }
+        }
+      },
+      "BrowserSentryConfig": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dsn",
+          "environment",
+          "release"
+        ],
+        "properties": {
+          "dsn": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "environment": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "release": {
+            "type": "string",
+            "maxLength": 200
+          }
+        }
+      },
       "CapabilitySnapshot": {
         "$ref": "./opentoggl-shared.openapi.json#/components/schemas/CapabilitySnapshot"
       },

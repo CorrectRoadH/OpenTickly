@@ -8,6 +8,7 @@ on:
     paths:
       - "apps/landing/**"
       - "packages/**"
+      - "tools/sentry-build.ts"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -31,7 +32,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: CorrectRoadH/app-release-action@3243a2aea8a61686a8ae5a7c314e626f80ea2cde
+      - uses: CorrectRoadH/app-release-action@cd93be25b555447000877d481a14fc01989bb2a9
         with:
           app: opentoggl-saas
           image-prefix: ghcr.io/correctroadh/opentickly
@@ -39,6 +40,8 @@ jobs:
           tailscale-client-id: ${{ vars.APP_RELEASE_TS_CLIENT_ID }}
           tailscale-audience: ${{ vars.APP_RELEASE_TS_AUDIENCE }}
           deployer-url: ${{ vars.APP_RELEASE_DEPLOYER_URL }}
+          secrets: |
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
           components: |
             - name: landing
               dockerfile: apps/landing/Dockerfile

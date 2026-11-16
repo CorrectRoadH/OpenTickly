@@ -61,7 +61,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          secrets: |
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
           build-args: |
+            SOURCE_SHA=${{ github.sha }}
             OPENTOGGL_VERSION=${{ github.ref_name }}
 
   # The built frontend is arch-independent static JS, so build it once here
@@ -81,8 +84,10 @@ jobs:
           cache: true
 
       - name: Build frontend
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          vp install --filter @opentickly/website... --frozen-lockfile --ignore-scripts
+          vp install --filter opentoggl --filter @opentickly/website... --frozen-lockfile --ignore-scripts
           vp run website#build
 
       - name: Upload frontend dist

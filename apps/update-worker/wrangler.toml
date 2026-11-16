@@ -1,6 +1,8 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "opentoggl-update-worker"
-main = "src/index.ts"
+main = "dist/index.js"
+no_bundle = true
+
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -38,3 +40,7 @@ vars = { GITHUB_REPO = "CorrectRoadH/OpenTickly" }
 [[env.staging.analytics_engine_datasets]]
 binding = "UPDATE_REQUESTS"
 dataset = "opentoggl_update_requests_staging"
+
+[build]
+command = "vp run update-worker#build"
+cwd = "../.."

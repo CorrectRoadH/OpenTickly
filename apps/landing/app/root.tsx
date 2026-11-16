@@ -1,3 +1,5 @@
+import { officialSentryDsn } from "./lib/sentry-dsn.ts";
+import { initBrowser, captureException } from "@opentickly/monitoring/browser";
 import {
   isRouteErrorResponse,
   Links,
@@ -15,6 +17,13 @@ import SearchDialog from "@/components/search";
 import NotFound from "./routes/not-found";
 import { i18n } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo } from "react";
+
+if (typeof window !== "undefined" && import.meta.env.PROD)
+  initBrowser("landing", {
+    dsn: officialSentryDsn,
+    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || "production",
+    release: import.meta.env.VITE_SENTRY_RELEASE,
+  });
 
 const localeItems = [
   { name: "English", locale: "en" },
@@ -158,6 +167,9 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  useEffect(() => {
+    if (!isRouteErrorResponse(error) || error.status >= 500) captureException(error);
+  }, [error]);
   let message = "Request failed";
   let details = "The landing site hit an unexpected error.";
   let stack: string | undefined;

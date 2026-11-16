@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "build:content": "vp exec node scripts/build-content.mjs",
-    "dev": "vp run build:content && vp exec wrangler dev",
+    "dev": "SENTRY_BUILD_MODE=development vp exec wrangler dev",
     "deploy": "vp run build:content && vp exec wrangler deploy --env production",
     "deploy:staging": "vp run build:content && vp exec wrangler deploy --env staging",
     "check": "vp run build:content && vp exec tsc --noEmit",
-    "test": "vp run build:content && vp test run"
+    "test": "vp run build:content && vp test run",
+    "build": "vp run build:content && vp build"
   },
   "dependencies": {
+    "@opentickly/monitoring": "workspace:*",
+    "@sentry/cloudflare": "catalog:",
     "zod": "^4.6.7"
   },
   "devDependencies": {

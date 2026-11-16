@@ -11,12 +11,14 @@ COPY --chown=vp:vp apps/website/package.json ./apps/website/
 COPY --chown=vp:vp apps/update-worker/package.json ./apps/update-worker/
 COPY --chown=vp:vp packages/web-ui/package.json ./packages/web-ui/
 COPY --chown=vp:vp packages/shared-contracts/package.json ./packages/shared-contracts/
-RUN vp install --filter @opentickly/landing... --frozen-lockfile --ignore-scripts
+COPY --chown=vp:vp packages/monitoring/package.json ./packages/monitoring/
+RUN vp install --filter opentoggl --filter @opentickly/landing... --frozen-lockfile --ignore-scripts
 COPY --chown=vp:vp apps/landing ./apps/landing
 COPY --chown=vp:vp packages ./packages
+COPY --chown=vp:vp tools ./tools
 ENV NODE_OPTIONS="--dns-result-order=ipv4first"
-RUN vp run @opentickly/landing#build
 ARG SOURCE_SHA
+RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN vp run @opentickly/landing#build
 # Copy only serve and its runtime dependencies, preserving dependency resolution.
 # Hoist a version once; conflicting versions remain local to their consumer.
 RUN vp exec node --input-type=module <<'JS'

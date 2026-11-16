@@ -3,6 +3,7 @@ module opentoggl/backend
 go 1.27.3
 
 require (
+	github.com/getsentry/sentry-go v0.50.0
 	github.com/crewjam/saml v0.5.1
 	github.com/getkin/kin-openapi v0.152.0
 	github.com/google/uuid v1.6.0

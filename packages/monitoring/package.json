@@ -1,0 +1,22 @@
+{
+  "name": "@opentickly/monitoring",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./policy": "./src/policy.ts",
+    "./browser": "./src/browser.ts",
+    "./envelope": "./src/envelope.ts"
+  },
+  "scripts": {
+    "check": "vp exec tsc --noEmit"
+  },
+  "dependencies": {
+    "@sentry/core": "catalog:",
+    "@sentry/react": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

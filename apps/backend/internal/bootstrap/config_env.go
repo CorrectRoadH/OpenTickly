@@ -23,6 +23,8 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 		}
 	}
 
+	cfg.BrowserSentry.DSN = getEnv("SENTRY_BROWSER_DSN")
+	cfg.BrowserSentry.Environment = getEnv("SENTRY_ENVIRONMENT")
 	applyStringOverride(&cfg.ServiceName, getEnv("OPENTOGGL_SERVICE_NAME"))
 	if err := applyRequiredPortOverride(&cfg.Server.ListenAddress, getEnv("PORT")); err != nil {
 		return Config{}, err
@@ -39,6 +41,9 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	applyBoolOverride(&cfg.Telemetry.Enabled, getEnv("OPENTOGGL_TELEMETRY"))
 	applyBoolOverride(&cfg.Webhook.AllowPrivateTargets, getEnv("OPENTOGGL_WEBHOOK_ALLOW_PRIVATE_TARGETS"))
 
+	cfg.Sentry.DSN = getEnv("SENTRY_DSN")
+	cfg.Sentry.Environment = getEnv("SENTRY_ENVIRONMENT")
+	cfg.Sentry.Release = getEnv("SENTRY_RELEASE")
 	return withDefaults(cfg), nil
 }
 

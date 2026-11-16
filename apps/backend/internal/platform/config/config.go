@@ -1,17 +1,31 @@
 package config
 
+type SentryConfig struct {
+	DSN         string
+	Environment string
+	Release     string
+}
+
 // StartupConfig keeps the composition root explicit while the platform layer is
 // still lightweight, so later slices can swap adapters without adding globals.
 type StartupConfig struct {
-	ServiceName string
-	Server      ServerConfig
-	Database    DatabaseConfig
-	Redis       RedisConfig
-	FileStore   FileStoreConfig
-	Jobs        JobsConfig
-	Governance  GovernanceConfig
-	Telemetry   TelemetryConfig
-	Webhook     WebhookConfig
+	Sentry        SentryConfig
+	ServiceName   string
+	Server        ServerConfig
+	Database      DatabaseConfig
+	Redis         RedisConfig
+	FileStore     FileStoreConfig
+	Jobs          JobsConfig
+	Governance    GovernanceConfig
+	Telemetry     TelemetryConfig
+	BrowserSentry BrowserSentryConfig
+	Webhook       WebhookConfig
+}
+
+// BrowserSentryConfig contains only explicitly public browser settings.
+type BrowserSentryConfig struct {
+	DSN         string
+	Environment string
 }
 
 type ServerConfig struct {

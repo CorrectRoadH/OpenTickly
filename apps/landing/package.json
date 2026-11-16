@@ -15,6 +15,7 @@
     "generate:types": "vp exec react-router typegen && vp exec fumadocs-mdx"
   },
   "dependencies": {
+    "@opentickly/monitoring": "workspace:*",
     "@opentickly/web-ui": "workspace:*",
     "@react-router/node": "^8.5.0",
     "fumadocs-core": "16.17.8",

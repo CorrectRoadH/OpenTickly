@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"strconv"
 	"strings"
 	"time"
@@ -53,6 +54,7 @@ func newWebRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
 }
 
 type routeHandlers struct {
+	browserSentry   webapi.BrowserSentryConfig
 	pool            *pgxpool.Pool
 	platformHandles *platform.Handles
 	catalogApp      *catalogapplication.Service

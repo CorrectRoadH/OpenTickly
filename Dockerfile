@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.4.0 AS website-builder
 
 USER root
@@ -14,13 +15,16 @@ COPY --chown=vp:vp apps/landing/package.json ./apps/landing/
 COPY --chown=vp:vp apps/update-worker/package.json ./apps/update-worker/
 COPY --chown=vp:vp packages/web-ui/package.json ./packages/web-ui/
 COPY --chown=vp:vp packages/shared-contracts/package.json ./packages/shared-contracts/
+COPY --chown=vp:vp packages/monitoring/package.json ./packages/monitoring/
 
-RUN vp install --filter @opentickly/website... --frozen-lockfile --ignore-scripts
+RUN vp install --filter opentoggl --filter @opentickly/website... --frozen-lockfile --ignore-scripts
 
 COPY --chown=vp:vp apps/website ./apps/website
 COPY --chown=vp:vp packages ./packages
+COPY --chown=vp:vp tools ./tools
 
-RUN vp run @opentickly/website#build
+ARG SOURCE_SHA
+RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN vp run @opentickly/website#build
 
 FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS builder
 

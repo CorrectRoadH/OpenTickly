@@ -58,6 +58,8 @@ export interface UpdateResponse {
  * rate limit isn't enough. Set via `wrangler secret put GITHUB_TOKEN`.
  */
 export interface WorkerEnv {
+  SENTRY_ENVIRONMENT?: string;
+  SENTRY_RELEASE?: string;
   UPDATE_REQUESTS?: AnalyticsEngineDataset;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;

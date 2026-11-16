@@ -1,3 +1,4 @@
+import { captureException } from "@opentickly/monitoring/browser";
 import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
 import { FileQuestion } from "lucide-react";
 import { type ReactElement } from "react";
@@ -6,6 +7,9 @@ import { useTranslation } from "react-i18next";
 import { PublicStatusPage } from "../app/PublicStatusPage.tsx";
 
 export const rootRoute = createRootRoute({
+  onCatch: (error) => {
+    captureException(error);
+  },
   component: Outlet,
   notFoundComponent: NotFoundPage,
 });

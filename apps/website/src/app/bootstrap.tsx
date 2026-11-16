@@ -1,3 +1,4 @@
+import { ErrorBoundary } from "@opentickly/monitoring/browser";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -27,6 +28,8 @@ void queryClient.prefetchQuery({
 
 createRoot(container).render(
   <StrictMode>
-    <AppProviders queryClient={queryClient} router={router} />
+    <ErrorBoundary>
+      <AppProviders queryClient={queryClient} router={router} />
+    </ErrorBoundary>
   </StrictMode>,
 );

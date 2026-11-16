@@ -16,15 +16,18 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	"opentoggl/backend/apps/backend/internal/log"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"opentoggl/backend/apps/backend/internal/platform"
 	"opentoggl/backend/apps/backend/internal/telemetry"
 	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	"opentoggl/backend/apps/backend/internal/web"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/labstack/echo/v4"
 )
 
 type App struct {
+	sentryClient    *sentry.Client
 	Config          Config
 	HTTP            *echo.Echo
 	Platform        *platform.Handles
@@ -54,7 +57,7 @@ func NewApp(cfg Config) (*App, error) {
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
 	telemetryPinger := newTelemetryPinger(cfg, platform)
-	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(platform, telemetryPinger)
+	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(cfg, platform, telemetryPinger)
 	if err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
@@ -80,6 +83,8 @@ func NewApp(cfg Config) (*App, error) {
 		governanceApp:   governanceService,
 		telemetryPinger: telemetryPinger,
 	}
+	app.sentryClient = monitoring.New(cfg.Sentry.DSN, cfg.Sentry.Environment, cfg.Sentry.Release)
+	app.HTTP.Use(monitoring.Middleware(app.sentryClient))
 	logStartupSuccess(cfg, moduleNames)
 	return app, nil
 }
@@ -104,6 +109,7 @@ func newTelemetryPinger(cfg Config, p *platform.Handles) *telemetry.Pinger {
 }
 
 func (app *App) Start() error {
+	defer monitoring.Flush(app.sentryClient)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -152,12 +158,13 @@ func validateRequiredStartupConfig(cfg Config) error {
 	return nil
 }
 
-func newHTTPRouteRegistrar(platform *platform.Handles, pinger *telemetry.Pinger) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
+func newHTTPRouteRegistrar(cfg Config, platform *platform.Handles, pinger *telemetry.Pinger) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
 	appLogger := log.NewZapLogger(slog.Default())
 	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger, pinger)
 	if err != nil {
 		return nil, nil, err
 	}
+	assembledHandlers.browserSentry = publicBrowserTelemetry(cfg.BrowserSentry, web.FrontendSentryRelease())
 	webRoutes, err := newWebRoutes(assembledHandlers)
 	if err != nil {
 		return nil, nil, err

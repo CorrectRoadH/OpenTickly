@@ -7,6 +7,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vite-plus";
 
+import { sentryBuild } from "../../tools/sentry-build.ts";
+
+const sentry = sentryBuild("web", "opentickly-demo", "dist");
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const localEnvPath = path.join(workspaceRoot, ".env.local");
 
@@ -63,6 +66,7 @@ export default defineConfig(() => {
       dedupe: ["react", "react-dom"],
     },
     plugins: [
+      ...sentry.plugins,
       react(),
       babel({ presets: [reactCompilerPreset({ target: "19" })] }),
       tailwindcss(),
@@ -113,6 +117,7 @@ export default defineConfig(() => {
       }),
     ],
     build: {
+      sourcemap: "hidden",
       // modulePreload left at Vite's default so the entry's static vendor
       // chunks are discovered via injected <link rel="modulepreload"> hints
       // instead of a serial html -> entry -> vendors waterfall.

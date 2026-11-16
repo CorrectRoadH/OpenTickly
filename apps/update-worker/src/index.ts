@@ -1,3 +1,4 @@
+import { captureUpdateError, monitorWorker } from "./sentry.ts";
 import { recordUpdateRequest } from "./analytics.ts";
 import { getActiveAnnouncements } from "./content.ts";
 import { fetchReleases, type GithubRelease } from "./github.ts";
@@ -12,7 +13,7 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Max-Age": "86400",
 };
 
-export default {
+export default monitorWorker({
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -34,6 +35,7 @@ export default {
     try {
       releases = await fetchReleases(env.GITHUB_REPO, env.GITHUB_TOKEN);
     } catch (err) {
+      captureUpdateError(err);
       console.error("[update-worker] github fetch failed", err);
     }
 
@@ -52,7 +54,7 @@ export default {
       "Cache-Control": "public, max-age=60",
     });
   },
-};
+});
 
 function json(body: unknown, status = 200, extra: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
