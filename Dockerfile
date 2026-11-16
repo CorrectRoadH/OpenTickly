@@ -43,7 +43,9 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath -ldflags="-s -w -X main.version=${OPENTOGGL_VERSION}" \
     -o /out/opentoggl ./apps/backend
 
-FROM alpine:3.22
+FROM alpine:3.22 AS release
+ARG SOURCE_SHA
+ENV SENTRY_RELEASE=api@${SOURCE_SHA}
 
 WORKDIR /app
 

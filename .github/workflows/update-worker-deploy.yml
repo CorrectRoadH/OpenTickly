@@ -29,6 +29,14 @@ jobs:
       group: update-worker-production
       cancel-in-progress: false
     steps:
+      - name: Require Sentry upload credential
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::error::Configure SENTRY_AUTH_TOKEN before publishing production assets"
+            exit 1
+          fi
       - uses: actions/checkout@v7
 
       - uses: voidzero-dev/setup-vp@v1.21.2
