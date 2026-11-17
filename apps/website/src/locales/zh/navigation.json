@@ -29,6 +29,6 @@
   "setDefault": "设为默认",
   "currentOrganization": "当前组织",
   "member": "成员",
-  "members": "成员",
+  "memberPlural": "成员",
   "organizationName": "组织名称"
 }

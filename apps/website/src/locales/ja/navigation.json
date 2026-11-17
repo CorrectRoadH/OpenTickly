@@ -29,6 +29,6 @@
   "setDefault": "デフォルトに設定",
   "currentOrganization": "現在の組織",
   "member": "メンバー",
-  "members": "メンバー",
+  "memberPlural": "メンバー",
   "organizationName": "組織名"
 }

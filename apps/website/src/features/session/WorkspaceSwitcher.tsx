@@ -272,7 +272,7 @@ function OrganizationOptionsPanel({
             {organization?.name ?? ""}
           </h2>
           <p className="mt-0.5 text-[12px] text-[var(--track-text-muted)]">
-            {memberCount} {memberCount === 1 ? t("member") : t("members")}
+            {memberCount} {memberCount === 1 ? t("member") : t("memberPlural")}
           </p>
         </div>
       </div>

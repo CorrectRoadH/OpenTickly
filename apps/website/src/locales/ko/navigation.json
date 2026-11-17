@@ -29,6 +29,6 @@
   "setDefault": "기본으로 설정",
   "currentOrganization": "현재 조직",
   "member": "멤버",
-  "members": "멤버",
+  "memberPlural": "멤버",
   "organizationName": "조직 이름"
 }

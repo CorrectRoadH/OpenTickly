@@ -29,6 +29,6 @@
   "setDefault": "Ustaw jako domyślną",
   "currentOrganization": "Bieżąca organizacja",
   "member": "członek",
-  "members": "członkowie",
+  "memberPlural": "członkowie",
   "organizationName": "Nazwa organizacji"
 }
