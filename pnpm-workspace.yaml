@@ -91,5 +91,5 @@ peerDependencyRules:
     vitest: "*"
 
 patchedDependencies:
-  '@sentry/bundler-plugins@11.12.0': patches/@sentry__bundler-plugins@11.12.0.patch
+  "@sentry/bundler-plugins@11.12.0": patches/@sentry__bundler-plugins@11.12.0.patch
   sentry@0.49.0: patches/sentry@0.49.0.patch

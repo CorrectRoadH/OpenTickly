@@ -6,6 +6,8 @@ RUN mkdir -p /workspace && chown vp:vp /workspace
 USER vp
 WORKDIR /workspace
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY --chown=vp:vp patches/@sentry__bundler-plugins@11.12.0.patch ./patches/@sentry__bundler-plugins@11.12.0.patch
+COPY --chown=vp:vp patches/sentry@0.49.0.patch ./patches/sentry@0.49.0.patch
 COPY --chown=vp:vp apps/landing/package.json ./apps/landing/
 COPY --chown=vp:vp apps/website/package.json ./apps/website/
 COPY --chown=vp:vp apps/update-worker/package.json ./apps/update-worker/
