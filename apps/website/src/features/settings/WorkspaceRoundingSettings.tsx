@@ -15,7 +15,7 @@ export function WorkspaceRoundingSettings({
   );
   return (
     <SettingsCard title={t("timeRounding")} description={t("timeRoundingDescription")}>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 py-5">
         <label className="grid gap-2 text-sm text-[var(--track-text)]">
           {t("roundingDirection")}
           <select
