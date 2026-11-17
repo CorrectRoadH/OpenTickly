@@ -58,6 +58,9 @@ func TestConcurrentHTTPParentsAndBusinessOutcomes(t *testing.T) {
 		if c.Param("outcome") == "cancel" {
 			return context.Canceled
 		}
+		if span.Op != "task" {
+			t.Error("server business phase must be task")
+		}
 		if span.ParentSpanID == (sentry.SpanID{}) {
 			t.Error("missing business parent")
 		}

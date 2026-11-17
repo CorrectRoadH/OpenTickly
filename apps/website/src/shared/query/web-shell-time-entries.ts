@@ -78,17 +78,19 @@ export function useTimeEntriesQuery(options: {
   return useQuery({
     enabled: options.enabled ?? true,
     queryFn: async () =>
-      traceOperation("time_entry.list", async () => {
+      traceOperation("time_entry.list", async (context) => {
         await ensureTimeEntriesWorkspaceScope(queryClient, options.workspaceId);
-        return unwrapWebApiResult(
-          getTimeEntries({
-            query: {
-              end_date: options?.endDate,
-              include_sharing: options?.includeSharing,
-              meta: true,
-              start_date: options?.startDate,
-            },
-          }),
+        return context.run(() =>
+          unwrapWebApiResult(
+            getTimeEntries({
+              query: {
+                end_date: options?.endDate,
+                include_sharing: options?.includeSharing,
+                meta: true,
+                start_date: options?.startDate,
+              },
+            }),
+          ),
         );
       }),
     queryKey: timeEntriesQueryKey(

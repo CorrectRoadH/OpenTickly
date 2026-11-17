@@ -33,7 +33,7 @@ func newEmailVerifierFromDB(pool *pgxpool.Pool, emailSender *dbBackedEmailSender
 // registration functional but prevents shipping dead links; admins are
 // notified via warn-level logs.
 func (v *dbBackedEmailVerifier) IsVerificationRequired(ctx context.Context) bool {
-	if !v.emailSender.IsConfigured() {
+	if !v.emailSender.IsConfigured(ctx) {
 		return false
 	}
 	var required bool

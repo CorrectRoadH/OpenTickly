@@ -2,6 +2,7 @@ import { traceOperation } from "@opentickly/monitoring/operations";
 import { officialSentryDsn } from "./sentry-dsn.ts";
 import { envelopePrivacy } from "@opentickly/monitoring/envelope";
 import * as Sentry from "@sentry/cloudflare";
+import { wrapRequestHandler } from "@sentry/cloudflare/request";
 import { privacyOptions, telemetryConfig } from "@opentickly/monitoring/policy";
 import type { WorkerEnv } from "./types.ts";
 
@@ -43,8 +44,12 @@ export function monitorWorker(
   const instrumented = {
     ...handler,
     fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext) {
-      return traceOperation("update.request", () =>
-        handler.fetch(originalRequests.get(request) ?? request, env, ctx),
+      const root = Sentry.getActiveSpan();
+      if (root) Sentry.updateSpanName(root, "update.request");
+      return traceOperation(
+        "update.request",
+        () => handler.fetch(originalRequests.get(request) ?? request, env, ctx),
+        root,
       );
     },
   };
@@ -55,7 +60,7 @@ export function monitorWorker(
       if (!optionsForEnv(env)) return handler.fetch(request, env, ctx);
       const headers = new Headers(request.headers);
       const trace = headers.get("sentry-trace") ?? "";
-      const match = trace.match(/^([a-f0-9]{32})-([a-f0-9]{16})-([01])$/);
+      const match = trace.match(/^([a-f0-9]{32})-([a-f0-9]{16})(?:-([01]))?$/);
       if (!match || /^0+$/.test(match[1]!) || /^0+$/.test(match[2]!))
         headers.delete("sentry-trace");
       headers.delete("baggage");
@@ -66,7 +71,14 @@ export function monitorWorker(
         signal: request.signal,
       });
       originalRequests.set(carrier, request);
-      return wrapped.fetch(carrier, env, ctx).finally(() => originalRequests.delete(carrier));
+      const result =
+        request.method === "HEAD" || request.method === "OPTIONS"
+          ? wrapRequestHandler(
+              { options: optionsForEnv(env)!, request: carrier, context: ctx },
+              () => instrumented.fetch(carrier, env, ctx),
+            )
+          : wrapped.fetch(carrier, env, ctx);
+      return result.finally(() => originalRequests.delete(carrier));
     },
   };
 }

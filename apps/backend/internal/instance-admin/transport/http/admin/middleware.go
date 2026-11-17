@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -11,19 +12,19 @@ import (
 type AdminSessionResolver interface {
 	// IsInstanceAdmin returns true if the session belongs to an instance admin.
 	// Returns error if the session is invalid or user not found.
-	IsInstanceAdmin(sessionID string) (bool, error)
+	IsInstanceAdmin(requestCtx context.Context, sessionID string) (bool, error)
 }
 
 // BootstrapStateChecker checks if bootstrap has been completed.
 type BootstrapStateChecker interface {
-	IsBootstrapped() (bool, error)
+	IsBootstrapped(requestCtx context.Context) (bool, error)
 }
 
 // AdminAuthConfig holds configuration for admin auth middleware.
 type AdminAuthConfig struct {
-	SessionCookieName    string
-	SessionResolver      AdminSessionResolver
-	BootstrapChecker     BootstrapStateChecker
+	SessionCookieName string
+	SessionResolver   AdminSessionResolver
+	BootstrapChecker  BootstrapStateChecker
 }
 
 // AdminAuthMiddleware protects /admin/v1/* routes.
@@ -36,7 +37,7 @@ func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 
 			// Bootstrap endpoints are open when not yet bootstrapped
 			if strings.HasSuffix(path, "/admin/v1/bootstrap") {
-				bootstrapped, err := cfg.BootstrapChecker.IsBootstrapped()
+				bootstrapped, err := cfg.BootstrapChecker.IsBootstrapped(ctx.Request().Context())
 				if err != nil {
 					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 				}
@@ -56,7 +57,7 @@ func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
 			}
 
-			isAdmin, err := cfg.SessionResolver.IsInstanceAdmin(sessionID)
+			isAdmin, err := cfg.SessionResolver.IsInstanceAdmin(ctx.Request().Context(), sessionID)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required").SetInternal(err)
 			}

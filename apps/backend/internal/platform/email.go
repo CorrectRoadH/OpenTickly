@@ -31,7 +31,7 @@ func NewEmailSender(config EmailConfig) *EmailSender {
 }
 
 // IsConfigured returns true if the sender has enough config to attempt delivery.
-func (s *EmailSender) IsConfigured() bool {
+func (s *EmailSender) IsConfigured(ctx context.Context) bool {
 	return s.config.Host != "" && s.config.Username != ""
 }
 
@@ -95,7 +95,7 @@ func sendErr(stage SendStage, addr string, err error) error {
 // set both a dial timeout and a per-operation deadline, and let ctx
 // cancellation abort the dial.
 func (s *EmailSender) Send(ctx context.Context, to string, subject string, bodyHTML string) error {
-	if !s.IsConfigured() {
+	if !s.IsConfigured(ctx) {
 		return ErrSMTPNotConfigured
 	}
 

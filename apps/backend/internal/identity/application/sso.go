@@ -91,7 +91,7 @@ func (service *Service) LoginOrProvisionSSO(ctx context.Context, identity SSOIde
 	}
 	var candidate *domain.User
 	if !bound {
-		candidate, err = service.newSSOUser(identity)
+		candidate, err = service.newSSOUser(ctx, identity)
 		if err != nil {
 			return SSOLoginResult{}, err
 		}
@@ -107,8 +107,8 @@ func (service *Service) LoginOrProvisionSSO(ctx context.Context, identity SSOIde
 	return SSOLoginResult{Session: AuthenticatedSession{SessionID: sid, User: snapshotFromUser(stored.User)}, Provisioned: stored.Provisioned}, nil
 }
 
-func (service *Service) newSSOUser(identity SSOIdentity) (*domain.User, error) {
-	id, err := service.ids.NextUserID()
+func (service *Service) newSSOUser(ctx context.Context, identity SSOIdentity) (*domain.User, error) {
+	id, err := service.ids.NextUserID(ctx)
 	if err != nil {
 		return nil, err
 	}

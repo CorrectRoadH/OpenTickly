@@ -1,10 +1,16 @@
 # Sentry monitoring
 
 The shared website/API image leaves `SENTRY_DSN` and `SENTRY_BROWSER_DSN` empty.
-An operator can explicitly configure their own DSNs on any host. The browser
-fetches `/web/v1/telemetry/config` once, asynchronously, with a two second abort;
-configuration failure leaves it disabled and does not delay rendering. The
-endpoint and API schema define the public configuration contract.
+An operator can explicitly configure their own DSNs on any host. The Go server
+embeds the same validated public configuration as non-executable JSON in the
+website HTML. The website initializes synchronously before importing the app
+bootstrap, including its session prefetch. Empty or malformed configuration
+leaves monitoring disabled immediately, with no configuration fetch or timer.
+JSON encoding escapes HTML delimiters and the virtual HTML file reports its
+actual injected length. `/web/v1/telemetry/config` and its schema remain available
+for existing clients. The browser release still comes from the built website's
+`sentry-release.json`, separately from the API release. A development/static host
+without the Go HTML injection leaves website monitoring disabled.
 
 The dedicated landing and update Worker contain their project's public DSN.
 Landing enables it in a production build; the Worker uses its production build
@@ -67,6 +73,30 @@ is excluded from both propagation and the guard, preserving its original semanti
 navigation spans use fixed site operation names. Empty runtime DSN leaves fetch
 and profiling untouched.
 
+Browser operations use inactive spans with an independent lifetime. `traceOperation`
+passes an explicit `context.run(callback)` to its callback; only synchronous
+invocations activate a scope. The activation callback returns void, while the
+business Promise settles outside that scope. Awaited work keeps its original
+result/error/cancellation and finishes the operation once. An `await` does not
+implicitly carry a browser scope: requests or nested operations started afterwards
+must use `context.run`. Unowned requests follow the actual pageload/navigation.
+No global current-operation or provider replacement is used.
+
+The handwritten API-client adapter captures context at each generated method's
+synchronous entry, then reactivates it only to start that request's fetch after
+async auth/validation. It preserves each call's configured transport, options,
+interceptors and error behavior; it does not replace global fetch or auth. All six
+generated client singletons install this adapter once. Entity-write queues capture
+the submitting context before deferring execution, and the workspace lookup and
+post-write invalidation boundaries explicitly reactivate their business context.
+
+`concurrent-browser.test.ts` uses one real automatic pageload and the actual
+generated client. A and B both await separate gates and async auth; B completes
+before A. HTTP parent IDs match each operation, a request without explicit context
+belongs to pageload, no business scope remains active, and each operation counts
+once. The queue regression uses the real SDK and app QueryClient factory; the
+workerd regression continues to exercise the unchanged Worker provider.
+
 The Vite build emits `sentry-profile-assets.json` from emitted JS and Babel AST
 Identifier nodes, alongside the same release's assets. Source strings are not
 collected. Profile frame paths and symbols require exact manifest membership;
@@ -120,3 +150,41 @@ native reports. Cloudflare SDK 11.12 has no public automatic report-drain path:
 its option and final-wire allowlist remain enabled, but automatic Worker delivery
 is not claimed and no protected SDK method is called. `check_in`, aggregated
 `sessions`, Replay, attachments and unknown item types are still rejected.
+
+## Continuous request traces
+
+The browser uses `parentSpanIsAlwaysRootSpan: false`. Its automatic HTTP spans
+remain children of the active business operation even while pageload is active.
+Known method/route shapes get fixed operation names; unknown URLs retain the
+HTTP fallback. Go request transactions use registered router templates, with
+`health.check` for health/readiness and `http.server` for unknown/static routes.
+Go business stages use `task`, retaining their registered operation names.
+
+The pgx pool installs a QueryTracer. Driver Query/QueryRow/Exec spans are named
+`db.query`; batch execution is `db.batch`. They end at the actual driver callback,
+including Rows close, and retain errors and cancellation. No SQL, arguments,
+connection metadata or results are attached. Pool acquisition and transaction
+wall time are not separately measured. Calls without an active configured
+request/task create no standalone database root. Admin adapters, SMTP config
+reads and user-ID allocation carry the existing request context; startup and
+shutdown contexts remain independent.
+
+Each dedicated update-manifest call adds one `http.client` child spanning the
+actual call and response decoding, and derives safe propagation from that child.
+Only the exact configured HTTPS update root receives headers. Redirects retain
+the existing client behavior while removing telemetry headers.
+
+The update Worker reuses its SDK HTTP root as `update.request`, counts the
+operation once, and classifies real 4xx responses as rejected and 5xx as errors.
+Upstream waits use `http.client`, response/analytics work uses `task`. The existing
+Cloudflare `cacheTtl` remains unchanged; the upstream span measures the whole
+fetch and does not claim cache-hit timing. Valid two-part trace headers may omit
+a sampling decision; explicit sampled=0 is preserved.
+
+The directed Chromium fixture builds the real website HTML and main entry,
+substituting only the app bootstrap with an isolated read harness. Go injects
+the configuration using the same production helper. The harness calls the real
+project route, application service and PostgreSQL store in an ephemeral schema,
+and checks every adjacent parent ID. This tests telemetry startup and transport,
+not the complete React UI or a production deployment. `DATABASE_URL` and
+`OPENTICKLY_TRACE_REDIS_URL` must point to isolated local test services.

@@ -21,7 +21,7 @@ func TestReclaimPendingRegistrationRewritesExistingRow(t *testing.T) {
 	tokens := NewVerificationTokenRepository(database.Pool)
 	sequence := NewSequence(database.Pool)
 
-	userID, err := sequence.NextUserID()
+	userID, err := sequence.NextUserID(context.Background())
 	if err != nil {
 		t.Fatalf("next user id: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestPendingUserRoundTripsAndActivates(t *testing.T) {
 	users := NewUserRepository(database.Pool)
 	sequence := NewSequence(database.Pool)
 
-	userID, err := sequence.NextUserID()
+	userID, err := sequence.NextUserID(context.Background())
 	if err != nil {
 		t.Fatalf("next user id: %v", err)
 	}

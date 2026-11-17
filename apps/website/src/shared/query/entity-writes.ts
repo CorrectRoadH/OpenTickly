@@ -1,3 +1,4 @@
+import { captureTraceContext } from "@opentickly/monitoring/operations";
 import type { QueryClient } from "@tanstack/react-query";
 
 const queues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>();
@@ -13,8 +14,9 @@ export function writeEntity<T>(
     queue = new Map();
     queues.set(client, queue);
   }
+  const context = captureTraceContext();
   const previous = queue.get(key) ?? Promise.resolve();
-  const result = previous.catch(() => {}).then(operation);
+  const result = previous.catch(() => {}).then(() => context.run(operation));
   queue.set(key, result);
   const release = () => {
     if (queue.get(key) === result) queue.delete(key);

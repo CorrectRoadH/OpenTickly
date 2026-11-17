@@ -69,7 +69,7 @@ func NewClient(cfg Config) (*Client, error) {
 // FetchManifest sends a GET to the update worker with the build-info query
 // params and decodes the manifest reply. The upstream is idempotent — retries
 // are safe.
-func (c *Client) FetchManifest(ctx context.Context, payload domain.CheckinPayload) (domain.Manifest, error) {
+func (c *Client) FetchManifest(ctx context.Context, payload domain.CheckinPayload) (result domain.Manifest, resultErr error) {
 	u, err := url.Parse(c.endpoint)
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("telemetry: parse endpoint: %w", err)
@@ -95,6 +95,22 @@ func (c *Client) FetchManifest(ctx context.Context, payload domain.CheckinPayloa
 	}
 	u.RawQuery = q.Encode()
 
+	var dependency *sentry.Span
+	if sentry.SpanFromContext(ctx) != nil && sentry.GetHubFromContext(ctx) != nil {
+		dependency = sentry.StartSpan(ctx, "http.client", sentry.WithDescription("update.check"))
+		ctx = dependency.Context()
+		defer func() {
+			switch {
+			case errors.Is(resultErr, context.Canceled), errors.Is(resultErr, context.DeadlineExceeded):
+				dependency.Status = sentry.SpanStatusCanceled
+			case resultErr != nil:
+				dependency.Status = sentry.SpanStatusInternalError
+			default:
+				dependency.Status = sentry.SpanStatusOK
+			}
+			dependency.Finish()
+		}()
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("telemetry: build request: %w", err)

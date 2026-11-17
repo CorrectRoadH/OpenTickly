@@ -45,7 +45,7 @@ var (
 // EmailSender configured rejects invite operations that require delivery with
 // ErrSMTPNotConfigured; inviting workspace members is not allowed without it.
 type EmailSender interface {
-	IsConfigured() bool
+	IsConfigured(ctx context.Context) bool
 	Send(ctx context.Context, to string, subject string, bodyHTML string) error
 }
 
@@ -186,7 +186,7 @@ func (service *Service) InviteWorkspaceMember(
 	if command.Email == "" {
 		return WorkspaceMemberView{}, ErrWorkspaceMemberEmailBlank
 	}
-	if service.emailSender == nil || !service.emailSender.IsConfigured() {
+	if service.emailSender == nil || !service.emailSender.IsConfigured(ctx) {
 		return WorkspaceMemberView{}, ErrSMTPNotConfigured
 	}
 	if _, err := service.resolveSiteURL(ctx); err != nil {
@@ -273,7 +273,7 @@ func (service *Service) ResendWorkspaceInvite(
 	if err := service.requireManager(ctx, command.WorkspaceID, command.RequestedBy); err != nil {
 		return WorkspaceMemberView{}, err
 	}
-	if service.emailSender == nil || !service.emailSender.IsConfigured() {
+	if service.emailSender == nil || !service.emailSender.IsConfigured(ctx) {
 		return WorkspaceMemberView{}, ErrSMTPNotConfigured
 	}
 	if _, err := service.resolveSiteURL(ctx); err != nil {

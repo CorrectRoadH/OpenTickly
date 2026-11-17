@@ -198,8 +198,8 @@ func (v *stubEmailVerifier) SendVerificationEmail(_ context.Context, _, _ string
 
 type stubSequence struct{ n int }
 
-func (s *stubSequence) NextUserID() (int64, error)     { s.n++; return int64(s.n), nil }
-func (s *stubSequence) NextSessionID() (string, error) { s.n++; return "sess", nil }
+func (s *stubSequence) NextUserID(ctx context.Context) (int64, error) { s.n++; return int64(s.n), nil }
+func (s *stubSequence) NextSessionID() (string, error)                { s.n++; return "sess", nil }
 func (s *stubSequence) NextAPIToken() (string, error) {
 	s.n++
 	return "tok-" + time.Now().Format("150405.000000000"), nil

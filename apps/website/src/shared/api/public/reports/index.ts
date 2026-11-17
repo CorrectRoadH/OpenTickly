@@ -1,5 +1,7 @@
+import { traceApiClient } from "../../trace-client.ts";
 import { client } from "../../generated/public-reports/client.gen.ts";
 
+traceApiClient(client);
 client.setConfig({
   baseUrl: globalThis.location?.origin ?? "http://localhost",
   credentials: "same-origin",

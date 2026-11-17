@@ -14,10 +14,12 @@ import (
 type targetTransport struct {
 	target  string
 	headers []http.Header
+	spans   []*sentry.Span
 }
 
 func (t *targetTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	t.headers = append(t.headers, req.Header.Clone())
+	t.spans = append(t.spans, sentry.SpanFromContext(req.Context()))
 	clone := req.Clone(req.Context())
 	clone.URL.Scheme = "http"
 	clone.URL.Host = strings.TrimPrefix(t.target, "http://")
@@ -51,6 +53,13 @@ func TestDedicatedClientPropagationAndRedirect(t *testing.T) {
 			}
 			if got := transport.headers[0].Get("sentry-trace") != ""; got != test.sends {
 				t.Fatalf("propagation=%v", got)
+			}
+			child := transport.spans[0]
+			if child == nil || child.Op != "http.client" || child.ParentSpanID != span.SpanID || !child.EndTime.After(child.StartTime) {
+				t.Fatal("dedicated HTTP dependency span missing or unfinished")
+			}
+			if test.sends && transport.headers[0].Get("sentry-trace") != child.ToSentryTrace() {
+				t.Fatal("propagation did not originate at HTTP child")
 			}
 			if strings.Contains(transport.headers[0].Get("baggage"), "transaction") {
 				t.Fatal("unsafe DSC")

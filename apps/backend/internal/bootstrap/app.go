@@ -76,7 +76,8 @@ func NewApp(cfg Config) (*App, error) {
 	app := &App{
 		Config: cfg,
 		HTTP: httpapp.NewServerWithOptions(health, routeRegistrar, httpapp.ServerOptions{
-			Readiness: readiness,
+			Readiness:        readiness,
+			BrowserTelemetry: publicBrowserTelemetry(cfg.BrowserSentry, web.FrontendSentryRelease()),
 		}),
 		Platform:        platform,
 		Modules:         modules,

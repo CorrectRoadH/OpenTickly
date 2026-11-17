@@ -92,7 +92,7 @@ type stubEmailSender struct {
 	code    string
 }
 
-func (s *stubEmailSender) IsConfigured() bool { return true }
+func (s *stubEmailSender) IsConfigured(_ context.Context) bool { return true }
 
 func (s *stubEmailSender) Send(_ context.Context, _ string, _ string, _ string) error {
 	return s.sendErr

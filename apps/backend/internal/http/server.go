@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
 	"opentoggl/backend/apps/backend/internal/web"
 
@@ -17,8 +18,9 @@ import (
 )
 
 type ServerOptions struct {
-	Logger    *slog.Logger
-	Readiness web.ReadinessProbe
+	BrowserTelemetry webapi.BrowserSentryConfig
+	Logger           *slog.Logger
+	Readiness        web.ReadinessProbe
 }
 
 type RouteRegistrar func(*echo.Echo)
@@ -78,7 +80,7 @@ func NewServerWithOptions(
 		registerRoutes(server)
 	}
 	if staticFiles, ok := web.StaticFiles(); ok {
-		registerStaticWebRoutes(server, staticFiles)
+		registerStaticWebRoutes(server, BrowserTelemetryFiles(staticFiles, options.BrowserTelemetry))
 	}
 
 	return server

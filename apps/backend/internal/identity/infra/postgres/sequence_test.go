@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -14,11 +15,11 @@ func TestSequenceNextUserIDUsesCurrentIdentityUsersSerialSequence(t *testing.T) 
 	database := pgtest.OpenEphemeral(t)
 	sequence := NewSequence(database.Pool)
 
-	first, err := sequence.NextUserID()
+	first, err := sequence.NextUserID(context.Background())
 	if err != nil {
 		t.Fatalf("first NextUserID: %v", err)
 	}
-	second, err := sequence.NextUserID()
+	second, err := sequence.NextUserID(context.Background())
 	if err != nil {
 		t.Fatalf("second NextUserID: %v", err)
 	}

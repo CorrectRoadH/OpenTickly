@@ -115,7 +115,7 @@ func (service *Service) registrationUser(ctx context.Context, input RegisterInpu
 		return existing, true, nil
 	}
 
-	userID, err := service.ids.NextUserID()
+	userID, err := service.ids.NextUserID(ctx)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to generate user ID",
 			"error", err.Error(),

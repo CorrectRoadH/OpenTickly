@@ -216,7 +216,7 @@ type sequenceTestSequence struct {
 	nextAPITokenErr  error
 }
 
-func (sequence *sequenceTestSequence) NextUserID() (int64, error) {
+func (sequence *sequenceTestSequence) NextUserID(ctx context.Context) (int64, error) {
 	if sequence.nextUserIDErr != nil {
 		return 0, sequence.nextUserIDErr
 	}

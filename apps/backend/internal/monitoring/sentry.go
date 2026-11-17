@@ -55,7 +55,7 @@ func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 			}
 			hub := sentry.NewHub(client, sentry.NewScope())
 			ctx := sentry.SetHubOnContext(c.Request().Context(), hub)
-			transaction := sentry.StartTransaction(ctx, "http.server", sentry.WithOpName("http.server"), sentry.ContinueFromHeaders(incomingTrace(c.Request().Header.Get("sentry-trace")), ""))
+			transaction := sentry.StartTransaction(ctx, RouteOperation(c.Request().Method, c.Path()), sentry.WithOpName("http.server"), sentry.ContinueFromHeaders(incomingTrace(c.Request().Header.Get("sentry-trace")), ""))
 			transaction.SetDynamicSamplingContext(sentry.DynamicSamplingContextFromTransaction(transaction))
 			c.SetRequest(c.Request().WithContext(transaction.Context()))
 			defer func() {
@@ -65,8 +65,9 @@ func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 					transaction.Finish()
 					panic(recovered)
 				}
+				status := c.Response().Status
 				if err != nil {
-					status := 500
+					status = 500
 					var httpErr *echo.HTTPError
 					if errors.As(err, &httpErr) {
 						status = httpErr.Code
@@ -80,6 +81,10 @@ func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 					hub.CaptureMessage("Application error")
 					transaction.Status = sentry.SpanStatusInternalError
 				}
+				if transaction.Status == sentry.SpanStatusUndefined {
+					transaction.Status = sentry.HTTPtoSpanStatus(status)
+				}
+				transaction.SetData("http.response.status_code", status)
 				transaction.Finish()
 			}()
 			return next(c)

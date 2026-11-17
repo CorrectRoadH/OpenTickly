@@ -44,6 +44,9 @@ Sentry.getClient()?.on("afterCaptureMetric", (metric) => {
 Sentry.getClient()?.on("beforeEnvelope", (envelope) => {
   if (envelope[1].some((i) => i[0].type === "profile_chunk")) raw.push(envelope);
 });
+const firstRequest = location.search.includes("landing")
+  ? Promise.resolve()
+  : traceOperation("report.load", () => fetch("/api/v9/me/time_entries"));
 const runtime = {
   envelopes,
   capturedMetrics,
@@ -118,4 +121,6 @@ const runtime = {
   },
 };
 Object.assign(window, { runtime });
-document.body.innerHTML = '<main data-testid="telemetry-runtime">Ready</main>';
+void firstRequest.finally(() => {
+  document.body.innerHTML = '<main data-testid="telemetry-runtime">Ready</main>';
+});

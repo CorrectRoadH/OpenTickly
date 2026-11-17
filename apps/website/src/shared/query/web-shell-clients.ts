@@ -58,7 +58,7 @@ export function useRenameClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: ({ clientId, name }: { clientId: number; name: string }) =>
-      traceOperation("client.save", () =>
+      traceOperation("client.save", (context) =>
         writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
           const result = await unwrapWebApiResult(
             putWorkspaceClients({
@@ -66,7 +66,9 @@ export function useRenameClientMutation(workspaceId: number) {
               path: { workspace_id: workspaceId, client_id: clientId },
             }),
           );
-          await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
+          await context.run(() =>
+            queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] }),
+          );
           return result;
         }),
       ),

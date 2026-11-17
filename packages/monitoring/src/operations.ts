@@ -1,5 +1,8 @@
-import { getActiveSpan, getClient, logger, metrics } from "@sentry/core";
-import { startSpan } from "@sentry/core/browser";
+import { getActiveSpan, getClient, logger, metrics, type Span } from "@sentry/core";
+import { startInactiveSpan } from "@sentry/core/browser";
+import { captureTraceContext, contextForSpan, type OperationContext } from "./operation-context.ts";
+export { captureTraceContext };
+export type { OperationContext };
 
 export const businessOperations = [
   "auth.login",
@@ -37,16 +40,21 @@ export function operationName(value: unknown): value is BusinessOperation {
   return typeof value === "string" && names.has(value);
 }
 const operationStates = new WeakMap<object, { failed: boolean }>();
-export function traceOperation<T>(operation: BusinessOperation, callback: () => T): T {
+export function traceOperation<T>(
+  operation: BusinessOperation,
+  callback: (context: OperationContext) => T,
+  existingSpan?: Span,
+): T {
+  if (!getClient()) return callback(captureTraceContext());
   const parent = getActiveSpan();
   const top = !parent || !operationStates.has(parent);
   const started = performance.now();
-  return startSpan(
-    { name: operationName(operation) ? operation : "ui.action", op: "ui.action" },
-    (span) => {
-      const state = { failed: false };
-      operationStates.set(span, state);
-      const record = (outcome: "success" | "error" | "cancelled" | "rejected") => {
+  const run = (span: Span): T => {
+    const context = contextForSpan(span);
+    const state = { failed: false };
+    operationStates.set(span, state);
+    const record = (outcome: "success" | "error" | "cancelled" | "rejected") =>
+      context.run(() => {
         if (!getClient()) return;
         const attributes = { operation, outcome };
         if (top) {
@@ -57,47 +65,66 @@ export function traceOperation<T>(operation: BusinessOperation, callback: () => 
           });
         }
         if (outcome === "error") logger.error("operation.failed", attributes);
-      };
-      const failed = (error: unknown): never => {
-        const cancelled =
-          error && typeof error === "object" && "name" in error && error.name === "AbortError";
-        const rejected =
-          error &&
-          typeof error === "object" &&
-          "status" in error &&
-          typeof error.status === "number" &&
-          error.status >= 400 &&
-          error.status < 500;
-        const outcome = cancelled ? "cancelled" : rejected ? "rejected" : "error";
-        span.setAttribute("outcome", outcome);
-        record(outcome);
-        span.setStatus({ code: 2 });
-        throw error;
-      };
-      try {
-        const result = callback();
-        if (
-          result &&
-          typeof result === "object" &&
-          "then" in result &&
-          typeof result.then === "function"
-        ) {
-          return Promise.resolve(result).then((value) => {
-            const outcome = state.failed ? "error" : "success";
-            span.setAttribute("outcome", outcome);
-            record(outcome);
-            return value;
-          }, failed) as T;
-        }
-        const outcome = state.failed ? "error" : "success";
-        span.setAttribute("outcome", outcome);
-        record(outcome);
-        return result;
-      } catch (error) {
-        return failed(error);
+      });
+    const failed = (error: unknown): never => {
+      const cancelled =
+        error && typeof error === "object" && "name" in error && error.name === "AbortError";
+      const rejected =
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        typeof error.status === "number" &&
+        error.status >= 400 &&
+        error.status < 500;
+      const outcome = cancelled ? "cancelled" : rejected ? "rejected" : "error";
+      span.setAttribute("outcome", outcome);
+      record(outcome);
+      span.setStatus({ code: 2 });
+      if (!existingSpan) span.end();
+      throw error;
+    };
+    const completed = (value: unknown) => {
+      const status = value instanceof Response ? value.status : 0;
+      const outcome =
+        state.failed || status >= 500 ? "error" : status >= 400 ? "rejected" : "success";
+      span.setAttribute("outcome", outcome);
+      if (status) span.setAttribute("http.response.status_code", status);
+      if (outcome !== "success") span.setStatus({ code: 2 });
+      record(outcome);
+    };
+    try {
+      const result = context.run(() => callback(context));
+      if (
+        result &&
+        typeof result === "object" &&
+        "then" in result &&
+        typeof result.then === "function"
+      ) {
+        return Promise.resolve(result).then((value) => {
+          completed(value);
+          if (!existingSpan) span.end();
+          return value;
+        }, failed) as T;
       }
-    },
-  );
+      completed(result);
+      if (!existingSpan) span.end();
+      return result;
+    } catch (error) {
+      return failed(error);
+    }
+  };
+  if (existingSpan) return run(existingSpan);
+  const op =
+    operation === "update.request"
+      ? "http.server"
+      : operation === "update.upstream.fetch"
+        ? "http.client"
+        : operation === "update.cache.read"
+          ? "cache.get"
+          : operation.startsWith("update.")
+            ? "task"
+            : "ui.action";
+  return run(startInactiveSpan({ name: operationName(operation) ? operation : op, op }));
 }
 
 export function markOperationFailure() {

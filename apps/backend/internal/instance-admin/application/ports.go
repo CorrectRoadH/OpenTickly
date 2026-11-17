@@ -110,7 +110,7 @@ type UserCreator interface {
 
 // EmailSender sends emails. Fulfilled by platform.EmailSender.
 type EmailSender interface {
-	IsConfigured() bool
+	IsConfigured(ctx context.Context) bool
 	Send(ctx context.Context, to string, subject string, bodyHTML string) error
 	SendTest(ctx context.Context, to string, siteURL string) error
 	// ClassifyFailure maps a Send/SendTest error to a machine-readable outcome

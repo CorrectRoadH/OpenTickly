@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 	"opentoggl/backend/apps/backend/internal/platform/safehttp"
 
@@ -87,6 +88,7 @@ func NewDatabaseHandle(primaryDSN string) (DatabaseHandle, error) {
 		poolCfg.MaxConns = defaultWebMaxConns
 	}
 
+	poolCfg.ConnConfig.Tracer = monitoring.QueryTracer{}
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolCfg)
 	if err != nil {
 		return DatabaseHandle{}, err

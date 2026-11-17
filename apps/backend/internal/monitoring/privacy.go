@@ -50,14 +50,14 @@ func sanitize(event *sentry.Event, environment, release string) *sentry.Event {
 		clean.Exception = append(clean.Exception, value)
 	}
 	if event.Type == "transaction" {
-		clean.Transaction = safeOperation(event.Transaction)
+		clean.Transaction = safeSpanName(event.Transaction)
 		if event.Transaction == "http.server" || event.Transaction == "task" {
 			clean.Transaction = event.Transaction
 		}
 		clean.TransactionInfo = &sentry.TransactionInfo{Source: sentry.SourceCustom}
 	}
 	for _, span := range event.Spans {
-		clean.Spans = append(clean.Spans, &sentry.Span{TraceID: span.TraceID, SpanID: span.SpanID, ParentSpanID: span.ParentSpanID, Op: safeSpanOp(span.Op), Description: safeOperation(span.Description), StartTime: span.StartTime, EndTime: span.EndTime, Status: span.Status, Tags: safeSpanTags(span.Tags)})
+		clean.Spans = append(clean.Spans, &sentry.Span{TraceID: span.TraceID, SpanID: span.SpanID, ParentSpanID: span.ParentSpanID, Op: safeSpanOp(span.Op), Description: safeSpanName(span.Description), StartTime: span.StartTime, EndTime: span.EndTime, Status: span.Status, Tags: safeSpanTags(span.Tags)})
 	}
 	return clean
 }
@@ -76,4 +76,12 @@ func safeSpanTags(tags map[string]string) map[string]string {
 		clean["outcome"] = tags["outcome"]
 	}
 	return clean
+}
+
+func safeSpanName(name string) string {
+	switch name {
+	case "http.server", "task", "health.check", "db.query", "db.exec", "db.batch", "db.transaction", "db.commit", "db.rollback", "db.acquire":
+		return name
+	}
+	return safeOperation(name)
 }

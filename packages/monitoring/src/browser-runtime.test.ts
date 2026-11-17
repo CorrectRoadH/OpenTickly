@@ -47,7 +47,7 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
       res.end();
       return;
     }
-    if (req.url === "/web/v1/data") {
+    if (req.url === "/web/v1/data" || req.url === "/api/v9/me/time_entries") {
       incoming.push({
         trace: req.headers["sentry-trace"] as string,
         baggage: req.headers.baggage as string,
@@ -219,6 +219,12 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
       (span) => span.trace_id === outboundTrace && span.span_id === outboundSpan,
     );
     expect(httpSpan).toBeDefined();
+    expect(httpSpan?.name).toBe("time_entry.list");
+    const business = spans.find((span) => span.span_id === httpSpan?.parent_span_id);
+    expect(
+      spans.find((span) => span.span_id === business?.parent_span_id)?.attributes["sentry.op"]
+        ?.value,
+    ).toBe("pageload");
     expect(spans.find((span) => span.span_id === httpSpan?.parent_span_id)?.name).toBe(
       "report.load",
     );

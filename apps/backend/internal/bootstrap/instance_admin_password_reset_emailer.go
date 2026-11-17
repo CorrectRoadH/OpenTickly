@@ -31,7 +31,7 @@ func newPasswordResetEmailerFromDB(pool *pgxpool.Pool, emailSender *dbBackedEmai
 }
 
 func (e *dbBackedPasswordResetEmailer) SendPasswordResetEmail(ctx context.Context, email string, token string) error {
-	if !e.emailSender.IsConfigured() {
+	if !e.emailSender.IsConfigured(ctx) {
 		return ErrPasswordResetSMTPNotConfigured
 	}
 

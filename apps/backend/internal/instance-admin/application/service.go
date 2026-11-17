@@ -201,8 +201,8 @@ func (s *Service) ListOrganizations(ctx context.Context) ([]AdminOrganizationVie
 }
 
 // IsSMTPConfigured returns whether the instance has working SMTP.
-func (s *Service) IsSMTPConfigured() bool {
-	return s.emailSender.IsConfigured()
+func (s *Service) IsSMTPConfigured(ctx context.Context) bool {
+	return s.emailSender.IsConfigured(ctx)
 }
 
 // SendTestEmail sends a test email to verify SMTP configuration. On failure it

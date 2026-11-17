@@ -22,8 +22,8 @@ type Handler struct {
 
 // HealthChecker provides dependency health probes for the admin health endpoint.
 type HealthChecker interface {
-	PingDatabase() (time.Duration, error)
-	PingRedis() (time.Duration, error)
+	PingDatabase(requestCtx context.Context) (time.Duration, error)
+	PingRedis(requestCtx context.Context) (time.Duration, error)
 }
 
 // NewHandler builds an admin handler. `updateFeed` may be nil when the
@@ -136,7 +136,7 @@ func (h *Handler) GetInstanceHealth(ctx echo.Context) error {
 	}
 
 	dbHealth := adminapi.DependencyHealth{Status: adminapi.Up}
-	if latency, pingErr := h.platform.PingDatabase(); pingErr != nil {
+	if latency, pingErr := h.platform.PingDatabase(ctx.Request().Context()); pingErr != nil {
 		dbHealth.Status = adminapi.Down
 	} else {
 		ms := int(latency.Milliseconds())
@@ -144,7 +144,7 @@ func (h *Handler) GetInstanceHealth(ctx echo.Context) error {
 	}
 
 	redisHealth := adminapi.DependencyHealth{Status: adminapi.Up}
-	if latency, pingErr := h.platform.PingRedis(); pingErr != nil {
+	if latency, pingErr := h.platform.PingRedis(ctx.Request().Context()); pingErr != nil {
 		redisHealth.Status = adminapi.Down
 	} else {
 		ms := int(latency.Milliseconds())

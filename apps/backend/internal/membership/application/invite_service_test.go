@@ -28,7 +28,7 @@ func newFakeEmailSender() *fakeEmailSender {
 	return &fakeEmailSender{configured: true}
 }
 
-func (f *fakeEmailSender) IsConfigured() bool { return f.configured }
+func (f *fakeEmailSender) IsConfigured(ctx context.Context) bool { return f.configured }
 
 func (f *fakeEmailSender) Send(ctx context.Context, to, subject, body string) error {
 	f.calls++

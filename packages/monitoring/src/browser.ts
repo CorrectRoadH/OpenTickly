@@ -1,3 +1,4 @@
+import { httpOperation } from "./http-name.ts";
 import { landingMetrics } from "./landing-metrics.ts";
 import { installHeaderBoundary } from "./outgoing.ts";
 import { safeDsc } from "./dsc.ts";
@@ -33,6 +34,7 @@ export function initBrowser(
       profileLifecycle: "trace",
       profileSessionSampleRate: profiling ? (options.profileSessionSampleRate ?? 0.1) : 0,
       tracesSampleRate: options.tracesSampleRate ?? 0.1,
+      parentSpanIsAlwaysRootSpan: false,
       integrations: [
         safeDsc(config),
         ...(component === "landing" ? [landingMetrics()] : []),
@@ -59,6 +61,17 @@ export function initBrowser(
       defaultIntegrations: false,
       tracePropagationTargets: targets,
     });
+    Sentry.getClient()?.on("spanStart", (span) => {
+      const data = Sentry.spanToJSON(span);
+      if (component !== "web" || data.attributes["sentry.op"] !== "http.client") return;
+      const method = data.attributes["http.request.method"] ?? data.attributes["http.method"];
+      const name = httpOperation(
+        typeof method === "string" ? method : "GET",
+        data.attributes["url.full"] ?? data.attributes["http.url"],
+        location.origin,
+      );
+      if (name) Sentry.updateSpanName(span, name);
+    });
     if (profiling)
       void fetch(new URL("/sentry-profile-assets.json", location.origin), {
         credentials: "omit",
@@ -84,26 +97,14 @@ export function initBrowser(
     }
   }
 }
-let requested = false;
-export async function initDemoTelemetry() {
-  if (requested) return;
-  requested = true;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2000);
+// Configuration is embedded in the HTML so the first session request is traced,
+// while an unconfigured self-hosted instance starts without a network wait.
+export function initDemoTelemetry() {
   try {
-    const response = await fetch("/web/v1/telemetry/config", {
-      signal: controller.signal,
-      cache: "no-store",
-      credentials: "omit",
-    });
-    if (response.ok) {
-      const value: unknown = await response.json();
-      if (value && typeof value === "object" && "sentry" in value) initBrowser("web", value.sentry);
-    }
+    const value = document.getElementById("opentickly-telemetry")?.textContent;
+    if (value) initBrowser("web", JSON.parse(value));
   } catch {
-    /* Configuration failure leaves monitoring disabled. */
-  } finally {
-    clearTimeout(timeout);
+    /* Invalid configuration leaves monitoring disabled. */
   }
 }
 export { ErrorBoundary, captureException } from "@sentry/react";

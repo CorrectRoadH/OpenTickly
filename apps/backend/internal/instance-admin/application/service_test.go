@@ -118,7 +118,7 @@ func (s *memInstanceConfigStore) UpdateConfig(_ context.Context, update Instance
 
 type memEmailSender struct{ configured bool }
 
-func (s *memEmailSender) IsConfigured() bool { return s.configured }
+func (s *memEmailSender) IsConfigured(ctx context.Context) bool { return s.configured }
 func (s *memEmailSender) Send(_ context.Context, _ string, _ string, _ string) error {
 	return nil
 }

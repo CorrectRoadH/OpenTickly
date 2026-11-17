@@ -1,10 +1,5 @@
 import { client as generatedWebClient } from "./web/index.ts";
 
-generatedWebClient.setConfig({
-  baseUrl: globalThis.location?.origin ?? "http://localhost",
-  credentials: "same-origin",
-});
-
 export class WebApiError extends Error {
   status: number;
   data: unknown;

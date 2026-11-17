@@ -39,7 +39,7 @@ func safeOperation(value string) string {
 	return "http.request"
 }
 
-var tracePattern = regexp.MustCompile(`^([a-f0-9]{32})-([a-f0-9]{16})-([01])$`)
+var tracePattern = regexp.MustCompile(`^([a-f0-9]{32})-([a-f0-9]{16})(?:-([01]))?$`)
 
 func incomingTrace(value string) string {
 	match := tracePattern.FindStringSubmatch(value)
@@ -71,7 +71,7 @@ func StartBusiness(ctx context.Context, operation Operation) (*sentry.Span, func
 		ctx = sentry.SetHubOnContext(ctx, sentry.NewHub(hub.Client(), sentry.NewScope()))
 		span = sentry.StartTransaction(ctx, safeOperation(string(operation)), sentry.WithOpName("task"))
 	} else {
-		span = sentry.StartSpan(ctx, "ui.action", sentry.WithDescription(safeOperation(string(operation))))
+		span = sentry.StartSpan(ctx, "task", sentry.WithDescription(safeOperation(string(operation))))
 	}
 	return span, func(err error) {
 		once.Do(func() {
@@ -98,10 +98,14 @@ func StartBusiness(ctx context.Context, operation Operation) (*sentry.Span, func
 	}
 }
 func SafeBaggage(span *sentry.Span) string {
-	dsc := sentry.DynamicSamplingContextFromTransaction(span)
-	delete(dsc.Entries, "transaction")
-	delete(dsc.Entries, "org_id")
-	return dsc.String()
+	source := sentry.DynamicSamplingContextFromTransaction(span)
+	clean := sentry.DynamicSamplingContext{Entries: map[string]string{}}
+	for _, key := range []string{"trace_id", "public_key", "environment", "release", "sample_rate", "sampled", "sample_rand"} {
+		if value, ok := source.Entries[key]; ok {
+			clean.Entries[key] = value
+		}
+	}
+	return clean.String()
 }
 
 func FinishBusiness(finish func(error), err *error, rejected ...error) {

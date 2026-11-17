@@ -91,7 +91,7 @@ type RunningTimerLookup interface {
 }
 
 type Sequence interface {
-	NextUserID() (int64, error)
+	NextUserID(ctx context.Context) (int64, error)
 	NextSessionID() (string, error)
 	NextAPIToken() (string, error)
 }

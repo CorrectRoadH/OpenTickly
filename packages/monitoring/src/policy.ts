@@ -168,6 +168,7 @@ const operations = new Set([
   "http.request",
   "ui.action",
   "task",
+  "cache.get",
 ]);
 const origins = new Set([
   "manual",

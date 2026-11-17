@@ -115,9 +115,9 @@ type platformHealthChecker struct {
 	platform *platform.Handles
 }
 
-func (h *platformHealthChecker) PingDatabase() (time.Duration, error) {
+func (h *platformHealthChecker) PingDatabase(requestCtx context.Context) (time.Duration, error) {
 	start := time.Now()
-	err := h.platform.Database.Pool().Ping(context.Background())
+	err := h.platform.Database.Pool().Ping(requestCtx)
 	elapsed := time.Since(start)
 	if elapsed == 0 {
 		elapsed = time.Microsecond
@@ -125,7 +125,7 @@ func (h *platformHealthChecker) PingDatabase() (time.Duration, error) {
 	return elapsed, err
 }
 
-func (h *platformHealthChecker) PingRedis() (time.Duration, error) {
+func (h *platformHealthChecker) PingRedis(requestCtx context.Context) (time.Duration, error) {
 	addr := h.platform.Redis.Address()
 	if addr == "" {
 		return 0, fmt.Errorf("redis not configured")
@@ -137,7 +137,7 @@ func (h *platformHealthChecker) PingRedis() (time.Duration, error) {
 	client := redis.NewClient(options)
 	defer client.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(requestCtx, 2*time.Second)
 	defer cancel()
 
 	start := time.Now()
@@ -153,8 +153,8 @@ type adminSessionResolverAdapter struct {
 	identityApp *identityapplication.Service
 }
 
-func (a *adminSessionResolverAdapter) IsInstanceAdmin(sessionID string) (bool, error) {
-	user, err := a.identityApp.ResolveCurrentUser(context.Background(), sessionID)
+func (a *adminSessionResolverAdapter) IsInstanceAdmin(requestCtx context.Context, sessionID string) (bool, error) {
+	user, err := a.identityApp.ResolveCurrentUser(requestCtx, sessionID)
 	if err != nil {
 		return false, err
 	}
@@ -165,8 +165,8 @@ type bootstrapStateCheckerAdapter struct {
 	store *instanceadminpostgres.Store
 }
 
-func (a *bootstrapStateCheckerAdapter) IsBootstrapped() (bool, error) {
-	state, err := a.store.GetBootstrapState(context.Background())
+func (a *bootstrapStateCheckerAdapter) IsBootstrapped(requestCtx context.Context) (bool, error) {
+	state, err := a.store.GetBootstrapState(requestCtx)
 	if err != nil {
 		return false, err
 	}
