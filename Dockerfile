@@ -7,6 +7,8 @@ USER vp
 WORKDIR /workspace
 
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY --chown=vp:vp patches/@sentry__bundler-plugins@11.12.0.patch ./patches/@sentry__bundler-plugins@11.12.0.patch
+COPY --chown=vp:vp patches/sentry@0.49.0.patch ./patches/sentry@0.49.0.patch
 
 # Manifests-first: copy every workspace member's package.json so pnpm can resolve
 # the full graph, keeping the install layer cached across source-only edits.
