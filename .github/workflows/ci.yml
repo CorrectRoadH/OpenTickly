@@ -103,5 +103,7 @@ jobs:
           cache: true
       - run: vp install --frozen-lockfile
       - run: vp run check
+      - name: Install Chromium for telemetry runtime tests
+        run: vp exec playwright install --with-deps --only-shell chromium
       - run: vp run test:unit
       - run: vp run build
