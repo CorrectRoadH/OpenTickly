@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"sort"
 	"strings"
 	"time"
@@ -337,7 +338,13 @@ func (service *Service) VerifyEmail(ctx context.Context, token string) (Authenti
 	return session, nil
 }
 
-func (service *Service) LoginBasic(ctx context.Context, credentials domain.BasicCredentials) (AuthenticatedSession, error) {
+func (service *Service) LoginBasic(ctx context.Context, credentials domain.BasicCredentials) (traceResult AuthenticatedSession, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("auth.login"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "login attempt",
 		"username", credentials.Username,
 	)
@@ -406,7 +413,13 @@ func (service *Service) ResolveCurrentUser(ctx context.Context, sessionID string
 	return snapshotFromUser(user), nil
 }
 
-func (service *Service) Logout(ctx context.Context, sessionID string) error {
+func (service *Service) Logout(ctx context.Context, sessionID string) (traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("auth.logout"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "logout",
 		"session_id", sessionID,
 	)

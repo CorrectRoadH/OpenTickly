@@ -41,6 +41,8 @@ func Options(dsn, environment, release string, transport sentry.Transport) sentr
 	release = label(release)
 	return sentry.ClientOptions{Dsn: dsn, Environment: label(environment), Release: label(release), Transport: transport,
 		EnableTracing: true, TracesSampleRate: 0.1, SendDefaultPII: false, MaxBreadcrumbs: -1,
+		BeforeSendLog:         func(log *sentry.Log) *sentry.Log { return sanitizeLog(log, environment, release) },
+		BeforeSendMetric:      func(metric *sentry.Metric) *sentry.Metric { return sanitizeMetric(metric, environment, release) },
 		BeforeSend:            func(e *sentry.Event, _ *sentry.EventHint) *sentry.Event { return sanitize(e, environment, release) },
 		BeforeSendTransaction: func(e *sentry.Event, _ *sentry.EventHint) *sentry.Event { return sanitize(e, environment, release) },
 	}
@@ -53,7 +55,8 @@ func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 			}
 			hub := sentry.NewHub(client, sentry.NewScope())
 			ctx := sentry.SetHubOnContext(c.Request().Context(), hub)
-			transaction := sentry.StartTransaction(ctx, "http.server", sentry.WithOpName("http.server"), sentry.ContinueFromRequest(c.Request()))
+			transaction := sentry.StartTransaction(ctx, "http.server", sentry.WithOpName("http.server"), sentry.ContinueFromHeaders(incomingTrace(c.Request().Header.Get("sentry-trace")), ""))
+			transaction.SetDynamicSamplingContext(sentry.DynamicSamplingContextFromTransaction(transaction))
 			c.SetRequest(c.Request().WithContext(transaction.Context()))
 			defer func() {
 				if recovered := recover(); recovered != nil {

@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -74,7 +75,13 @@ type SSORepository interface {
 	List(context.Context, int64) ([]SSOBinding, error)
 }
 
-func (service *Service) LoginOrProvisionSSO(ctx context.Context, identity SSOIdentity) (SSOLoginResult, error) {
+func (service *Service) LoginOrProvisionSSO(ctx context.Context, identity SSOIdentity) (traceResult SSOLoginResult, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("auth.login"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if service.sso == nil || identity.WorkspaceID <= 0 || identity.Revision <= 0 || identity.IdentityRevision <= 0 || len(identity.SubjectKey) != 64 {
 		return SSOLoginResult{}, ErrSSOIdentity
 	}

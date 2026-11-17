@@ -50,7 +50,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: CorrectRoadH/app-release-action@cd93be25b555447000877d481a14fc01989bb2a9
+      - id: release
+        uses: CorrectRoadH/app-release-action@cd93be25b555447000877d481a14fc01989bb2a9
         with:
           deploy: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy }}
           app: opentoggl-saas
@@ -72,3 +73,23 @@ jobs:
               target: release
               build-args: |
                 SOURCE_SHA=${{ github.sha }}
+      - name: Record healthy deployment in Sentry
+        if: steps.release.outputs.status == 'healthy'
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          for target in opentickly-landing:landing opentickly-demo:api opentickly-demo:web; do
+            project="${target%:*}"
+            version="${target#*:}@${GITHUB_SHA}"
+            curl --fail --silent --show-error --connect-timeout 10 --max-time 30 --output /dev/null \
+              --request POST "https://sentry.io/api/0/organizations/instaai/releases/" \
+              --header "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \
+              --header 'Content-Type: application/json' \
+              --data "{\"version\":\"${version}\",\"projects\":[\"${project}\"],\"ref\":\"${GITHUB_SHA}\",\"url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}\"}"
+            curl --fail --silent --show-error --connect-timeout 10 --max-time 30 --output /dev/null \
+              --request POST "https://sentry.io/api/0/organizations/instaai/releases/${version}/deploys/" \
+              --header "Authorization: Bearer ${SENTRY_AUTH_TOKEN}" \
+              --header 'Content-Type: application/json' \
+              --data "{\"environment\":\"production\",\"projects\":[\"${project}\"],\"name\":\"${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}\",\"url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}"
+          done

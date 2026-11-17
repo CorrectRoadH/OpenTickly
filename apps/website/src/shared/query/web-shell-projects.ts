@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
@@ -31,22 +32,24 @@ const projectsQueryKey = (workspaceId: number, status: ProjectListStatusFilter) 
 export function useProjectsQuery(workspaceId: number, status: ProjectListStatusFilter = "all") {
   return useQuery({
     queryFn: () =>
-      unwrapWebApiResult(
-        getProjects({
-          path: {
-            workspace_id: workspaceId,
-          },
-          query: {
-            active: status === "all" ? undefined : status === "active",
-            name: "",
-            only_templates: false,
-            page: 1,
-            search: "",
-            sort_field: "name",
-            sort_order: "ASC",
-            sort_pinned: true,
-          },
-        }),
+      traceOperation("project.list", () =>
+        unwrapWebApiResult(
+          getProjects({
+            path: {
+              workspace_id: workspaceId,
+            },
+            query: {
+              active: status === "all" ? undefined : status === "active",
+              name: "",
+              only_templates: false,
+              page: 1,
+              search: "",
+              sort_field: "name",
+              sort_order: "ASC",
+              sort_pinned: true,
+            },
+          }),
+        ),
       ),
     queryKey: projectsQueryKey(workspaceId, status),
     staleTime: 60 * 1000,
@@ -56,14 +59,18 @@ export function useProjectsQuery(workspaceId: number, status: ProjectListStatusF
 export function useProjectDetailQuery(workspaceId: number, projectId: number) {
   return useQuery({
     queryFn: () =>
-      unwrapWebApiResult(
-        getWorkspacesByWorkspaceIdProjectsByProjectId({
-          path: {
-            project_id: projectId,
-            workspace_id: workspaceId,
-          },
-        }),
-      ) as Promise<GithubComTogglTogglApiInternalModelsProject>,
+      traceOperation(
+        "project.list",
+        () =>
+          unwrapWebApiResult(
+            getWorkspacesByWorkspaceIdProjectsByProjectId({
+              path: {
+                project_id: projectId,
+                workspace_id: workspaceId,
+              },
+            }),
+          ) as Promise<GithubComTogglTogglApiInternalModelsProject>,
+      ),
     queryKey: ["project-detail", workspaceId, projectId],
   });
 }
@@ -88,27 +95,29 @@ export function useCreateProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: CreateProjectRequest) =>
-      unwrapWebApiResult(
-        postWorkspaceProjectCreate({
-          body: {
-            billable: request.billable,
-            client_id: request.clientId,
-            color: request.color,
-            currency: request.currency,
-            end_date: request.endDate,
-            estimated_hours: request.estimatedHours,
-            fixed_fee: request.fixedFee,
-            is_private: request.isPrivate,
-            name: request.name,
-            rate: request.rate,
-            recurring: request.recurring,
-            start_date: request.startDate,
-            template: request.template,
-          },
-          path: {
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("project.save", () =>
+        unwrapWebApiResult(
+          postWorkspaceProjectCreate({
+            body: {
+              billable: request.billable,
+              client_id: request.clientId,
+              color: request.color,
+              currency: request.currency,
+              end_date: request.endDate,
+              estimated_hours: request.estimatedHours,
+              fixed_fee: request.fixedFee,
+              is_private: request.isPrivate,
+              name: request.name,
+              rate: request.rate,
+              recurring: request.recurring,
+              start_date: request.startDate,
+              template: request.template,
+            },
+            path: {
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -123,29 +132,31 @@ export function useUpdateProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: UpdateProjectRequest) =>
-      unwrapWebApiResult(
-        putWorkspaceProject({
-          body: {
-            active: request.active,
-            billable: request.billable,
-            client_id: request.clientId,
-            color: request.color,
-            currency: request.currency,
-            end_date: request.endDate,
-            estimated_hours: request.estimatedHours,
-            fixed_fee: request.fixedFee,
-            is_private: request.isPrivate,
-            name: request.name,
-            rate: request.rate,
-            recurring: request.recurring,
-            start_date: request.startDate,
-            template: request.template,
-          },
-          path: {
-            project_id: request.projectId,
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("project.save", () =>
+        unwrapWebApiResult(
+          putWorkspaceProject({
+            body: {
+              active: request.active,
+              billable: request.billable,
+              client_id: request.clientId,
+              color: request.color,
+              currency: request.currency,
+              end_date: request.endDate,
+              estimated_hours: request.estimatedHours,
+              fixed_fee: request.fixedFee,
+              is_private: request.isPrivate,
+              name: request.name,
+              rate: request.rate,
+              recurring: request.recurring,
+              start_date: request.startDate,
+              template: request.template,
+            },
+            path: {
+              project_id: request.projectId,
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

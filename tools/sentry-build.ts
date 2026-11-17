@@ -1,3 +1,4 @@
+import { profileAssets } from "./sentry-profile-assets.ts";
 import { readdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -33,6 +34,7 @@ export function sentryBuild(
   return {
     release,
     plugins: [
+      ...(component === "update" ? [] : [profileAssets(release)]),
       ...(component === "web"
         ? [
             {

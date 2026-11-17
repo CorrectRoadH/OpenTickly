@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { writeEntity } from "./entity-writes.ts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -14,12 +15,14 @@ import {
 export function useClientsQuery(workspaceId: number) {
   return useQuery({
     queryFn: async () =>
-      unwrapWebApiResult(
-        getWorkspaceClients({
-          path: {
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("client.list", () =>
+        unwrapWebApiResult(
+          getWorkspaceClients({
+            path: {
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     queryKey: ["clients", workspaceId],
   });
@@ -30,15 +33,17 @@ export function useCreateClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (name: string) =>
-      unwrapWebApiResult(
-        postWorkspaceClients({
-          body: {
-            name,
-          },
-          path: {
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("client.save", () =>
+        unwrapWebApiResult(
+          postWorkspaceClients({
+            body: {
+              name,
+            },
+            path: {
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -53,16 +58,18 @@ export function useRenameClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: ({ clientId, name }: { clientId: number; name: string }) =>
-      writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
-        const result = await unwrapWebApiResult(
-          putWorkspaceClients({
-            body: { name },
-            path: { workspace_id: workspaceId, client_id: clientId },
-          }),
-        );
-        await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
-        return result;
-      }),
+      traceOperation("client.save", () =>
+        writeEntity(queryClient, `client:${workspaceId}:${clientId}`, async () => {
+          const result = await unwrapWebApiResult(
+            putWorkspaceClients({
+              body: { name },
+              path: { workspace_id: workspaceId, client_id: clientId },
+            }),
+          );
+          await queryClient.invalidateQueries({ queryKey: ["clients", workspaceId] });
+          return result;
+        }),
+      ),
   });
 }
 

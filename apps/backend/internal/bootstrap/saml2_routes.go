@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"net/http"
 	"net/url"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strconv"
 	"strings"
 	"time"
@@ -74,7 +75,12 @@ type ssoResolveResponse struct {
 	LoginPath     string `json:"login_path,omitempty"`
 }
 
-func (handlers *routeHandlers) ssoResolve(ctx echo.Context) error {
+func (handlers *routeHandlers) ssoResolve(ctx echo.Context) (traceErr error) {
+	span, finish := monitoring.StartBusiness(ctx.Request().Context(), "auth.sso.resolve")
+	if span != nil {
+		ctx.SetRequest(ctx.Request().WithContext(span.Context()))
+	}
+	defer monitoring.FinishBusiness(finish, &traceErr)
 	samlResponseHeaders(ctx)
 	var request ssoResolveRequest
 	if err := ctx.Bind(&request); err != nil {

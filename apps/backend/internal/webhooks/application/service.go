@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"time"
 
 	"opentoggl/backend/apps/backend/internal/log"
@@ -57,21 +58,31 @@ type CreateSubscriptionCommand struct {
 	EventFilters []domain.EventFilter
 }
 
-func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscriptionCommand) (domain.Subscription, error) {
+func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscriptionCommand) (traceResult domain.Subscription, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("webhook.handle"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	if cmd.Description == "" {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("subscription description must not be empty")
 	}
 	if len(cmd.EventFilters) == 0 {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("the list of event filters must not be empty")
 	}
 
 	maxWebhooks, maxEvents := domain.DefaultLimits()
 
 	if len(cmd.EventFilters) > maxEvents {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("the limit of %d event filters for your subscription has been exceeded as you're trying to set %d filters", maxEvents, len(cmd.EventFilters))
 	}
 
 	if err := validateFilters(cmd.EventFilters); err != nil {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, err
 	}
 
@@ -80,6 +91,7 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 		return domain.Subscription{}, err
 	}
 	if exists {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("subscription description '%s' is already in use for workspace %d", cmd.Description, cmd.WorkspaceID)
 	}
 
@@ -89,9 +101,11 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 			return domain.Subscription{}, err
 		}
 		if count >= maxWebhooks {
+			monitoring.RejectOperation(ctx)
 			return domain.Subscription{}, fmt.Errorf("user %d already reached the limit of %d enabled subscriptions for workspace %d", cmd.UserID, maxWebhooks, cmd.WorkspaceID)
 		}
 		if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
+			monitoring.RejectOperation(ctx)
 			return domain.Subscription{}, err
 		}
 	}
@@ -133,6 +147,7 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 	// that Toggl SaaS uses to verify third-party URL ownership.
 	validated, err := s.store.SetValidated(ctx, created.WorkspaceID, created.ID)
 	if err != nil {
+		monitoring.Degraded(ctx, "webhook.handle")
 		s.logger.WarnContext(ctx, "auto-validate after creation failed", "subscription_id", created.ID, "error", err)
 		return created, nil
 	}
@@ -149,21 +164,31 @@ type UpdateSubscriptionCommand struct {
 	EventFilters   []domain.EventFilter
 }
 
-func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscriptionCommand) (domain.Subscription, error) {
+func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscriptionCommand) (traceResult domain.Subscription, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("webhook.handle"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	if cmd.Description == "" {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("subscription description must not be empty")
 	}
 	if len(cmd.EventFilters) == 0 {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("the list of event filters must not be empty")
 	}
 
 	_, maxEvents := domain.DefaultLimits()
 
 	if len(cmd.EventFilters) > maxEvents {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("the limit of %d event filters for your subscription has been exceeded as you're trying to set %d filters", maxEvents, len(cmd.EventFilters))
 	}
 
 	if err := validateFilters(cmd.EventFilters); err != nil {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, err
 	}
 
@@ -177,6 +202,7 @@ func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscription
 		return domain.Subscription{}, err
 	}
 	if exists {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("subscription description '%s' is already in use for workspace %d", cmd.Description, cmd.WorkspaceID)
 	}
 
@@ -187,12 +213,14 @@ func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscription
 			return domain.Subscription{}, err
 		}
 		if count >= maxWebhooks {
+			monitoring.RejectOperation(ctx)
 			return domain.Subscription{}, fmt.Errorf("user %d already reached the limit of %d enabled subscriptions for workspace %d", cmd.UserID, maxWebhooks, cmd.WorkspaceID)
 		}
 	}
 
 	if cmd.Enabled {
 		if err := s.prober.Probe(ctx, cmd.URLCallback); err != nil {
+			monitoring.RejectOperation(ctx)
 			return domain.Subscription{}, err
 		}
 	}
@@ -206,7 +234,13 @@ func (s *Service) UpdateSubscription(ctx context.Context, cmd UpdateSubscription
 	return s.store.Update(ctx, existing)
 }
 
-func (s *Service) PatchSubscription(ctx context.Context, workspaceID, subscriptionID, userID int64, enabled bool) (domain.Subscription, error) {
+func (s *Service) PatchSubscription(ctx context.Context, workspaceID, subscriptionID, userID int64, enabled bool) (traceResult domain.Subscription, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("webhook.handle"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	existing, err := s.store.Get(ctx, workspaceID, subscriptionID)
 	if err != nil {
 		return domain.Subscription{}, err
@@ -219,6 +253,7 @@ func (s *Service) PatchSubscription(ctx context.Context, workspaceID, subscripti
 			return domain.Subscription{}, err
 		}
 		if count >= maxWebhooks {
+			monitoring.RejectOperation(ctx)
 			return domain.Subscription{}, fmt.Errorf("user %d already reached the limit of %d enabled subscriptions for workspace %d", userID, maxWebhooks, workspaceID)
 		}
 
@@ -230,11 +265,23 @@ func (s *Service) PatchSubscription(ctx context.Context, workspaceID, subscripti
 	return s.store.SetEnabled(ctx, workspaceID, subscriptionID, enabled)
 }
 
-func (s *Service) DeleteSubscription(ctx context.Context, workspaceID, subscriptionID int64) (domain.Subscription, error) {
+func (s *Service) DeleteSubscription(ctx context.Context, workspaceID, subscriptionID int64) (traceResult domain.Subscription, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("webhook.handle"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	return s.store.Delete(ctx, workspaceID, subscriptionID)
 }
 
-func (s *Service) Ping(ctx context.Context, workspaceID, subscriptionID int64) error {
+func (s *Service) Ping(ctx context.Context, workspaceID, subscriptionID int64) (traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("webhook.handle"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	sub, err := s.store.Get(ctx, workspaceID, subscriptionID)
 	if err != nil {
 		return err
@@ -242,12 +289,20 @@ func (s *Service) Ping(ctx context.Context, workspaceID, subscriptionID int64) e
 	return s.prober.Probe(ctx, sub.URLCallback)
 }
 
-func (s *Service) Validate(ctx context.Context, workspaceID, subscriptionID int64, validationCode string) (domain.Subscription, error) {
+func (s *Service) Validate(ctx context.Context, workspaceID, subscriptionID int64, validationCode string) (traceResult domain.Subscription, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("webhook.handle"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	sub, err := s.store.GetByValidationCode(ctx, workspaceID, subscriptionID, validationCode)
 	if err != nil {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("subscription %d for workspace %d and validation code '%s' was not found", subscriptionID, workspaceID, validationCode)
 	}
 	if sub.ValidatedAt != nil {
+		monitoring.RejectOperation(ctx)
 		return domain.Subscription{}, fmt.Errorf("subscription %d has already been validated", subscriptionID)
 	}
 	return s.store.SetValidated(ctx, workspaceID, subscriptionID)

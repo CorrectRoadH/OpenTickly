@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"opentoggl/backend/apps/backend/internal/telemetry/domain"
 )
 
@@ -96,7 +97,7 @@ func (p *Pinger) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			if _, err := p.SendOnce(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			if err := monitoring.TraceScheduler(ctx, "update_check", func(taskCtx context.Context) error { _, err := p.SendOnce(taskCtx); return err }); err != nil && !errors.Is(err, context.Canceled) {
 				p.logger.Info("telemetry check-in failed", "error", err)
 			}
 			timer.Reset(p.interval)
@@ -106,7 +107,12 @@ func (p *Pinger) Run(ctx context.Context) {
 
 // SendOnce performs a single check-in and caches the manifest for later
 // retrieval via LatestManifest. Safe to call from handlers.
-func (p *Pinger) SendOnce(ctx context.Context) (domain.Manifest, error) {
+func (p *Pinger) SendOnce(ctx context.Context) (result domain.Manifest, resultErr error) {
+	span, finish := monitoring.StartBusiness(ctx, monitoring.UpdateCheck)
+	if span != nil {
+		ctx = span.Context()
+	}
+	defer func() { finish(resultErr) }()
 	id, err := p.store.GetInstanceID(ctx)
 	if err != nil {
 		return domain.Manifest{}, err

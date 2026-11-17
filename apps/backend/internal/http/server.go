@@ -469,5 +469,14 @@ serveEmbeddedFile delegates file responses to Echo's fs.FS-aware static handler
 so embedded assets can be returned without relying on unsupported Context APIs.
 */
 func serveEmbeddedFile(context echo.Context, staticFiles fs.FS, filePath string) error {
+	if path.Ext(filePath) == ".html" {
+		policy := context.Response().Header().Get("Document-Policy")
+		if !strings.Contains(policy, "js-profiling") {
+			if policy != "" {
+				policy += ", "
+			}
+			context.Response().Header().Set("Document-Policy", policy+"js-profiling")
+		}
+	}
 	return echo.StaticFileHandler(filePath, staticFiles)(context)
 }

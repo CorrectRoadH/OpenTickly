@@ -1,4 +1,7 @@
+import { cleanLog, cleanMetric } from "./format.ts";
 import type { ErrorEvent, StreamedSpanJSON } from "@sentry/core";
+import { operationName } from "./operations.ts";
+import { validId } from "./profile.ts";
 
 export interface TelemetryConfig {
   dsn: string;
@@ -177,14 +180,16 @@ export function sanitizeSpan(
   span: StreamedSpanJSON,
   component: string,
   config: TelemetryConfig,
+  profiling = false,
 ): StreamedSpanJSON {
   const op = operations.has(String(span.attributes["sentry.op"]))
     ? String(span.attributes["sentry.op"])
     : "http.request";
+  const name = operationName(span.name) ? span.name : op;
   const attributes: StreamedSpanJSON["attributes"] = {
     component,
     "sentry.op": op,
-    "sentry.segment.name": op,
+    "sentry.segment.name": name,
     "sentry.release": config.release,
     "sentry.environment": config.environment,
   };
@@ -205,11 +210,29 @@ export function sanitizeSpan(
     const value = span.attributes[key];
     if (typeof value === "number" && Number.isFinite(value)) attributes[key] = value;
   }
+  const outcome = span.attributes.outcome;
+  if (
+    outcome === "success" ||
+    outcome === "error" ||
+    outcome === "rejected" ||
+    outcome === "cancelled"
+  )
+    attributes.outcome = outcome;
+  if (
+    profiling &&
+    validId(span.attributes["sentry.profiler_id"]) &&
+    (span.attributes["thread.id"] === 0 || span.attributes["thread.id"] === "0")
+  ) {
+    const threadId = Number(span.attributes["thread.id"]);
+    attributes["sentry.profiler_id"] = span.attributes["sentry.profiler_id"];
+    attributes["thread.id"] = threadId;
+    attributes["sentry.thread.id"] = String(threadId);
+  }
   return {
     trace_id: span.trace_id,
     span_id: span.span_id,
     parent_span_id: span.parent_span_id,
-    name: op,
+    name,
     start_timestamp: span.start_timestamp,
     end_timestamp: span.end_timestamp,
     status: span.status,
@@ -217,13 +240,16 @@ export function sanitizeSpan(
     attributes,
   };
 }
-export function privacyOptions(component: string, config: TelemetryConfig) {
+export function privacyOptions(component: string, config: TelemetryConfig, profiling = false) {
   return {
     ...config,
     dataCollection: { ...dataCollection, httpBodies: [] },
+    sendClientReports: true,
     traceLifecycle: "stream" as const,
-    beforeSendLog: () => null,
+    beforeSendLog: (log: import("@sentry/core").Log) => cleanLog(log, component, config),
+    beforeSendMetric: (metric: import("@sentry/core").Metric) =>
+      cleanMetric(metric, component, config),
     beforeSend: (event: ErrorEvent) => sanitizeEvent(event, component, config),
-    beforeSendSpan: (span: StreamedSpanJSON) => sanitizeSpan(span, component, config),
+    beforeSendSpan: (span: StreamedSpanJSON) => sanitizeSpan(span, component, config, profiling),
   };
 }

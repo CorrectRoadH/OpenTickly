@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"slices"
 	"strconv"
 	"strings"
@@ -128,7 +129,13 @@ func (s *Service) DeleteScheduledReport(ctx context.Context, workspaceID, report
 func (service *Service) BuildWeeklyReportEntries(
 	ctx context.Context,
 	query Query,
-) ([]trackingapplication.TimeEntryView, error) {
+) (traceResult []trackingapplication.TimeEntryView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	location := resolveLocation(query.Timezone)
 	startUTC := query.StartDate.In(location).UTC()
 	until := reportUntil(query.EndDate, location)
@@ -172,7 +179,13 @@ func (service *Service) GetWorkspaceBillableRate(
 	return service.rates.GetWorkspaceBillableRate(ctx, workspaceID)
 }
 
-func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (WeeklyReport, error) {
+func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (traceResult WeeklyReport, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	service.logger.InfoContext(ctx, "building weekly report",
 		"workspace_id", query.WorkspaceID,
 		"start_date", query.StartDate,
@@ -299,7 +312,13 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 	}, nil
 }
 
-func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (SummaryReport, error) {
+func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (traceResult SummaryReport, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	service.logger.InfoContext(ctx, "building summary report",
 		"workspace_id", query.WorkspaceID,
 		"start_date", query.StartDate,
@@ -378,7 +397,13 @@ func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (Su
 // Insights: Data Trends
 // ---------------------------------------------------------------------------
 
-func (service *Service) BuildProjectDataTrends(ctx context.Context, query ProjectDataTrendsQuery) ([]ProjectDataTrend, error) {
+func (service *Service) BuildProjectDataTrends(ctx context.Context, query ProjectDataTrendsQuery) (traceResult []ProjectDataTrend, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	service.logger.InfoContext(ctx, "building project data trends",
 		"workspace_id", query.WorkspaceID,
 		"start_date", query.StartDate,
@@ -513,7 +538,13 @@ func (service *Service) BuildProjectDataTrends(ctx context.Context, query Projec
 // Insights: Profitability
 // ---------------------------------------------------------------------------
 
-func (service *Service) BuildProjectProfitability(ctx context.Context, query ProjectProfitabilityQuery) ([]ProjectProfitabilityRow, error) {
+func (service *Service) BuildProjectProfitability(ctx context.Context, query ProjectProfitabilityQuery) (traceResult []ProjectProfitabilityRow, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	service.logger.InfoContext(ctx, "building project profitability",
 		"workspace_id", query.WorkspaceID,
 	)
@@ -618,7 +649,13 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 	return results, nil
 }
 
-func (service *Service) BuildEmployeeProfitability(ctx context.Context, query EmployeeProfitabilityQuery) ([]EmployeeProfitabilityRow, error) {
+func (service *Service) BuildEmployeeProfitability(ctx context.Context, query EmployeeProfitabilityQuery) (traceResult []EmployeeProfitabilityRow, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr)
+
 	service.logger.InfoContext(ctx, "building employee profitability",
 		"workspace_id", query.WorkspaceID,
 	)

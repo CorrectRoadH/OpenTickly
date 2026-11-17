@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 )
 
@@ -19,7 +20,13 @@ func (service *Service) StartWorkspaceImport(
 	requestedBy int64,
 	source string,
 	archive []byte,
-) (ImportJobView, error) {
+) (traceResult ImportJobView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("import.run"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if workspaceID <= 0 || requestedBy <= 0 {
 		return ImportJobView{}, ErrInvalidScopeID
 	}

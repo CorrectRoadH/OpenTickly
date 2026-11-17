@@ -2,12 +2,19 @@ package application
 
 import (
 	"context"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 
 	"opentoggl/backend/apps/backend/internal/catalog/domain"
 )
 
-func (service *Service) ListClients(ctx context.Context, workspaceID int64, filter ListClientsFilter) ([]ClientView, error) {
+func (service *Service) ListClients(ctx context.Context, workspaceID int64, filter ListClientsFilter) (traceResult []ClientView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("client.list"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
@@ -33,7 +40,13 @@ func (service *Service) ListClientsByIDs(ctx context.Context, workspaceID int64,
 	return clients, nil
 }
 
-func (service *Service) CreateClient(ctx context.Context, command CreateClientCommand) (ClientView, error) {
+func (service *Service) CreateClient(ctx context.Context, command CreateClientCommand) (traceResult ClientView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("client.save"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "creating client",
 		"workspace_id", command.WorkspaceID,
 		"name", command.Name,
@@ -69,7 +82,13 @@ func (service *Service) GetClient(ctx context.Context, workspaceID int64, client
 	return service.loadClient(ctx, workspaceID, clientID)
 }
 
-func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCommand) (ClientView, error) {
+func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCommand) (traceResult ClientView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("client.save"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "updating client",
 		"workspace_id", command.WorkspaceID,
 		"client_id", command.ClientID,

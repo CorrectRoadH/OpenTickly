@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { resolveSsoProfile } from "../api/auth-client.ts";
@@ -45,7 +46,8 @@ export function useLoginMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: LoginRequestDto) => unwrapWebApiResult(loginWebUser({ body: request })),
+    mutationFn: (request: LoginRequestDto) =>
+      traceOperation("auth.login", () => unwrapWebApiResult(loginWebUser({ body: request }))),
     onSuccess: (data) => {
       queryClient.setQueryData(sessionQueryKey, data);
     },
@@ -116,9 +118,10 @@ export function useLogoutMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      await unwrapWebApiResult(logoutWebUser());
-    },
+    mutationFn: async () =>
+      traceOperation("auth.logout", async () => {
+        await unwrapWebApiResult(logoutWebUser());
+      }),
     onSuccess: async () => {
       await queryClient.cancelQueries();
       queryClient.clear();
@@ -145,7 +148,8 @@ export type { SsoConfigCheck, SsoConfigTestResult } from "../api/web/index.ts";
 // the dedicated SSO login screen can redirect the browser to the IdP.
 export function useSsoResolveMutation() {
   return useMutation({
-    mutationFn: (email: string) => resolveSsoProfile(email),
+    mutationFn: (email: string) =>
+      traceOperation("auth.sso.resolve", () => resolveSsoProfile(email)),
   });
 }
 

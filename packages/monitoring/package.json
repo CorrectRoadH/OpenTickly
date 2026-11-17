@@ -5,7 +5,8 @@
   "exports": {
     "./policy": "./src/policy.ts",
     "./browser": "./src/browser.ts",
-    "./envelope": "./src/envelope.ts"
+    "./envelope": "./src/envelope.ts",
+    "./operations": "./src/operations.ts"
   },
   "scripts": {
     "check": "vp exec tsc --noEmit"

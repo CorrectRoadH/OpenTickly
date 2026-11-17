@@ -112,12 +112,14 @@ func (app *App) Start() error {
 	defer monitoring.Flush(app.sentryClient)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	monitoring.ServiceLog(monitoring.BackgroundContext(ctx, app.sentryClient), "service.started")
+	defer monitoring.ServiceLog(monitoring.BackgroundContext(context.Background(), app.sentryClient), "service.stopped")
 
 	if days := app.Config.Governance.AuditLogRetentionDays; days > 0 && app.governanceApp != nil {
-		governanceapplication.StartAuditLogCleanupWorker(ctx, app.governanceApp, days)
+		governanceapplication.StartAuditLogCleanupWorker(monitoring.BackgroundContext(ctx, app.sentryClient), app.governanceApp, days)
 	}
 	if app.telemetryPinger != nil {
-		telemetry.StartWorker(ctx, app.telemetryPinger)
+		telemetry.StartWorker(monitoring.BackgroundContext(ctx, app.sentryClient), app.telemetryPinger)
 	}
 
 	serverErr := make(chan error, 1)

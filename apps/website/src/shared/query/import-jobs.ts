@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { getImportJob } from "../api/import/index.ts";
@@ -15,14 +16,19 @@ export function useCreateArchiveImportJobMutation() {
     }: {
       archive: File;
       organizationName: string;
-    }) => createArchiveImportJobUpload({ archive, organizationName }),
+    }) =>
+      traceOperation("import.run", () =>
+        createArchiveImportJobUpload({ archive, organizationName }),
+      ),
   });
 }
 
 export function useCreateTimeEntriesImportJobMutation() {
   return useMutation({
     mutationFn: async ({ archive, workspaceId }: { archive: File; workspaceId: number }) =>
-      createTimeEntriesImportJobUpload({ archive, workspaceId }),
+      traceOperation("import.run", () =>
+        createTimeEntriesImportJobUpload({ archive, workspaceId }),
+      ),
   });
 }
 

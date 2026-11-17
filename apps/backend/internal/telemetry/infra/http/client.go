@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"opentoggl/backend/apps/backend/internal/telemetry/domain"
 )
 
@@ -100,7 +102,27 @@ func (c *Client) FetchManifest(ctx context.Context, payload domain.CheckinPayloa
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := c.http.Do(req)
+	httpClient := c.http
+	if span := sentry.SpanFromContext(ctx); span != nil && u.Scheme == "https" && u.Host == "update.opentoggl.com" && u.User == nil && u.Path == "/" && u.Fragment == "" {
+		req.Header.Set("sentry-trace", span.ToSentryTrace())
+		req.Header.Set("baggage", monitoring.SafeBaggage(span))
+		// The dedicated client may follow redirects, but never forwards telemetry on them.
+		clone := *c.http
+		previous := clone.CheckRedirect
+		clone.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+			next.Header.Del("sentry-trace")
+			next.Header.Del("baggage")
+			if previous != nil {
+				return previous(next, via)
+			}
+			if len(via) >= 10 {
+				return errors.New("stopped after 10 redirects")
+			}
+			return nil
+		}
+		httpClient = &clone
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("telemetry: fetch manifest: %w", err)
 	}

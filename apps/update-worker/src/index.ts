@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { captureUpdateError, monitorWorker } from "./sentry.ts";
 import { recordUpdateRequest } from "./analytics.ts";
 import { getActiveAnnouncements } from "./content.ts";
@@ -33,7 +34,9 @@ export default monitorWorker({
     // announcements. Clients interpret `latestVersion === ""` as "unknown".
     let releases: GithubRelease[] = [];
     try {
-      releases = await fetchReleases(env.GITHUB_REPO, env.GITHUB_TOKEN);
+      releases = await traceOperation("update.upstream.fetch", () =>
+        fetchReleases(env.GITHUB_REPO, env.GITHUB_TOKEN),
+      );
     } catch (err) {
       captureUpdateError(err);
       console.error("[update-worker] github fetch failed", err);
@@ -46,13 +49,19 @@ export default monitorWorker({
     });
 
     // Best-effort DAU write — never blocks the response.
-    ctx.waitUntil(Promise.resolve().then(() => recordUpdateRequest(env, query, request)));
+    ctx.waitUntil(
+      traceOperation("update.analytics", () =>
+        Promise.resolve().then(() => recordUpdateRequest(env, query, request)),
+      ),
+    );
 
-    return json(manifest, 200, {
-      // Edge-cache the composed manifest for a minute so a stampede doesn't
-      // translate 1:1 into GH fetches. GH itself is cached for 5min in github.ts.
-      "Cache-Control": "public, max-age=60",
-    });
+    return traceOperation("update.response", () =>
+      json(manifest, 200, {
+        // Edge-cache the composed manifest for a minute so a stampede doesn't
+        // translate 1:1 into GH fetches. GH itself is cached for 5min in github.ts.
+        "Cache-Control": "public, max-age=60",
+      }),
+    );
   },
 });
 

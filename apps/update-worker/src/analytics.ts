@@ -1,3 +1,4 @@
+import { markOperationFailure } from "@opentickly/monitoring/operations";
 import type { QueryParams } from "./validation.ts";
 import type { WorkerEnv } from "./types.ts";
 
@@ -35,6 +36,7 @@ export function recordUpdateRequest(env: WorkerEnv, query: QueryParams, request:
       doubles: [],
     });
   } catch (err) {
+    markOperationFailure();
     // Analytics is best-effort. Never break the response on write failure.
     console.error("[update-worker] analytics write failed", err);
   }

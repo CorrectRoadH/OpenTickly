@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 
 	"opentoggl/backend/apps/backend/internal/catalog/domain"
@@ -10,7 +11,13 @@ import (
 	"github.com/samber/lo"
 )
 
-func (service *Service) ListProjects(ctx context.Context, workspaceID int64, filter ListProjectsFilter) ([]ProjectView, error) {
+func (service *Service) ListProjects(ctx context.Context, workspaceID int64, filter ListProjectsFilter) (traceResult []ProjectView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("project.list"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
@@ -23,7 +30,13 @@ func (service *Service) ListProjects(ctx context.Context, workspaceID int64, fil
 	return service.store.ListProjects(ctx, workspaceID, filter)
 }
 
-func (service *Service) CreateProject(ctx context.Context, command CreateProjectCommand) (ProjectView, error) {
+func (service *Service) CreateProject(ctx context.Context, command CreateProjectCommand) (traceResult ProjectView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("project.save"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "creating project",
 		"workspace_id", command.WorkspaceID,
 		"name", command.Name,
@@ -88,7 +101,13 @@ func (service *Service) GetProject(ctx context.Context, workspaceID int64, proje
 	return service.loadProject(ctx, workspaceID, projectID)
 }
 
-func (service *Service) UpdateProject(ctx context.Context, command UpdateProjectCommand) (ProjectView, error) {
+func (service *Service) UpdateProject(ctx context.Context, command UpdateProjectCommand) (traceResult ProjectView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("project.save"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "updating project",
 		"workspace_id", command.WorkspaceID,
 		"project_id", command.ProjectID,

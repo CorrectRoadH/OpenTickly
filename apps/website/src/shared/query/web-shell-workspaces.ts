@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
@@ -334,22 +335,26 @@ export function useWorkspaceWeeklyReportQuery(
 ) {
   return useQuery({
     queryFn: () =>
-      unwrapWebApiResult(
-        postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries({
-          body: {
-            rounding: options.rounding,
-            rounding_minutes: options.roundingMinutes,
-            description: options.description?.trim() || undefined,
-            end_date: options.endDate,
-            project_ids: options.projectIds?.length ? options.projectIds : undefined,
-            start_date: options.startDate,
-            tag_ids: options.tagIds?.length ? options.tagIds : undefined,
-          },
-          path: {
-            workspace_id: workspaceId,
-          },
-        }),
-      ) as Promise<SavedWeeklyReportData>,
+      traceOperation(
+        "report.load",
+        () =>
+          unwrapWebApiResult(
+            postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries({
+              body: {
+                rounding: options.rounding,
+                rounding_minutes: options.roundingMinutes,
+                description: options.description?.trim() || undefined,
+                end_date: options.endDate,
+                project_ids: options.projectIds?.length ? options.projectIds : undefined,
+                start_date: options.startDate,
+                tag_ids: options.tagIds?.length ? options.tagIds : undefined,
+              },
+              path: {
+                workspace_id: workspaceId,
+              },
+            }),
+          ) as Promise<SavedWeeklyReportData>,
+      ),
     queryKey: [
       "workspace-weekly-report",
       options.rounding,

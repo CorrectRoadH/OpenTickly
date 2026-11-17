@@ -152,6 +152,7 @@ export default defineConfig(() => {
       },
     },
     server: {
+      headers: { "Document-Policy": "js-profiling" },
       proxy: {
         "/healthz": {
           target: webProxyTarget,

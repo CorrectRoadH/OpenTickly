@@ -9,6 +9,7 @@ import { sentryBuild } from "../../tools/sentry-build.ts";
 const sentry = sentryBuild("landing", "opentickly-landing", "build");
 
 export default defineConfig({
+  server: { headers: { "Document-Policy": "js-profiling" } },
   envDir: "../..",
   define: { "import.meta.env.VITE_SENTRY_RELEASE": JSON.stringify(sentry.release) },
   build: { sourcemap: "hidden" },

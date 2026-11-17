@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 )
 
@@ -14,7 +15,13 @@ func (service *Service) StartWorkspaceTimeEntriesImport(
 	requestedBy int64,
 	source string,
 	content []byte,
-) (ImportJobView, error) {
+) (traceResult ImportJobView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("import.run"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if workspaceID <= 0 || requestedBy <= 0 {
 		return ImportJobView{}, ErrInvalidScopeID
 	}

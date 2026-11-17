@@ -2,12 +2,23 @@ package application
 
 import (
 	"context"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 
 	"github.com/samber/lo"
 )
 
-func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeEntryCommand) (TimeEntryView, error) {
+func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeEntryCommand) (traceResult TimeEntryView, traceErr error) {
+	traceOperation := monitoring.Operation("time_entry.create")
+	if command.Duration != nil && *command.Duration < 0 {
+		traceOperation = "timer.start"
+	}
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, traceOperation)
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if err := requireWorkspaceID(command.WorkspaceID); err != nil {
 		return TimeEntryView{}, err
 	}
@@ -151,14 +162,26 @@ func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeE
 	return entry, nil
 }
 
-func (service *Service) ListTimeEntries(ctx context.Context, workspaceID int64, filter ListTimeEntriesFilter) ([]TimeEntryView, error) {
+func (service *Service) ListTimeEntries(ctx context.Context, workspaceID int64, filter ListTimeEntriesFilter) (traceResult []TimeEntryView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("time_entry.list"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
 	return service.store.ListTimeEntries(ctx, workspaceID, filter)
 }
 
-func (service *Service) ListUserTimeEntries(ctx context.Context, filter ListTimeEntriesFilter) ([]TimeEntryView, error) {
+func (service *Service) ListUserTimeEntries(ctx context.Context, filter ListTimeEntriesFilter) (traceResult []TimeEntryView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("time_entry.list"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	return service.store.ListTimeEntriesForUser(ctx, filter)
 }
 
@@ -221,7 +244,13 @@ func (service *Service) GetUserTimeEntry(ctx context.Context, userID int64, time
 	return entry, nil
 }
 
-func (service *Service) GetCurrentTimeEntry(ctx context.Context, userID int64) (TimeEntryView, error) {
+func (service *Service) GetCurrentTimeEntry(ctx context.Context, userID int64) (traceResult TimeEntryView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("time_entry.list"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	entry, ok, err := service.store.GetCurrentTimeEntry(ctx, userID)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to get current time entry",

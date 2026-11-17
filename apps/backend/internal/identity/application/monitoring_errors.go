@@ -1,0 +1,40 @@
+package application
+
+import "opentoggl/backend/apps/backend/internal/identity/domain"
+
+// Explicit domain rejections retain original errors and are not service faults.
+var telemetryRejectedErrors = []error{
+	ErrSSOIdentity,
+	ErrSSOAccountExists,
+	ErrSSOConfigurationChanged,
+	ErrSSOBindingTaken,
+	ErrSSOVerificationRequired,
+	ErrSSOMembershipRequired,
+	ErrSessionNotFound,
+	ErrUnknownPreferencesClient,
+	ErrUnknownAlphaFeature,
+	ErrRegistrationClosed,
+	ErrVerificationTokenExpired,
+	ErrVerificationTokenInvalid,
+	ErrPasswordResetTokenInvalid,
+	ErrPasswordResetTokenExpired,
+	ErrPasswordResetTokenConsumed,
+	ErrVerificationResendCooldown,
+	domain.ErrCurrentPasswordInvalid,
+	domain.ErrCurrentPasswordRequired,
+	domain.ErrInvalidCredentials,
+	domain.ErrInvalidDateFormat,
+	domain.ErrInvalidBeginningOfWeek,
+	domain.ErrInvalidEmail,
+	domain.ErrInvalidFullName,
+	domain.ErrInvalidPassword,
+	domain.ErrInvalidTimeOfDayFormat,
+	domain.ErrInvalidTimezone,
+	domain.ErrPreferencesFieldProtected,
+	domain.ErrEmailAlreadyRegistered,
+	domain.ErrUserNotFound,
+	domain.ErrUserDeactivated,
+	domain.ErrUserDeleted,
+	domain.ErrUserPendingVerification,
+	domain.ErrPushServiceTokenRequired,
+}

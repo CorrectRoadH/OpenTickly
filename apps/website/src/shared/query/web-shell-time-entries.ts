@@ -1,3 +1,4 @@
+import { traceOperation } from "@opentickly/monitoring/operations";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../api/generated/public-track/types.gen.ts";
@@ -76,19 +77,20 @@ export function useTimeEntriesQuery(options: {
 
   return useQuery({
     enabled: options.enabled ?? true,
-    queryFn: async () => {
-      await ensureTimeEntriesWorkspaceScope(queryClient, options.workspaceId);
-      return unwrapWebApiResult(
-        getTimeEntries({
-          query: {
-            end_date: options?.endDate,
-            include_sharing: options?.includeSharing,
-            meta: true,
-            start_date: options?.startDate,
-          },
-        }),
-      );
-    },
+    queryFn: async () =>
+      traceOperation("time_entry.list", async () => {
+        await ensureTimeEntriesWorkspaceScope(queryClient, options.workspaceId);
+        return unwrapWebApiResult(
+          getTimeEntries({
+            query: {
+              end_date: options?.endDate,
+              include_sharing: options?.includeSharing,
+              meta: true,
+              start_date: options?.startDate,
+            },
+          }),
+        );
+      }),
     queryKey: timeEntriesQueryKey(
       options.workspaceId,
       options.startDate,
@@ -101,7 +103,8 @@ export function useTimeEntriesQuery(options: {
 
 export function useCurrentTimeEntryQuery() {
   return useQuery({
-    queryFn: () => unwrapWebApiResult(getCurrentTimeEntry()),
+    queryFn: () =>
+      traceOperation("time_entry.list", () => unwrapWebApiResult(getCurrentTimeEntry())),
     queryKey: currentTimeEntryQueryKey,
     retry: false,
     refetchInterval: 30_000,
@@ -139,23 +142,25 @@ export function useStartTimeEntryMutation(workspaceId: number) {
       tagNames?: string[];
       taskId?: number | null;
     }) =>
-      unwrapWebApiResult(
-        postWorkspaceTimeEntries({
-          body: {
-            billable: request.billable,
-            created_with: "opentoggl-web",
-            description: request.description,
-            duration: -1,
-            project_id: request.projectId ?? undefined,
-            start: toTrackUtcString(request.start),
-            tag_ids: request.tagIds,
-            task_id: request.taskId ?? undefined,
-            workspace_id: workspaceId,
-          },
-          path: {
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("timer.start", () =>
+        unwrapWebApiResult(
+          postWorkspaceTimeEntries({
+            body: {
+              billable: request.billable,
+              created_with: "opentoggl-web",
+              description: request.description,
+              duration: -1,
+              project_id: request.projectId ?? undefined,
+              start: toTrackUtcString(request.start),
+              tag_ids: request.tagIds,
+              task_id: request.taskId ?? undefined,
+              workspace_id: workspaceId,
+            },
+            path: {
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     onMutate: (request) => {
       const previous =
@@ -263,27 +268,29 @@ export function useCreateTimeEntryMutation(workspaceId: number) {
       tagIds?: number[];
       taskId?: number | null;
     }) =>
-      unwrapWebApiResult(
-        postWorkspaceTimeEntries({
-          body: {
-            billable: request.billable,
-            created_with: "opentoggl-web",
-            description: request.description,
-            duration: request.duration,
-            project_id: request.projectId ?? undefined,
-            start: toTrackUtcString(request.start),
-            stop: toTrackUtcString(request.stop),
-            tag_ids: request.tagIds,
-            task_id: request.taskId ?? undefined,
-            workspace_id: workspaceId,
-          },
-          path: {
-            workspace_id: workspaceId,
-          },
-          query: {
-            meta: true,
-          },
-        }),
+      traceOperation("time_entry.create", () =>
+        unwrapWebApiResult(
+          postWorkspaceTimeEntries({
+            body: {
+              billable: request.billable,
+              created_with: "opentoggl-web",
+              description: request.description,
+              duration: request.duration,
+              project_id: request.projectId ?? undefined,
+              start: toTrackUtcString(request.start),
+              stop: toTrackUtcString(request.stop),
+              tag_ids: request.tagIds,
+              task_id: request.taskId ?? undefined,
+              workspace_id: workspaceId,
+            },
+            path: {
+              workspace_id: workspaceId,
+            },
+            query: {
+              meta: true,
+            },
+          }),
+        ),
       ),
     onMutate: (request) => {
       const previousLists = queryClient.getQueriesData<
@@ -341,13 +348,15 @@ export function useStopTimeEntryMutation() {
 
   return useMutation({
     mutationFn: ({ timeEntryId, workspaceId }: { timeEntryId: number; workspaceId: number }) =>
-      unwrapWebApiResult(
-        patchWorkspaceStopTimeEntryHandler({
-          path: {
-            time_entry_id: timeEntryId,
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("timer.stop", () =>
+        unwrapWebApiResult(
+          patchWorkspaceStopTimeEntryHandler({
+            path: {
+              time_entry_id: timeEntryId,
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     onMutate: ({ timeEntryId }) => {
       const previous =
@@ -437,32 +446,34 @@ export function useUpdateTimeEntryMutation() {
       timeEntryId: number;
       workspaceId: number;
     }) =>
-      unwrapWebApiResult(
-        putWorkspaceTimeEntryHandler({
-          // Explicit null on `task_id` is the clearing signal — `?? undefined`
-          // would drop it and leave the server-side task_id untouched, which
-          // breaks project-switch flows where the stale task belongs to the
-          // old project. Upstream Toggl OpenAPI types `task_id` as `number`
-          // only, so we cast at this boundary to preserve the null.
-          body: {
-            billable: request.billable,
-            description: request.description,
-            project_id: request.projectId === undefined ? undefined : request.projectId,
-            start: toTrackUtcString(request.start),
-            stop: toTrackUtcString(request.stop),
-            tag_ids: request.tagIds,
-            task_id:
-              request.taskId === undefined ? undefined : (request.taskId as unknown as number),
-          },
-          path: {
-            time_entry_id: timeEntryId,
-            workspace_id: workspaceId,
-          },
-          query: {
-            include_sharing: true,
-            meta: true,
-          },
-        }),
+      traceOperation("time_entry.update", () =>
+        unwrapWebApiResult(
+          putWorkspaceTimeEntryHandler({
+            // Explicit null on `task_id` is the clearing signal — `?? undefined`
+            // would drop it and leave the server-side task_id untouched, which
+            // breaks project-switch flows where the stale task belongs to the
+            // old project. Upstream Toggl OpenAPI types `task_id` as `number`
+            // only, so we cast at this boundary to preserve the null.
+            body: {
+              billable: request.billable,
+              description: request.description,
+              project_id: request.projectId === undefined ? undefined : request.projectId,
+              start: toTrackUtcString(request.start),
+              stop: toTrackUtcString(request.stop),
+              tag_ids: request.tagIds,
+              task_id:
+                request.taskId === undefined ? undefined : (request.taskId as unknown as number),
+            },
+            path: {
+              time_entry_id: timeEntryId,
+              workspace_id: workspaceId,
+            },
+            query: {
+              include_sharing: true,
+              meta: true,
+            },
+          }),
+        ),
       ),
     onMutate: ({ request, timeEntryId }) => {
       // `project_name` / `project_color` are server-denormalized fields
@@ -566,13 +577,15 @@ export function useDeleteTimeEntryMutation() {
 
   return useMutation({
     mutationFn: ({ timeEntryId, workspaceId }: { timeEntryId: number; workspaceId: number }) =>
-      unwrapWebApiResult(
-        deleteWorkspaceTimeEntries({
-          path: {
-            time_entry_id: timeEntryId,
-            workspace_id: workspaceId,
-          },
-        }),
+      traceOperation("time_entry.delete", () =>
+        unwrapWebApiResult(
+          deleteWorkspaceTimeEntries({
+            path: {
+              time_entry_id: timeEntryId,
+              workspace_id: workspaceId,
+            },
+          }),
+        ),
       ),
     onMutate: ({ timeEntryId }) => {
       const previousLists = queryClient.getQueriesData<

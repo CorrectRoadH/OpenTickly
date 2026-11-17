@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,10 +14,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type captureTransport struct{ events []*sentry.Event }
+type captureTransport struct {
+	events []*sentry.Event
+	mu     sync.Mutex
+}
 
-func (t *captureTransport) Configure(sentry.ClientOptions)          {}
-func (t *captureTransport) SendEvent(e *sentry.Event)               { t.events = append(t.events, e) }
+func (t *captureTransport) Configure(sentry.ClientOptions) {}
+func (t *captureTransport) SendEvent(e *sentry.Event) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.events = append(t.events, e)
+}
 func (t *captureTransport) Flush(time.Duration) bool                { return true }
 func (t *captureTransport) FlushWithContext(_ context.Context) bool { return true }
 func (t *captureTransport) Close()                                  {}

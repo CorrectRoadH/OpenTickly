@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"slices"
 	"strings"
 
@@ -10,7 +11,13 @@ import (
 	"github.com/samber/lo"
 )
 
-func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeEntryCommand) (TimeEntryView, error) {
+func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeEntryCommand) (traceResult TimeEntryView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("time_entry.update"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "updating time entry",
 		"workspace_id", command.WorkspaceID,
 		"user_id", command.UserID,
@@ -211,7 +218,13 @@ func (service *Service) PatchTimeEntries(
 	return success, failures, nil
 }
 
-func (service *Service) StopTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (TimeEntryView, error) {
+func (service *Service) StopTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (traceResult TimeEntryView, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("timer.stop"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	current, err := service.GetTimeEntry(ctx, workspaceID, userID, timeEntryID)
 	if err != nil {
 		return TimeEntryView{}, err
@@ -226,7 +239,13 @@ func (service *Service) StopTimeEntry(ctx context.Context, workspaceID int64, us
 	})
 }
 
-func (service *Service) DeleteTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) error {
+func (service *Service) DeleteTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("time_entry.delete"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	service.logger.InfoContext(ctx, "deleting time entry",
 		"workspace_id", workspaceID,
 		"user_id", userID,

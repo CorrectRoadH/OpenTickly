@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"strings"
 	"time"
 
@@ -16,12 +17,12 @@ import (
 )
 
 var (
-	ErrStoreRequired    = errors.New("importing store is required")
-	ErrLoggerRequired   = errors.New("importing logger is required")
-	ErrExportNotFound   = errors.New("export archive not found")
-	ErrObjectsRequired  = errors.New("at least one object is required")
-	ErrInvalidScopeID   = errors.New("scope id must be positive")
-	ErrTokenCreate      = errors.New("generate export token")
+	ErrStoreRequired   = errors.New("importing store is required")
+	ErrLoggerRequired  = errors.New("importing logger is required")
+	ErrExportNotFound  = errors.New("export archive not found")
+	ErrObjectsRequired = errors.New("at least one object is required")
+	ErrInvalidScopeID  = errors.New("scope id must be positive")
+	ErrTokenCreate     = errors.New("generate export token")
 )
 
 type Service struct {
@@ -79,7 +80,13 @@ func (service *Service) StartWorkspaceExportWithData(
 	requestedBy int64,
 	objects []string,
 	data WorkspaceExportData,
-) (string, error) {
+) (traceResult string, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.export"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if workspaceID <= 0 || requestedBy <= 0 {
 		return "", ErrInvalidScopeID
 	}
@@ -153,7 +160,13 @@ func (service *Service) startExport(
 	scopeID int64,
 	requestedBy int64,
 	objects []string,
-) (string, error) {
+) (traceResult string, traceErr error) {
+	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.export"))
+	if traceSpan != nil {
+		ctx = traceSpan.Context()
+	}
+	defer monitoring.FinishBusiness(traceFinish, &traceErr, telemetryRejectedErrors...)
+
 	if scopeID <= 0 || requestedBy <= 0 {
 		return "", ErrInvalidScopeID
 	}
