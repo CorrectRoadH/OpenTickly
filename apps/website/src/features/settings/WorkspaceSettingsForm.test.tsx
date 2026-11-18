@@ -27,6 +27,27 @@ const initialValues: WorkspaceSettingsFormValues = {
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
+it("saves rounding when the workspace has an uploaded logo", async () => {
+  const onSubmit = vi.fn();
+  const onSubmitError = vi.fn();
+  render(
+    <WorkspaceSettingsForm
+      initialValues={{ ...initialValues, logoUrl: "/files/workspace/logo.png" }}
+      onSubmit={onSubmit}
+      onSubmitError={onSubmitError}
+      workspaceId={1}
+    />,
+  );
+  const interval = screen.getByRole("combobox", { name: "roundingInterval" });
+  fireEvent.change(interval, { target: { value: "5" } });
+  await act(() => vi.advanceTimersByTimeAsync(900));
+  expect(onSubmit).toHaveBeenCalledOnce();
+  expect(onSubmit).toHaveBeenCalledWith(
+    expect.objectContaining({ workspace: expect.objectContaining({ rounding_minutes: 5 }) }),
+  );
+  expect(onSubmitError).not.toHaveBeenCalled();
+});
+
 it("retains and saves edits made while the previous save and server refresh complete", async () => {
   let finish!: () => void;
   const onSubmit = vi

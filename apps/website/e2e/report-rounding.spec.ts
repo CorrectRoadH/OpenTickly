@@ -15,12 +15,26 @@ test("workspace rounding drives reports, exports and invoice quantities", async 
   });
   await page.goto(`/${workspaceId}/settings/general`);
   await expect(page.getByTestId("workspace-settings-page")).toBeVisible();
-  await page.getByLabel("Rounding direction").selectOption("-1");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "workspace-logo.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWTsAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
+  const logo = page.getByRole("img", { name: "Workspace logo" });
+  await expect(logo).toHaveAttribute("src", /^\/files\//);
+  await page.reload();
+  await expect(page.getByTestId("workspace-settings-page")).toBeVisible();
+  await expect(logo).toHaveAttribute("src", /^\/files\//);
   const saved = page.waitForResponse(
-    (r) => r.request().method() === "PATCH" && r.url().includes(`/workspaces/${workspaceId}`),
+    (r) =>
+      r.request().method() === "PATCH" && r.url().endsWith(`/workspaces/${workspaceId}/settings`),
   );
+  await page.getByLabel("Rounding direction").selectOption("-1");
   await page.getByLabel("Rounding interval").selectOption("5");
-  await saved;
+  expect((await saved).ok()).toBeTruthy();
   await page.reload();
   await expect(page.getByTestId("workspace-settings-page")).toBeVisible();
   await expect(page.getByLabel("Rounding direction")).toHaveValue("-1");

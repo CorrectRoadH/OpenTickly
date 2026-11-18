@@ -9,16 +9,17 @@ import type {
   ModelsPutPayload,
 } from "../api/generated/public-track/types.gen.ts";
 
-export const organizationSettingsFormSchema = z.object({
+const organizationSettingsUpdateSchema = z.object({
   name: z.string().min(1),
-  maxWorkspaces: z.number().int().nonnegative(),
-  isMultiWorkspaceEnabled: z.boolean(),
-  userCount: z.number().int().nonnegative(),
 });
 
-export type OrganizationSettingsFormValues = z.infer<typeof organizationSettingsFormSchema>;
+export type OrganizationSettingsFormValues = z.infer<typeof organizationSettingsUpdateSchema> & {
+  maxWorkspaces: number;
+  isMultiWorkspaceEnabled: boolean;
+  userCount: number;
+};
 
-export const workspaceSettingsFormSchema = z.object({
+const workspaceSettingsUpdateSchema = z.object({
   name: z.string().min(1),
   defaultCurrency: z.string().min(1),
   defaultHourlyRate: z.number(),
@@ -36,10 +37,11 @@ export const workspaceSettingsFormSchema = z.object({
   reportLockedAt: z.string(),
   showTimesheetView: z.boolean(),
   requiredTimeEntryFields: z.array(z.string()),
-  logoUrl: z.string().url().or(z.literal("")),
 });
 
-export type WorkspaceSettingsFormValues = z.infer<typeof workspaceSettingsFormSchema>;
+export type WorkspaceSettingsFormValues = z.infer<typeof workspaceSettingsUpdateSchema> & {
+  logoUrl: string;
+};
 
 export function createOrganizationSettingsFormValues(
   organization: ModelsMeOrganization,
@@ -55,11 +57,7 @@ export function createOrganizationSettingsFormValues(
 export function mapOrganizationSettingsFormToRequest(
   values: OrganizationSettingsFormValues,
 ): ModelsPutPayload {
-  const parsed = organizationSettingsFormSchema.parse(values);
-
-  return {
-    name: parsed.name,
-  };
+  return organizationSettingsUpdateSchema.parse(values);
 }
 
 export function createWorkspaceSettingsFormValues(
@@ -92,7 +90,7 @@ export function createWorkspaceSettingsFormValues(
 export function mapWorkspaceSettingsFormToRequest(
   values: WorkspaceSettingsFormValues,
 ): UpdateWorkspaceSettingsRequestDto {
-  const parsed = workspaceSettingsFormSchema.parse(values);
+  const parsed = workspaceSettingsUpdateSchema.parse(values);
 
   return {
     workspace: {
