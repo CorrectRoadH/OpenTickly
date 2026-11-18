@@ -36,7 +36,7 @@ export const workspaceSettingsFormSchema = z.object({
   reportLockedAt: z.string(),
   showTimesheetView: z.boolean(),
   requiredTimeEntryFields: z.array(z.string()),
-  logoUrl: z.string().url().or(z.literal("")),
+  logoUrl: z.string(),
 });
 
 export type WorkspaceSettingsFormValues = z.infer<typeof workspaceSettingsFormSchema>;
