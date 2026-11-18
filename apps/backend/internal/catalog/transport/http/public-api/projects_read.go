@@ -10,6 +10,7 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -376,6 +377,7 @@ func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.Github
 		EstimatedSeconds: intPointerFromInt64Pointer(view.EstimatedSeconds),
 		FixedFee:         float32PointerFromFloat64(view.FixedFee),
 		Rate:             float32PointerFromFloat64(view.Rate),
+		RateLastUpdated:  tracktime.FormatUTCFromPtr(view.RateLastUpdated),
 	}
 	if view.EndDate != nil {
 		project.EndDate = datePointer(*view.EndDate)

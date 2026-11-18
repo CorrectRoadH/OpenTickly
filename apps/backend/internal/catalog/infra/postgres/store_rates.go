@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
@@ -21,6 +22,31 @@ func (store *Store) CreateRate(
 		_ = tx.Rollback(ctx)
 	}()
 
+	rate, err := createRate(ctx, tx, command)
+	if err != nil {
+		return catalogapplication.RateView{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return catalogapplication.RateView{}, writeCatalogError("commit catalog rate", err)
+	}
+	return rate, nil
+}
+
+func createRate(ctx context.Context, tx pgx.Tx, command catalogapplication.CreateRateCommand) (catalogapplication.RateView, error) {
+	if command.Level == catalogapplication.RateLevelProject {
+		// Serialize standalone rate writes with project updates for this target.
+		var projectID int64
+		err := tx.QueryRow(ctx,
+			"select id from catalog_projects where workspace_id = $1 and id = $2 for no key update",
+			command.WorkspaceID, command.LevelID,
+		).Scan(&projectID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return catalogapplication.RateView{}, catalogapplication.ErrProjectNotFound
+		}
+		if err != nil {
+			return catalogapplication.RateView{}, writeCatalogError("lock project rate target", err)
+		}
+	}
 	start := command.Start.UTC()
 	if err := closeOverlappingRates(ctx, tx, command, start); err != nil {
 		return catalogapplication.RateView{}, err
@@ -83,9 +109,6 @@ func (store *Store) CreateRate(
 
 	if err := syncCurrentRateValue(ctx, tx, rate); err != nil {
 		return catalogapplication.RateView{}, err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return catalogapplication.RateView{}, writeCatalogError("commit catalog rate", err)
 	}
 	return rate, nil
 }

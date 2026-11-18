@@ -343,8 +343,8 @@ func (c *cachedCatalogStore) CreateProject(ctx context.Context, cmd catalogappli
 	return v, err
 }
 
-func (c *cachedCatalogStore) UpdateProject(ctx context.Context, project catalogapplication.ProjectView) error {
-	err := c.Store.UpdateProject(ctx, project)
+func (c *cachedCatalogStore) UpdateProject(ctx context.Context, project catalogapplication.ProjectView, currency *string, rate *catalogapplication.CreateRateCommand) error {
+	err := c.Store.UpdateProject(ctx, project, currency, rate)
 	if err == nil {
 		c.catalogInvalidateWorkspace(ctx, project.WorkspaceID)
 		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:project:%d:%d", project.WorkspaceID, project.ID))

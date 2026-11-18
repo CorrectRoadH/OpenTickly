@@ -441,7 +441,7 @@ func (store *Store) CreateProject(
 		select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, 0::bigint as actual_seconds,
 			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 			p.color, p.is_private, p.billable,
-			p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
+			p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate, null::timestamptz
 		from inserted p
 		left join catalog_clients c on c.id = p.client_id`,
 		command.WorkspaceID,
@@ -462,11 +462,16 @@ func (store *Store) CreateProject(
 	return project, nil
 }
 
-func (store *Store) UpdateProject(ctx context.Context, project catalogapplication.ProjectView) error {
-	_, err := store.pool.Exec(
+func (store *Store) UpdateProject(ctx context.Context, project catalogapplication.ProjectView, currency *string, rate *catalogapplication.CreateRateCommand) error {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return writeCatalogError("begin project update", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	result, err := tx.Exec(
 		ctx,
 		`update catalog_projects
-		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7, color = $8, is_private = $9, billable = $10
+		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7, color = $8, is_private = $9, billable = $10, currency = coalesce($11, currency)
 		where workspace_id = $1 and id = $2`,
 		project.WorkspaceID,
 		project.ID,
@@ -478,9 +483,21 @@ func (store *Store) UpdateProject(ctx context.Context, project catalogapplicatio
 		project.Color,
 		project.IsPrivate,
 		project.Billable,
+		currency,
 	)
 	if err != nil {
 		return writeCatalogError("update catalog project", err)
+	}
+	if result.RowsAffected() == 0 {
+		return catalogapplication.ErrProjectNotFound
+	}
+	if rate != nil {
+		if _, err := createRate(ctx, tx, *rate); err != nil {
+			return err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return writeCatalogError("commit project update", err)
 	}
 	return nil
 }

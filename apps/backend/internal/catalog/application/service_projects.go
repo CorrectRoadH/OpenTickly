@@ -172,7 +172,27 @@ func (service *Service) UpdateProject(ctx context.Context, command UpdateProject
 		current.Billable = *command.Billable
 	}
 
-	if err := service.store.UpdateProject(ctx, current); err != nil {
+	var rateChange *CreateRateCommand
+	if command.Rate != nil {
+		if *command.Rate <= 0 {
+			return ProjectView{}, ErrRateAmountInvalid
+		}
+		mode := command.RateChangeMode
+		if mode == nil {
+			defaultMode := RateChangeModeOverrideAll
+			mode = &defaultMode
+		}
+		start, resolvedMode, err := resolveRateTiming(nil, mode)
+		if err != nil {
+			return ProjectView{}, err
+		}
+		rateChange = &CreateRateCommand{
+			WorkspaceID: command.WorkspaceID, CreatorID: command.ActorID,
+			Level: RateLevelProject, LevelID: command.ProjectID, Type: RateTypeBillable,
+			Amount: *command.Rate, Start: &start, Mode: &resolvedMode,
+		}
+	}
+	if err := service.store.UpdateProject(ctx, current, command.Currency, rateChange); err != nil {
 		service.logger.ErrorContext(ctx, "failed to update project",
 			"workspace_id", command.WorkspaceID,
 			"project_id", command.ProjectID,

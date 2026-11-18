@@ -46,8 +46,9 @@ type MembershipQueries interface {
 	) ([]membershipapplication.WorkspaceMemberView, error)
 }
 
-// RateResolver looks up the workspace-level billable rate.
+// RateResolver looks up workspace and effective per-entry billable rates.
 type RateResolver interface {
+	GetEntryBillableRates(context.Context, int64, []trackingapplication.TimeEntryView) (map[int64]int, string, error)
 	GetWorkspaceBillableRate(ctx context.Context, workspaceID int64) (amountCents int, currency string, ok bool)
 }
 
@@ -63,6 +64,10 @@ type Service struct {
 
 // secondsPerHour converts between duration seconds and hourly rates.
 const secondsPerHour = 3600
+
+func billableAmount(seconds, rateCents int) int {
+	return seconds * rateCents / secondsPerHour
+}
 
 func NewService(tracking TrackingQueries, membership MembershipQueries, rates RateResolver, logger log.Logger) *Service {
 	return &Service{
@@ -179,6 +184,15 @@ func (service *Service) GetWorkspaceBillableRate(
 	return service.rates.GetWorkspaceBillableRate(ctx, workspaceID)
 }
 
+func (service *Service) entryBillableRates(
+	ctx context.Context, workspaceID int64, entries []trackingapplication.TimeEntryView,
+) (map[int64]int, string, error) {
+	if service.rates == nil {
+		return nil, "", nil
+	}
+	return service.rates.GetEntryBillableRates(ctx, workspaceID, entries)
+}
+
 func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (traceResult WeeklyReport, traceErr error) {
 	traceSpan, traceFinish := monitoring.StartBusiness(ctx, monitoring.Operation("report.load"))
 	if traceSpan != nil {
@@ -217,13 +231,11 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (tra
 	daysWithTime := map[int]struct{}{}
 	totalSeconds := 0
 
-	// Resolve workspace billable rate for amount calculation.
-	rateCents, currency, hasRate := 0, "USD", false
-	if service.rates != nil {
-		rateCents, currency, hasRate = service.rates.GetWorkspaceBillableRate(
-			ctx, query.WorkspaceID,
-		)
+	rates, currency, err := service.entryBillableRates(ctx, query.WorkspaceID, entries)
+	if err != nil {
+		return WeeklyReport{}, err
 	}
+	rowRates := map[weeklyRowKey]int{}
 
 	for _, entry := range entries {
 		dayIndex, ok := reportDayIndex(entry, query, location)
@@ -254,7 +266,6 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (tra
 				BillableSeconds:        make([]int, dayCount),
 				ClientName:             derefString(entry.ClientName),
 				Currency:               currency,
-				HourlyRateInCents:      rateCents,
 				ProjectID:              derefInt64(entry.ProjectID),
 				ProjectName:            fallbackProjectName(entry.ProjectName),
 				Seconds:                make([]int, dayCount),
@@ -267,8 +278,14 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (tra
 		row.Seconds[dayIndex] += duration
 		if entry.Billable {
 			row.BillableSeconds[dayIndex] += duration
-			if hasRate {
-				row.BillableAmountsInCents[dayIndex] += duration * rateCents / secondsPerHour
+			rate := rates[entry.ID]
+			row.BillableAmountsInCents[dayIndex] += billableAmount(duration, rate)
+			if prior, seen := rowRates[key]; !seen || prior == rate {
+				rowRates[key] = rate
+				row.HourlyRateInCents = rate
+			} else {
+				rowRates[key] = -1
+				row.HourlyRateInCents = 0
 			}
 		}
 		totalSeconds += duration
@@ -387,9 +404,10 @@ func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (tr
 	})
 
 	return SummaryReport{
-		Groups:       groups,
-		TotalSeconds: weekly.TotalSeconds,
-		TrackedDays:  weekly.TrackedDays,
+		Groups:                groups,
+		BillableAmountInCents: weekly.BillableAmountInCents,
+		TotalSeconds:          weekly.TotalSeconds,
+		TrackedDays:           weekly.TrackedDays,
 	}, nil
 }
 
@@ -557,9 +575,12 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 		return nil, err
 	}
 
-	rateCents, currency, hasRate := 0, query.Currency, false
-	if service.rates != nil {
-		rateCents, currency, hasRate = service.rates.GetWorkspaceBillableRate(ctx, query.WorkspaceID)
+	rates, currency, err := service.entryBillableRates(ctx, query.WorkspaceID, entries)
+	if err != nil {
+		return nil, err
+	}
+	if currency == "" {
+		currency = query.Currency
 	}
 	if currency == "" {
 		currency = "USD"
@@ -570,6 +591,7 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 		color           string
 		totalSeconds    int
 		billableSeconds int
+		earnings        int
 	}
 	projects := map[int64]*accum{}
 
@@ -616,22 +638,19 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 		acc.totalSeconds += duration
 		if entry.Billable {
 			acc.billableSeconds += duration
+			acc.earnings += billableAmount(duration, rates[entry.ID])
 		}
 	}
 
 	results := make([]ProjectProfitabilityRow, 0, len(projects))
 	for projectID, acc := range projects {
-		earnings := 0
-		if hasRate {
-			earnings = acc.billableSeconds * rateCents / secondsPerHour
-		}
 		results = append(results, ProjectProfitabilityRow{
 			ProjectID:       projectID,
 			ProjectName:     acc.name,
 			ProjectColor:    acc.color,
 			TotalSeconds:    acc.totalSeconds,
 			BillableSeconds: acc.billableSeconds,
-			Earnings:        earnings,
+			Earnings:        acc.earnings,
 			Currency:        currency,
 		})
 	}
@@ -674,9 +693,12 @@ func (service *Service) BuildEmployeeProfitability(ctx context.Context, query Em
 	}
 	userNames := buildUserNameIndex(members)
 
-	rateCents, currency, hasRate := 0, query.Currency, false
-	if service.rates != nil {
-		rateCents, currency, hasRate = service.rates.GetWorkspaceBillableRate(ctx, query.WorkspaceID)
+	rates, currency, err := service.entryBillableRates(ctx, query.WorkspaceID, entries)
+	if err != nil {
+		return nil, err
+	}
+	if currency == "" {
+		currency = query.Currency
 	}
 	if currency == "" {
 		currency = "USD"
@@ -685,6 +707,7 @@ func (service *Service) BuildEmployeeProfitability(ctx context.Context, query Em
 	type accum struct {
 		totalSeconds    int
 		billableSeconds int
+		earnings        int
 	}
 	employees := map[int64]*accum{}
 
@@ -713,21 +736,18 @@ func (service *Service) BuildEmployeeProfitability(ctx context.Context, query Em
 		acc.totalSeconds += duration
 		if entry.Billable {
 			acc.billableSeconds += duration
+			acc.earnings += billableAmount(duration, rates[entry.ID])
 		}
 	}
 
 	results := make([]EmployeeProfitabilityRow, 0, len(employees))
 	for userID, acc := range employees {
-		earnings := 0
-		if hasRate {
-			earnings = acc.billableSeconds * rateCents / secondsPerHour
-		}
 		results = append(results, EmployeeProfitabilityRow{
 			UserID:          userID,
 			UserName:        fallbackUserName(userNames[userID], userID),
 			TotalSeconds:    acc.totalSeconds,
 			BillableSeconds: acc.billableSeconds,
-			Earnings:        earnings,
+			Earnings:        acc.earnings,
 			Currency:        currency,
 		})
 	}

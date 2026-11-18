@@ -376,10 +376,11 @@ func (store *Store) ListProjects(
 			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, project_totals.actual_seconds,
 				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 				p.color, p.is_private, p.billable,
-				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
+				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, coalesce(p.currency, case when project_rate.amount is not null then w.default_currency end),
+				coalesce(project_rate.amount, p.rate), project_rate.created_at
 			from catalog_projects p
 			left join catalog_clients c on c.id = p.client_id
-			`+projectActualSecondsJoin+`
+			`+projectActualSecondsJoin+projectRateJoin+`
 			where %s
 			order by %s
 			limit $%d offset $%d`,
@@ -416,10 +417,11 @@ func (store *Store) GetProject(
 		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, project_totals.actual_seconds,
 			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 			p.color, p.is_private, p.billable,
-				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
+				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, coalesce(p.currency, case when project_rate.amount is not null then w.default_currency end),
+				coalesce(project_rate.amount, p.rate), project_rate.created_at
 		from catalog_projects p
 		left join catalog_clients c on c.id = p.client_id
-		`+projectActualSecondsJoin+`
+		`+projectActualSecondsJoin+projectRateJoin+`
 		where p.workspace_id = $1 and p.id = $2`,
 		workspaceID,
 		projectID,

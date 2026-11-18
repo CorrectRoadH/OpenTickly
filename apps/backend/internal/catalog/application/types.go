@@ -139,6 +139,7 @@ type ProjectView struct {
 	FixedFee         *float64
 	Currency         *string
 	Rate             *float64
+	RateLastUpdated  *time.Time
 }
 
 type TaskView struct {
@@ -253,16 +254,20 @@ type RestoreClientCommand struct {
 }
 
 type UpdateProjectCommand struct {
-	WorkspaceID int64
-	ProjectID   int64
-	ClientID    *int64
-	Name        *string
-	Active      *bool
-	Template    *bool
-	Recurring   *bool
-	Color       *string
-	IsPrivate   *bool
-	Billable    *bool
+	ActorID        int64
+	Currency       *string
+	Rate           *float64
+	RateChangeMode *RateChangeMode
+	WorkspaceID    int64
+	ProjectID      int64
+	ClientID       *int64
+	Name           *string
+	Active         *bool
+	Template       *bool
+	Recurring      *bool
+	Color          *string
+	IsPrivate      *bool
+	Billable       *bool
 }
 
 type SetProjectPinnedCommand struct {
@@ -353,7 +358,7 @@ type Store interface {
 	ListProjects(context.Context, int64, ListProjectsFilter) ([]ProjectView, error)
 	GetProject(context.Context, int64, int64) (ProjectView, bool, error)
 	CreateProject(context.Context, CreateProjectCommand) (ProjectView, error)
-	UpdateProject(context.Context, ProjectView) error
+	UpdateProject(context.Context, ProjectView, *string, *CreateRateCommand) error
 	DeleteProject(context.Context, int64, int64) error
 	ReassignProjectTimeEntries(ctx context.Context, workspaceID int64, fromProjectID int64, toProjectID int64) (int64, error)
 	DeleteProjectTasks(ctx context.Context, workspaceID int64, projectID int64) (int64, error)
