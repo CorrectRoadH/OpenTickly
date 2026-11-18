@@ -21,22 +21,6 @@ func NewBillableRateStore(pool *pgxpool.Pool) *BillableRateStore {
 	return &BillableRateStore{pool: pool}
 }
 
-func (store *BillableRateStore) GetWorkspaceBillableRate(ctx context.Context, workspaceID int64) (int, string, bool) {
-	var cents int
-	var currency string
-	err := store.pool.QueryRow(ctx, `
-		select round(coalesce(rate.amount, w.default_hourly_rate))::bigint, w.default_currency
-		from tenant_workspaces w
-		left join lateral (
-			select amount from catalog_rates
-			where workspace_id = w.id and type = 'billable_rates' and level = 'workspace' and level_id = w.id
-				and start_at <= now() and (end_at is null or end_at > now())
-			order by start_at desc, id desc limit 1
-		) rate on true
-		where w.id = $1`, workspaceID).Scan(&cents, &currency)
-	return cents, currency, err == nil && cents > 0
-}
-
 func (store *BillableRateStore) GetEntryBillableRates(
 	ctx context.Context, workspaceID int64, entries []tracking.TimeEntryView,
 ) (map[int64]int, string, error) {

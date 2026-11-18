@@ -49,7 +49,6 @@ type MembershipQueries interface {
 // RateResolver looks up workspace and effective per-entry billable rates.
 type RateResolver interface {
 	GetEntryBillableRates(context.Context, int64, []trackingapplication.TimeEntryView) (map[int64]int, string, error)
-	GetWorkspaceBillableRate(ctx context.Context, workspaceID int64) (amountCents int, currency string, ok bool)
 }
 
 type Service struct {
@@ -173,15 +172,20 @@ func (service *Service) BuildWeeklyReportEntries(
 	return filtered, nil
 }
 
-// GetWorkspaceBillableRate exposes the rate resolver for handlers.
-func (service *Service) GetWorkspaceBillableRate(
-	ctx context.Context,
-	workspaceID int64,
-) (amountCents int, currency string, ok bool) {
-	if service.rates == nil {
-		return 0, "USD", false
+// EntryBillableAmounts applies the effective rates to already-rounded entry durations.
+func (service *Service) EntryBillableAmounts(
+	ctx context.Context, workspaceID int64, entries []trackingapplication.TimeEntryView,
+) (map[int64]int, string, error) {
+	amounts, currency, err := service.entryBillableRates(ctx, workspaceID, entries)
+	if err != nil {
+		return nil, "", err
 	}
-	return service.rates.GetWorkspaceBillableRate(ctx, workspaceID)
+	for _, entry := range entries {
+		if rate, ok := amounts[entry.ID]; ok {
+			amounts[entry.ID] = billableAmount(entry.Duration, rate)
+		}
+	}
+	return amounts, currency, nil
 }
 
 func (service *Service) entryBillableRates(

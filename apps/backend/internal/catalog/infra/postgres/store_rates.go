@@ -47,6 +47,29 @@ func createRate(ctx context.Context, tx pgx.Tx, command catalogapplication.Creat
 			return catalogapplication.RateView{}, writeCatalogError("lock project rate target", err)
 		}
 	}
+	if command.Level == catalogapplication.RateLevelProjectUser {
+		projectID, userID, ok := catalogapplication.DecodeProjectUserID(command.LevelID)
+		if !ok {
+			return catalogapplication.RateView{}, catalogapplication.ErrProjectUserNotFound
+		}
+		var memberID int64
+		err := tx.QueryRow(ctx, `
+			select pu.user_id from catalog_project_users pu join catalog_projects p on p.id = pu.project_id
+			where p.workspace_id = $1 and pu.project_id = $2 and pu.user_id = $3
+			for no key update of pu`, command.WorkspaceID, projectID, userID).Scan(&memberID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return catalogapplication.RateView{}, catalogapplication.ErrProjectUserNotFound
+		}
+		if err != nil {
+			return catalogapplication.RateView{}, writeCatalogError("lock project member rate target", err)
+		}
+	}
+	if command.Level == catalogapplication.RateLevelWorkspace && command.Type == catalogapplication.RateTypeBillable {
+		var workspaceID int64
+		if err := tx.QueryRow(ctx, "select id from tenant_workspaces where id = $1 for no key update", command.WorkspaceID).Scan(&workspaceID); err != nil {
+			return catalogapplication.RateView{}, writeCatalogError("lock workspace rate target", err)
+		}
+	}
 	start := command.Start.UTC()
 	if err := closeOverlappingRates(ctx, tx, command, start); err != nil {
 		return catalogapplication.RateView{}, err

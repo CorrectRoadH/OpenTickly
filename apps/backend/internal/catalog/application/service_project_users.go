@@ -2,7 +2,16 @@ package application
 
 import (
 	"context"
+
+	"github.com/samber/lo"
 )
+
+func (service *Service) CanManageLaborCosts(ctx context.Context, workspaceID, actorID int64) (bool, error) {
+	if service.members == nil {
+		return false, nil
+	}
+	return service.members.IsWorkspaceAdmin(ctx, workspaceID, actorID)
+}
 
 func (service *Service) ListProjectUsers(
 	ctx context.Context,
@@ -99,8 +108,11 @@ func (service *Service) UpdateProjectUser(ctx context.Context, command UpdatePro
 		return ProjectUserView{}, ErrProjectUserNotFound
 	}
 
-	current.Role = projectUserRole(command.Manager)
-	if err := service.store.UpdateProjectUser(ctx, current); err != nil {
+	var role *string
+	if command.Manager != nil {
+		role = lo.ToPtr(projectUserRole(*command.Manager))
+	}
+	if err := service.store.UpdateProjectUser(ctx, current, role, command.Rates); err != nil {
 		service.logger.ErrorContext(ctx, "failed to update project user",
 			"workspace_id", command.WorkspaceID,
 			"project_id", command.ProjectID,

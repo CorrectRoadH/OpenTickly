@@ -77,13 +77,18 @@ func (handler *Handler) GetPublicTrackProjectUsers(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
 		return err
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
 
+	canManageCosts, err := handler.catalog.CanManageLaborCosts(ctx.Request().Context(), workspaceID, user.ID)
+	if err != nil {
+		return writePublicTrackCatalogError(ctx, err)
+	}
 	if raw := strings.TrimSpace(ctx.QueryParam("project_ids")); raw != "" {
 		projectIDs, err := parseCSVInt64s(raw)
 		if err != nil {
@@ -97,7 +102,7 @@ func (handler *Handler) GetPublicTrackProjectUsers(ctx echo.Context) error {
 		}
 		users := make([]publictrackapi.ModelsProjectUser, 0, len(views))
 		for _, view := range views {
-			users = append(users, projectUserViewToAPI(view))
+			users = append(users, projectUserViewToAPI(view, canManageCosts))
 		}
 		return ctx.JSON(http.StatusOK, users)
 	}
@@ -109,7 +114,7 @@ func (handler *Handler) GetPublicTrackProjectUsers(ctx echo.Context) error {
 
 	users := make([]publictrackapi.ModelsProjectUser, 0, len(views))
 	for _, view := range views {
-		users = append(users, projectUserViewToAPI(view))
+		users = append(users, projectUserViewToAPI(view, canManageCosts))
 	}
 	return ctx.JSON(http.StatusOK, users)
 }
@@ -312,14 +317,21 @@ func (handler *Handler) publicTrackProjectCount(
 	return ctx.JSON(http.StatusOK, projectCountsToAPI(projectIDs, counts))
 }
 
-func projectUserViewToAPI(view catalogapplication.ProjectUserView) publictrackapi.ModelsProjectUser {
+func projectUserViewToAPI(view catalogapplication.ProjectUserView, canManageCosts bool) publictrackapi.ModelsProjectUser {
+	if !canManageCosts {
+		view.LaborCost, view.LaborCostLastUpdated = nil, nil
+	}
 	return publictrackapi.ModelsProjectUser{
-		At:          timePointer(view.CreatedAt),
-		Id:          lo.ToPtr(int(catalogapplication.EncodeProjectUserID(view.ProjectID, view.UserID))),
-		Manager:     lo.ToPtr(view.Role == "admin"),
-		ProjectId:   lo.ToPtr(int(view.ProjectID)),
-		UserId:      lo.ToPtr(int(view.UserID)),
-		WorkspaceId: lo.ToPtr(int(view.WorkspaceID)),
+		Rate:                 float32PointerFromFloat64(view.Rate),
+		RateLastUpdated:      tracktime.FormatUTCFromPtr(view.RateLastUpdated),
+		LaborCost:            float32PointerFromFloat64(view.LaborCost),
+		LaborCostLastUpdated: tracktime.FormatUTCFromPtr(view.LaborCostLastUpdated),
+		At:                   timePointer(view.CreatedAt),
+		Id:                   lo.ToPtr(int(catalogapplication.EncodeProjectUserID(view.ProjectID, view.UserID))),
+		Manager:              lo.ToPtr(view.Role == "admin"),
+		ProjectId:            lo.ToPtr(int(view.ProjectID)),
+		UserId:               lo.ToPtr(int(view.UserID)),
+		WorkspaceId:          lo.ToPtr(int(view.WorkspaceID)),
 	}
 }
 

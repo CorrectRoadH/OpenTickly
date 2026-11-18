@@ -417,9 +417,14 @@ func (store *Store) SaveOrganization(
 func (store *Store) SaveWorkspace(
 	ctx context.Context,
 	workspace domain.Workspace,
+	billableRateActorID *int64,
 ) error {
-	commandTag, err := store.pool.Exec(ctx, `
-		update tenant_workspaces
+	var saved bool
+	err := store.pool.QueryRow(ctx, `
+		with previous as (
+			select id, default_hourly_rate from tenant_workspaces where id = $1 for no key update
+		), updated as (
+		update tenant_workspaces w
 		set name = $2,
 			logo_storage_key = $3,
 			avatar_storage_key = $4,
@@ -439,7 +444,23 @@ func (store *Store) SaveWorkspace(
 			report_locked_at = $18,
 			show_timesheet_view = $19,
 			required_time_entry_fields = $20
-		where id = $1
+		from previous
+		where w.id = previous.id
+		returning w.id, w.default_hourly_rate, previous.default_hourly_rate as previous_rate
+		), expired as (
+			update catalog_rates r set end_at = greatest(r.start_at, now()), updated_at = now()
+			from updated w
+			where $21::bigint is not null and r.workspace_id = w.id and r.level_id = w.id
+				and r.level = 'workspace' and r.type = 'billable_rates'
+				and (w.default_hourly_rate <> w.previous_rate or w.default_hourly_rate = 0)
+				and (r.end_at is null or r.end_at > now())
+		), inserted as (
+			insert into catalog_rates (workspace_id, type, level, level_id, amount, creator_id, start_at, rate_change_mode)
+			select id, 'billable_rates', 'workspace', id, default_hourly_rate, $21, now(), 'override-all'
+			from updated
+			where $21::bigint is not null and default_hourly_rate > 0 and default_hourly_rate <> previous_rate
+		)
+		select exists(select 1 from updated)
 	`,
 		int64(workspace.ID()),
 		workspace.Name(),
@@ -461,11 +482,12 @@ func (store *Store) SaveWorkspace(
 		workspace.Settings().ReportLockedAt(),
 		workspace.Settings().ShowTimesheetView(),
 		mustJSON(workspace.Settings().RequiredTimeEntryFields()),
-	)
+		billableRateActorID,
+	).Scan(&saved)
 	if err != nil {
 		return fmt.Errorf("update tenant workspace %d: %w", workspace.ID(), err)
 	}
-	if commandTag.RowsAffected() == 0 {
+	if !saved {
 		return errWorkspaceNotFound
 	}
 	return nil

@@ -33,7 +33,13 @@ func (handler *Handler) PostPublicTrackProjects(ctx echo.Context) error {
 	if clientID == nil {
 		clientID = int64PointerFromTrackIntPointer(request.Cid)
 	}
+	rate, err := projectRateChange(workspaceID, user.ID, catalogapplication.RateLevelProject, catalogapplication.RateTypeBillable, request.Rate, request.RateChangeMode)
+	if err != nil {
+		return writePublicTrackRateError(err)
+	}
 	view, err := handler.catalog.CreateProject(ctx.Request().Context(), catalogapplication.CreateProjectCommand{
+		Currency:    request.Currency,
+		RateChange:  rate,
 		WorkspaceID: workspaceID,
 		CreatedBy:   user.ID,
 		ClientID:    clientID,

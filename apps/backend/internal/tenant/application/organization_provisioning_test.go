@@ -76,7 +76,7 @@ func (store *stubStore) SaveOrganization(ctx context.Context, organization domai
 	panic("unexpected call")
 }
 
-func (store *stubStore) SaveWorkspace(ctx context.Context, workspace domain.Workspace) error {
+func (store *stubStore) SaveWorkspace(ctx context.Context, workspace domain.Workspace, _ *int64) error {
 	panic("unexpected call")
 }
 

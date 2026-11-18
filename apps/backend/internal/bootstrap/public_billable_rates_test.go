@@ -158,4 +158,110 @@ func TestPublicBillableRatesFeedProjectAndReports(t *testing.T) {
 		Type: lo.ToPtr("billable_rates"), Mode: lo.ToPtr(trackapi.RatesCreationRequestMode("override-all")),
 	}, http.StatusCreated)
 	checkProfitability(47000)
+	totalsBody := request(http.MethodPost, reportPath+"/search/time_entries/totals", query, http.StatusOK)
+	var totals reportsapi.TotalsReportData
+	mustDecodeJSON(t, totalsBody, &totals)
+	if lo.FromPtr(totals.BillableAmountInCents) != 53000 {
+		t.Errorf("totals did not match effective rates: %s", totalsBody)
+	}
+	for _, endpoint := range []string{"projects", "clients", "users"} {
+		body := request(http.MethodPost, reportPath+"/data_trends/"+endpoint, reportsapi.BaseDataTrendsPost{
+			StartDate: &date, EndDate: &date, Currency: lo.ToPtr("USD"),
+		}, http.StatusOK)
+		type earningsRow struct {
+			Earnings int `json:"earnings"`
+		}
+		var trend struct {
+			Currency string `json:"currency"`
+			Graph    struct {
+				Data []struct {
+					Projects []earningsRow `json:"projects"`
+					Clients  []earningsRow `json:"clients"`
+					Users    []earningsRow `json:"users"`
+				} `json:"data"`
+			} `json:"graph"`
+		}
+		mustDecodeJSON(t, body, &trend)
+		earnings := 0
+		for _, day := range trend.Graph.Data {
+			for _, group := range [][]earningsRow{day.Projects, day.Clients, day.Users} {
+				for _, row := range group {
+					earnings += row.Earnings
+				}
+			}
+		}
+		if earnings != 53000 || trend.Currency != "EUR" {
+			t.Errorf("%s trend had wrong earnings or currency: %s", endpoint, body)
+		}
+	}
+
+	newProject := request(http.MethodPost, workspace+"/projects", trackapi.ProjectPayload{
+		Name: lo.ToPtr("Project with initial rate"), Rate: lo.ToPtr(float32(12300)), Currency: lo.ToPtr("EUR"),
+	}, http.StatusOK)
+	assertProject(newProject, 12300, "EUR")
+	mustDecodeJSON(t, newProject, &projectBody)
+	newProjectID := lo.FromPtr(projectBody.Id)
+	memberPath := workspace + "/project_users"
+	member := request(http.MethodPost, memberPath, trackapi.UserPostPayload{
+		ProjectId: &newProjectID, UserId: lo.ToPtr(int(userID)), Manager: lo.ToPtr(true),
+		Rate: lo.ToPtr(float32(8800)), LaborCost: lo.ToPtr(float32(2500)),
+	}, http.StatusOK)
+	assertMember := func(body []byte, rate, cost float32) {
+		t.Helper()
+		var result trackapi.ModelsProjectUser
+		mustDecodeJSON(t, body, &result)
+		if lo.FromPtr(result.Rate) != rate || lo.FromPtr(result.LaborCost) != cost ||
+			result.RateLastUpdated == nil || result.LaborCostLastUpdated == nil || !lo.FromPtr(result.Manager) {
+			t.Errorf("project member rate or cost not reflected: %s", body)
+		}
+	}
+	assertMember(member, 8800, 2500)
+	memberIDPath := memberPath + "/" + intToString(catalog.EncodeProjectUserID(int64(newProjectID), userID))
+	assertMember(request(http.MethodPut, memberIDPath, trackapi.UserPutPayload{
+		Rate: lo.ToPtr(float32(9400)), LaborCost: lo.ToPtr(float32(3100)),
+	}, http.StatusOK), 9400, 3100)
+
+	readerEmail := uniqueTestEmail("rate-reader")
+	reader := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register",
+		webapi.RegisterRequest{Email: openapitypes.Email(readerEmail), Fullname: lo.ToPtr("Rate Reader"), Password: "secret1"}, "")
+	if reader.Code != http.StatusCreated {
+		t.Fatalf("register reader: %d %s", reader.Code, reader.Body.String())
+	}
+	if _, err := db.Pool.Exec(t.Context(), `
+		insert into membership_workspace_members (workspace_id, user_id, email, role, state)
+		select $1, id, email, 'member', 'joined' from identity_users where email = $2
+	`, session.WorkspaceID, readerEmail); err != nil {
+		t.Fatal(err)
+	}
+	readerAuth := basicAuthorization(readerEmail, "secret1")
+	visible := performAuthorizedJSONRequest(t, app, http.MethodGet,
+		memberPath+"?project_ids="+intToString(int64(newProjectID)), nil, readerAuth)
+	var visibleMembers []trackapi.ModelsProjectUser
+	mustDecodeJSON(t, visible.Body.Bytes(), &visibleMembers)
+	if visible.Code != http.StatusOK || len(visibleMembers) != 1 ||
+		lo.FromPtr(visibleMembers[0].Rate) != 9400 || visibleMembers[0].LaborCost != nil {
+		t.Errorf("workspace member should see the billable rate without labor cost: %d %s", visible.Code, visible.Body.String())
+	}
+	denied := performAuthorizedJSONRequest(t, app, http.MethodPut, memberIDPath,
+		trackapi.UserPutPayload{LaborCost: lo.ToPtr(float32(1))}, readerAuth)
+	if denied.Code != http.StatusForbidden {
+		t.Errorf("workspace member could modify labor cost: %d %s", denied.Code, denied.Body.String())
+	}
+
+	settingsBody := request(http.MethodPut, workspace, trackapi.WorkspacePayload{
+		DefaultCurrency: lo.ToPtr("GBP"), DefaultHourlyRate: lo.ToPtr(float32(0)),
+	}, http.StatusOK)
+	var settings trackapi.GithubComTogglTogglApiInternalModelsWorkspace
+	mustDecodeJSON(t, settingsBody, &settings)
+	if lo.FromPtr(settings.DefaultCurrency) != "GBP" || lo.FromPtr(settings.DefaultHourlyRate) != 0 {
+		t.Errorf("workspace billing settings not saved: %s", settingsBody)
+	}
+	var activeWorkspaceRates int
+	if err := db.Pool.QueryRow(t.Context(), `
+		select count(*) from catalog_rates where workspace_id = $1 and level = 'workspace'
+			and type = 'billable_rates' and (end_at is null or end_at > now())`,
+		session.WorkspaceID).Scan(&activeWorkspaceRates); err != nil || activeWorkspaceRates != 0 {
+		t.Fatalf("workspace rate remained active after disabling: %d, %v", activeWorkspaceRates, err)
+	}
+
 }

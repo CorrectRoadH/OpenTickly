@@ -279,6 +279,21 @@ func (store *Store) GetTag(
 	return tag, true, nil
 }
 
+var projectUserRateJoins = fmt.Sprintf(`
+	left join lateral (
+		select amount, created_at from catalog_rates
+		where workspace_id = p.workspace_id and level = 'project_user' and level_id = pu.project_id * %[1]d + pu.user_id
+			and type = 'billable_rates' and start_at <= now() and (end_at is null or end_at > now())
+		order by start_at desc, id desc limit 1
+	) member_rate on true
+	left join lateral (
+		select amount, created_at from catalog_rates
+		where workspace_id = p.workspace_id and level = 'project_user' and level_id = pu.project_id * %[1]d + pu.user_id
+			and type = 'labor_costs' and start_at <= now() and (end_at is null or end_at > now())
+		order by start_at desc, id desc limit 1
+	) member_cost on true
+`, catalogapplication.EncodeProjectUserID(1, 0))
+
 func (store *Store) ListProjectUsers(
 	ctx context.Context,
 	workspaceID int64,
@@ -294,9 +309,10 @@ func (store *Store) ListProjectUsers(
 	rows, err := store.pool.Query(
 		ctx,
 		fmt.Sprintf(
-			`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at
+			`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at, member_rate.amount, member_rate.created_at, member_cost.amount, member_cost.created_at
 			from catalog_project_users pu
 			join catalog_projects p on p.id = pu.project_id
+			`+projectUserRateJoins+`
 			where %s
 			order by pu.project_id, pu.user_id`,
 			strings.Join(where, " and "),
@@ -311,7 +327,7 @@ func (store *Store) ListProjectUsers(
 	users := make([]catalogapplication.ProjectUserView, 0)
 	for rows.Next() {
 		var user catalogapplication.ProjectUserView
-		if err := rows.Scan(&user.ProjectID, &user.UserID, &user.Role, &user.WorkspaceID, &user.CreatedAt); err != nil {
+		if err := rows.Scan(&user.ProjectID, &user.UserID, &user.Role, &user.WorkspaceID, &user.CreatedAt, &user.Rate, &user.RateLastUpdated, &user.LaborCost, &user.LaborCostLastUpdated); err != nil {
 			return nil, writeCatalogError("scan catalog project user", err)
 		}
 		users = append(users, user)
@@ -327,9 +343,10 @@ func (store *Store) GetProjectUser(
 ) (catalogapplication.ProjectUserView, bool, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at
+		`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at, member_rate.amount, member_rate.created_at, member_cost.amount, member_cost.created_at
 		from catalog_project_users pu
 		join catalog_projects p on p.id = pu.project_id
+			`+projectUserRateJoins+`
 		where p.workspace_id = $1 and pu.project_id = $2 and pu.user_id = $3`,
 		workspaceID,
 		projectID,
@@ -337,7 +354,7 @@ func (store *Store) GetProjectUser(
 	)
 
 	var view catalogapplication.ProjectUserView
-	if err := row.Scan(&view.ProjectID, &view.UserID, &view.Role, &view.WorkspaceID, &view.CreatedAt); err != nil {
+	if err := row.Scan(&view.ProjectID, &view.UserID, &view.Role, &view.WorkspaceID, &view.CreatedAt, &view.Rate, &view.RateLastUpdated, &view.LaborCost, &view.LaborCostLastUpdated); err != nil {
 		if notFound(err) {
 			return catalogapplication.ProjectUserView{}, false, nil
 		}

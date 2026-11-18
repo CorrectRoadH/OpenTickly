@@ -72,11 +72,15 @@ type TagView struct {
 }
 
 type ProjectUserView struct {
-	ProjectID   int64
-	UserID      int64
-	Role        string
-	WorkspaceID int64
-	CreatedAt   time.Time
+	Rate                 *float64
+	RateLastUpdated      *time.Time
+	LaborCost            *float64
+	LaborCostLastUpdated *time.Time
+	ProjectID            int64
+	UserID               int64
+	Role                 string
+	WorkspaceID          int64
+	CreatedAt            time.Time
 }
 
 type ProjectGroupView struct {
@@ -87,6 +91,7 @@ type ProjectGroupView struct {
 }
 
 type CreateProjectUserCommand struct {
+	Rates       []CreateRateCommand
 	WorkspaceID int64
 	ProjectID   int64
 	UserID      int64
@@ -100,10 +105,11 @@ type CreateProjectGroupCommand struct {
 }
 
 type UpdateProjectUserCommand struct {
+	Rates       []CreateRateCommand
 	WorkspaceID int64
 	ProjectID   int64
 	UserID      int64
-	Manager     bool
+	Manager     *bool
 }
 
 type ProjectCountView struct {
@@ -219,6 +225,8 @@ type CreateTagCommand struct {
 }
 
 type CreateProjectCommand struct {
+	Currency    *string
+	RateChange  *CreateRateCommand
 	WorkspaceID int64
 	CreatedBy   int64
 	ClientID    *int64
@@ -349,7 +357,7 @@ type Store interface {
 	ListProjectUsers(context.Context, int64, ListProjectUsersFilter) ([]ProjectUserView, error)
 	GetProjectUser(context.Context, int64, int64, int64) (ProjectUserView, bool, error)
 	CreateProjectUser(context.Context, CreateProjectUserCommand) (ProjectUserView, error)
-	UpdateProjectUser(context.Context, ProjectUserView) error
+	UpdateProjectUser(context.Context, ProjectUserView, *string, []CreateRateCommand) error
 	DeleteProjectUser(context.Context, int64, int64, int64) error
 	ListProjectGroups(context.Context, int64, []int64) ([]ProjectGroupView, error)
 	GetProjectGroup(context.Context, int64, int64) (ProjectGroupView, bool, error)

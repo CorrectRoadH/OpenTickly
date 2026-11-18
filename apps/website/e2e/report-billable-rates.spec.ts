@@ -49,3 +49,55 @@ test("reports show a project rate in the workspace currency without a workspace 
   await expect(page.getByTestId("reports-profitability-metrics")).toContainText("€100.00");
   await page.screenshot({ path: testInfo.outputPath("project-rate-in-eur.png"), fullPage: true });
 });
+
+test("workspace billing settings persist currency and can disable the default rate", async ({
+  page,
+}, testInfo) => {
+  await registerE2eUser(page, testInfo, {
+    email: `workspace-rate-${Date.now()}@example.com`,
+    fullName: "Billing Owner",
+    password: "rates-e2e-pass",
+  });
+  const { current_workspace_id: workspaceId } = await readSessionBootstrap(page);
+  if (!workspaceId) throw new Error("Expected a workspace");
+
+  await page.goto(`/${workspaceId}/settings/billable-rates`);
+  await expect(page.getByTestId("billable-rates-section")).toBeVisible();
+  const billable = page.getByRole("radio", { name: "Billable", exact: true });
+  const nonBillable = page.getByRole("radio", { name: "Non-billable", exact: true });
+  const hourlyRate = page.getByRole("textbox", { name: "Hourly Rate" });
+  const currency = page.locator("#currency-select");
+  const save = async () => {
+    const saved = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PUT" &&
+        response.url().endsWith(`/api/v9/workspaces/${workspaceId}`),
+    );
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    expect((await saved).ok()).toBeTruthy();
+  };
+
+  await expect(nonBillable).toBeChecked();
+  await billable.check();
+  await hourlyRate.fill("42.50");
+  await currency.click();
+  await page.getByRole("option", { name: "EUR", exact: true }).click();
+  await save();
+  await expect(page.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByTestId("billable-rates-section")).toBeVisible();
+  await expect(billable).toBeChecked();
+  await expect(hourlyRate).toHaveValue("42.50");
+  await expect(currency).toContainText("EUR");
+  await page.screenshot({ path: testInfo.outputPath("workspace-billing-eur.png") });
+
+  await nonBillable.check();
+  await save();
+  await expect(page.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByTestId("billable-rates-section")).toBeVisible();
+  await expect(nonBillable).toBeChecked();
+  const workspace = await page.request.get(`/api/v9/workspaces/${workspaceId}`);
+  expect(workspace.ok()).toBeTruthy();
+  expect(await workspace.json()).toMatchObject({ default_currency: "EUR", default_hourly_rate: 0 });
+});
