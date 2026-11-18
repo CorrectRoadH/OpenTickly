@@ -43,5 +43,5 @@
     "vite": "catalog:",
     "vite-plus": "catalog:"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@12.21.0"
 }
