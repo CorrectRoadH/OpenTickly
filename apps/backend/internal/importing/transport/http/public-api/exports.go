@@ -14,6 +14,7 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	importapi "opentoggl/backend/apps/backend/internal/http/generated/import"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
@@ -22,13 +23,13 @@ import (
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
 }
 
 type OrganizationCreator interface {
@@ -128,7 +129,7 @@ func NewHandler(
 	}
 }
 
-func (handler *Handler) GetPublicTrackMeExport(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackMeExport(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -140,14 +141,14 @@ func (handler *Handler) GetPublicTrackMeExport(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, exportRecordsBody(exports))
 }
 
-func (handler *Handler) PostPublicTrackMeExport(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackMeExport(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
 	var payload publictrackapi.ExportPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	token, err := handler.importing.StartUserExport(ctx.Request().Context(), user.ID, importingapplication.UserExportSelection{
 		Profile:  lo.FromPtr(payload.Profile),
@@ -159,7 +160,7 @@ func (handler *Handler) PostPublicTrackMeExport(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, token)
 }
 
-func (handler *Handler) GetPublicTrackMeExportArchive(ctx echo.Context, token string) error {
+func (handler *Handler) GetPublicTrackMeExportArchive(ctx *echo.Context, token string) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -172,7 +173,7 @@ func (handler *Handler) GetPublicTrackMeExportArchive(ctx echo.Context, token st
 	return ctx.Blob(http.StatusOK, "application/zip", archive.Content)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceExports(ctx echo.Context, workspaceID int64) error {
+func (handler *Handler) GetPublicTrackWorkspaceExports(ctx *echo.Context, workspaceID int64) error {
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
@@ -183,7 +184,7 @@ func (handler *Handler) GetPublicTrackWorkspaceExports(ctx echo.Context, workspa
 	return ctx.JSON(http.StatusOK, exportRecordsBody(exports))
 }
 
-func (handler *Handler) PostPublicTrackWorkspaceExports(ctx echo.Context, workspaceID int64) error {
+func (handler *Handler) PostPublicTrackWorkspaceExports(ctx *echo.Context, workspaceID int64) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -193,7 +194,7 @@ func (handler *Handler) PostPublicTrackWorkspaceExports(ctx echo.Context, worksp
 	}
 	var payload []string
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	data, err := handler.collectWorkspaceExportData(ctx.Request().Context(), workspaceID, user.ID, payload)
 	if err != nil {
@@ -358,7 +359,7 @@ func (handler *Handler) collectWorkspaceExportData(
 }
 
 func (handler *Handler) GetPublicTrackWorkspaceExportArchive(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int64,
 	token string,
 ) error {
@@ -373,29 +374,29 @@ func (handler *Handler) GetPublicTrackWorkspaceExportArchive(
 	return ctx.Blob(http.StatusOK, "application/zip", archive.Content)
 }
 
-func (handler *Handler) CreateImportJob(ctx echo.Context) error {
+func (handler *Handler) CreateImportJob(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
 	source, err := parseRequiredStringField(ctx.FormValue("source"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	uploadedFile, err := ctx.FormFile("archive")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	fileReader, err := uploadedFile.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	defer fileReader.Close()
 
 	archiveContent, err := io.ReadAll(fileReader)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	switch source {
@@ -408,7 +409,7 @@ func (handler *Handler) CreateImportJob(ctx echo.Context) error {
 	}
 }
 
-func (handler *Handler) GetImportJob(ctx echo.Context, jobID string) error {
+func (handler *Handler) GetImportJob(ctx *echo.Context, jobID string) error {
 	job, err := handler.importing.GetImportJob(ctx.Request().Context(), jobID)
 	if err != nil {
 		return writeImportingError(err)
@@ -481,14 +482,14 @@ func defaultImportedWorkspaceName(user identityapplication.UserSnapshot) string 
 }
 
 func (handler *Handler) createArchiveImportJob(
-	ctx echo.Context,
+	ctx *echo.Context,
 	user identityapplication.UserSnapshot,
 	archiveContent []byte,
 	source string,
 ) error {
 	organizationName, err := parseRequiredStringField(ctx.FormValue("organization_name"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	createdTenant, err := handler.tenant.CreateOrganization(
 		ctx.Request().Context(),
@@ -507,7 +508,7 @@ func (handler *Handler) createArchiveImportJob(
 			UserID:      user.ID,
 		},
 	); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	job, err := handler.importing.StartWorkspaceImport(
 		ctx.Request().Context(),
@@ -526,21 +527,21 @@ func (handler *Handler) createArchiveImportJob(
 			int64(createdTenant.OrganizationID),
 			int64(createdTenant.WorkspaceID),
 		); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 	return ctx.JSON(http.StatusAccepted, importJobBodyWithOrganization(job, int(createdTenant.OrganizationID)))
 }
 
 func (handler *Handler) createTimeEntriesImportJob(
-	ctx echo.Context,
+	ctx *echo.Context,
 	userID int64,
 	csvContent []byte,
 	source string,
 ) error {
 	workspaceID, err := parseInt64Field(ctx.FormValue("workspace_id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -565,12 +566,12 @@ func writeImportingError(err error) error {
 		errors.Is(err, importingapplication.ErrImportArchiveRequired),
 		errors.Is(err, importingapplication.ErrImportArchiveInvalid),
 		errors.Is(err, importingapplication.ErrImportSourceInvalid):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	case errors.Is(err, importingapplication.ErrExportNotFound):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	case errors.Is(err, importingapplication.ErrImportJobNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }

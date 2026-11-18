@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func TestSAMLBrowserCookieRoundTrip(t *testing.T) {
@@ -21,7 +21,7 @@ func TestSAMLBrowserCookieRoundTrip(t *testing.T) {
 		t.Skip("set SAML_TEST_BROWSER=1 for real Chromium acceptance")
 	}
 	f := newSAMLSecurityFixture(t)
-	f.app.HTTP.GET("/saml-test-ready", func(c echo.Context) error { return c.HTML(200, `<div data-testid="saml-test-ready">Ready</div>`) })
+	f.app.HTTP.GET("/saml-test-ready", func(c *echo.Context) error { return c.HTML(200, `<div data-testid="saml-test-ready">Ready</div>`) })
 	server := httptest.NewTLSServer(f.app.HTTP)
 	defer server.Close()
 	idp := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -3,15 +3,15 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (server *publicTrackOpenAPIServer) GetClients(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetClients(ctx *echo.Context) error {
 	return server.catalog.GetPublicTrackClients(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceClients(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceClientsParams,
 ) error {
@@ -20,28 +20,28 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceClients(
 	return server.catalog.GetPublicTrackClients(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceClients(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceClients(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.PostPublicTrackClients(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) ArchiveClients(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) ArchiveClients(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.ArchivePublicTrackClients(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceClientsData(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceClientsData(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.GetPublicTrackClientsData(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) DeleteWorkspaceClients(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceClients(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.DeletePublicTrackClients(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceClient(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
@@ -51,7 +51,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceClient(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceClient(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
@@ -61,7 +61,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceClient(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceClients(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
@@ -71,7 +71,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceClients(
 }
 
 func (server *publicTrackOpenAPIServer) ArchiveClient(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
@@ -81,7 +81,7 @@ func (server *publicTrackOpenAPIServer) ArchiveClient(
 }
 
 func (server *publicTrackOpenAPIServer) RestoreClient(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {

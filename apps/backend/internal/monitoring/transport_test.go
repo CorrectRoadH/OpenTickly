@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func TestFinalHTTPEnvelope(t *testing.T) {
@@ -35,7 +35,7 @@ func TestFinalHTTPEnvelope(t *testing.T) {
 	}
 	e := echo.New()
 	e.Use(Middleware(client))
-	e.GET("/:id", func(c echo.Context) error {
+	e.GET("/:id", func(c *echo.Context) error {
 		span := sentry.StartSpan(c.Request().Context(), "db.query", sentry.WithDescription("SENSITIVE"))
 		span.SetData("nested", struct{ Token string }{"SENSITIVE"})
 		defer span.Finish()

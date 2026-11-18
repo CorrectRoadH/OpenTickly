@@ -432,7 +432,7 @@ func TestPublicTrackRegistersUnimplementedSpecRoutes(t *testing.T) {
 	}
 	t.Cleanup(app.Platform.Database.Close)
 
-	for _, route := range app.HTTP.Routes() {
+	for _, route := range app.HTTP.Router().Routes() {
 		if route.Method == http.MethodGet && route.Path == "/api/v9/countries" {
 			return
 		}

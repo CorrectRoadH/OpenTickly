@@ -1,20 +1,18 @@
 package bootstrap
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strings"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/labstack/echo/v4"
-	echomiddleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/labstack/echo/v5"
 )
 
 const publicTrackUserContextKey = "public_track_user"
@@ -27,19 +25,10 @@ func newPublicTrackRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, erro
 
 	swagger = withAbsoluteTrackPaths(swagger, "/api/v9")
 	allowTrackTaskIDNullClearing(swagger)
-	validator := echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
-		Options: openapi3filter.Options{
-			AuthenticationFunc: func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
-				echoContext := echomiddleware.GetEchoContext(ctx)
-				if echoContext == nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
-				}
-				_, err := handlers.publicTrackUser(echoContext)
-				return err
-			},
-		},
-		Skipper: skipPublicTrackOpenAPIValidation,
-	})
+	validator, err := httpapp.NewOpenAPIValidator(swagger, skipPublicTrackOpenAPIValidation, handlers.authenticatePublicTrack)
+	if err != nil {
+		return nil, err
+	}
 
 	return func(server *echo.Echo) {
 		group := server.Group("/api/v9")
@@ -90,7 +79,7 @@ func allowTrackTaskIDNullClearing(swagger *openapi3.T) {
 	}
 }
 
-func skipPublicTrackOpenAPIValidation(ctx echo.Context) bool {
+func skipPublicTrackOpenAPIValidation(ctx *echo.Context) bool {
 	path := strings.TrimSpace(ctx.Request().URL.Path)
 
 	// The upstream swagger spec lacks consumes: ["multipart/form-data"] on
@@ -137,10 +126,10 @@ func isMultipartUploadPath(path string) bool {
 	}
 }
 
-func publicTrackCredentials(ctx echo.Context) (identitydomain.BasicCredentials, error) {
+func publicTrackCredentials(ctx *echo.Context) (identitydomain.BasicCredentials, error) {
 	username, password, ok := ctx.Request().BasicAuth()
 	if !ok {
-		return identitydomain.BasicCredentials{}, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+		return identitydomain.BasicCredentials{}, httperror.New(http.StatusForbidden, "User does not have access to this resource.")
 	}
 
 	return identitydomain.BasicCredentials{
@@ -149,7 +138,7 @@ func publicTrackCredentials(ctx echo.Context) (identitydomain.BasicCredentials, 
 	}, nil
 }
 
-func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*application.UserSnapshot, error) {
+func (handlers *routeHandlers) publicTrackUser(ctx *echo.Context) (*application.UserSnapshot, error) {
 	if cached, ok := ctx.Get(publicTrackUserContextKey).(*application.UserSnapshot); ok && cached != nil {
 		return cached, nil
 	}
@@ -164,9 +153,9 @@ func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*application.U
 		case errors.Is(resolveErr, identitydomain.ErrInvalidCredentials),
 			errors.Is(resolveErr, identitydomain.ErrUserDeactivated),
 			errors.Is(resolveErr, identitydomain.ErrUserDeleted):
-			return nil, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.").SetInternal(err)
+			return nil, httperror.New(http.StatusForbidden, "User does not have access to this resource.").WithCause(err)
 		default:
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return nil, httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 
@@ -184,8 +173,13 @@ func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*application.U
 		errors.Is(resolveErr, identitydomain.ErrInvalidCredentials),
 		errors.Is(resolveErr, identitydomain.ErrUserDeactivated),
 		errors.Is(resolveErr, identitydomain.ErrUserDeleted):
-		return nil, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+		return nil, httperror.New(http.StatusForbidden, "User does not have access to this resource.")
 	default:
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return nil, httperror.New(http.StatusInternalServerError, "Internal Server Error")
 	}
+}
+
+func (handlers *routeHandlers) authenticatePublicTrack(c *echo.Context) error {
+	_, err := handlers.publicTrackUser(c)
+	return err
 }

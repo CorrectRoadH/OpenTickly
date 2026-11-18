@@ -18,6 +18,7 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
@@ -44,7 +45,7 @@ import (
 	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 const currentSessionHomeContextKey = "current_session_home"
@@ -238,7 +239,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 
 // --- Shared helpers ---
 
-func sessionID(ctx echo.Context) string {
+func sessionID(ctx *echo.Context) string {
 	cookie, err := ctx.Cookie(websession.CookieName)
 	if err == nil {
 		return cookie.Value
@@ -258,7 +259,7 @@ func sessionID(ctx echo.Context) string {
 	return ""
 }
 
-func parsePathID(ctx echo.Context, key string) (int64, bool) {
+func parsePathID(ctx *echo.Context, key string) (int64, bool) {
 	value, err := strconv.ParseInt(ctx.Param(key), 10, 64)
 	if err != nil {
 		return 0, false
@@ -266,7 +267,7 @@ func parsePathID(ctx echo.Context, key string) (int64, bool) {
 	return value, true
 }
 
-func (handlers *routeHandlers) writeIdentityResponse(ctx echo.Context, response identityweb.Response) error {
+func (handlers *routeHandlers) writeIdentityResponse(ctx *echo.Context, response identityweb.Response) error {
 	if response.SessionID != "" && response.StatusCode < http.StatusBadRequest {
 		setSessionCookie(ctx, response.SessionID)
 	}
@@ -279,7 +280,7 @@ func (handlers *routeHandlers) writeIdentityResponse(ctx echo.Context, response 
 	return ctx.JSON(response.StatusCode, response.Body)
 }
 
-func (handlers *routeHandlers) authorizeSession(ctx echo.Context) (error, bool) {
+func (handlers *routeHandlers) authorizeSession(ctx *echo.Context) (error, bool) {
 	response := handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx))
 	if response.StatusCode == http.StatusOK {
 		return nil, true
@@ -287,14 +288,14 @@ func (handlers *routeHandlers) authorizeSession(ctx echo.Context) (error, bool) 
 	return identityHTTPError(response), false
 }
 
-func writeTenantResponse(ctx echo.Context, response tenantweb.Response) error {
+func writeTenantResponse(ctx *echo.Context, response tenantweb.Response) error {
 	if response.StatusCode == http.StatusNoContent {
 		return ctx.NoContent(http.StatusNoContent)
 	}
 	return ctx.JSON(response.StatusCode, response.Body)
 }
 
-func setSessionCookie(ctx echo.Context, sessionID string) {
+func setSessionCookie(ctx *echo.Context, sessionID string) {
 	ctx.SetCookie(&http.Cookie{
 		Name:     websession.CookieName,
 		Value:    sessionID,
@@ -307,22 +308,22 @@ func setSessionCookie(ctx echo.Context, sessionID string) {
 }
 
 func identityHTTPError(response identityweb.Response) error {
-	return echo.NewHTTPError(response.StatusCode, response.Body)
+	return httperror.New(response.StatusCode, response.Body)
 }
 
-func (handlers *routeHandlers) requireCurrentSessionWorkspace(ctx echo.Context, workspaceID int64) error {
+func (handlers *routeHandlers) requireCurrentSessionWorkspace(ctx *echo.Context, workspaceID int64) error {
 	home, err := handlers.currentSessionHome(ctx)
 	if err != nil {
 		return err
 	}
 	if home.workspaceID != workspaceID {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
-			SetInternal(errors.New("requested workspace does not match the current session workspace"))
+		return httperror.New(http.StatusForbidden, "Forbidden").
+			WithCause(errors.New("requested workspace does not match the current session workspace"))
 	}
 	return nil
 }
 
-func (handlers *routeHandlers) currentSessionHome(ctx echo.Context) (sessionHome, error) {
+func (handlers *routeHandlers) currentSessionHome(ctx *echo.Context) (sessionHome, error) {
 	if cached, ok := ctx.Get(currentSessionHomeContextKey).(*sessionHome); ok && cached != nil {
 		return *cached, nil
 	}
@@ -333,19 +334,19 @@ func (handlers *routeHandlers) currentSessionHome(ctx echo.Context) (sessionHome
 		case errors.Is(err, identityapplication.ErrSessionNotFound),
 			errors.Is(err, identitydomain.ErrUserDeactivated),
 			errors.Is(err, identitydomain.ErrUserDeleted):
-			return sessionHome{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+			return sessionHome{}, httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 		default:
-			return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return sessionHome{}, httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 
 	organizationID, workspaceID, found, lookupErr := handlers.userHomes.FindByUserID(ctx.Request().Context(), user.ID)
 	switch {
 	case lookupErr != nil:
-		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(lookupErr)
+		return sessionHome{}, httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(lookupErr)
 	case !found:
-		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").
-			SetInternal(errors.New("session home was not found for the current user"))
+		return sessionHome{}, httperror.New(http.StatusInternalServerError, "Internal Server Error").
+			WithCause(errors.New("session home was not found for the current user"))
 	default:
 		home := &sessionHome{
 			organizationID: organizationID,
@@ -356,7 +357,7 @@ func (handlers *routeHandlers) currentSessionHome(ctx echo.Context) (sessionHome
 	}
 }
 
-func clearSessionCookie(ctx echo.Context) {
+func clearSessionCookie(ctx *echo.Context) {
 	ctx.SetCookie(&http.Cookie{
 		Name:     websession.CookieName,
 		Value:    "",
@@ -368,7 +369,7 @@ func clearSessionCookie(ctx echo.Context) {
 	})
 }
 
-func resolveCookieSecure(ctx echo.Context) bool {
+func resolveCookieSecure(ctx *echo.Context) bool {
 	return ctx.Scheme() == "https"
 }
 

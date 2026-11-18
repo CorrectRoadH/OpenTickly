@@ -6,25 +6,26 @@ import (
 	"net/http"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handlers *routeHandlers) getOnboarding(ctx echo.Context) error {
+func (handlers *routeHandlers) getOnboarding(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 
 	completed, err := handlers.getOnboardingCompleted(ctx.Request().Context(), user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	return ctx.JSON(http.StatusOK, webapi.OnboardingStatus{
@@ -32,14 +33,14 @@ func (handlers *routeHandlers) getOnboarding(ctx echo.Context) error {
 	})
 }
 
-func (handlers *routeHandlers) completeOnboarding(ctx echo.Context) error {
+func (handlers *routeHandlers) completeOnboarding(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 
 	var request webapi.CompleteOnboardingRequest
@@ -48,7 +49,7 @@ func (handlers *routeHandlers) completeOnboarding(ctx echo.Context) error {
 	}
 
 	if err := handlers.applyOnboardingComplete(ctx.Request().Context(), user.ID, request); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	return ctx.JSON(http.StatusOK, webapi.OnboardingStatus{
@@ -56,14 +57,14 @@ func (handlers *routeHandlers) completeOnboarding(ctx echo.Context) error {
 	})
 }
 
-func (handlers *routeHandlers) resetOnboarding(ctx echo.Context) error {
+func (handlers *routeHandlers) resetOnboarding(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 
 	_, err = handlers.pool.Exec(ctx.Request().Context(),
@@ -71,7 +72,7 @@ func (handlers *routeHandlers) resetOnboarding(ctx echo.Context) error {
 		user.ID,
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	return ctx.JSON(http.StatusOK, webapi.OnboardingStatus{

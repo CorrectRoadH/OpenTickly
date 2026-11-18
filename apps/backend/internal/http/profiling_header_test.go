@@ -1,7 +1,7 @@
 package httpapp
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"net/http/httptest"
 	"testing"
 	"testing/fstest"

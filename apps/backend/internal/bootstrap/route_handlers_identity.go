@@ -5,15 +5,16 @@ import (
 	"net/http"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handlers *routeHandlers) register(ctx echo.Context) error {
+func (handlers *routeHandlers) register(ctx *echo.Context) error {
 	var request identityweb.RegisterRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -21,13 +22,13 @@ func (handlers *routeHandlers) register(ctx echo.Context) error {
 	response := handlers.identity.Register(ctx.Request().Context(), request)
 	if response.StatusCode == http.StatusCreated {
 		if err := maybeBootstrapFirstUser(ctx.Request().Context(), handlers.pool, request.Email); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 	return handlers.writeIdentityResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) verifyEmail(ctx echo.Context) error {
+func (handlers *routeHandlers) verifyEmail(ctx *echo.Context) error {
 	var request struct {
 		Token string `json:"token"`
 	}
@@ -38,7 +39,7 @@ func (handlers *routeHandlers) verifyEmail(ctx echo.Context) error {
 	return handlers.writeIdentityResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) login(ctx echo.Context) error {
+func (handlers *routeHandlers) login(ctx *echo.Context) error {
 	var request identityweb.LoginRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -46,17 +47,17 @@ func (handlers *routeHandlers) login(ctx echo.Context) error {
 	return handlers.writeIdentityResponse(ctx, handlers.identity.Login(ctx.Request().Context(), request))
 }
 
-func (handlers *routeHandlers) logout(ctx echo.Context) error {
+func (handlers *routeHandlers) logout(ctx *echo.Context) error {
 	response := handlers.identity.Logout(ctx.Request().Context(), sessionID(ctx))
 	return handlers.writeIdentityResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) session(ctx echo.Context) error {
+func (handlers *routeHandlers) session(ctx *echo.Context) error {
 	response := handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx))
 	return handlers.writeIdentityResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
+func (handlers *routeHandlers) updateSession(ctx *echo.Context) error {
 	var request webapi.UpdateWebSessionRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -71,15 +72,15 @@ func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
 		case errors.Is(err, identityapplication.ErrSessionNotFound),
 			errors.Is(err, identitydomain.ErrUserDeactivated),
 			errors.Is(err, identitydomain.ErrUserDeleted):
-			return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+			return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 
 	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	var selectedWorkspace *tenantapplication.WorkspaceView
@@ -90,8 +91,8 @@ func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
 		}
 	}
 	if selectedWorkspace == nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
-			SetInternal(errors.New("requested workspace is not accessible to the current user"))
+		return httperror.New(http.StatusForbidden, "Forbidden").
+			WithCause(errors.New("requested workspace is not accessible to the current user"))
 	}
 
 	if err := handlers.userHomes.Save(
@@ -100,7 +101,7 @@ func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
 		int64(selectedWorkspace.OrganizationID),
 		int64(selectedWorkspace.ID),
 	); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	response := handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx))

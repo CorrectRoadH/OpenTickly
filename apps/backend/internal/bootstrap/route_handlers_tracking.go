@@ -6,12 +6,13 @@ import (
 	"time"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) error {
+func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -25,17 +26,17 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 
 	query := strings.TrimSpace(ctx.QueryParam("query"))
 	if query == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "query parameter is required")
+		return httperror.New(http.StatusBadRequest, "query parameter is required")
 	}
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 
 	entries, err := handlers.trackingApp.SearchTimeEntries(ctx.Request().Context(), workspaceID, user.ID, query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	items := timeEntrySearchViewsToWebAPI(entries)
@@ -43,7 +44,7 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 	return ctx.JSON(http.StatusOK, webapi.TimeEntrySearchResult{Entries: items})
 }
 
-func (handlers *routeHandlers) listRecentWorkspaceTimeEntrySuggestions(ctx echo.Context) error {
+func (handlers *routeHandlers) listRecentWorkspaceTimeEntrySuggestions(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -57,12 +58,12 @@ func (handlers *routeHandlers) listRecentWorkspaceTimeEntrySuggestions(ctx echo.
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 
 	entries, err := handlers.trackingApp.ListRecentTimeEntrySuggestions(ctx.Request().Context(), workspaceID, user.ID, 8)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	return ctx.JSON(http.StatusOK, webapi.TimeEntrySearchResult{

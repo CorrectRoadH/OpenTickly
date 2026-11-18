@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handler *Handler) PatchWorkspaceProjectTasks(ctx echo.Context) error {
+func (handler *Handler) PatchWorkspaceProjectTasks(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -49,7 +50,7 @@ func (handler *Handler) PatchWorkspaceProjectTasks(ctx echo.Context) error {
 	success, err := handler.catalog.PatchTasks(ctx.Request().Context(), workspaceID, projectID, taskIDs, commands)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrTaskNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

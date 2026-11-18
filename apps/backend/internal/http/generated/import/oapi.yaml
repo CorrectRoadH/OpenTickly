@@ -1,9 +1,13 @@
 package: importapi
 generate:
   models: true
-  echo-server: true
+  echo5-server: true
   embedded-spec: true
 output-options:
+  skip-enum-validate: true
   skip-prune: true
 import-mapping:
   ./opentoggl-shared.openapi.json: opentoggl/backend/apps/backend/internal/http/generated/shared
+
+compatibility:
+  sort-handler-registrations: true

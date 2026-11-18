@@ -7,11 +7,11 @@ import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackWorkspaceAllActivities(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceAllActivities(ctx *echo.Context) error {
 	workspaceID, since, err := handler.requireDashboardScope(ctx)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (handler *Handler) GetPublicTrackWorkspaceAllActivities(ctx echo.Context) e
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceTopActivity(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceTopActivity(ctx *echo.Context) error {
 	workspaceID, since, err := handler.requireDashboardScope(ctx)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (handler *Handler) GetPublicTrackWorkspaceTopActivity(ctx echo.Context) err
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceMostActive(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceMostActive(ctx *echo.Context) error {
 	workspaceID, since, err := handler.requireDashboardScope(ctx)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (handler *Handler) GetPublicTrackWorkspaceMostActive(ctx echo.Context) erro
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) requireDashboardScope(ctx echo.Context) (int64, *time.Time, error) {
+func (handler *Handler) requireDashboardScope(ctx *echo.Context) (int64, *time.Time, error) {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return 0, nil, err
 	}

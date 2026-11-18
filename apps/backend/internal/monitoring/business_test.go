@@ -3,7 +3,7 @@ package monitoring
 import (
 	"context"
 	"github.com/getsentry/sentry-go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -52,7 +52,7 @@ func TestConcurrentHTTPParentsAndBusinessOutcomes(t *testing.T) {
 	client, _ := sentry.NewClient(Options("https://public@example.com/1", "production", "api@test", transport))
 	server := echo.New()
 	server.Use(Middleware(client))
-	server.GET("/work/:outcome", func(c echo.Context) (resultErr error) {
+	server.GET("/work/:outcome", func(c *echo.Context) (resultErr error) {
 		span, finish := StartBusiness(c.Request().Context(), "report.load")
 		defer FinishBusiness(finish, &resultErr)
 		if c.Param("outcome") == "cancel" {

@@ -1,19 +1,19 @@
 package bootstrap
 
-import "github.com/labstack/echo/v4"
+import "github.com/labstack/echo/v5"
 
-func (server *publicTrackOpenAPIServer) GetProjectGroups(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetProjectGroups(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.GetPublicTrackProjectGroups(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostProjectGroup(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostProjectGroup(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.PostPublicTrackProjectGroup(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) DeleteProjectGroup(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectGroupId int,
 ) error {

@@ -6,9 +6,10 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -17,7 +18,7 @@ import (
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProjects(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -59,7 +60,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 
 	rows, err := handler.reports.BuildProjectProfitability(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	currency := request.Currency
@@ -141,7 +142,7 @@ func (r projectsSummaryRow) MarshalJSON() ([]byte, error) {
 }
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -151,7 +152,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
 
 	var request publicreportsapi.DtoProjectUsersRequest
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	location := loadLocation(user.Timezone)
@@ -170,7 +171,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
 
 	entries, err := handler.reports.BuildWeeklyReportEntries(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	// Aggregate per (user_id, project_id) preserving nil project_id as a
@@ -226,7 +227,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsProjectIdSummary(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 	projectID int,
 ) error {
@@ -237,7 +238,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsProjectIdSum
 
 	var request publicreportsapi.BaseRangePost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	location := loadLocation(user.Timezone)
@@ -257,7 +258,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsProjectIdSum
 
 	entries, err := handler.reports.BuildWeeklyReportEntries(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	totalSeconds := 0
@@ -278,7 +279,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsProjectIdSum
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdActionTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 	action string,
 ) error {
@@ -289,7 +290,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdActionTasks(
 
 	var request publicreportsapi.TasksTasksPost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	filter := catalogapplication.ListTasksFilter{
@@ -306,7 +307,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdActionTasks(
 
 	page, err := handler.catalog.ListTasks(ctx.Request().Context(), int64(workspaceID), filter)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	// Get time tracked per task.
@@ -314,7 +315,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdActionTasks(
 		ctx.Request().Context(), int64(workspaceID), trackingListFilter(user),
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	taskSecs := aggregateTaskSeconds(entries)
 

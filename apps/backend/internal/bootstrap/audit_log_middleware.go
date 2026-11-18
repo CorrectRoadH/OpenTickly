@@ -12,11 +12,12 @@ import (
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/platform"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -24,7 +25,7 @@ const auditLogMaxBodySize = governanceapplication.AuditPayloadMaxSize
 
 func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(ctx echo.Context) error {
+		return func(ctx *echo.Context) error {
 			req := ctx.Request()
 
 			// Only log mutating requests
@@ -42,7 +43,7 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 					io.Closer
 				}{io.MultiReader(bytes.NewReader(prefix), original), original}
 				if err != nil {
-					return echo.NewHTTPError(http.StatusBadRequest, "Unable to read request body")
+					return httperror.New(http.StatusBadRequest, "Unable to read request body")
 				}
 				requestBody = governanceapplication.SanitizeAuditPayload(prefix)
 			}
@@ -57,13 +58,17 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 				}
 			}
 
-			// Wrap response writer to capture response body
+			// Wrap the underlying writer while keeping Echo response tracking intact.
+			response, _ := echo.UnwrapResponse(ctx.Response())
+			if response == nil {
+				return next(ctx)
+			}
 			recorder := &responseRecorder{
-				ResponseWriter: ctx.Response().Writer,
+				ResponseWriter: response.ResponseWriter,
 				body:           &bytes.Buffer{},
 				maxSize:        auditLogMaxBodySize,
 			}
-			ctx.Response().Writer = recorder
+			response.ResponseWriter = recorder
 
 			// Execute handler
 			handlerErr := next(ctx)
@@ -80,7 +85,7 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 				if recorder.overflow {
 					responseBody = ""
 				}
-				if handlerErr != nil || ctx.Response().Status >= http.StatusBadRequest {
+				if handlerErr != nil || response.Status >= http.StatusBadRequest {
 					requestBody, responseBody, metadata = "", "", ""
 				}
 				if governanceapplication.SensitiveAuditPath(req.URL.Path) {
@@ -118,7 +123,7 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 	}
 }
 
-func resolveSource(ctx echo.Context) string {
+func resolveSource(ctx *echo.Context) string {
 	_, _, hasBasicAuth := ctx.Request().BasicAuth()
 	if hasBasicAuth {
 		return "api"
@@ -155,7 +160,7 @@ func resolveEntity(path string) (entityType string, entityID *int64) {
 	return "", nil
 }
 
-func resolveOrgWorkspace(ctx echo.Context, handlers *routeHandlers, user *application.UserSnapshot) (orgID int64, wsID *int64) {
+func resolveOrgWorkspace(ctx *echo.Context, handlers *routeHandlers, user *application.UserSnapshot) (orgID int64, wsID *int64) {
 	if raw := ctx.Param("workspace_id"); raw != "" {
 		id, err := strconv.ParseInt(raw, 10, 64)
 		if err != nil {
@@ -263,7 +268,7 @@ func (r *responseRecorder) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-func auditUser(ctx echo.Context, handlers *routeHandlers) *application.UserSnapshot {
+func auditUser(ctx *echo.Context, handlers *routeHandlers) *application.UserSnapshot {
 	if user, ok := ctx.Get(publicTrackUserContextKey).(*application.UserSnapshot); ok {
 		return user
 	}

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type captureTransport struct {
@@ -36,7 +36,7 @@ func TestRequestCapturePrivacy(t *testing.T) {
 	}
 	e := echo.New()
 	e.Use(Middleware(client))
-	e.GET("/items/:id", func(c echo.Context) error {
+	e.GET("/items/:id", func(c *echo.Context) error {
 		hub := sentry.GetHubFromContext(c.Request().Context())
 		hub.Scope().SetContext("nested", sentry.Context{"secret": "SENSITIVE"})
 		hub.Scope().SetUser(sentry.User{Email: "SENSITIVE"})
@@ -92,7 +92,7 @@ func TestInboundUnsampledTraceStillCapturesErrors(t *testing.T) {
 	}
 	e := echo.New()
 	e.Use(Middleware(client))
-	e.GET("/", func(c echo.Context) error { return errors.New("SENSITIVE") })
+	e.GET("/", func(c *echo.Context) error { return errors.New("SENSITIVE") })
 	req := httptest.NewRequest("GET", "https://selfhosted.example/", nil)
 	req.Header.Set("sentry-trace", "01234567890123456789012345678901-0123456789012345-0")
 	e.ServeHTTP(httptest.NewRecorder(), req)

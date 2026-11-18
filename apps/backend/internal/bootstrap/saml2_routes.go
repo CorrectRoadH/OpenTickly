@@ -11,13 +11,14 @@ import (
 	"time"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
 	"github.com/crewjam/saml"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 const (
@@ -75,7 +76,7 @@ type ssoResolveResponse struct {
 	LoginPath     string `json:"login_path,omitempty"`
 }
 
-func (handlers *routeHandlers) ssoResolve(ctx echo.Context) (traceErr error) {
+func (handlers *routeHandlers) ssoResolve(ctx *echo.Context) (traceErr error) {
 	span, finish := monitoring.StartBusiness(ctx.Request().Context(), "auth.sso.resolve")
 	if span != nil {
 		ctx.SetRequest(ctx.Request().WithContext(span.Context()))
@@ -92,18 +93,18 @@ func (handlers *routeHandlers) ssoResolve(ctx echo.Context) (traceErr error) {
 	}
 	config, found, err := handlers.samlConfig.ResolveByEmailDomain(ctx.Request().Context(), domain)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	if !found || !config.active() {
 		return ctx.JSON(http.StatusOK, ssoResolveResponse{Found: false})
 	}
 	sp, err := handlers.buildSAMLServiceProvider(ctx, config)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadGateway, "SSO provider unavailable")
+		return httperror.New(http.StatusBadGateway, "SSO provider unavailable")
 	}
 	destination, err := url.Parse(sp.GetSSOBindingLocation(saml.HTTPRedirectBinding))
 	if err != nil || destination.Scheme != "https" {
-		return echo.NewHTTPError(http.StatusBadGateway, "Invalid SSO provider")
+		return httperror.New(http.StatusBadGateway, "Invalid SSO provider")
 	}
 	var workspaceName string
 	if err := handlers.pool.QueryRow(ctx.Request().Context(), `SELECT name FROM tenant_workspaces WHERE id=$1`, config.WorkspaceID).Scan(&workspaceName); err != nil {
@@ -117,27 +118,27 @@ func (handlers *routeHandlers) ssoResolve(ctx echo.Context) (traceErr error) {
 	})
 }
 
-func (handlers *routeHandlers) saml2Metadata(ctx echo.Context) error {
+func (handlers *routeHandlers) saml2Metadata(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 	keypair, err := handlers.samlConfig.ServiceProviderKeypair(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	metadata, err := identitysaml.SPMetadata(keypair, handlers.samlBaseURL(ctx), workspaceID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	xmlBytes, err := xml.MarshalIndent(metadata, "", "  ")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.Blob(http.StatusOK, "application/samlmetadata+xml", xmlBytes)
 }
 
-func (handlers *routeHandlers) saml2Login(ctx echo.Context) error {
+func (handlers *routeHandlers) saml2Login(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.Redirect(http.StatusFound, samlLoginErrorRedirect)
@@ -189,7 +190,7 @@ func (handlers *routeHandlers) joinWorkspaceAfterSSO(ctx context.Context, worksp
 
 // buildSAMLServiceProvider loads the SP keypair and asks the Manager for the
 // workspace's ServiceProvider (cached per config fingerprint).
-func (handlers *routeHandlers) buildSAMLServiceProvider(ctx echo.Context, config samlWorkspaceConfig) (*saml.ServiceProvider, error) {
+func (handlers *routeHandlers) buildSAMLServiceProvider(ctx *echo.Context, config samlWorkspaceConfig) (*saml.ServiceProvider, error) {
 	keypair, err := handlers.samlConfig.ServiceProviderKeypair(ctx.Request().Context())
 	if err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ func (handlers *routeHandlers) buildSAMLServiceProvider(ctx echo.Context, config
 	})
 }
 
-func (handlers *routeHandlers) samlBaseURL(ctx echo.Context) string {
+func (handlers *routeHandlers) samlBaseURL(ctx *echo.Context) string {
 	return strings.TrimRight(handlers.siteURL.ReadSiteURL(ctx.Request().Context()), "/")
 }
 

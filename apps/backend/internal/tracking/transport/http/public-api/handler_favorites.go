@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackFavorites(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackFavorites(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -26,14 +27,14 @@ func (handler *Handler) GetPublicTrackFavorites(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) PostPublicTrackFavorite(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackFavorite(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	var payload publictrackapi.HandlerfavoritesPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	favorite, err := handler.tracking.UpsertFavorite(ctx.Request().Context(), trackingapplication.UpsertFavoriteCommand{
 		WorkspaceID: workspaceID,
@@ -51,14 +52,14 @@ func (handler *Handler) PostPublicTrackFavorite(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, favoriteViewToAPI(favorite))
 }
 
-func (handler *Handler) PutPublicTrackFavorite(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackFavorite(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	var payload publictrackapi.FavoritesUpdateFavorite
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	favoriteID := int64PointerFromTrackIntPointer(payload.FavoriteId)
 	if favoriteID == nil {
@@ -83,11 +84,11 @@ func (handler *Handler) PutPublicTrackFavorite(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, favoriteViewToAPI(favorite))
 }
 
-func (handler *Handler) PostPublicTrackFavoriteSuggestions(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackFavoriteSuggestions(ctx *echo.Context) error {
 	return handler.GetPublicTrackFavorites(ctx)
 }
 
-func (handler *Handler) DeletePublicTrackFavorite(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackFavorite(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err

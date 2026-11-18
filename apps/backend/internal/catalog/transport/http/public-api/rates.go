@@ -8,13 +8,14 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) PostPublicTrackRate(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackRate(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -75,7 +76,7 @@ func (handler *Handler) PostPublicTrackRate(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusCreated)
 }
 
-func (handler *Handler) GetPublicTrackRatesByLevel(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackRatesByLevel(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -174,9 +175,9 @@ func writePublicTrackRateError(err error) error {
 		errors.Is(err, catalogapplication.ErrProjectNotFound),
 		errors.Is(err, catalogapplication.ErrProjectUserNotFound),
 		errors.Is(err, catalogapplication.ErrTaskNotFound):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return httperror.New(http.StatusBadRequest, "Bad Request")
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }
 

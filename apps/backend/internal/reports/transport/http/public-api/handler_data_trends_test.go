@@ -6,7 +6,8 @@ import (
 
 	"testing"
 
-	"github.com/labstack/echo/v4"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
+
 	"github.com/samber/lo"
 )
 
@@ -21,9 +22,9 @@ func mustLoadLocation(t *testing.T, name string) *time.Location {
 
 func httpErrorCode(t *testing.T, err error) int {
 	t.Helper()
-	httpErr, ok := err.(*echo.HTTPError)
+	httpErr, ok := err.(*httperror.Error)
 	if !ok {
-		t.Fatalf("expected *echo.HTTPError, got %T: %v", err, err)
+		t.Fatalf("expected *httperror.Error, got %T: %v", err, err)
 	}
 	return httpErr.Code
 }
@@ -126,7 +127,7 @@ func TestResolveDateBounds(t *testing.T) {
 				if code := httpErrorCode(t, err); code != tc.wantCode {
 					t.Errorf("resolveDateBounds error code = %d, want %d (err: %v)", code, tc.wantCode, err)
 				}
-				if msg := err.(*echo.HTTPError).Message; msg != tc.wantMsg {
+				if msg := err.(*httperror.Error).Message; msg != tc.wantMsg {
 					t.Errorf("resolveDateBounds error message = %q, want %q", msg, tc.wantMsg)
 				}
 				return

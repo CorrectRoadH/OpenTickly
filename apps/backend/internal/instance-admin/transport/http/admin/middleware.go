@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
+
+	"github.com/labstack/echo/v5"
 )
 
 // AdminSessionResolver resolves the current session to check admin status.
@@ -32,14 +34,14 @@ type AdminAuthConfig struct {
 // when not yet bootstrapped. All other endpoints require an instance admin session.
 func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(ctx echo.Context) error {
+		return func(ctx *echo.Context) error {
 			path := ctx.Path()
 
 			// Bootstrap endpoints are open when not yet bootstrapped
 			if strings.HasSuffix(path, "/admin/v1/bootstrap") {
 				bootstrapped, err := cfg.BootstrapChecker.IsBootstrapped(ctx.Request().Context())
 				if err != nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+					return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 				}
 				if !bootstrapped {
 					return next(ctx)
@@ -54,15 +56,15 @@ func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 			// All other admin routes require instance admin session
 			sessionID := extractSessionID(ctx, cfg.SessionCookieName)
 			if sessionID == "" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+				return httperror.New(http.StatusUnauthorized, "Authentication required")
 			}
 
 			isAdmin, err := cfg.SessionResolver.IsInstanceAdmin(ctx.Request().Context(), sessionID)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required").SetInternal(err)
+				return httperror.New(http.StatusUnauthorized, "Authentication required").WithCause(err)
 			}
 			if !isAdmin {
-				return echo.NewHTTPError(http.StatusForbidden, "Instance admin access required").SetInternal(err)
+				return httperror.New(http.StatusForbidden, "Instance admin access required").WithCause(err)
 			}
 
 			return next(ctx)
@@ -70,7 +72,7 @@ func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 	}
 }
 
-func extractSessionID(ctx echo.Context, cookieName string) string {
+func extractSessionID(ctx *echo.Context, cookieName string) string {
 	cookie, err := ctx.Cookie(cookieName)
 	if err == nil {
 		return cookie.Value

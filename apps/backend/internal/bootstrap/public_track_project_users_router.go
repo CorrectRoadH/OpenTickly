@@ -1,11 +1,11 @@
 package bootstrap
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (server *publicTrackOpenAPIServer) PatchWorkspaceProjectUsersIds(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectUserIds []int,
 ) error {

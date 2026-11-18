@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -46,7 +47,7 @@ type workspacePreferences struct {
 	RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
 }
 
-func (handlers *routeHandlers) deleteOrganization(ctx echo.Context) error {
+func (handlers *routeHandlers) deleteOrganization(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -59,15 +60,15 @@ func (handlers *routeHandlers) deleteOrganization(ctx echo.Context) error {
 		return err
 	}
 	if home.organizationID != organizationID {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
-			SetInternal(errors.New("requested organization does not match the current session organization"))
+		return httperror.New(http.StatusForbidden, "Forbidden").
+			WithCause(errors.New("requested organization does not match the current session organization"))
 	}
 
 	response := handlers.tenant.DeleteOrganization(ctx.Request().Context(), organizationID)
 	return writeTenantResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {
+func (handlers *routeHandlers) workspaceSettings(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -82,7 +83,7 @@ func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {
 	return writeTenantResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) updateWorkspaceSettings(ctx echo.Context) error {
+func (handlers *routeHandlers) updateWorkspaceSettings(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -155,7 +156,7 @@ func (handlers *routeHandlers) updateWorkspaceSettings(ctx echo.Context) error {
 	return writeTenantResponse(ctx, response)
 }
 
-func (handlers *routeHandlers) workspacePermissions(ctx echo.Context) error {
+func (handlers *routeHandlers) workspacePermissions(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -179,7 +180,7 @@ func (handlers *routeHandlers) workspacePermissions(ctx echo.Context) error {
 	})
 }
 
-func (handlers *routeHandlers) updateWorkspacePermissions(ctx echo.Context) error {
+func (handlers *routeHandlers) updateWorkspacePermissions(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}

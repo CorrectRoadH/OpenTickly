@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
+
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"golang.org/x/time/rate"
 )
 
@@ -28,7 +30,7 @@ type authEmailRateLimiter struct {
 func newAuthEmailRateLimiter() *authEmailRateLimiter {
 	return &authEmailRateLimiter{
 		store: middleware.NewRateLimiterMemoryStoreWithConfig(middleware.RateLimiterMemoryStoreConfig{
-			Rate:      rate.Every(authEmailRateLimitInterval),
+			Rate:      float64(rate.Every(authEmailRateLimitInterval)),
 			Burst:     authEmailRateLimitBurst,
 			ExpiresIn: time.Hour,
 		}),
@@ -36,13 +38,13 @@ func newAuthEmailRateLimiter() *authEmailRateLimiter {
 }
 
 // allow returns nil when the request may proceed, or a 429 otherwise.
-func (limiter *authEmailRateLimiter) allow(ctx echo.Context) error {
+func (limiter *authEmailRateLimiter) allow(ctx *echo.Context) error {
 	allowed, err := limiter.store.Allow(ctx.RealIP())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	if !allowed {
-		return echo.NewHTTPError(http.StatusTooManyRequests, authPreconditionBody{
+		return httperror.New(http.StatusTooManyRequests, authPreconditionBody{
 			Error:   "rate_limited",
 			Message: "Too many email requests from this client. Wait a minute and try again.",
 		})

@@ -4,14 +4,15 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackWorkspacePreferences(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspacePreferences(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -27,7 +28,7 @@ func (handler *Handler) GetPublicTrackWorkspacePreferences(ctx echo.Context) err
 	return ctx.JSON(http.StatusOK, workspacePreferencesBody(view))
 }
 
-func (handler *Handler) PostPublicTrackWorkspacePreferences(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackWorkspacePreferences(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -105,7 +106,7 @@ func workspacePreferencesBody(view tenantapplication.WorkspaceView) publictracka
 }
 
 // PostEnableSso enables SSO for a workspace.
-func (handler *Handler) PostEnableSso(ctx echo.Context) error {
+func (handler *Handler) PostEnableSso(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -113,11 +114,11 @@ func (handler *Handler) PostEnableSso(ctx echo.Context) error {
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return httperror.New(http.StatusNotImplemented, "Not Implemented")
 }
 
 // GetWorkspaceSso returns SSO configuration for a workspace.
-func (handler *Handler) GetWorkspaceSso(ctx echo.Context) error {
+func (handler *Handler) GetWorkspaceSso(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -125,11 +126,11 @@ func (handler *Handler) GetWorkspaceSso(ctx echo.Context) error {
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return httperror.New(http.StatusNotImplemented, "Not Implemented")
 }
 
 // PutWorkspaceSso updates SSO configuration for a workspace.
-func (handler *Handler) PutWorkspaceSso(ctx echo.Context) error {
+func (handler *Handler) PutWorkspaceSso(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -137,11 +138,11 @@ func (handler *Handler) PutWorkspaceSso(ctx echo.Context) error {
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return httperror.New(http.StatusNotImplemented, "Not Implemented")
 }
 
 // DeleteWorkspaceLinkedSsoProfiles deletes linked SSO profiles for a workspace.
-func (handler *Handler) DeleteWorkspaceLinkedSsoProfiles(ctx echo.Context) error {
+func (handler *Handler) DeleteWorkspaceLinkedSsoProfiles(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -149,7 +150,7 @@ func (handler *Handler) DeleteWorkspaceLinkedSsoProfiles(ctx echo.Context) error
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return httperror.New(http.StatusNotImplemented, "Not Implemented")
 }
 
 func optionalString(value string) *string {
@@ -160,12 +161,12 @@ func optionalString(value string) *string {
 }
 
 // GetSaml2LoginUrl returns the SAML2 login URL for a workspace.
-func (handler *Handler) GetSaml2LoginUrl(ctx echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+func (handler *Handler) GetSaml2LoginUrl(ctx *echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
+	return httperror.New(http.StatusNotImplemented, "Not Implemented")
 }
 
 // PostSaml2Callback handles SAML2 authentication callback.
-func (handler *Handler) PostSaml2Callback(ctx echo.Context, workspaceId int) error {
+func (handler *Handler) PostSaml2Callback(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return httperror.New(http.StatusNotImplemented, "Not Implemented")
 }

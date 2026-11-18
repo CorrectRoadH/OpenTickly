@@ -10,23 +10,24 @@ import (
 	"time"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 func writePublicTrackTrackingError(err error) error {
 	switch {
 	case errors.Is(err, trackingapplication.ErrRunningTimeEntryExists):
-		return echo.NewHTTPError(http.StatusConflict, "Conflict").SetInternal(err)
+		return httperror.New(http.StatusConflict, "Conflict").WithCause(err)
 	case trackingapplication.IsNotFound(err):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	case errors.Is(err, trackingapplication.ErrInvalidTimeRange),
 		errors.Is(err, trackingapplication.ErrInvalidWorkspace):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }
 
@@ -135,13 +136,6 @@ func intValueOrZero(value *int) int {
 	return *value
 }
 
-func interfaceValue(value *any) any {
-	if value == nil {
-		return nil
-	}
-	return *value
-}
-
 // jsonPatchValueAsInt64 accepts the numeric representations that encoding/json
 // produces for JSON-Patch values: float64 (default), int, and json.Number.
 func jsonPatchValueAsInt64(value any) (int64, error) {
@@ -191,7 +185,7 @@ func jsonPatchValueAsStringSlice(value any) ([]string, error) {
 	return result, nil
 }
 
-func parseOptionalPathID(ctx echo.Context, key string) (int64, bool) {
+func parseOptionalPathID(ctx *echo.Context, key string) (int64, bool) {
 	value := strings.TrimSpace(ctx.Param(key))
 	if value == "" {
 		return 0, false
@@ -203,7 +197,7 @@ func parseOptionalPathID(ctx echo.Context, key string) (int64, bool) {
 	return parsed, true
 }
 
-func queryInt64(ctx echo.Context, key string) (int64, bool) {
+func queryInt64(ctx *echo.Context, key string) (int64, bool) {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return 0, false
@@ -278,7 +272,7 @@ func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.G
 	}
 }
 
-func bindTrackRequestBody(ctx echo.Context, payload any) (map[string]json.RawMessage, error) {
+func bindTrackRequestBody(ctx *echo.Context, payload any) (map[string]json.RawMessage, error) {
 	bodyBytes, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
 		return nil, err

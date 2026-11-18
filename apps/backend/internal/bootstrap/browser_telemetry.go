@@ -9,7 +9,7 @@ import (
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 var publicDSNKey = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
@@ -36,7 +36,7 @@ func publicBrowserTelemetry(cfg platformconfig.BrowserSentryConfig, release stri
 	return webapi.BrowserSentryConfig{Dsn: cfg.DSN, Environment: cfg.Environment, Release: release}
 }
 
-func (server *webOpenAPIServer) GetBrowserTelemetryConfig(ctx echo.Context) error {
+func (server *webOpenAPIServer) GetBrowserTelemetryConfig(ctx *echo.Context) error {
 	ctx.Response().Header().Set("Cache-Control", "no-store")
 	return ctx.JSON(http.StatusOK, webapi.BrowserTelemetryConfig{Sentry: server.handlers.browserSentry})
 }

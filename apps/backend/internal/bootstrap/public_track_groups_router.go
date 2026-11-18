@@ -1,19 +1,19 @@
 package bootstrap
 
-import "github.com/labstack/echo/v4"
+import "github.com/labstack/echo/v5"
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceGroups(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceGroups(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.GetPublicTrackGroups(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceGroup(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceGroup(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.PostPublicTrackGroups(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceGroup(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	groupId int,
 ) error {
@@ -23,7 +23,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceGroup(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceGroup(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	groupId int,
 ) error {

@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // authPreconditionBody is the canonical shape for 422 responses from the
@@ -18,7 +19,7 @@ type authPreconditionBody struct {
 	Message string `json:"message"`
 }
 
-func (handlers *routeHandlers) requestPasswordReset(ctx echo.Context) error {
+func (handlers *routeHandlers) requestPasswordReset(ctx *echo.Context) error {
 	if err := handlers.authEmailLimiter.allow(ctx); err != nil {
 		return err
 	}
@@ -34,7 +35,7 @@ func (handlers *routeHandlers) requestPasswordReset(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func (handlers *routeHandlers) resetPassword(ctx echo.Context) error {
+func (handlers *routeHandlers) resetPassword(ctx *echo.Context) error {
 	var request webapi.ResetPasswordRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -46,15 +47,15 @@ func (handlers *routeHandlers) resetPassword(ctx echo.Context) error {
 		case errors.Is(err, identityapplication.ErrPasswordResetTokenInvalid),
 			errors.Is(err, identityapplication.ErrPasswordResetTokenExpired),
 			errors.Is(err, identityapplication.ErrPasswordResetTokenConsumed):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
+			return httperror.New(http.StatusBadRequest, err.Error()).WithCause(err)
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 	return ctx.NoContent(http.StatusOK)
 }
 
-func (handlers *routeHandlers) resendVerificationEmail(ctx echo.Context) error {
+func (handlers *routeHandlers) resendVerificationEmail(ctx *echo.Context) error {
 	if err := handlers.authEmailLimiter.allow(ctx); err != nil {
 		return err
 	}
@@ -78,16 +79,16 @@ func writeAuthPreconditionError(err error) error {
 	switch {
 	case errors.Is(err, ErrVerificationSiteURLMissing),
 		errors.Is(err, ErrPasswordResetSiteURLMissing):
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, authPreconditionBody{
+		return httperror.New(http.StatusUnprocessableEntity, authPreconditionBody{
 			Error:   "site_url_not_configured",
 			Message: "Set the site URL under instance admin settings before using this feature — the email needs a link recipients can open.",
-		}).SetInternal(err)
+		}).WithCause(err)
 	case errors.Is(err, ErrPasswordResetSMTPNotConfigured):
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, authPreconditionBody{
+		return httperror.New(http.StatusUnprocessableEntity, authPreconditionBody{
 			Error:   "smtp_not_configured",
 			Message: "Configure SMTP under instance admin settings before using this feature.",
-		}).SetInternal(err)
+		}).WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 }

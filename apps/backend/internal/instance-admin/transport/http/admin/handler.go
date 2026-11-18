@@ -7,10 +7,11 @@ import (
 	"time"
 
 	adminapi "opentoggl/backend/apps/backend/internal/http/generated/admin"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	"opentoggl/backend/apps/backend/internal/instance-admin/application"
 	"opentoggl/backend/apps/backend/internal/instance-admin/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // Handler implements adminapi.ServerInterface for the instance-admin module.
@@ -33,56 +34,56 @@ func NewHandler(service *application.Service, platform HealthChecker, updateFeed
 	return &Handler{service: service, platform: platform, updateFeed: updateFeed}
 }
 
-func (h *Handler) GetBootstrapState(ctx echo.Context) error {
+func (h *Handler) GetBootstrapState(ctx *echo.Context) error {
 	state, err := h.service.GetBootstrapState(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, bootstrapStateResponse(state))
 }
 
-func (h *Handler) BootstrapInstanceAdmin(ctx echo.Context) error {
+func (h *Handler) BootstrapInstanceAdmin(ctx *echo.Context) error {
 	var req adminapi.BootstrapRequest
 	if err := ctx.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	state, err := h.service.Bootstrap(ctx.Request().Context(), application.BootstrapCommand{
 		Email:    string(req.Email),
 		Password: req.Password,
 	})
 	if errors.Is(err, domain.ErrBootstrapAlreadyCompleted) {
-		return echo.NewHTTPError(http.StatusConflict, "Bootstrap already completed").SetInternal(err)
+		return httperror.New(http.StatusConflict, "Bootstrap already completed").WithCause(err)
 	}
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusCreated, bootstrapStateResponse(state))
 }
 
-func (h *Handler) GetRegistrationPolicy(ctx echo.Context) error {
+func (h *Handler) GetRegistrationPolicy(ctx *echo.Context) error {
 	policy, err := h.service.GetRegistrationPolicy(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, registrationPolicyResponse(policy))
 }
 
-func (h *Handler) UpdateRegistrationPolicy(ctx echo.Context) error {
+func (h *Handler) UpdateRegistrationPolicy(ctx *echo.Context) error {
 	var req adminapi.UpdateRegistrationPolicyRequest
 	if err := ctx.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	policy, err := h.service.SetRegistrationPolicy(ctx.Request().Context(), string(req.Mode))
 	if errors.Is(err, domain.ErrInvalidRegistrationMode) {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid registration mode").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Invalid registration mode").WithCause(err)
 	}
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, registrationPolicyResponse(policy))
 }
 
-func (h *Handler) ListInstanceUsers(ctx echo.Context, params adminapi.ListInstanceUsersParams) error {
+func (h *Handler) ListInstanceUsers(ctx *echo.Context, params adminapi.ListInstanceUsersParams) error {
 	filter := application.InstanceUserFilter{
 		Status:  "all",
 		Page:    1,
@@ -102,37 +103,37 @@ func (h *Handler) ListInstanceUsers(ctx echo.Context, params adminapi.ListInstan
 	}
 	page, err := h.service.ListInstanceUsers(ctx.Request().Context(), filter)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, instanceUserListResponse(page))
 }
 
-func (h *Handler) DisableInstanceUser(ctx echo.Context, userId int64) error {
+func (h *Handler) DisableInstanceUser(ctx *echo.Context, userId int64) error {
 	err := h.service.DisableInstanceUser(ctx.Request().Context(), userId)
 	if errors.Is(err, domain.ErrInstanceUserNotFound) {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "User not found").WithCause(err)
 	}
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, map[string]string{"status": "disabled"})
 }
 
-func (h *Handler) RestoreInstanceUser(ctx echo.Context, userId int64) error {
+func (h *Handler) RestoreInstanceUser(ctx *echo.Context, userId int64) error {
 	err := h.service.RestoreInstanceUser(ctx.Request().Context(), userId)
 	if errors.Is(err, domain.ErrInstanceUserNotFound) {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "User not found").WithCause(err)
 	}
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, map[string]string{"status": "active"})
 }
 
-func (h *Handler) GetInstanceHealth(ctx echo.Context) error {
+func (h *Handler) GetInstanceHealth(ctx *echo.Context) error {
 	userCount, err := h.service.CountUsers(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	dbHealth := adminapi.DependencyHealth{Status: adminapi.Up}
@@ -166,18 +167,18 @@ func (h *Handler) GetInstanceHealth(ctx echo.Context) error {
 	})
 }
 
-func (h *Handler) GetInstanceConfig(ctx echo.Context) error {
+func (h *Handler) GetInstanceConfig(ctx *echo.Context) error {
 	cfg, err := h.service.GetInstanceConfig(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, instanceConfigResponse(cfg))
 }
 
-func (h *Handler) UpdateInstanceConfig(ctx echo.Context) error {
+func (h *Handler) UpdateInstanceConfig(ctx *echo.Context) error {
 	var req adminapi.UpdateInstanceConfigRequest
 	if err := ctx.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	update := application.InstanceConfigUpdate{
 		SiteURL:                   req.SiteUrl,
@@ -195,15 +196,15 @@ func (h *Handler) UpdateInstanceConfig(ctx echo.Context) error {
 	}
 	cfg, err := h.service.UpdateInstanceConfig(ctx.Request().Context(), update)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, instanceConfigResponse(cfg))
 }
 
-func (h *Handler) ListOrganizations(ctx echo.Context) error {
+func (h *Handler) ListOrganizations(ctx *echo.Context) error {
 	orgs, err := h.service.ListOrganizations(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	items := make([]adminapi.AdminOrganization, 0, len(orgs))
 	for _, o := range orgs {
@@ -220,12 +221,12 @@ func (h *Handler) ListOrganizations(ctx echo.Context) error {
 	})
 }
 
-func (h *Handler) SendTestEmail(ctx echo.Context) error {
+func (h *Handler) SendTestEmail(ctx *echo.Context) error {
 	var req struct {
 		To string `json:"to"`
 	}
 	if err := ctx.Bind(&req); err != nil || req.To == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Email address required").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Email address required").WithCause(err)
 	}
 	// Safety-net deadline on top of the SMTP client's own dial/IO timeouts,
 	// so a stuck handler can never outlive the request.
@@ -237,7 +238,7 @@ func (h *Handler) SendTestEmail(ctx echo.Context) error {
 	// outcome in the payload.
 	code, err := h.service.SendTestEmail(reqCtx, req.To)
 	if err != nil {
-		ctx.Logger().Errorf("send test email to %s failed: %v", req.To, err)
+		ctx.Logger().Error("send test email failed", "recipient", req.To, "error", err)
 		return ctx.JSON(http.StatusOK, adminapi.TestEmailResult{
 			Success: false,
 			Code:    adminapi.TestEmailResultCode(code),
@@ -251,8 +252,8 @@ func (h *Handler) SendTestEmail(ctx echo.Context) error {
 	})
 }
 
-func (h *Handler) GetInstanceFeatureGate(ctx echo.Context, capabilityKey string) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented")
+func (h *Handler) GetInstanceFeatureGate(ctx *echo.Context, capabilityKey string) error {
+	return httperror.New(http.StatusNotImplemented, "Not implemented")
 }
 
 func instanceConfigResponse(cfg application.InstanceConfigView) adminapi.InstanceConfig {

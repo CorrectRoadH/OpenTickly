@@ -6,11 +6,12 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handler *Handler) GetPublicTrackProjectStatistics(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackProjectStatistics(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -25,7 +26,7 @@ func (handler *Handler) GetPublicTrackProjectStatistics(ctx echo.Context) error 
 	view, err := handler.tracking.GetProjectStatistics(ctx.Request().Context(), workspaceID, projectID)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackTrackingError(err)
 	}

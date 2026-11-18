@@ -3,4 +3,5 @@ generate:
   models: true
   embedded-spec: true
 output-options:
+  skip-enum-validate: true
   skip-prune: true

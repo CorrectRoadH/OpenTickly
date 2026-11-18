@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackTimeline(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimeline(ctx *echo.Context) error {
 	_, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -36,14 +37,14 @@ func (handler *Handler) GetPublicTrackTimeline(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) PostPublicTrackTimeline(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackTimeline(ctx *echo.Context) error {
 	_, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	var payload []publictrackapi.ModelsTimelineEvent
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	events := make([]trackingapplication.TimelineEventView, 0, len(payload))
 	for _, event := range payload {
@@ -66,7 +67,7 @@ func (handler *Handler) PostPublicTrackTimeline(ctx echo.Context) error {
 	})
 }
 
-func (handler *Handler) DeletePublicTrackTimeline(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackTimeline(ctx *echo.Context) error {
 	_, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err

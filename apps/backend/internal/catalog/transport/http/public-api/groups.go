@@ -6,12 +6,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackGroups(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackGroups(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -30,7 +31,7 @@ func (handler *Handler) GetPublicTrackGroups(ctx echo.Context) error {
 
 	views, err := handler.catalog.ListGroups(ctx.Request().Context(), organizationID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	groups := make([]publictrackapi.GithubComTogglTogglApiInternalModelsGroup, 0, len(views))
@@ -40,7 +41,7 @@ func (handler *Handler) GetPublicTrackGroups(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, groups)
 }
 
-func (handler *Handler) PostPublicTrackGroups(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackGroups(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -74,7 +75,7 @@ func (handler *Handler) PostPublicTrackGroups(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, groupViewToAPI(view))
 }
 
-func (handler *Handler) PutPublicTrackGroup(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackGroup(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -103,14 +104,14 @@ func (handler *Handler) PutPublicTrackGroup(ctx echo.Context) error {
 	view, err := handler.catalog.UpdateGroup(ctx.Request().Context(), organizationID, groupID, lo.FromPtr(request.Name))
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrGroupNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
 	return ctx.JSON(http.StatusOK, groupViewToAPI(view))
 }
 
-func (handler *Handler) DeletePublicTrackGroup(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackGroup(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -133,7 +134,7 @@ func (handler *Handler) DeletePublicTrackGroup(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteGroup(ctx.Request().Context(), organizationID, groupID); err != nil {
 		if errors.Is(err, catalogapplication.ErrGroupNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

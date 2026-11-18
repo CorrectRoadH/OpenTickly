@@ -3,51 +3,51 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (server *publicTrackOpenAPIServer) GetFavorites(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetFavorites(ctx *echo.Context) error {
 	return server.tracking.GetPublicTrackFavorites(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) CreateFavorite(ctx echo.Context, params publictrackapi.CreateFavoriteParams) error {
+func (server *publicTrackOpenAPIServer) CreateFavorite(ctx *echo.Context, params publictrackapi.CreateFavoriteParams) error {
 	_ = params
 	return server.tracking.PostPublicTrackFavorite(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) UpdateFavorite(ctx echo.Context, params publictrackapi.UpdateFavoriteParams) error {
+func (server *publicTrackOpenAPIServer) UpdateFavorite(ctx *echo.Context, params publictrackapi.UpdateFavoriteParams) error {
 	_ = params
 	return server.tracking.PutPublicTrackFavorite(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostFavoritesSuggestions(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) PostFavoritesSuggestions(ctx *echo.Context) error {
 	return server.tracking.PostPublicTrackFavoriteSuggestions(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) DeleteFavorite(ctx echo.Context, favoriteId int) error {
+func (server *publicTrackOpenAPIServer) DeleteFavorite(ctx *echo.Context, favoriteId int) error {
 	_ = favoriteId
 	return server.tracking.DeletePublicTrackFavorite(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetTimeEntries(ctx echo.Context, params publictrackapi.GetTimeEntriesParams) error {
+func (server *publicTrackOpenAPIServer) GetTimeEntries(ctx *echo.Context, params publictrackapi.GetTimeEntriesParams) error {
 	_ = params
 	return server.tracking.GetPublicTrackTimeEntries(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetTimeEntriesChecklist(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetTimeEntriesChecklist(ctx *echo.Context) error {
 	return server.tracking.GetPublicTrackTimeEntriesChecklist(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWebTimer(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetWebTimer(ctx *echo.Context) error {
 	return server.tracking.GetPublicTrackWebTimer(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetCurrentTimeEntry(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetCurrentTimeEntry(ctx *echo.Context) error {
 	return server.tracking.GetPublicTrackCurrentTimeEntry(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetTimeEntryById(
-	ctx echo.Context,
+	ctx *echo.Context,
 	timeEntryId int,
 	params publictrackapi.GetTimeEntryByIdParams,
 ) error {
@@ -56,51 +56,51 @@ func (server *publicTrackOpenAPIServer) GetTimeEntryById(
 	return server.tracking.GetPublicTrackTimeEntryByID(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetMeTrackReminders(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetMeTrackReminders(ctx *echo.Context) error {
 	return server.tracking.GetPublicTrackMeTrackReminders(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetSyncServerMeGoals(
-	ctx echo.Context,
+	ctx *echo.Context,
 	params publictrackapi.GetSyncServerMeGoalsParams,
 ) error {
 	_ = params
 	return server.tracking.GetPublicTrackSyncGoals(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetExpense(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetExpense(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.GetPublicTrackExpenses(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) DeleteTimeline(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) DeleteTimeline(ctx *echo.Context) error {
 	return server.tracking.DeletePublicTrackTimeline(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetTimeline(
-	ctx echo.Context,
+	ctx *echo.Context,
 	params publictrackapi.GetTimelineParams,
 ) error {
 	_ = params
 	return server.tracking.GetPublicTrackTimeline(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostTimeline(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) PostTimeline(ctx *echo.Context) error {
 	return server.tracking.PostPublicTrackTimeline(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostExpense(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostExpense(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.PostPublicTrackExpense(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceFavorites(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceFavorites(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.GetPublicTrackFavorites(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) CreateWorkspaceFavorite(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.CreateWorkspaceFavoriteParams,
 ) error {
@@ -110,7 +110,7 @@ func (server *publicTrackOpenAPIServer) CreateWorkspaceFavorite(
 }
 
 func (server *publicTrackOpenAPIServer) UpdateWorkspaceFavorite(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.UpdateWorkspaceFavoriteParams,
 ) error {
@@ -119,13 +119,13 @@ func (server *publicTrackOpenAPIServer) UpdateWorkspaceFavorite(
 	return server.tracking.PutPublicTrackFavorite(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceFavoritesSuggestions(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceFavoritesSuggestions(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.PostPublicTrackFavoriteSuggestions(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) WorkspaceDeleteFavorite(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	favoriteId int,
 ) error {
@@ -135,7 +135,7 @@ func (server *publicTrackOpenAPIServer) WorkspaceDeleteFavorite(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdGoals(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspacesWorkspaceIdGoalsParams,
 ) error {
@@ -144,13 +144,13 @@ func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdGoals(
 	return server.tracking.GetPublicTrackGoals(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspacesWorkspaceIdGoals(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspacesWorkspaceIdGoals(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.PostPublicTrackGoal(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspacesWorkspaceIdGoalsGoalId(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	goalId int,
 ) error {
@@ -160,7 +160,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspacesWorkspaceIdGoalsGoalId(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdGoalsGoalId(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	goalId int,
 ) error {
@@ -170,7 +170,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdGoalsGoalId(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspacesWorkspaceIdGoalsGoalId(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	goalId int,
 ) error {
@@ -180,7 +180,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspacesWorkspaceIdGoalsGoalId(
 }
 
 func (server *publicTrackOpenAPIServer) PostWorkspaceTimeEntries(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.PostWorkspaceTimeEntriesParams,
 ) error {
@@ -190,7 +190,7 @@ func (server *publicTrackOpenAPIServer) PostWorkspaceTimeEntries(
 }
 
 func (server *publicTrackOpenAPIServer) PatchTimeEntries(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	timeEntryIds []int,
 	params publictrackapi.PatchTimeEntriesParams,
@@ -202,7 +202,7 @@ func (server *publicTrackOpenAPIServer) PatchTimeEntries(
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceTimeEntries(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	timeEntryId int,
 ) error {
@@ -212,7 +212,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceTimeEntries(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceTimeEntryHandler(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	timeEntryId int,
 	params publictrackapi.PutWorkspaceTimeEntryHandlerParams,
@@ -224,7 +224,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceTimeEntryHandler(
 }
 
 func (server *publicTrackOpenAPIServer) PatchWorkspaceStopTimeEntryHandler(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	timeEntryId int,
 ) error {
@@ -233,18 +233,18 @@ func (server *publicTrackOpenAPIServer) PatchWorkspaceStopTimeEntryHandler(
 	return server.tracking.StopPublicTrackTimeEntry(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceTrackReminders(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceTrackReminders(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.GetPublicTrackTrackReminders(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceTrackReminders(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceTrackReminders(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tracking.PostPublicTrackTrackReminder(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceTrackReminder(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	reminderId int,
 ) error {
@@ -254,7 +254,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceTrackReminder(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceTrackReminder(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	reminderId int,
 ) error {

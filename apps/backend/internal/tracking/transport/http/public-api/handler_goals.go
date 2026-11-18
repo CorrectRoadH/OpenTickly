@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackGoals(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackGoals(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func (handler *Handler) GetPublicTrackGoals(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackGoal(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackGoal(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -50,22 +51,22 @@ func (handler *Handler) GetPublicTrackGoal(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, goalViewToAPI(goal))
 }
 
-func (handler *Handler) PostPublicTrackGoal(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackGoal(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	var payload publictrackapi.HandlergoalsCreatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	startDate, err := parseTrackDate(payload.StartDate)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	endDate, err := parseOptionalTrackDate(payload.EndDate)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	goal, err := handler.tracking.CreateGoal(ctx.Request().Context(), trackingapplication.CreateGoalCommand{
 		WorkspaceID:   workspaceID,
@@ -89,7 +90,7 @@ func (handler *Handler) PostPublicTrackGoal(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, goalViewToAPI(goal))
 }
 
-func (handler *Handler) PutPublicTrackGoal(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackGoal(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -100,11 +101,11 @@ func (handler *Handler) PutPublicTrackGoal(ctx echo.Context) error {
 	}
 	var payload publictrackapi.HandlergoalsUpdatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	endDate, err := parseOptionalTrackDate(payload.EndDate)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	goal, err := handler.tracking.UpdateGoal(ctx.Request().Context(), trackingapplication.UpdateGoalCommand{
 		WorkspaceID:   workspaceID,
@@ -123,7 +124,7 @@ func (handler *Handler) PutPublicTrackGoal(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, goalViewToAPI(goal))
 }
 
-func (handler *Handler) DeletePublicTrackGoal(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackGoal(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -138,7 +139,7 @@ func (handler *Handler) DeletePublicTrackGoal(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *Handler) GetPublicTrackSyncGoals(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackSyncGoals(ctx *echo.Context) error {
 	return handler.GetPublicTrackGoals(ctx)
 }
 

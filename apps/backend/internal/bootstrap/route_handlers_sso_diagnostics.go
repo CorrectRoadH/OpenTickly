@@ -10,7 +10,7 @@ import (
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ssoCheck is one diagnostic result. Code identifies the check (the UI localizes
@@ -28,7 +28,7 @@ type ssoTestResponse struct {
 
 var emailDomainPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$`)
 
-func (handlers *routeHandlers) testWorkspaceSsoConfig(ctx echo.Context) error {
+func (handlers *routeHandlers) testWorkspaceSsoConfig(ctx *echo.Context) error {
 	workspaceID, err := handlers.authorizeWorkspaceAdmin(ctx)
 	if err != nil {
 		return err

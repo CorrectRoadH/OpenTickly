@@ -10,7 +10,7 @@ import (
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 
 	"github.com/crewjam/saml"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // samlTestResultPayload is reported back to the settings page (via postMessage)
@@ -27,7 +27,7 @@ type samlTestResultPayload struct {
 // saml2TestLogin starts a real, admin-initiated SAML login that the ACS will
 // report back instead of turning into a session. It works before SSO is enabled
 // (only a usable IdP config is required) so admins can verify the round-trip.
-func (handlers *routeHandlers) saml2TestLogin(ctx echo.Context) error {
+func (handlers *routeHandlers) saml2TestLogin(ctx *echo.Context) error {
 	workspaceID, err := handlers.authorizeWorkspaceAdmin(ctx)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (handlers *routeHandlers) saml2TestLogin(ctx echo.Context) error {
 
 // renderSAMLTestResult turns a validated (or rejected) assertion into the report
 // shown to the admin, including the domain-match outcome the real login enforces.
-func (handlers *routeHandlers) renderSAMLTestResult(ctx echo.Context, config samlWorkspaceConfig, assertion *saml.Assertion, parseErr error) error {
+func (handlers *routeHandlers) renderSAMLTestResult(ctx *echo.Context, config samlWorkspaceConfig, assertion *saml.Assertion, parseErr error) error {
 	if parseErr != nil {
 		return handlers.writeSAMLTestPage(ctx, samlTestResultPayload{
 			Error: "The assertion could not be validated.",
@@ -86,7 +86,7 @@ func (handlers *routeHandlers) renderSAMLTestResult(ctx echo.Context, config sam
 // settings page) and closes. The JSON is HTML-escaped by encoding/json, so it is
 // safe to embed inside the script. Results are delivered only to the configured
 // application origin, never to an arbitrary opener.
-func (handlers *routeHandlers) writeSAMLTestPage(ctx echo.Context, payload samlTestResultPayload) error {
+func (handlers *routeHandlers) writeSAMLTestPage(ctx *echo.Context, payload samlTestResultPayload) error {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		data = []byte(`{"ok":false,"error":"internal error"}`)

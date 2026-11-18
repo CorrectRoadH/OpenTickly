@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -16,12 +17,12 @@ import (
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3SharedReportToken(
-	ctx echo.Context,
+	ctx *echo.Context,
 	reportToken string,
 ) error {
 	report, err := handler.reports.GetSavedReportByToken(ctx.Request().Context(), reportToken)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Report not found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Report not found").WithCause(err)
 	}
 	_ = report
 
@@ -35,24 +36,24 @@ func (handler *Handler) PostReportsApiV3SharedReportToken(
 }
 
 func (handler *Handler) PostReportsApiV3SharedReportTokenCsv(
-	ctx echo.Context,
+	ctx *echo.Context,
 	reportToken string,
 ) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Shared report CSV export is not yet supported")
+	return httperror.New(http.StatusNotImplemented, "Shared report CSV export is not yet supported")
 }
 
 func (handler *Handler) PostReportsApiV3SharedReportTokenPdf(
-	ctx echo.Context,
+	ctx *echo.Context,
 	reportToken string,
 ) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "PDF export is not yet supported")
+	return httperror.New(http.StatusNotImplemented, "PDF export is not yet supported")
 }
 
 func (handler *Handler) PostReportsApiV3SharedReportTokenXlsx(
-	ctx echo.Context,
+	ctx *echo.Context,
 	reportToken string,
 ) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "XLSX export is not yet supported")
+	return httperror.New(http.StatusNotImplemented, "XLSX export is not yet supported")
 }
 
 // ---------------------------------------------------------------------------
@@ -60,12 +61,12 @@ func (handler *Handler) PostReportsApiV3SharedReportTokenXlsx(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesExtension(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 	extension string,
 ) error {
 	if extension != "csv" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Only csv export is currently supported")
+		return httperror.New(http.StatusBadRequest, "Only csv export is currently supported")
 	}
 
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -101,7 +102,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesEx
 
 	report, err := handler.reports.BuildSummaryReport(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	ctx.Response().Header().Set("Content-Type", "text/csv")
@@ -122,10 +123,10 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesEx
 }
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesPdf(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "PDF export is not yet supported")
+	return httperror.New(http.StatusNotImplemented, "PDF export is not yet supported")
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +134,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesPd
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntriesCsv(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -161,7 +162,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntriesCsv
 
 	report, err := handler.reports.BuildWeeklyReport(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	ctx.Response().Header().Set("Content-Type", "text/csv")
@@ -187,8 +188,8 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntriesCsv
 }
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntriesPdf(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "PDF export is not yet supported")
+	return httperror.New(http.StatusNotImplemented, "PDF export is not yet supported")
 }

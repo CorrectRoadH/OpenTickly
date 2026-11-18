@@ -3,11 +3,11 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (server *publicTrackOpenAPIServer) GetAuditLogs(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	from string,
 	to string,
@@ -20,40 +20,40 @@ func (server *publicTrackOpenAPIServer) GetAuditLogs(
 	return server.governance.GetPublicTrackAuditLogs(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceTimeEntryConstraints(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceTimeEntryConstraints(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.GetPublicTrackTimeEntryConstraints(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceTimeEntryConstraints(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceTimeEntryConstraints(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.PostPublicTrackTimeEntryConstraints(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetAlerts(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetAlerts(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.GetPublicTrackAlerts(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostAlerts(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostAlerts(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.PostPublicTrackAlerts(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) DeleteAlerts(ctx echo.Context, workspaceId int, alertId int) error {
+func (server *publicTrackOpenAPIServer) DeleteAlerts(ctx *echo.Context, workspaceId int, alertId int) error {
 	_ = workspaceId
 	_ = alertId
 	return server.governance.DeletePublicTrackAlerts(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PutAlerts(ctx echo.Context, workspaceId int, alertId int) error {
+func (server *publicTrackOpenAPIServer) PutAlerts(ctx *echo.Context, workspaceId int, alertId int) error {
 	_ = workspaceId
 	_ = alertId
 	return server.governance.PutPublicTrackAlerts(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetTimesheetSetups(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetTimesheetSetupsParams,
 ) error {
@@ -62,25 +62,25 @@ func (server *publicTrackOpenAPIServer) GetTimesheetSetups(
 	return server.governance.GetPublicTrackTimesheetSetups(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostTimesheetSetups(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostTimesheetSetups(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.PostPublicTrackTimesheetSetups(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) DeleteTimesheetSetups(ctx echo.Context, workspaceId int, setupId int) error {
+func (server *publicTrackOpenAPIServer) DeleteTimesheetSetups(ctx *echo.Context, workspaceId int, setupId int) error {
 	_ = workspaceId
 	_ = setupId
 	return server.governance.DeletePublicTrackTimesheetSetups(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PutTimesheetSetups(ctx echo.Context, workspaceId int, setupId int) error {
+func (server *publicTrackOpenAPIServer) PutTimesheetSetups(ctx *echo.Context, workspaceId int, setupId int) error {
 	_ = workspaceId
 	_ = setupId
 	return server.governance.PutPublicTrackTimesheetSetups(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetsHandler(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTimesheetsHandlerParams,
 ) error {
@@ -89,18 +89,18 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetsHandler(
 	return server.governance.GetPublicTrackTimesheets(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PutWorkspaceTimesheetsBatchHandler(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PutWorkspaceTimesheetsBatchHandler(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.PutPublicTrackTimesheetsBatch(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetHoursHandler(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetHoursHandler(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.GetPublicTrackTimesheetHours(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceTimesheetsHandler(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	setupId int,
 	startDate string,
@@ -112,7 +112,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceTimesheetsHandler(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetHistoryHandler(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	setupId int,
 	startDate string,
@@ -124,7 +124,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetHistoryHandler(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetTimeEntriesHandler(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	setupId int,
 	startDate string,
@@ -135,6 +135,6 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTimesheetTimeEntriesHandler(
 	return server.governance.GetPublicTrackTimesheetTimeEntries(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetMeTimesheets(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetMeTimesheets(ctx *echo.Context) error {
 	return server.governance.GetPublicTrackMeTimesheets(ctx)
 }

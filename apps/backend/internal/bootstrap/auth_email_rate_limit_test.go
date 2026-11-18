@@ -5,10 +5,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/labstack/echo/v4"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
+
+	"github.com/labstack/echo/v5"
 )
 
-func contextForIP(t *testing.T, ip string) echo.Context {
+func contextForIP(t *testing.T, ip string) *echo.Context {
 	t.Helper()
 	request := httptest.NewRequest(http.MethodPost, "/web/v1/auth/verify-email/resend", nil)
 	request.RemoteAddr = ip + ":54321"
@@ -29,7 +31,7 @@ func TestAuthEmailRateLimiterAllowsBurstThenBlocks(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected the request past the burst to be rejected")
 	}
-	httpErr, ok := err.(*echo.HTTPError)
+	httpErr, ok := err.(*httperror.Error)
 	if !ok {
 		t.Fatalf("expected an echo.HTTPError, got %T", err)
 	}

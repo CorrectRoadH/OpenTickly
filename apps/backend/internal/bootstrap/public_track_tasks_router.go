@@ -3,11 +3,11 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (server *publicTrackOpenAPIServer) GetTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	params publictrackapi.GetTasksParams,
 ) error {
 	_ = params
@@ -15,7 +15,7 @@ func (server *publicTrackOpenAPIServer) GetTasks(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceProjectTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	params publictrackapi.GetWorkspaceProjectTasksParams,
@@ -27,7 +27,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceProjectTasks(
 }
 
 func (server *publicTrackOpenAPIServer) PostWorkspaceProjectTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
@@ -37,7 +37,7 @@ func (server *publicTrackOpenAPIServer) PostWorkspaceProjectTasks(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceProjectTask(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	taskId int,
@@ -49,7 +49,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceProjectTask(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceProjectTask(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	taskId string,
@@ -61,7 +61,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceProjectTask(
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceProjectTask(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	taskId int,
@@ -73,7 +73,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceProjectTask(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTasksParams,
 ) error {
@@ -83,7 +83,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTasks(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTasksBasic(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTasksBasicParams,
 ) error {
@@ -93,7 +93,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTasksBasic(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTasksData(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTasksDataParams,
 ) error {
@@ -103,7 +103,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTasksData(
 }
 
 func (server *publicTrackOpenAPIServer) PatchWorkspaceProjectTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	taskIds string,

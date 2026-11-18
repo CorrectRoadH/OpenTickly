@@ -14,12 +14,13 @@ import (
 	"opentoggl/backend/apps/backend/internal/files/imageupload"
 	filespostgres "opentoggl/backend/apps/backend/internal/files/infra/postgres"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
 	referenceapplication "opentoggl/backend/apps/backend/internal/reference/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/samber/lo"
 )
@@ -49,7 +50,7 @@ func NewPublicTrackHandler(
 	}
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackMe(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackMe(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -57,7 +58,7 @@ func (handler *PublicTrackHandler) GetPublicTrackMe(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, currentUserBody(user))
 }
 
-func (handler *PublicTrackHandler) PutPublicTrackMe(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PutPublicTrackMe(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -85,7 +86,7 @@ func (handler *PublicTrackHandler) PutPublicTrackMe(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, currentUserBody(updated))
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackPreferences(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackPreferences(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -98,7 +99,7 @@ func (handler *PublicTrackHandler) GetPublicTrackPreferences(ctx echo.Context) e
 	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackPreferences(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackPreferences(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -127,7 +128,7 @@ func (handler *PublicTrackHandler) PostPublicTrackPreferences(ctx echo.Context) 
 	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackPreferencesClient(ctx echo.Context, client string) error {
+func (handler *PublicTrackHandler) GetPublicTrackPreferencesClient(ctx *echo.Context, client string) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (handler *PublicTrackHandler) GetPublicTrackPreferencesClient(ctx echo.Cont
 	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackPreferencesClient(ctx echo.Context, client string) error {
+func (handler *PublicTrackHandler) PostPublicTrackPreferencesClient(ctx *echo.Context, client string) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -168,7 +169,7 @@ func (handler *PublicTrackHandler) PostPublicTrackPreferencesClient(ctx echo.Con
 	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackResetToken(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackResetToken(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -181,7 +182,7 @@ func (handler *PublicTrackHandler) PostPublicTrackResetToken(ctx echo.Context) e
 	return ctx.JSON(http.StatusOK, token)
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackDesktopLogin(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackDesktopLogin(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -197,7 +198,7 @@ func (handler *PublicTrackHandler) GetPublicTrackDesktopLogin(ctx echo.Context) 
 	return ctx.Redirect(http.StatusFound, location)
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackDesktopLoginTokens(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackDesktopLoginTokens(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -214,7 +215,7 @@ func (handler *PublicTrackHandler) PostPublicTrackDesktopLoginTokens(ctx echo.Co
 	})
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -242,7 +243,7 @@ func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx echo.Context) er
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackMeFlags(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackMeFlags(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -261,7 +262,7 @@ func (handler *PublicTrackHandler) GetPublicTrackMeFlags(ctx echo.Context) error
 	return ctx.JSON(http.StatusOK, flags)
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackMeFlags(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackMeFlags(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -306,14 +307,14 @@ func (handler *PublicTrackHandler) PostPublicTrackMeFlags(ctx echo.Context) erro
 	return ctx.JSON(http.StatusOK, flags)
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackMeLogged(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackMeLogged(ctx *echo.Context) error {
 	if _, err := handler.resolvePublicTrackUser(ctx); err != nil {
 		return err
 	}
 	return ctx.NoContent(http.StatusOK)
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackMeAcceptTOS(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackMeAcceptTOS(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -325,7 +326,7 @@ func (handler *PublicTrackHandler) PostPublicTrackMeAcceptTOS(ctx echo.Context) 
 	return ctx.JSON(http.StatusOK, "Successful operation.")
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackCloseAccount(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackCloseAccount(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -338,7 +339,7 @@ func (handler *PublicTrackHandler) PostPublicTrackCloseAccount(ctx echo.Context)
 }
 
 func (handler *PublicTrackHandler) PostPublicTrackDisableProductEmails(
-	ctx echo.Context,
+	ctx *echo.Context,
 	disableCode string,
 ) error {
 	if err := handler.identity.service.DisableProductEmailsByCode(ctx.Request().Context(), disableCode); err != nil {
@@ -349,7 +350,7 @@ func (handler *PublicTrackHandler) PostPublicTrackDisableProductEmails(
 }
 
 func (handler *PublicTrackHandler) PostPublicTrackDisableWeeklyReport(
-	ctx echo.Context,
+	ctx *echo.Context,
 	weeklyReportCode string,
 ) error {
 	if err := handler.identity.service.DisableWeeklyReportByCode(ctx.Request().Context(), weeklyReportCode); err != nil {
@@ -359,7 +360,7 @@ func (handler *PublicTrackHandler) PostPublicTrackDisableWeeklyReport(
 	return ctx.JSON(http.StatusOK, "Successful operation.")
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackMeID(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackMeID(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -367,7 +368,7 @@ func (handler *PublicTrackHandler) GetPublicTrackMeID(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, user.ID)
 }
 
-func (handler *PublicTrackHandler) GetPublicTrackMeLocation(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackMeLocation(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -383,14 +384,14 @@ func (handler *PublicTrackHandler) GetPublicTrackMeLocation(ctx echo.Context) er
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx echo.Context) (application.UserSnapshot, error) {
+func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx *echo.Context) (application.UserSnapshot, error) {
 	credentials, err := credentialsFromBasicAuth(ctx)
 	switch {
 	case err == nil:
 		user, resolveErr := handler.identity.service.ResolveBasicUser(ctx.Request().Context(), credentials)
 		if resolveErr != nil {
 			response := mapError(resolveErr)
-			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body).SetInternal(err)
+			return application.UserSnapshot{}, httperror.New(response.StatusCode, response.Body).WithCause(err)
 		}
 		return user, nil
 	case sessionIDFromTrackContext(ctx) == "":
@@ -399,16 +400,16 @@ func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx echo.Context) (app
 		user, resolveErr := handler.identity.service.ResolveCurrentUser(ctx.Request().Context(), sessionIDFromTrackContext(ctx))
 		if resolveErr != nil {
 			response := mapError(resolveErr)
-			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body).SetInternal(err)
+			return application.UserSnapshot{}, httperror.New(response.StatusCode, response.Body).WithCause(err)
 		}
 		return user, nil
 	}
 }
 
-func credentialsFromBasicAuth(ctx echo.Context) (identitydomain.BasicCredentials, error) {
+func credentialsFromBasicAuth(ctx *echo.Context) (identitydomain.BasicCredentials, error) {
 	username, password, ok := ctx.Request().BasicAuth()
 	if !ok {
-		return identitydomain.BasicCredentials{}, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+		return identitydomain.BasicCredentials{}, httperror.New(http.StatusForbidden, "User does not have access to this resource.")
 	}
 	return identitydomain.BasicCredentials{
 		Username: username,
@@ -416,7 +417,7 @@ func credentialsFromBasicAuth(ctx echo.Context) (identitydomain.BasicCredentials
 	}, nil
 }
 
-func bindTrackJSON(ctx echo.Context, target any) error {
+func bindTrackJSON(ctx *echo.Context, target any) error {
 	return ctx.Bind(target)
 }
 
@@ -438,7 +439,7 @@ func avatarResponse(storageKey string) publictrackapi.ModelsAvatar {
 	}
 }
 
-func sessionIDFromTrackContext(ctx echo.Context) string {
+func sessionIDFromTrackContext(ctx *echo.Context) string {
 	cookie, err := ctx.Cookie(websession.CookieName)
 	if err == nil {
 		return cookie.Value
@@ -498,27 +499,27 @@ func preferencesFromPublicTrackRequest(
 }
 
 // PostUnifiedFeedback handles general feedback submission.
-func (handler *PublicTrackHandler) PostUnifiedFeedback(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostUnifiedFeedback(ctx *echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Feedback received.")
 }
 
 // PostSmailContact handles contact form submissions.
-func (handler *PublicTrackHandler) PostSmailContact(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostSmailContact(ctx *echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Contact request received.")
 }
 
 // PostSmailDemo handles demo request submissions.
-func (handler *PublicTrackHandler) PostSmailDemo(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostSmailDemo(ctx *echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Demo request received.")
 }
 
 // PostSmailMeet handles meeting request submissions.
-func (handler *PublicTrackHandler) PostSmailMeet(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostSmailMeet(ctx *echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Meeting request received.")
 }
 
 // GetPublicTrackAvatars returns user avatars.
-func (handler *PublicTrackHandler) GetPublicTrackAvatars(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackAvatars(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -527,7 +528,7 @@ func (handler *PublicTrackHandler) GetPublicTrackAvatars(ctx echo.Context) error
 }
 
 // DeletePublicTrackAvatars deletes user avatar.
-func (handler *PublicTrackHandler) DeletePublicTrackAvatars(ctx echo.Context) error {
+func (handler *PublicTrackHandler) DeletePublicTrackAvatars(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -546,7 +547,7 @@ func (handler *PublicTrackHandler) DeletePublicTrackAvatars(ctx echo.Context) er
 }
 
 // PostPublicTrackAvatars uploads a user avatar.
-func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -602,7 +603,7 @@ func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) erro
 }
 
 // PostPublicTrackUseGravatar toggles Gravatar usage for the user.
-func (handler *PublicTrackHandler) PostPublicTrackUseGravatar(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackUseGravatar(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err

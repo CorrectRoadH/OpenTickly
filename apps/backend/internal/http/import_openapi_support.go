@@ -3,7 +3,7 @@ package httpapp
 import (
 	importapi "opentoggl/backend/apps/backend/internal/http/generated/import"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func NewGeneratedImportRouteRegistrar(handler importapi.ServerInterface) (RouteRegistrar, error) {

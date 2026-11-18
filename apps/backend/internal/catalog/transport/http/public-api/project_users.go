@@ -6,12 +6,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) PostPublicTrackProjectUser(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackProjectUser(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -36,7 +37,7 @@ func (handler *Handler) PostPublicTrackProjectUser(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -44,7 +45,7 @@ func (handler *Handler) PostPublicTrackProjectUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, projectUserViewToAPI(view))
 }
 
-func (handler *Handler) PutPublicTrackProjectUser(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackProjectUser(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -79,7 +80,7 @@ func (handler *Handler) PutPublicTrackProjectUser(ctx echo.Context) error {
 		switch {
 		case errors.Is(err, catalogapplication.ErrProjectNotFound),
 			errors.Is(err, catalogapplication.ErrProjectUserNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		default:
 			return writePublicTrackCatalogError(ctx, err)
 		}
@@ -88,7 +89,7 @@ func (handler *Handler) PutPublicTrackProjectUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, projectUserViewToAPI(view))
 }
 
-func (handler *Handler) DeletePublicTrackProjectUser(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackProjectUser(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -112,7 +113,7 @@ func (handler *Handler) DeletePublicTrackProjectUser(ctx echo.Context) error {
 		switch {
 		case errors.Is(err, catalogapplication.ErrProjectNotFound),
 			errors.Is(err, catalogapplication.ErrProjectUserNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		default:
 			return writePublicTrackCatalogError(ctx, err)
 		}

@@ -6,8 +6,7 @@ import (
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
 
-	"github.com/labstack/echo/v4"
-	echomiddleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/labstack/echo/v5"
 )
 
 type ListProjectsRequest struct {
@@ -22,7 +21,10 @@ func NewGeneratedWebRouteRegistrar(handler webapi.ServerInterface, middlewares .
 	}
 
 	swagger.Servers = nil
-	validator := echomiddleware.OapiRequestValidator(swagger)
+	validator, err := NewOpenAPIValidator(swagger, nil, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return func(server *echo.Echo) {
 		group := server.Group("")
@@ -34,7 +36,7 @@ func NewGeneratedWebRouteRegistrar(handler webapi.ServerInterface, middlewares .
 	}, nil
 }
 
-func sessionID(context echo.Context) string {
+func sessionID(context *echo.Context) string {
 	cookie, err := context.Cookie(websession.CookieName)
 	if err == nil {
 		return cookie.Value

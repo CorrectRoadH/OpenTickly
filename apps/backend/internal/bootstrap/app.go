@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,7 +24,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/web"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type App struct {
@@ -123,9 +124,18 @@ func (app *App) Start() error {
 		telemetry.StartWorker(monitoring.BackgroundContext(ctx, app.sentryClient), app.telemetryPinger)
 	}
 
+	listener, err := net.Listen("tcp", app.Config.Server.ListenAddress)
+	if err != nil {
+		return err
+	}
+	return app.serveHTTP(ctx, stop, listener)
+}
+
+func (app *App) serveHTTP(ctx context.Context, stop context.CancelFunc, listener net.Listener) error {
+	server := &http.Server{Addr: app.Config.Server.ListenAddress, Handler: app.HTTP}
 	serverErr := make(chan error, 1)
 	go func() {
-		if err := app.HTTP.Start(app.Config.Server.ListenAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 			return
 		}
@@ -139,7 +149,9 @@ func (app *App) Start() error {
 		stop()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		return app.HTTP.Shutdown(shutdownCtx)
+		err := server.Shutdown(shutdownCtx)
+		<-serverErr
+		return err
 	}
 }
 

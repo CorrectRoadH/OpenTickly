@@ -21,7 +21,7 @@ func sanitize(event *sentry.Event, environment, release string) *sentry.Event {
 	for _, exception := range event.Exception {
 		kind := "Error"
 		switch exception.Type {
-		case "*errors.errorString", "*fmt.wrapError", "*fmt.wrapErrors", "*echo.HTTPError", "*pgconn.PgError", "*net.OpError", "*url.Error", "runtime.errorString", "*runtime.TypeAssertionError":
+		case "*errors.errorString", "*fmt.wrapError", "*fmt.wrapErrors", "*echo.HTTPError", "*httperror.Error", "*pgconn.PgError", "*net.OpError", "*url.Error", "runtime.errorString", "*runtime.TypeAssertionError":
 			kind = exception.Type
 		}
 		value := sentry.Exception{Type: kind, Value: "Application error"}

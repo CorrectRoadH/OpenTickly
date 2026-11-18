@@ -14,7 +14,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi2conv"
 )
 
-const oapiCodegenCommand = "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1"
+const oapiCodegenCommand = "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.2"
 
 type specVersion struct {
 	Swagger string `json:"swagger"`
@@ -70,26 +70,15 @@ func normalizedSpecPath(inputPath string) (string, func(), error) {
 		return "", nil, err
 	}
 
-	if version.Swagger != "2.0" {
+	var convertedData []byte
+	switch {
+	case version.Swagger == "2.0":
+		convertedData, err = convertSwagger2(data)
+	case strings.HasPrefix(version.OpenAPI, "3.1.") && strings.HasPrefix(filepath.Base(inputPath), "opentoggl-"):
+		return normalizedOpenAPI31Path(inputPath)
+	default:
 		return inputPath, nil, nil
 	}
-
-	data, err = normalizeSwagger2(data)
-	if err != nil {
-		return "", nil, err
-	}
-
-	var document openapi2.T
-	if err := json.Unmarshal(data, &document); err != nil {
-		return "", nil, err
-	}
-
-	converted, err := openapi2conv.ToV3(&document)
-	if err != nil {
-		return "", nil, err
-	}
-
-	convertedData, err := json.Marshal(converted)
 	if err != nil {
 		return "", nil, err
 	}
@@ -108,6 +97,26 @@ func normalizedSpecPath(inputPath string) (string, func(), error) {
 	return tempPath, func() {
 		_ = os.RemoveAll(tempDir)
 	}, nil
+}
+
+func convertSwagger2(data []byte) ([]byte, error) {
+	data, err := normalizeSwagger2(data)
+	if err != nil {
+		return nil, err
+	}
+	var document openapi2.T
+	if err := json.Unmarshal(data, &document); err != nil {
+		return nil, err
+	}
+	converted, err := openapi2conv.ToV3(&document)
+	if err != nil {
+		return nil, err
+	}
+	data, err = json.Marshal(converted)
+	if err != nil {
+		return nil, err
+	}
+	return normalizeLegacyNullable(data, false)
 }
 
 func exitf(format string, args ...any) {

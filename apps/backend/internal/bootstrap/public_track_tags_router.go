@@ -3,15 +3,15 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (server *publicTrackOpenAPIServer) GetTags(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetTags(ctx *echo.Context) error {
 	return server.catalog.GetPublicTrackTags(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceTag(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTagParams,
 ) error {
@@ -20,13 +20,13 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTag(
 	return server.catalog.GetPublicTrackTags(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceTag(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceTag(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.PostPublicTrackTags(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceTag(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	tagId int,
 ) error {
@@ -36,7 +36,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceTag(
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceTag(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	tagId int,
 ) error {
@@ -45,6 +45,6 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceTag(
 	return server.catalog.DeletePublicTrackTag(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PatchWorkspaceTags(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PatchWorkspaceTags(ctx *echo.Context, workspaceId int) error {
 	return server.catalog.PatchPublicTrackTags(ctx)
 }

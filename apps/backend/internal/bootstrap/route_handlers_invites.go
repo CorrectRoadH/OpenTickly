@@ -4,17 +4,18 @@ import (
 	"net/http"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // getInvite exposes a public lookup endpoint for workspace invites so the
 // accept page can render inviter + workspace context before the user
 // authenticates. It never surfaces unrelated membership PII.
-func (handlers *routeHandlers) getInvite(ctx echo.Context, token string) error {
+func (handlers *routeHandlers) getInvite(ctx *echo.Context, token string) error {
 	info, err := handlers.membershipApp.GetInviteByToken(ctx.Request().Context(), token)
 	if err != nil {
 		return writeMembershipError(err)
@@ -25,13 +26,13 @@ func (handlers *routeHandlers) getInvite(ctx echo.Context, token string) error {
 // acceptInvite claims an invite with the currently authenticated session.
 // The session user's email must match the invite's email; mismatches are
 // surfaced as 400s so the UI can prompt the user to switch accounts.
-func (handlers *routeHandlers) acceptInvite(ctx echo.Context, token string) error {
+func (handlers *routeHandlers) acceptInvite(ctx *echo.Context, token string) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 
 	accepted, err := handlers.membershipApp.ClaimInvite(ctx.Request().Context(), membershipapplication.AcceptInviteCommand{
@@ -50,7 +51,7 @@ func (handlers *routeHandlers) acceptInvite(ctx echo.Context, token string) erro
 // through the identity handler's pre-verified path so the email-verification
 // flow is bypassed — presenting the invite token already proves the recipient
 // owns the email it was sent to.
-func (handlers *routeHandlers) acceptInviteSignup(ctx echo.Context, token string) error {
+func (handlers *routeHandlers) acceptInviteSignup(ctx *echo.Context, token string) error {
 	var request webapi.WorkspaceInviteSignupRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -89,7 +90,7 @@ func (handlers *routeHandlers) acceptInviteSignup(ctx echo.Context, token string
 	// cookie we're about to set. Claim the invite on the new user's id.
 	newUser, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), response.SessionID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	if _, err := handlers.membershipApp.ClaimInvite(ctx.Request().Context(), membershipapplication.AcceptInviteCommand{

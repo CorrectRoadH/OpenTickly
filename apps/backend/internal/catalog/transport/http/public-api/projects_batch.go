@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handler *Handler) PatchWorkspaceProjects(ctx echo.Context) error {
+func (handler *Handler) PatchWorkspaceProjects(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -44,7 +45,7 @@ func (handler *Handler) PatchWorkspaceProjects(ctx echo.Context) error {
 	successIDs, err := handler.catalog.PatchProjects(ctx.Request().Context(), workspaceID, projectIDs, commands)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -56,7 +57,7 @@ func (handler *Handler) PatchWorkspaceProjects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, batchSuccessResponse{Success: result})
 }
 
-func (handler *Handler) PostWorkspacesWorkspaceIdProjectsBillableAmounts(ctx echo.Context) error {
+func (handler *Handler) PostWorkspacesWorkspaceIdProjectsBillableAmounts(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -80,4 +81,3 @@ type projectPatchInput struct {
 	Template  *bool   `json:"template,omitempty"`
 	Recurring *bool   `json:"recurring,omitempty"`
 }
-

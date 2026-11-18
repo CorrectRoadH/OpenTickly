@@ -12,7 +12,7 @@ import (
 	adminapi "opentoggl/backend/apps/backend/internal/http/generated/admin"
 	telemetrydomain "opentoggl/backend/apps/backend/internal/telemetry/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type fakeFeed struct {

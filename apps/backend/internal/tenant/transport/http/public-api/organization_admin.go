@@ -7,13 +7,14 @@ import (
 
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackOrganizationOwner(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationOwner(ctx *echo.Context) error {
 	organization, requester, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -22,7 +23,7 @@ func (handler *Handler) GetPublicTrackOrganizationOwner(ctx echo.Context) error 
 	for _, workspaceID := range organization.WorkspaceIDs {
 		members, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID)
 		if memberErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		for _, member := range members {
 			if member.UserID == nil || member.Role != membershipdomain.WorkspaceRoleAdmin {
@@ -38,24 +39,24 @@ func (handler *Handler) GetPublicTrackOrganizationOwner(ctx echo.Context) error 
 		}
 	}
 
-	return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+	return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 }
 
-func (handler *Handler) GetPublicTrackOrganizationRoles(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationRoles(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
 	}
 
 	roles := []publictrackapi.TypesRole{
-		organizationRoleBody(int(organization.ID), 1, "owner", "Owner", "Organization owner", publictrackapi.Organization, publictrackapi.Owner, []string{"manage_organization", "manage_members"}),
-		organizationRoleBody(int(organization.ID), 2, "admin", "Admin", "Organization administrator", publictrackapi.Organization, publictrackapi.Admin, []string{"manage_members"}),
-		organizationRoleBody(int(organization.ID), 3, "member", "Member", "Workspace member", publictrackapi.Workspace, publictrackapi.Guest, []string{"view"}),
+		organizationRoleBody(int(organization.ID), 1, "owner", "Owner", "Organization owner", publictrackapi.TypesRoleEntityOrganization, publictrackapi.Owner, []string{"manage_organization", "manage_members"}),
+		organizationRoleBody(int(organization.ID), 2, "admin", "Admin", "Organization administrator", publictrackapi.TypesRoleEntityOrganization, publictrackapi.Admin, []string{"manage_members"}),
+		organizationRoleBody(int(organization.ID), 3, "member", "Member", "Workspace member", publictrackapi.TypesRoleEntityWorkspace, publictrackapi.Guest, []string{"view"}),
 	}
 	return ctx.JSON(http.StatusOK, roles)
 }
 
-func (handler *Handler) GetPublicTrackOrganizationSubscription(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationSubscription(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -88,7 +89,7 @@ func (handler *Handler) GetPublicTrackOrganizationSubscription(ctx echo.Context)
 	return ctx.JSON(http.StatusOK, body)
 }
 
-func (handler *Handler) GetPublicTrackOrganizationWorkspacesStatistics(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationWorkspacesStatistics(ctx *echo.Context) error {
 	organization, requester, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -98,11 +99,11 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspacesStatistics(ctx echo.
 	for _, workspaceID := range organization.WorkspaceIDs {
 		members, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID)
 		if memberErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(organization.ID))
 		if groupErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 
 		admins := make([]publictrackapi.ModelsUserData, 0)
@@ -178,7 +179,7 @@ func planID(plan billingdomain.Plan) int {
 	}
 }
 
-func (handler *Handler) GetPublicTrackOwnershipTransfers(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOwnershipTransfers(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -187,26 +188,26 @@ func (handler *Handler) GetPublicTrackOwnershipTransfers(ctx echo.Context) error
 	return ctx.JSON(http.StatusOK, []any{})
 }
 
-func (handler *Handler) PostPublicTrackOwnershipTransfer(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackOwnershipTransfer(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
 	}
 	_ = organization.ID
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
+	return httperror.New(http.StatusNotImplemented, "Not Implemented").WithCause(err)
 }
 
-func (handler *Handler) GetPublicTrackOwnershipTransfer(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOwnershipTransfer(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
 	}
 	_ = organization.ID
 	_ = ctx.Param("transfer_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
+	return httperror.New(http.StatusNotImplemented, "Not Implemented").WithCause(err)
 }
 
-func (handler *Handler) PostPublicTrackOwnershipTransferActions(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackOwnershipTransferActions(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -214,7 +215,7 @@ func (handler *Handler) PostPublicTrackOwnershipTransferActions(ctx echo.Context
 	_ = organization.ID
 	_ = ctx.Param("transfer_id")
 	_ = ctx.Param("action")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
+	return httperror.New(http.StatusNotImplemented, "Not Implemented").WithCause(err)
 }
 
 func max(left int, right int) int {

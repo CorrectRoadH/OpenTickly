@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackTrackReminders(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTrackReminders(ctx *echo.Context) error {
 	workspaceID, _, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -26,18 +27,18 @@ func (handler *Handler) GetPublicTrackTrackReminders(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackMeTrackReminders(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackMeTrackReminders(ctx *echo.Context) error {
 	return handler.GetPublicTrackTrackReminders(ctx)
 }
 
-func (handler *Handler) PostPublicTrackTrackReminder(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackTrackReminder(ctx *echo.Context) error {
 	workspaceID, _, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	var payload publictrackapi.RemindersPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	reminder, err := handler.tracking.UpsertReminder(ctx.Request().Context(), trackingapplication.UpsertReminderCommand{
 		WorkspaceID:          workspaceID,
@@ -54,7 +55,7 @@ func (handler *Handler) PostPublicTrackTrackReminder(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, reminderViewToAPI(reminder))
 }
 
-func (handler *Handler) PutPublicTrackTrackReminder(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackTrackReminder(ctx *echo.Context) error {
 	workspaceID, _, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (handler *Handler) PutPublicTrackTrackReminder(ctx echo.Context) error {
 	}
 	var payload publictrackapi.RemindersPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	reminder, err := handler.tracking.UpsertReminder(ctx.Request().Context(), trackingapplication.UpsertReminderCommand{
 		WorkspaceID:          workspaceID,
@@ -83,7 +84,7 @@ func (handler *Handler) PutPublicTrackTrackReminder(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, reminderViewToAPI(reminder))
 }
 
-func (handler *Handler) DeletePublicTrackTrackReminder(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackTrackReminder(ctx *echo.Context) error {
 	workspaceID, _, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err

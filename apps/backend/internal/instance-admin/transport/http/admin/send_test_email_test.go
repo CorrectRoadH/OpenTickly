@@ -14,7 +14,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/instance-admin/application"
 	"opentoggl/backend/apps/backend/internal/instance-admin/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // A failed delivery must still answer 200 with the reason in the body.

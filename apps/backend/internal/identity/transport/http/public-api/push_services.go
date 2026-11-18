@@ -5,11 +5,11 @@ import (
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *PublicTrackHandler) GetPublicTrackPushServices(ctx echo.Context) error {
+func (handler *PublicTrackHandler) GetPublicTrackPushServices(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func (handler *PublicTrackHandler) GetPublicTrackPushServices(ctx echo.Context) 
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *PublicTrackHandler) PostPublicTrackPushServices(ctx echo.Context) error {
+func (handler *PublicTrackHandler) PostPublicTrackPushServices(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (handler *PublicTrackHandler) PostPublicTrackPushServices(ctx echo.Context)
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *PublicTrackHandler) DeletePublicTrackPushServices(ctx echo.Context) error {
+func (handler *PublicTrackHandler) DeletePublicTrackPushServices(ctx *echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err

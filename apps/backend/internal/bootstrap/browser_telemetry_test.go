@@ -10,7 +10,7 @@ import (
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func TestBrowserTelemetryAnonymousConfig(t *testing.T) {

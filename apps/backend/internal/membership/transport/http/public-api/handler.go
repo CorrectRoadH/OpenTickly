@@ -8,20 +8,21 @@ import (
 	"strings"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackOrganization(ctx *echo.Context, organizationID int64) error
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
 }
 
 type OrganizationLookup interface {
@@ -46,7 +47,7 @@ func NewHandler(
 	}
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceUsers(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceUsers(ctx *echo.Context) error {
 	_, _, members, err := handler.workspaceMembers(ctx)
 	if err != nil {
 		return err
@@ -56,7 +57,7 @@ func (handler *Handler) GetPublicTrackWorkspaceUsers(ctx echo.Context) error {
 	if value := strings.TrimSpace(ctx.QueryParam("exclude_deleted")); value != "" {
 		parsed, parseErr := strconv.ParseBool(value)
 		if parseErr != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(parseErr)
 		}
 		excludeDeleted = parsed
 	}
@@ -71,7 +72,7 @@ func (handler *Handler) GetPublicTrackWorkspaceUsers(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) PostPublicTrackWorkspaceUsersData(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackWorkspaceUsersData(ctx *echo.Context) error {
 	_, _, members, err := handler.workspaceMembers(ctx)
 	if err != nil {
 		return err
@@ -79,7 +80,7 @@ func (handler *Handler) PostPublicTrackWorkspaceUsersData(ctx echo.Context) erro
 
 	var userIDs []int64
 	if err := ctx.Bind(&userIDs); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	memberByUserID := make(map[int64]membershipapplication.WorkspaceMemberView, len(members))
@@ -100,9 +101,9 @@ func (handler *Handler) PostPublicTrackWorkspaceUsersData(ctx echo.Context) erro
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceWorkspaceUsers(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceWorkspaceUsers(ctx *echo.Context) error {
 	if _, parseErr := strconv.ParseBool(ctx.QueryParam("includeIndirect")); parseErr != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(parseErr)
 	}
 
 	_, _, members, err := handler.workspaceMembers(ctx)
@@ -117,7 +118,7 @@ func (handler *Handler) GetPublicTrackWorkspaceWorkspaceUsers(ctx echo.Context) 
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) DeletePublicTrackWorkspaceUser(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackWorkspaceUser(ctx *echo.Context) error {
 	workspaceID, requester, _, err := handler.workspaceMembers(ctx)
 	if err != nil {
 		return err
@@ -138,7 +139,7 @@ func (handler *Handler) DeletePublicTrackWorkspaceUser(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusOK)
 }
 
-func (handler *Handler) PutPublicTrackWorkspaceWorkspaceUser(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackWorkspaceWorkspaceUser(ctx *echo.Context) error {
 	workspaceID, requester, _, err := handler.workspaceMembers(ctx)
 	if err != nil {
 		return err
@@ -150,7 +151,7 @@ func (handler *Handler) PutPublicTrackWorkspaceWorkspaceUser(ctx echo.Context) e
 	return handler.updateWorkspaceMember(ctx, workspaceID, memberID, requester.ID)
 }
 
-func (handler *Handler) PutPublicTrackWorkspaceUser(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackWorkspaceUser(ctx *echo.Context) error {
 	workspaceID, requester, members, err := handler.workspaceMembers(ctx)
 	if err != nil {
 		return err
@@ -162,17 +163,17 @@ func (handler *Handler) PutPublicTrackWorkspaceUser(ctx echo.Context) error {
 
 	member, found := findWorkspaceMemberByUserID(members, userID)
 	if !found {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	}
 	return handler.updateWorkspaceMember(ctx, workspaceID, member.ID, requester.ID)
 }
 
 func (handler *Handler) workspaceMembers(
-	ctx echo.Context,
+	ctx *echo.Context,
 ) (int64, *identityapplication.UserSnapshot, []membershipapplication.WorkspaceMemberView, error) {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
-		return 0, nil, nil, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return 0, nil, nil, httperror.New(http.StatusBadRequest, "Bad Request")
 	}
 	requester, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
@@ -189,14 +190,14 @@ func (handler *Handler) workspaceMembers(
 }
 
 func (handler *Handler) updateWorkspaceMember(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int64,
 	memberID int64,
 	requestedBy int64,
 ) error {
 	var payload publictrackapi.GithubComTogglTogglApiInternalServicesWorkspaceUserPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	if payload.Role != nil || payload.Rate != nil || payload.LaborCost != nil {
@@ -210,7 +211,7 @@ func (handler *Handler) updateWorkspaceMember(
 		if payload.Role != nil {
 			role, err := publicTrackWorkspaceRole(*payload.Role)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+				return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 			}
 			command.Role = &role
 		}
@@ -297,9 +298,9 @@ func publicTrackWorkspaceRole(value string) (membershipdomain.WorkspaceRole, err
 func writeMembershipError(err error) error {
 	switch {
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberExists),
 		errors.Is(err, membershipapplication.ErrWorkspaceMemberEmailBlank),
 		errors.Is(err, membershipdomain.ErrInvalidWorkspaceRole),
@@ -312,13 +313,13 @@ func writeMembershipError(err error) error {
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberNotDisabled),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberRemoved),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberAlreadyRemoved):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }
 
-func parsePathID(ctx echo.Context, key string) (int64, bool) {
+func parsePathID(ctx *echo.Context, key string) (int64, bool) {
 	value, err := strconv.ParseInt(ctx.Param(key), 10, 64)
 	if err != nil {
 		return 0, false

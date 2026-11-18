@@ -9,26 +9,27 @@ import (
 	"time"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackHome(ctx echo.Context) (organizationID int64, workspaceID int64, err error)
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
-	WorkspaceOrganizationID(ctx echo.Context, workspaceID int64) (int64, error)
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackHome(ctx *echo.Context) (organizationID int64, workspaceID int64, err error)
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
+	WorkspaceOrganizationID(ctx *echo.Context, workspaceID int64) (int64, error)
 	// ListPublicTrackUserWorkspaces returns every workspace ID the
 	// authenticated user is a member of. Used by cross-workspace /me/*
 	// list endpoints (projects, clients, tags, tasks) so they match
 	// official Toggl v9 semantics instead of collapsing to a single
 	// "home" workspace (which is unreliable — web_user_homes can drift
 	// out of sync with the actual membership set).
-	ListPublicTrackUserWorkspaces(ctx echo.Context) ([]int64, error)
+	ListPublicTrackUserWorkspaces(ctx *echo.Context) ([]int64, error)
 }
 
 type Handler struct {
@@ -43,7 +44,7 @@ func NewHandler(catalog *catalogapplication.Service, scope ScopeAuthorizer) *Han
 	}
 }
 
-func bindPublicTrackJSON(ctx echo.Context, target any, optional bool) error {
+func bindPublicTrackJSON(ctx *echo.Context, target any, optional bool) error {
 	if err := ctx.Bind(target); err != nil {
 		if optional && errors.Is(err, io.EOF) {
 			return nil
@@ -53,12 +54,12 @@ func bindPublicTrackJSON(ctx echo.Context, target any, optional bool) error {
 	return nil
 }
 
-func writePublicTrackCatalogError(ctx echo.Context, err error) error {
+func writePublicTrackCatalogError(ctx *echo.Context, err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23503") {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return httperror.New(http.StatusBadRequest, "Bad Request")
 	}
-	return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+	return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 }
 
 func parseCSVInt64s(value string) ([]int64, error) {
@@ -109,7 +110,7 @@ func projectCountsToAPI(projectIDs []int64, counts []catalogapplication.ProjectC
 	return response
 }
 
-func queryInt(ctx echo.Context, key string, fallback int) int {
+func queryInt(ctx *echo.Context, key string, fallback int) int {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return fallback
@@ -121,7 +122,7 @@ func queryInt(ctx echo.Context, key string, fallback int) int {
 	return parsed
 }
 
-func queryBool(ctx echo.Context, key string) (bool, bool) {
+func queryBool(ctx *echo.Context, key string) (bool, bool) {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return false, false
@@ -133,7 +134,7 @@ func queryBool(ctx echo.Context, key string) (bool, bool) {
 	return parsed, true
 }
 
-func queryBoolValue(ctx echo.Context, key string) bool {
+func queryBoolValue(ctx *echo.Context, key string) bool {
 	value, ok := queryBool(ctx, key)
 	return ok && value
 }
@@ -158,7 +159,7 @@ type batchSuccessResponse struct {
 	Success []int `json:"success"`
 }
 
-func parsePathID(ctx echo.Context, key string) (int64, bool) {
+func parsePathID(ctx *echo.Context, key string) (int64, bool) {
 	value, err := strconv.ParseInt(ctx.Param(key), 10, 64)
 	if err != nil {
 		return 0, false
@@ -182,7 +183,7 @@ func parseQueryInt64(raw string) (int64, bool) {
 // list endpoints aggregate across all the user's workspaces — this is
 // both the official Toggl v9 semantic AND the only way to be robust to
 // web_user_homes drift.
-func (handler *Handler) publicTrackWorkspaceIDs(ctx echo.Context) ([]int64, error) {
+func (handler *Handler) publicTrackWorkspaceIDs(ctx *echo.Context) ([]int64, error) {
 	if workspaceID, ok := parsePathID(ctx, "workspace_id"); ok {
 		if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 			return nil, err

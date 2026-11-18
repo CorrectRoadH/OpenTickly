@@ -6,12 +6,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) PostPublicTrackClients(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackClients(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -41,7 +42,7 @@ func (handler *Handler) PostPublicTrackClients(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 }
 
-func (handler *Handler) PutPublicTrackClient(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackClient(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -70,14 +71,14 @@ func (handler *Handler) PutPublicTrackClient(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
 	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 }
 
-func (handler *Handler) ArchivePublicTrackClients(ctx echo.Context) error {
+func (handler *Handler) ArchivePublicTrackClients(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -102,9 +103,9 @@ func (handler *Handler) ArchivePublicTrackClients(ctx echo.Context) error {
 		archivedProjectIDs, err := handler.catalog.ArchiveClient(ctx.Request().Context(), workspaceID, clientID)
 		if err != nil {
 			if errors.Is(err, catalogapplication.ErrClientNotFound) {
-				return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+				return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 			}
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		projectIDs = append(projectIDs, archivedProjectIDs...)
 	}
@@ -117,7 +118,7 @@ func (handler *Handler) ArchivePublicTrackClients(ctx echo.Context) error {
 	}})
 }
 
-func (handler *Handler) DeletePublicTrackClients(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackClients(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -136,14 +137,14 @@ func (handler *Handler) DeletePublicTrackClients(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteClients(ctx.Request().Context(), workspaceID, intsToInt64s(request)); err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *Handler) DeletePublicTrackClient(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackClient(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -161,14 +162,14 @@ func (handler *Handler) DeletePublicTrackClient(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteClients(ctx.Request().Context(), workspaceID, []int64{clientID}); err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
 	return ctx.JSON(http.StatusOK, clientID)
 }
 
-func (handler *Handler) ArchivePublicTrackClient(ctx echo.Context) error {
+func (handler *Handler) ArchivePublicTrackClient(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -187,14 +188,14 @@ func (handler *Handler) ArchivePublicTrackClient(ctx echo.Context) error {
 	projectIDs, err := handler.catalog.ArchiveClient(ctx.Request().Context(), workspaceID, clientID)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, intsFromInt64s(projectIDs))
 }
 
-func (handler *Handler) RestorePublicTrackClient(ctx echo.Context) error {
+func (handler *Handler) RestorePublicTrackClient(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -229,11 +230,11 @@ func (handler *Handler) RestorePublicTrackClient(ctx echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, catalogapplication.ErrClientNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		case errors.Is(err, catalogapplication.ErrProjectNotFound):
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 	}
 	return ctx.JSON(http.StatusOK, clientViewToAPI(view))

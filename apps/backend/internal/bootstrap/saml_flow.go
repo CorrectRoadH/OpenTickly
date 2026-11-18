@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/crewjam/saml"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 )
 
@@ -21,16 +21,16 @@ func samlBrowserHash(value string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func setSAMLBrowserCookie(ctx echo.Context, value string, maxAge int) {
+func setSAMLBrowserCookie(ctx *echo.Context, value string, maxAge int) {
 	ctx.SetCookie(&http.Cookie{Name: samlBrowserCookie, Value: value, Path: "/auth/saml2/", HttpOnly: true, Secure: true, SameSite: http.SameSiteNoneMode, MaxAge: maxAge})
 }
 
-func samlResponseHeaders(ctx echo.Context) {
+func samlResponseHeaders(ctx *echo.Context) {
 	ctx.Response().Header().Set("Cache-Control", "no-store")
 	ctx.Response().Header().Set("Referrer-Policy", "no-referrer")
 }
 
-func (handlers *routeHandlers) startSAMLFlow(ctx echo.Context, config samlWorkspaceConfig, pending samlPendingLogin) (string, error) {
+func (handlers *routeHandlers) startSAMLFlow(ctx *echo.Context, config samlWorkspaceConfig, pending samlPendingLogin) (string, error) {
 	samlResponseHeaders(ctx)
 	if err := identitysaml.ValidateHTTPSURL(handlers.samlBaseURL(ctx)); err != nil {
 		return "", err
@@ -66,7 +66,7 @@ func (handlers *routeHandlers) startSAMLFlow(ctx echo.Context, config samlWorksp
 	return target.String(), nil
 }
 
-func (handlers *routeHandlers) consumeSAMLFlow(ctx echo.Context, workspaceID int64) (samlPendingLogin, string, error) {
+func (handlers *routeHandlers) consumeSAMLFlow(ctx *echo.Context, workspaceID int64) (samlPendingLogin, string, error) {
 	var pending samlPendingLogin
 	r := ctx.Request()
 	// Artifact binding can make crewjam send an additional HTTP request. We only

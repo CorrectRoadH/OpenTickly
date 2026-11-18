@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -103,7 +104,7 @@ func TestApplyNullableIDFilters(t *testing.T) {
 	}
 }
 
-func newJSONContext(t *testing.T, body string) echo.Context {
+func newJSONContext(t *testing.T, body string) *echo.Context {
 	t.Helper()
 	e := echo.New()
 	request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
@@ -174,9 +175,9 @@ func TestBindWithNullableIDs(t *testing.T) {
 				if err == nil {
 					t.Fatalf("bindWithNullableIDs(%q) expected error, got filters %+v", tc.body, filters)
 				}
-				httpErr, ok := err.(*echo.HTTPError)
+				httpErr, ok := err.(*httperror.Error)
 				if !ok || httpErr.Code != http.StatusBadRequest {
-					t.Errorf("bindWithNullableIDs(%q) error = %v, want *echo.HTTPError with code 400", tc.body, err)
+					t.Errorf("bindWithNullableIDs(%q) error = %v, want *httperror.Error with code 400", tc.body, err)
 				}
 				return
 			}

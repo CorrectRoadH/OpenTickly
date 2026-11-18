@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	"opentoggl/backend/apps/backend/internal/web"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func TestServerDoesNotServeFrontendFallbackWithoutCompiledWebsiteAssets(t *testing.T) {
@@ -213,7 +214,7 @@ func TestServerRejectsCrossOriginCookieMutations(t *testing.T) {
 	server := NewServerWithOptions(
 		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
 		func(server *echo.Echo) {
-			server.POST("/web/v1/profile", func(c echo.Context) error {
+			server.POST("/web/v1/profile", func(c *echo.Context) error {
 				return c.NoContent(http.StatusNoContent)
 			})
 		},
@@ -236,7 +237,7 @@ func TestServerAllowsSameOriginCookieMutations(t *testing.T) {
 	server := NewServerWithOptions(
 		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
 		func(server *echo.Echo) {
-			server.POST("/web/v1/profile", func(c echo.Context) error {
+			server.POST("/web/v1/profile", func(c *echo.Context) error {
 				return c.NoContent(http.StatusNoContent)
 			})
 		},
@@ -261,9 +262,9 @@ func TestServerLogsHandlerErrorsWithInternalCause(t *testing.T) {
 	server := NewServerWithOptions(
 		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
 		func(server *echo.Echo) {
-			server.GET("/boom", func(c echo.Context) error {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").
-					SetInternal(errors.New("boom cause"))
+			server.GET("/boom", func(c *echo.Context) error {
+				return httperror.New(http.StatusInternalServerError, "Internal Server Error").
+					WithCause(errors.New("boom cause"))
 			})
 		},
 		ServerOptions{
@@ -310,9 +311,9 @@ func TestServerLogsClientErrorsWithInternalCauseAndReturnsRealMessage(t *testing
 	server := NewServerWithOptions(
 		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
 		func(server *echo.Echo) {
-			server.GET("/bad", func(c echo.Context) error {
-				return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").
-					SetInternal(errors.New("tracking time entry values are inconsistent"))
+			server.GET("/bad", func(c *echo.Context) error {
+				return httperror.New(http.StatusBadRequest, "Bad Request").
+					WithCause(errors.New("tracking time entry values are inconsistent"))
 			})
 		},
 		ServerOptions{
@@ -367,11 +368,11 @@ func TestServerPreservesStructuredClientErrorWhileLoggingInternalCause(t *testin
 	server := NewServerWithOptions(
 		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
 		func(server *echo.Echo) {
-			server.POST("/invite", func(c echo.Context) error {
-				return echo.NewHTTPError(http.StatusUnprocessableEntity, deliveryError{
+			server.POST("/invite", func(c *echo.Context) error {
+				return httperror.New(http.StatusUnprocessableEntity, deliveryError{
 					Error:   "timeout",
 					Message: "Invitation email delivery failed.",
-				}).SetInternal(errors.New("smtp resolver timed out"))
+				}).WithCause(errors.New("smtp resolver timed out"))
 			})
 		},
 		ServerOptions{},

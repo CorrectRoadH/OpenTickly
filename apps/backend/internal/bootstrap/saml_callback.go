@@ -4,12 +4,13 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 )
 
-func (handlers *routeHandlers) saml2ACS(ctx echo.Context) error {
+func (handlers *routeHandlers) saml2ACS(ctx *echo.Context) error {
 	samlResponseHeaders(ctx)
 	fail := func(code string) error { return ctx.Redirect(http.StatusSeeOther, "/login?sso_error="+code) }
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
@@ -61,7 +62,7 @@ func (handlers *routeHandlers) saml2ACS(ctx echo.Context) error {
 	}
 	if err := handlers.joinWorkspaceAfterSSO(ctx.Request().Context(), workspaceID, result.Session.User.ID); err != nil {
 		if revokeErr := handlers.identityApp.Logout(ctx.Request().Context(), result.Session.SessionID); revokeErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Could not complete SSO login").SetInternal(errors.Join(err, revokeErr))
+			return httperror.New(http.StatusInternalServerError, "Could not complete SSO login").WithCause(errors.Join(err, revokeErr))
 		}
 		return fail("unavailable")
 	}

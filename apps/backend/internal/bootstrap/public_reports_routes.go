@@ -1,16 +1,11 @@
 package bootstrap
 
 import (
-	"context"
-	"net/http"
-
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/labstack/echo/v4"
-	echomiddleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/labstack/echo/v5"
 )
 
 func newPublicReportsRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
@@ -31,18 +26,10 @@ func newPublicReportsRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, er
 	swagger.Components.SecuritySchemes["APIKeyAuth"] = &openapi3.SecuritySchemeRef{
 		Value: openapi3.NewSecurityScheme().WithType("http").WithScheme("basic"),
 	}
-	validator := echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
-		Options: openapi3filter.Options{
-			AuthenticationFunc: func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
-				echoContext := echomiddleware.GetEchoContext(ctx)
-				if echoContext == nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
-				}
-				_, err := handlers.publicTrackUser(echoContext)
-				return err
-			},
-		},
-	})
+	validator, err := httpapp.NewOpenAPIValidator(swagger, nil, handlers.authenticatePublicTrack)
+	if err != nil {
+		return nil, err
+	}
 
 	return func(server *echo.Echo) {
 		group := server.Group("")

@@ -3,7 +3,7 @@ package publicapi
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // segmentationResponse is the JSON shape for organization segmentation data.
@@ -12,7 +12,7 @@ type segmentationResponse struct {
 }
 
 // GetOrganizationSegmentation returns segmentation data for the organization.
-func (handler *Handler) GetOrganizationSegmentation(ctx echo.Context) error {
+func (handler *Handler) GetOrganizationSegmentation(ctx *echo.Context) error {
 	_, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func (handler *Handler) GetOrganizationSegmentation(ctx echo.Context) error {
 }
 
 // PutOrganizationSegmentation updates segmentation data for the organization.
-func (handler *Handler) PutOrganizationSegmentation(ctx echo.Context) error {
+func (handler *Handler) PutOrganizationSegmentation(ctx *echo.Context) error {
 	_, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err

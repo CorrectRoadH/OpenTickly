@@ -9,7 +9,7 @@ import (
 	adminapi "opentoggl/backend/apps/backend/internal/http/generated/admin"
 	telemetrydomain "opentoggl/backend/apps/backend/internal/telemetry/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -38,7 +38,7 @@ type UpdateFeed interface {
 	LatestManifest() (telemetrydomain.Manifest, bool)
 }
 
-func (h *Handler) GetInstanceVersion(ctx echo.Context) error {
+func (h *Handler) GetInstanceVersion(ctx *echo.Context) error {
 	current := currentVersion()
 	resp := adminapi.InstanceVersion{
 		CurrentVersion:  current,

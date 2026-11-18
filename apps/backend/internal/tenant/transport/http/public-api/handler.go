@@ -12,21 +12,22 @@ import (
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	filespostgres "opentoggl/backend/apps/backend/internal/files/infra/postgres"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackHome(ctx echo.Context) (organizationID int64, workspaceID int64, err error)
-	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackHome(ctx *echo.Context) (organizationID int64, workspaceID int64, err error)
+	RequirePublicTrackOrganization(ctx *echo.Context, organizationID int64) error
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
 }
 
 type HomeRepository interface {
@@ -81,7 +82,7 @@ func NewHandler(
 	}
 }
 
-func (handler *Handler) GetPublicTrackOrganizations(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizations(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -97,7 +98,7 @@ func (handler *Handler) GetPublicTrackOrganizations(ctx echo.Context) error {
 	}))
 }
 
-func (handler *Handler) GetPublicTrackQuota(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackQuota(ctx *echo.Context) error {
 	organizationID, workspaceID, err := handler.scope.RequirePublicTrackHome(ctx)
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func (handler *Handler) GetPublicTrackQuota(ctx echo.Context) error {
 	}})
 }
 
-func (handler *Handler) PostPublicTrackOrganization(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackOrganization(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -123,7 +124,7 @@ func (handler *Handler) PostPublicTrackOrganization(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsPostPayload
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	result, err := handler.tenant.CreateOrganization(ctx.Request().Context(), tenantapplication.CreateOrganizationCommand{
@@ -134,13 +135,13 @@ func (handler *Handler) PostPublicTrackOrganization(ctx echo.Context) error {
 		return mapError(err)
 	}
 	if err := handler.homes.Save(ctx.Request().Context(), user.ID, int64(result.OrganizationID), int64(result.WorkspaceID)); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	if _, err := handler.membership.EnsureWorkspaceOwner(ctx.Request().Context(), membershipapplication.EnsureWorkspaceOwnerCommand{
 		WorkspaceID: int64(result.WorkspaceID),
 		UserID:      user.ID,
 	}); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	permissions := []string{"admin"}
@@ -153,7 +154,7 @@ func (handler *Handler) PostPublicTrackOrganization(ctx echo.Context) error {
 	})
 }
 
-func (handler *Handler) GetPublicTrackOrganization(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganization(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -169,7 +170,7 @@ func (handler *Handler) GetPublicTrackOrganization(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, organizationBody(view))
 }
 
-func (handler *Handler) PutPublicTrackOrganization(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackOrganization(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -180,7 +181,7 @@ func (handler *Handler) PutPublicTrackOrganization(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsPutPayload
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	if err := handler.tenant.UpdateOrganization(ctx.Request().Context(), tenantapplication.UpdateOrganizationCommand{
@@ -192,7 +193,7 @@ func (handler *Handler) PutPublicTrackOrganization(ctx echo.Context) error {
 	return handler.GetPublicTrackOrganization(ctx)
 }
 
-func (handler *Handler) GetPublicTrackWorkspace(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspace(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -208,7 +209,7 @@ func (handler *Handler) GetPublicTrackWorkspace(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, workspaceBody(view))
 }
 
-func (handler *Handler) PutPublicTrackWorkspace(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackWorkspace(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -219,7 +220,7 @@ func (handler *Handler) PutPublicTrackWorkspace(ctx echo.Context) error {
 
 	var request publictrackapi.WorkspacePayload
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	current, err := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
@@ -255,7 +256,7 @@ func (handler *Handler) PutPublicTrackWorkspace(ctx echo.Context) error {
 	return handler.GetPublicTrackWorkspace(ctx)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaces(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaces(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -278,7 +279,7 @@ func (handler *Handler) GetPublicTrackWorkspaces(ctx echo.Context) error {
 			},
 		)
 		if projectErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, projectErr.Error()).SetInternal(projectErr)
+			return httperror.New(http.StatusInternalServerError, projectErr.Error()).WithCause(projectErr)
 		}
 
 		response = append(response, publictrackapi.WorkspaceWithActiveProjectCount{
@@ -312,7 +313,7 @@ func (handler *Handler) GetPublicTrackWorkspaces(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceSubscription(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceSubscription(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -331,7 +332,7 @@ func (handler *Handler) GetPublicTrackWorkspaceSubscription(ctx echo.Context) er
 	})
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceStatistics(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceStatistics(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -346,15 +347,15 @@ func (handler *Handler) GetPublicTrackWorkspaceStatistics(ctx echo.Context) erro
 
 	members, err := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), workspaceID, requester.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	workspace, wsErr := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
 	if wsErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, wsErr.Error()).SetInternal(wsErr)
+		return httperror.New(http.StatusInternalServerError, wsErr.Error()).WithCause(wsErr)
 	}
 	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.OrganizationID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	admins := make([]publictrackapi.ModelsUserData, 0)
@@ -461,13 +462,13 @@ func mapError(err error) error {
 	case errors.Is(err, tenantapplication.ErrOrganizationNotFound),
 		errors.Is(err, tenantapplication.ErrWorkspaceNotFound),
 		errors.Is(err, billingapplication.ErrCommercialAccountNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }
 
-func parsePathID(ctx echo.Context, key string) (int64, bool) {
+func parsePathID(ctx *echo.Context, key string) (int64, bool) {
 	value := strings.TrimSpace(ctx.Param(key))
 	if value == "" {
 		return 0, false

@@ -6,9 +6,10 @@ import (
 	"time"
 
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -17,7 +18,7 @@ import (
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -27,7 +28,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 
 	var request publicreportsapi.BaseDataTrendsPost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	location := loadLocation(user.Timezone)
@@ -44,7 +45,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 		EndDate:     endDate,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	resolution := lo.FromPtrOr(request.Resolution, "day")
@@ -129,7 +130,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -139,7 +140,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 
 	var request publicreportsapi.BaseDataTrendsPost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	location := loadLocation(user.Timezone)
@@ -156,7 +157,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 		EndDate:     endDate,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	resolution := lo.FromPtrOr(request.Resolution, "day")
@@ -241,7 +242,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -251,7 +252,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 
 	var request publicreportsapi.BaseDataTrendsPost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	location := loadLocation(user.Timezone)
@@ -268,14 +269,14 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 		EndDate:     endDate,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	members, err := handler.membership.ListWorkspaceMembers(
 		ctx.Request().Context(), int64(workspaceID), user.ID,
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	userNames := map[int64]string{}
 	for _, m := range members {
@@ -367,7 +368,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdComparative(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -377,7 +378,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdComparative(
 
 	var request publicreportsapi.ComparativeComparativePost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	location := loadLocation(user.Timezone)
@@ -405,7 +406,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdComparative(
 
 	entries, err := handler.reports.BuildWeeklyReportEntries(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	resolution := lo.FromPtrOr(request.Resolution, "day")
@@ -464,7 +465,7 @@ func loadLocation(timezone string) *time.Location {
 func parseDate(s string, loc *time.Location) (time.Time, error) {
 	t, err := time.ParseInLocation(time.DateOnly, s, loc)
 	if err != nil {
-		return time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		return time.Time{}, httperror.New(http.StatusBadRequest, "Wrong format date").WithCause(err)
 	}
 	return t, nil
 }
@@ -477,7 +478,7 @@ func parseDate(s string, loc *time.Location) (time.Time, error) {
 // endpoints. When both are present, end must not precede start.
 func resolveDateBounds(startStr *string, endStr *string, loc *time.Location) (time.Time, time.Time, error) {
 	if startStr == nil && endStr == nil {
-		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
+		return time.Time{}, time.Time{}, httperror.New(http.StatusBadRequest, "At least one parameter must be set")
 	}
 	if startStr == nil {
 		startStr = endStr
@@ -487,14 +488,14 @@ func resolveDateBounds(startStr *string, endStr *string, loc *time.Location) (ti
 	}
 	start, err := time.ParseInLocation(time.DateOnly, *startStr, loc)
 	if err != nil {
-		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		return time.Time{}, time.Time{}, httperror.New(http.StatusBadRequest, "Wrong format date").WithCause(err)
 	}
 	end, err := time.ParseInLocation(time.DateOnly, *endStr, loc)
 	if err != nil {
-		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		return time.Time{}, time.Time{}, httperror.New(http.StatusBadRequest, "Wrong format date").WithCause(err)
 	}
 	if end.Before(start) {
-		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "end date must not be before start date")
+		return time.Time{}, time.Time{}, httperror.New(http.StatusBadRequest, "end date must not be before start date")
 	}
 	return start, end, nil
 }
@@ -542,4 +543,3 @@ func sortedKeys(m map[string]struct{}) []string {
 	slices.Sort(result)
 	return result
 }
-

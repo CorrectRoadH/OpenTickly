@@ -6,25 +6,26 @@ import (
 	"strings"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identitysaml "opentoggl/backend/apps/backend/internal/identity/saml"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handlers *routeHandlers) getWorkspaceSsoConfig(ctx echo.Context) error {
+func (handlers *routeHandlers) getWorkspaceSsoConfig(ctx *echo.Context) error {
 	workspaceID, err := handlers.authorizeWorkspaceAdmin(ctx)
 	if err != nil {
 		return err
 	}
 	config, _, getErr := handlers.samlConfig.Get(ctx.Request().Context(), workspaceID)
 	if getErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(getErr)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(getErr)
 	}
 	return ctx.JSON(http.StatusOK, handlers.ssoConfigView(ctx, config))
 }
 
-func (handlers *routeHandlers) updateWorkspaceSsoConfig(ctx echo.Context) error {
+func (handlers *routeHandlers) updateWorkspaceSsoConfig(ctx *echo.Context) error {
 	workspaceID, err := handlers.authorizeWorkspaceAdmin(ctx)
 	if err != nil {
 		return err
@@ -51,24 +52,24 @@ func (handlers *routeHandlers) updateWorkspaceSsoConfig(ctx echo.Context) error 
 	}
 	if upsertErr := handlers.samlConfig.Upsert(ctx.Request().Context(), config); upsertErr != nil {
 		if errors.Is(upsertErr, errSSOConfigConflict) {
-			return echo.NewHTTPError(http.StatusConflict, upsertErr.Error())
+			return httperror.New(http.StatusConflict, upsertErr.Error())
 		}
 		if strings.Contains(upsertErr.Error(), "tenant_workspace_sso_config_domain_key") {
-			return echo.NewHTTPError(http.StatusConflict, "This email domain is already claimed by another workspace.")
+			return httperror.New(http.StatusConflict, "This email domain is already claimed by another workspace.")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(upsertErr)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(upsertErr)
 	}
 
 	saved, _, getErr := handlers.samlConfig.Get(ctx.Request().Context(), workspaceID)
 	if getErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(getErr)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(getErr)
 	}
 	return ctx.JSON(http.StatusOK, handlers.ssoConfigView(ctx, saved))
 }
 
 // authorizeWorkspaceAdmin enforces an authenticated session whose current
 // workspace matches the path and whose member role can administer it.
-func (handlers *routeHandlers) authorizeWorkspaceAdmin(ctx echo.Context) (int64, error) {
+func (handlers *routeHandlers) authorizeWorkspaceAdmin(ctx *echo.Context) (int64, error) {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return 0, response
 	}
@@ -82,14 +83,14 @@ func (handlers *routeHandlers) authorizeWorkspaceAdmin(ctx echo.Context) (int64,
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return 0, echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		return 0, httperror.New(http.StatusForbidden, "Forbidden").WithCause(err)
 	}
 	member, found, err := handlers.membershipApp.FindWorkspaceMemberByUserID(ctx.Request().Context(), workspaceID, user.ID)
 	if err != nil {
-		return 0, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return 0, httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	if !found || member.Role != membershipdomain.WorkspaceRoleAdmin {
-		return 0, echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return 0, httperror.New(http.StatusForbidden, "Forbidden")
 	}
 	return workspaceID, nil
 }
@@ -97,7 +98,7 @@ func (handlers *routeHandlers) authorizeWorkspaceAdmin(ctx echo.Context) (int64,
 // ssoConfigView projects the persisted config plus the generated Service Provider
 // integration details (Entity ID, ACS URL, Sign-in URL, metadata URL) the admin
 // pastes into their identity provider.
-func (handlers *routeHandlers) ssoConfigView(ctx echo.Context, config samlWorkspaceConfig) webapi.WorkspaceSsoConfig {
+func (handlers *routeHandlers) ssoConfigView(ctx *echo.Context, config samlWorkspaceConfig) webapi.WorkspaceSsoConfig {
 	base := handlers.samlBaseURL(ctx)
 	return webapi.WorkspaceSsoConfig{
 		Revision:       config.Revision,

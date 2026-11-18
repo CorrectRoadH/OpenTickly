@@ -8,10 +8,11 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -20,7 +21,7 @@ import (
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchClients(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	if _, err := handler.requireReportsScope(ctx, int64(workspaceID)); err != nil {
@@ -29,7 +30,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchClients(
 
 	var request publicreportsapi.DtoClientFilterParamsRequest
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	filter := catalogapplication.ListClientsFilter{}
@@ -39,7 +40,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchClients(
 
 	clients, err := handler.catalog.ListClients(ctx.Request().Context(), int64(workspaceID), filter)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	result := make([]publicreportsapi.DtoClientFilterResponse, 0, len(clients))
@@ -61,7 +62,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchClients(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchProjects(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	if _, err := handler.requireReportsScope(ctx, int64(workspaceID)); err != nil {
@@ -70,7 +71,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchProjects(
 
 	var request publicreportsapi.DtoProjectFilterParamRequest
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	filter := catalogapplication.ListProjectsFilter{Active: request.IsActive}
@@ -80,7 +81,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchProjects(
 
 	projects, err := handler.catalog.ListProjects(ctx.Request().Context(), int64(workspaceID), filter)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	result := make([]publicreportsapi.DtoProjectFilterResponse, 0, len(projects))
@@ -112,7 +113,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchProjects(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -122,14 +123,14 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchUsers(
 
 	var request publicreportsapi.DtoUserFilterParamsRequest
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	members, err := handler.membership.ListWorkspaceMembers(
 		ctx.Request().Context(), int64(workspaceID), user.ID,
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	result := make([]publicreportsapi.DtoUserFilterResponse, 0, len(members))
@@ -154,7 +155,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchUsers(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntries(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -196,7 +197,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntries(
 
 	entries, err := handler.reports.BuildWeeklyReportEntries(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	// Filter by billable.
@@ -260,12 +261,12 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntries(
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesExtension(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 	extension string,
 ) error {
 	if extension != "csv" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Only csv export is currently supported")
+		return httperror.New(http.StatusBadRequest, "Only csv export is currently supported")
 	}
 
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -307,7 +308,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesExt
 
 	entries, err := handler.reports.BuildWeeklyReportEntries(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	ctx.Response().Header().Set("Content-Type", "text/csv")
@@ -339,10 +340,10 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesExt
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesPdf(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "PDF export is not yet supported")
+	return httperror.New(http.StatusNotImplemented, "PDF export is not yet supported")
 }
 
 // ---------------------------------------------------------------------------
@@ -350,7 +351,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesPdf
 // ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesTotals(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceID int,
 ) error {
 	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
@@ -392,7 +393,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesTot
 
 	entries, err := handler.reports.BuildWeeklyReportEntries(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	totalSeconds := 0

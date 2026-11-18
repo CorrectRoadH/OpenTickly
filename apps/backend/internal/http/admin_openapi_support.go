@@ -3,7 +3,7 @@ package httpapp
 import (
 	adminapi "opentoggl/backend/apps/backend/internal/http/generated/admin"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func NewGeneratedAdminRouteRegistrar(handler adminapi.ServerInterface) (RouteRegistrar, error) {

@@ -6,12 +6,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) PostPublicTrackProjectTask(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackProjectTask(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -42,7 +43,7 @@ func (handler *Handler) PostPublicTrackProjectTask(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -50,7 +51,7 @@ func (handler *Handler) PostPublicTrackProjectTask(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, taskViewToAPI(task))
 }
 
-func (handler *Handler) PutPublicTrackProjectTask(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackProjectTask(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -91,7 +92,7 @@ func (handler *Handler) PutPublicTrackProjectTask(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, taskViewToAPI(task))
 }
 
-func (handler *Handler) DeletePublicTrackProjectTask(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackProjectTask(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")

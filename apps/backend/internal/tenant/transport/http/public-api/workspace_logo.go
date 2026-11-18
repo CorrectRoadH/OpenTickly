@@ -13,11 +13,11 @@ import (
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackWorkspaceLogo(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceLogo(ctx *echo.Context) error {
 	view, err := handler.loadPublicTrackWorkspaceForLogo(ctx)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func (handler *Handler) GetPublicTrackWorkspaceLogo(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, workspaceLogoBody(view))
 }
 
-func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -77,7 +77,7 @@ func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx echo.Context) error {
 	return handler.GetPublicTrackWorkspaceLogo(ctx)
 }
 
-func (handler *Handler) DeletePublicTrackWorkspaceLogo(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackWorkspaceLogo(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -101,7 +101,7 @@ func (handler *Handler) DeletePublicTrackWorkspaceLogo(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, publictrackapi.ModelsLogo{Logo: lo.ToPtr("")})
 }
 
-func (handler *Handler) loadPublicTrackWorkspaceForLogo(ctx echo.Context) (tenantapplication.WorkspaceView, error) {
+func (handler *Handler) loadPublicTrackWorkspaceForLogo(ctx *echo.Context) (tenantapplication.WorkspaceView, error) {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return tenantapplication.WorkspaceView{}, ctx.JSON(http.StatusBadRequest, "Bad Request")

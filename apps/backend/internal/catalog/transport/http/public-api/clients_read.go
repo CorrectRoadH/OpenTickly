@@ -8,12 +8,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackClients(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackClients(ctx *echo.Context) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
@@ -36,7 +37,7 @@ func (handler *Handler) GetPublicTrackClients(ctx echo.Context) error {
 	for _, workspaceID := range workspaceIDs {
 		views, err := handler.catalog.ListClients(ctx.Request().Context(), workspaceID, filter)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		for _, view := range views {
 			clients = append(clients, clientViewToAPI(view))
@@ -45,7 +46,7 @@ func (handler *Handler) GetPublicTrackClients(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, clients)
 }
 
-func (handler *Handler) GetPublicTrackClientsData(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackClientsData(ctx *echo.Context) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func (handler *Handler) GetPublicTrackClientsData(ctx echo.Context) error {
 				// whole request.
 				continue
 			}
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		for _, view := range views {
 			if _, exists := clientsByID[view.ID]; !exists {
@@ -87,7 +88,7 @@ func (handler *Handler) GetPublicTrackClientsData(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, clients)
 }
 
-func (handler *Handler) GetPublicTrackClient(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackClient(ctx *echo.Context) error {
 	clientID, ok := parsePathID(ctx, "client_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -106,11 +107,11 @@ func (handler *Handler) GetPublicTrackClient(ctx echo.Context) error {
 			if errors.Is(err, catalogapplication.ErrClientNotFound) {
 				continue
 			}
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 	}
-	return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	return httperror.New(http.StatusNotFound, "Not Found")
 }
 
 func clientViewToAPI(view catalogapplication.ClientView) publictrackapi.ModelsClient {

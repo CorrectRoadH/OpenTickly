@@ -4,18 +4,19 @@ import (
 	"net/http"
 
 	publicwebhooksapi "opentoggl/backend/apps/backend/internal/http/generated/publicwebhooks"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
 	"opentoggl/backend/apps/backend/internal/webhooks/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
 }
 
 type Handler struct {
@@ -27,12 +28,12 @@ func NewHandler(scope ScopeAuthorizer, webhooks *webhooksapplication.Service) *H
 	return &Handler{scope: scope, webhooks: webhooks}
 }
 
-func (h *Handler) GetEventFilters(ctx echo.Context) error {
+func (h *Handler) GetEventFilters(ctx *echo.Context) error {
 	filters := domain.SupportedEventFilters()
 	return ctx.JSON(http.StatusOK, filters)
 }
 
-func (h *Handler) GetWorkspaceLimits(ctx echo.Context, workspaceID int) error {
+func (h *Handler) GetWorkspaceLimits(ctx *echo.Context, workspaceID int) error {
 	maxWebhooks, maxEvents := domain.DefaultLimits()
 	return ctx.JSON(http.StatusOK, publicwebhooksapi.LimitsWorkspaceLimits{
 		MaxWebhooks:         lo.ToPtr(maxWebhooks),
@@ -40,13 +41,13 @@ func (h *Handler) GetWorkspaceLimits(ctx echo.Context, workspaceID int) error {
 	})
 }
 
-func (h *Handler) GetStatus(ctx echo.Context) error {
+func (h *Handler) GetStatus(ctx *echo.Context) error {
 	return ctx.JSON(http.StatusOK, publicwebhooksapi.StatusResponse{
 		Status: lo.ToPtr("ok"),
 	})
 }
 
-func (h *Handler) GetSubscriptions(ctx echo.Context, workspaceID int) error {
+func (h *Handler) GetSubscriptions(ctx *echo.Context, workspaceID int) error {
 	user, err := h.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -59,7 +60,7 @@ func (h *Handler) GetSubscriptions(ctx echo.Context, workspaceID int) error {
 
 	subs, err := h.webhooks.ListSubscriptions(ctx.Request().Context(), int64(workspaceID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	result := make([]publicwebhooksapi.ModelsWebhookSubscription, 0, len(subs))
@@ -69,7 +70,7 @@ func (h *Handler) GetSubscriptions(ctx echo.Context, workspaceID int) error {
 	return ctx.JSON(http.StatusOK, result)
 }
 
-func (h *Handler) PostSubscription(ctx echo.Context, workspaceID int) error {
+func (h *Handler) PostSubscription(ctx *echo.Context, workspaceID int) error {
 	user, err := h.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -80,7 +81,7 @@ func (h *Handler) PostSubscription(ctx echo.Context, workspaceID int) error {
 
 	var body publicwebhooksapi.ModelsWebhookSubscription
 	if err := ctx.Bind(&body); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	cmd := webhooksapplication.CreateSubscriptionCommand{
@@ -94,12 +95,12 @@ func (h *Handler) PostSubscription(ctx echo.Context, workspaceID int) error {
 
 	sub, err := h.webhooks.CreateSubscription(ctx.Request().Context(), cmd)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperror.New(http.StatusBadRequest, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, subscriptionToAPI(sub))
 }
 
-func (h *Handler) UpdateSubscription(ctx echo.Context, workspaceID int, subscriptionID int) error {
+func (h *Handler) UpdateSubscription(ctx *echo.Context, workspaceID int, subscriptionID int) error {
 	user, err := h.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -110,7 +111,7 @@ func (h *Handler) UpdateSubscription(ctx echo.Context, workspaceID int, subscrip
 
 	var body publicwebhooksapi.ModelsWebhookSubscription
 	if err := ctx.Bind(&body); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	cmd := webhooksapplication.UpdateSubscriptionCommand{
@@ -125,12 +126,12 @@ func (h *Handler) UpdateSubscription(ctx echo.Context, workspaceID int, subscrip
 
 	sub, err := h.webhooks.UpdateSubscription(ctx.Request().Context(), cmd)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperror.New(http.StatusBadRequest, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, subscriptionToAPI(sub))
 }
 
-func (h *Handler) PatchSubscription(ctx echo.Context, workspaceID int, subscriptionID int) error {
+func (h *Handler) PatchSubscription(ctx *echo.Context, workspaceID int, subscriptionID int) error {
 	user, err := h.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -141,7 +142,7 @@ func (h *Handler) PatchSubscription(ctx echo.Context, workspaceID int, subscript
 
 	var body publicwebhooksapi.SubscriptionsState
 	if err := ctx.Bind(&body); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	sub, err := h.webhooks.PatchSubscription(
@@ -150,12 +151,12 @@ func (h *Handler) PatchSubscription(ctx echo.Context, workspaceID int, subscript
 		lo.FromPtrOr(body.Enabled, false),
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperror.New(http.StatusBadRequest, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, subscriptionToAPI(sub))
 }
 
-func (h *Handler) DeleteSubscription(ctx echo.Context, workspaceID int, subscriptionID int) error {
+func (h *Handler) DeleteSubscription(ctx *echo.Context, workspaceID int, subscriptionID int) error {
 	if _, err := h.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
@@ -165,12 +166,12 @@ func (h *Handler) DeleteSubscription(ctx echo.Context, workspaceID int, subscrip
 
 	sub, err := h.webhooks.DeleteSubscription(ctx.Request().Context(), int64(workspaceID), int64(subscriptionID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		return httperror.New(http.StatusNotFound, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, subscriptionToAPI(sub))
 }
 
-func (h *Handler) PostPing(ctx echo.Context, workspaceID int, subscriptionID int) error {
+func (h *Handler) PostPing(ctx *echo.Context, workspaceID int, subscriptionID int) error {
 	if _, err := h.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
@@ -179,17 +180,17 @@ func (h *Handler) PostPing(ctx echo.Context, workspaceID int, subscriptionID int
 	}
 
 	if err := h.webhooks.Ping(ctx.Request().Context(), int64(workspaceID), int64(subscriptionID)); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperror.New(http.StatusBadRequest, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, publicwebhooksapi.PingResponse{
 		Status: lo.ToPtr("ok"),
 	})
 }
 
-func (h *Handler) GetValidate(ctx echo.Context, workspaceID int, subscriptionID int, validationCode string) error {
+func (h *Handler) GetValidate(ctx *echo.Context, workspaceID int, subscriptionID int, validationCode string) error {
 	_, err := h.webhooks.Validate(ctx.Request().Context(), int64(workspaceID), int64(subscriptionID), validationCode)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperror.New(http.StatusBadRequest, err.Error())
 	}
 	return ctx.String(http.StatusOK, "Subscription validated successfully")
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 )
 

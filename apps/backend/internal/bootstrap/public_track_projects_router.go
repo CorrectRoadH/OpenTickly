@@ -3,23 +3,23 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (server *publicTrackOpenAPIServer) GetMeProjects(
-	ctx echo.Context,
+	ctx *echo.Context,
 	params publictrackapi.GetMeProjectsParams,
 ) error {
 	_ = params
 	return server.catalog.GetPublicTrackProjects(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetMeProjectsPaginated(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetMeProjectsPaginated(ctx *echo.Context) error {
 	return server.catalog.GetPublicTrackProjects(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceProjectUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceProjectUsersParams,
 ) error {
@@ -28,13 +28,13 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceProjectUsers(
 	return server.catalog.GetPublicTrackProjectUsers(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceProjectUsers(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceProjectUsers(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.PostPublicTrackProjectUser(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PostWorkspaceProjectUsersPaginated(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.PostWorkspaceProjectUsersPaginatedParams,
 ) error {
@@ -44,7 +44,7 @@ func (server *publicTrackOpenAPIServer) PostWorkspaceProjectUsersPaginated(
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceProjectUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectUserId int,
 ) error {
@@ -54,7 +54,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceProjectUsers(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceProjectUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectUserId int,
 ) error {
@@ -64,7 +64,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceProjectUsers(
 }
 
 func (server *publicTrackOpenAPIServer) GetProjects(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetProjectsParams,
 ) error {
@@ -73,31 +73,31 @@ func (server *publicTrackOpenAPIServer) GetProjects(
 	return server.catalog.GetPublicTrackProjects(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetProjectsTemplates(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetProjectsTemplates(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.GetPublicTrackProjectTemplates(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PostWorkspaceProjectCreate(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 ) error {
 	_ = workspaceId
 	return server.catalog.PostPublicTrackProjects(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) ProjectTaskCount(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) ProjectTaskCount(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.ProjectTaskCount(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) ProjectUserCount(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) ProjectUserCount(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.catalog.ProjectUserCount(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceProject(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	params publictrackapi.DeleteWorkspaceProjectParams,
@@ -108,7 +108,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceProject(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectId(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
@@ -118,7 +118,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectI
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceProject(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
@@ -128,7 +128,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceProject(
 }
 
 func (server *publicTrackOpenAPIServer) PostPinnedProject(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
@@ -138,7 +138,7 @@ func (server *publicTrackOpenAPIServer) PostPinnedProject(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectIdStatistics(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
@@ -148,7 +148,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectI
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceProjectPeriods(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectId int,
 	params publictrackapi.GetWorkspaceProjectPeriodsParams,
@@ -160,7 +160,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceProjectPeriods(
 }
 
 func (server *publicTrackOpenAPIServer) PatchWorkspaceProjects(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	projectIds string,
 ) error {
@@ -170,7 +170,7 @@ func (server *publicTrackOpenAPIServer) PatchWorkspaceProjects(
 }
 
 func (server *publicTrackOpenAPIServer) PostWorkspacesWorkspaceIdProjectsBillableAmounts(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 ) error {
 	_ = workspaceId

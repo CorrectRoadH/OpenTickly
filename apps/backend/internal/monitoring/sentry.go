@@ -1,14 +1,13 @@
 package monitoring
 
 import (
-	"errors"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 var projectPath = regexp.MustCompile(`^/[0-9]+$`)
@@ -49,7 +48,7 @@ func Options(dsn, environment, release string, transport sentry.Transport) sentr
 }
 func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) (err error) {
+		return func(c *echo.Context) (err error) {
 			if client == nil {
 				return next(c)
 			}
@@ -65,19 +64,18 @@ func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 					transaction.Finish()
 					panic(recovered)
 				}
-				status := c.Response().Status
+				_, status := echo.ResolveResponseStatus(c.Response(), err)
 				if err != nil {
-					status = 500
-					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
-						status = httpErr.Code
+					status = echo.StatusCode(err)
+					if status == 0 {
+						status = 500
 					}
 					if status >= 500 {
 						hub.CaptureException(err)
 						transaction.Status = sentry.SpanStatusInternalError
 					}
 				}
-				if err == nil && c.Response().Status >= 500 {
+				if err == nil && status >= 500 {
 					hub.CaptureMessage("Application error")
 					transaction.Status = sentry.SpanStatusInternalError
 				}

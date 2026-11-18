@@ -10,21 +10,21 @@ import (
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
-	RequirePublicTrackTrackingScope(ctx echo.Context) (int64, *identityapplication.UserSnapshot, error)
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
+	RequirePublicTrackTrackingScope(ctx *echo.Context) (int64, *identityapplication.UserSnapshot, error)
 	// ListPublicTrackUserWorkspaces returns every workspace the authenticated
 	// user belongs to. The /me/time_entries routes read across all of them,
 	// matching official Toggl v9 semantics, instead of collapsing to the
 	// "home" workspace — web_user_homes drifts out of sync with
 	// users.default_workspace_id, and when it does, entries created through
 	// the default workspace become invisible to the list endpoint.
-	ListPublicTrackUserWorkspaces(ctx echo.Context) ([]int64, error)
+	ListPublicTrackUserWorkspaces(ctx *echo.Context) ([]int64, error)
 }
 
 type Handler struct {
@@ -41,7 +41,7 @@ func NewHandler(tracking *trackingapplication.Service, catalog *catalogapplicati
 	}
 }
 
-func parsePathID(ctx echo.Context, key string) (int64, bool) {
+func parsePathID(ctx *echo.Context, key string) (int64, bool) {
 	value, err := strconv.ParseInt(ctx.Param(key), 10, 64)
 	if err != nil {
 		return 0, false
@@ -74,7 +74,7 @@ func intsFromInt64s(values []int64) []int {
 	return converted
 }
 
-func queryInt(ctx echo.Context, key string, fallback int) int {
+func queryInt(ctx *echo.Context, key string, fallback int) int {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return fallback
@@ -86,7 +86,7 @@ func queryInt(ctx echo.Context, key string, fallback int) int {
 	return parsed
 }
 
-func queryBool(ctx echo.Context, key string) (bool, bool) {
+func queryBool(ctx *echo.Context, key string) (bool, bool) {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return false, false

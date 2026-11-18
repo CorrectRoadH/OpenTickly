@@ -3,38 +3,38 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (server *publicTrackOpenAPIServer) GetOrganizations(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetOrganizations(ctx *echo.Context) error {
 	return server.tenant.GetPublicTrackOrganizations(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetQuota(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetQuota(ctx *echo.Context) error {
 	return server.tenant.GetPublicTrackQuota(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostOrganization(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) PostOrganization(ctx *echo.Context) error {
 	return server.tenant.PostPublicTrackOrganization(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostOrganizationWorkspaces(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) PostOrganizationWorkspaces(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.PostPublicTrackOrganizationWorkspace(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetOrganization(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) GetOrganization(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.GetPublicTrackOrganization(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetOrganizationOwner(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) GetOrganizationOwner(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.GetPublicTrackOrganizationOwner(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetOrganizationGroups(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	params publictrackapi.GetOrganizationGroupsParams,
 ) error {
@@ -44,7 +44,7 @@ func (server *publicTrackOpenAPIServer) GetOrganizationGroups(
 }
 
 func (server *publicTrackOpenAPIServer) GetOrganizationUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	params publictrackapi.GetOrganizationUsersParams,
 ) error {
@@ -53,7 +53,7 @@ func (server *publicTrackOpenAPIServer) GetOrganizationUsers(
 }
 
 func (server *publicTrackOpenAPIServer) GetOrganizationUsersDetailed(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	params publictrackapi.GetOrganizationUsersDetailedParams,
 ) error {
@@ -61,62 +61,62 @@ func (server *publicTrackOpenAPIServer) GetOrganizationUsersDetailed(
 	return server.tenant.GetPublicTrackOrganizationUsersDetailed(ctx, params)
 }
 
-func (server *publicTrackOpenAPIServer) GetOrganizationRoles(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) GetOrganizationRoles(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.GetPublicTrackOrganizationRoles(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetOrganizationSubscription(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) GetOrganizationSubscription(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.GetPublicTrackOrganizationSubscription(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesStatistics(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesStatistics(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.GetPublicTrackOrganizationWorkspacesStatistics(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PutOrganization(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) PutOrganization(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.PutPublicTrackOrganization(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspace(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspace(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.GetPublicTrackWorkspace(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspacePreferences(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspacePreferences(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.GetPublicTrackWorkspacePreferences(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspacePreferences(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspacePreferences(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.PostPublicTrackWorkspacePreferences(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaces(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaces(ctx *echo.Context) error {
 	return server.tenant.GetPublicTrackWorkspaces(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PutWorkspaces(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PutWorkspaces(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.PutPublicTrackWorkspace(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceSubscription(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceSubscription(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.GetPublicTrackWorkspaceSubscription(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceStatistics(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceStatistics(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.GetPublicTrackWorkspaceStatistics(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesGroups(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	workspaceId int,
 ) error {
@@ -126,7 +126,7 @@ func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesGroups(
 }
 
 func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesWorkspaceusers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	workspaceId int,
 	params publictrackapi.GetOrganizationWorkspacesWorkspaceusersParams,
@@ -137,25 +137,25 @@ func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesWorkspaceusers(
 	return server.tenant.GetPublicTrackOrganizationWorkspaceUsers(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetOwnershipTransfers(ctx echo.Context, organizationId int, params publictrackapi.GetOwnershipTransfersParams) error {
+func (server *publicTrackOpenAPIServer) GetOwnershipTransfers(ctx *echo.Context, organizationId int, params publictrackapi.GetOwnershipTransfersParams) error {
 	_ = organizationId
 	_ = params
 	return server.tenant.GetPublicTrackOwnershipTransfers(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostOwnershipTransfer(ctx echo.Context, organizationId int) error {
+func (server *publicTrackOpenAPIServer) PostOwnershipTransfer(ctx *echo.Context, organizationId int) error {
 	_ = organizationId
 	return server.tenant.PostPublicTrackOwnershipTransfer(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetOwnershipTransfer(ctx echo.Context, organizationId int, transferId int) error {
+func (server *publicTrackOpenAPIServer) GetOwnershipTransfer(ctx *echo.Context, organizationId int, transferId int) error {
 	_ = organizationId
 	_ = transferId
 	return server.tenant.GetPublicTrackOwnershipTransfer(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PostOwnershipTransferActions(
-	ctx echo.Context,
+	ctx *echo.Context,
 	organizationId int,
 	transferId int,
 	action publictrackapi.PostOwnershipTransferActionsParamsAction,
@@ -166,33 +166,33 @@ func (server *publicTrackOpenAPIServer) PostOwnershipTransferActions(
 	return server.tenant.PostPublicTrackOwnershipTransferActions(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostEnableSso(ctx echo.Context) error {
+func (server *publicTrackOpenAPIServer) PostEnableSso(ctx *echo.Context) error {
 	return server.tenant.PostEnableSso(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetWorkspaceSso(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceSso(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.GetWorkspaceSso(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PutWorkspaceSso(ctx echo.Context, workspaceId int, ssoProfileId int) error {
+func (server *publicTrackOpenAPIServer) PutWorkspaceSso(ctx *echo.Context, workspaceId int, ssoProfileId int) error {
 	_ = workspaceId
 	_ = ssoProfileId
 	return server.tenant.PutWorkspaceSso(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) DeleteWorkspaceLinkedSsoProfiles(ctx echo.Context, workspaceId int, ssoProfileId int) error {
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceLinkedSsoProfiles(ctx *echo.Context, workspaceId int, ssoProfileId int) error {
 	_ = workspaceId
 	_ = ssoProfileId
 	return server.tenant.DeleteWorkspaceLinkedSsoProfiles(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostSaml2Callback(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostSaml2Callback(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.tenant.PostSaml2Callback(ctx, workspaceId)
 }
 
-func (server *publicTrackOpenAPIServer) GetSaml2LoginUrl(ctx echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
+func (server *publicTrackOpenAPIServer) GetSaml2LoginUrl(ctx *echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
 	_ = params
 	return server.tenant.GetSaml2LoginUrl(ctx, params)
 }

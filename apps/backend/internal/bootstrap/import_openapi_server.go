@@ -4,7 +4,7 @@ import (
 	importapi "opentoggl/backend/apps/backend/internal/http/generated/import"
 	importingpublicapi "opentoggl/backend/apps/backend/internal/importing/transport/http/public-api"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type importOpenAPIServer struct {
@@ -30,10 +30,10 @@ func newImportOpenAPIServer(handlers *routeHandlers) importapi.ServerInterface {
 	}
 }
 
-func (server *importOpenAPIServer) CreateImportJob(ctx echo.Context) error {
+func (server *importOpenAPIServer) CreateImportJob(ctx *echo.Context) error {
 	return server.importing.CreateImportJob(ctx)
 }
 
-func (server *importOpenAPIServer) GetImportJob(ctx echo.Context, jobId string) error {
+func (server *importOpenAPIServer) GetImportJob(ctx *echo.Context, jobId string) error {
 	return server.importing.GetImportJob(ctx, jobId)
 }

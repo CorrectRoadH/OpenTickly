@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
@@ -11,11 +12,11 @@ import (
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) PostPublicTrackOrganizationWorkspace(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackOrganizationWorkspace(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -69,7 +70,7 @@ func (handler *Handler) PostPublicTrackOrganizationWorkspace(ctx echo.Context) e
 		WorkspaceID: int64(result.WorkspaceID),
 		UserID:      requester.ID,
 	}); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	view, err := handler.tenant.GetWorkspace(ctx.Request().Context(), result.WorkspaceID)
@@ -79,7 +80,7 @@ func (handler *Handler) PostPublicTrackOrganizationWorkspace(ctx echo.Context) e
 	return ctx.JSON(http.StatusOK, workspaceBody(view))
 }
 
-func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx *echo.Context) error {
 	workspace, requester, err := handler.organizationWorkspace(ctx)
 	if err != nil {
 		return err
@@ -87,7 +88,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx echo.Conte
 
 	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.OrganizationID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))
@@ -107,7 +108,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx echo.Conte
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackOrganizationWorkspaceUsers(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationWorkspaceUsers(ctx *echo.Context) error {
 	workspace, requester, err := handler.organizationWorkspace(ctx)
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceUsers(ctx echo.Contex
 
 	members, err := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspace.ID), requester.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	response := make([]publictrackapi.GithubComTogglTogglApiInternalModelsWorkspaceUser, 0, len(members))
@@ -126,15 +127,15 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceUsers(ctx echo.Contex
 }
 
 func (handler *Handler) organizationWorkspace(
-	ctx echo.Context,
+	ctx *echo.Context,
 ) (tenantapplication.WorkspaceView, *identityapplication.UserSnapshot, error) {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
-		return tenantapplication.WorkspaceView{}, nil, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return tenantapplication.WorkspaceView{}, nil, httperror.New(http.StatusBadRequest, "Bad Request")
 	}
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
-		return tenantapplication.WorkspaceView{}, nil, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return tenantapplication.WorkspaceView{}, nil, httperror.New(http.StatusBadRequest, "Bad Request")
 	}
 	requester, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
@@ -149,7 +150,7 @@ func (handler *Handler) organizationWorkspace(
 		return tenantapplication.WorkspaceView{}, nil, mapError(err)
 	}
 	if int64(workspace.OrganizationID) != organizationID {
-		return tenantapplication.WorkspaceView{}, nil, echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return tenantapplication.WorkspaceView{}, nil, httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	}
 	return workspace, requester, nil
 }

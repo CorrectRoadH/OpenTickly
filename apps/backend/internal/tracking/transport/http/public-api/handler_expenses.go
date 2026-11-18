@@ -7,13 +7,14 @@ import (
 	"time"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackExpenses(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackExpenses(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -29,14 +30,14 @@ func (handler *Handler) GetPublicTrackExpenses(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) PostPublicTrackExpense(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackExpense(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	payload, err := bindPublicTrackExpensePayload(ctx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if payload.DateOfExpense == nil {
 		today := time.Now().UTC().Format("2006-01-02")
@@ -44,7 +45,7 @@ func (handler *Handler) PostPublicTrackExpense(ctx echo.Context) error {
 	}
 	dateOfExpense, err := parseTrackDate(payload.DateOfExpense)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	expense, err := handler.tracking.CreateExpense(ctx.Request().Context(), trackingapplication.CreateExpenseCommand{
 		WorkspaceID:   workspaceID,
@@ -80,7 +81,7 @@ func expenseViewToAPI(view trackingapplication.ExpenseView) publictrackapi.Expen
 	}
 }
 
-func bindPublicTrackExpensePayload(ctx echo.Context) (publictrackapi.ExpensesExpense, error) {
+func bindPublicTrackExpensePayload(ctx *echo.Context) (publictrackapi.ExpensesExpense, error) {
 	contentType := strings.TrimSpace(ctx.Request().Header.Get(echo.HeaderContentType))
 	if strings.HasPrefix(contentType, "multipart/form-data") {
 		if _, err := ctx.FormFile("file"); err != nil {
@@ -117,7 +118,7 @@ func bindPublicTrackExpensePayload(ctx echo.Context) (publictrackapi.ExpensesExp
 	return payload, nil
 }
 
-func optionalFormStringPointer(ctx echo.Context, key string) *string {
+func optionalFormStringPointer(ctx *echo.Context, key string) *string {
 	value := strings.TrimSpace(ctx.FormValue(key))
 	if value == "" {
 		return nil
@@ -125,7 +126,7 @@ func optionalFormStringPointer(ctx echo.Context, key string) *string {
 	return &value
 }
 
-func optionalFormIntPointer(ctx echo.Context, key string) (*int, error) {
+func optionalFormIntPointer(ctx *echo.Context, key string) (*int, error) {
 	value := strings.TrimSpace(ctx.FormValue(key))
 	if value == "" {
 		return nil, nil

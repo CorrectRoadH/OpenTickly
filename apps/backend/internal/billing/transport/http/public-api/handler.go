@@ -8,8 +8,9 @@ import (
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -27,7 +28,7 @@ func NewHandler(
 	return &Handler{billing: billing, invoices: invoices, scope: scope}
 }
 
-func (handler *Handler) GetPublicTrackPlans(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackPlans(ctx *echo.Context) error {
 	plans := make([]publictrackapi.ModelsPlanWithFeatures, 0, len(handler.billing.AvailablePlans()))
 	for _, plan := range handler.billing.AvailablePlans() {
 		features := make([]publictrackapi.GithubComTogglTogglApiInternalModelsPlanFeature, 0)
@@ -52,7 +53,7 @@ func (handler *Handler) GetPublicTrackPlans(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, plans)
 }
 
-func (handler *Handler) GetPublicTrackOrganizationPlans(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationPlans(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -71,7 +72,7 @@ func (handler *Handler) GetPublicTrackOrganizationPlans(ctx echo.Context) error 
 	})
 }
 
-func (handler *Handler) GetPublicTrackOrganizationPlan(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationPlan(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -81,12 +82,12 @@ func (handler *Handler) GetPublicTrackOrganizationPlan(ctx echo.Context) error {
 	}
 	planID, err := strconv.Atoi(ctx.Param("plan_id"))
 	if err != nil || planID <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	availablePlans := handler.billing.AvailablePlans()
 	if planID > len(availablePlans) {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	}
 	plan := availablePlans[planID-1]
 	name := strings.ToUpper(string(plan.Plan[:1])) + string(plan.Plan[1:])
@@ -96,7 +97,7 @@ func (handler *Handler) GetPublicTrackOrganizationPlan(ctx echo.Context) error {
 	})
 }
 
-func (handler *Handler) GetPublicTrackOrganizationUsage(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationUsage(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")

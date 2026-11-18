@@ -5,10 +5,10 @@ import (
 
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func (handlers *routeHandlers) workspaceCapabilities(ctx echo.Context) error {
+func (handlers *routeHandlers) workspaceCapabilities(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}
@@ -26,7 +26,7 @@ func (handlers *routeHandlers) workspaceCapabilities(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, tenantweb.CapabilitySnapshotToWeb(body))
 }
 
-func (handlers *routeHandlers) workspaceQuota(ctx echo.Context) error {
+func (handlers *routeHandlers) workspaceQuota(ctx *echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
 	}

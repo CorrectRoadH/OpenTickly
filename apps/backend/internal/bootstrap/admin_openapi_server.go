@@ -16,7 +16,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/platform"
 	"opentoggl/backend/apps/backend/internal/platform/websession"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func newAdminRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
@@ -62,46 +62,46 @@ type adminOpenAPIServer struct {
 	handler *instanceadmintransport.Handler
 }
 
-func (s *adminOpenAPIServer) GetBootstrapState(ctx echo.Context) error {
+func (s *adminOpenAPIServer) GetBootstrapState(ctx *echo.Context) error {
 	return s.handler.GetBootstrapState(ctx)
 }
-func (s *adminOpenAPIServer) BootstrapInstanceAdmin(ctx echo.Context) error {
+func (s *adminOpenAPIServer) BootstrapInstanceAdmin(ctx *echo.Context) error {
 	return s.handler.BootstrapInstanceAdmin(ctx)
 }
-func (s *adminOpenAPIServer) GetInstanceFeatureGate(ctx echo.Context, capabilityKey string) error {
+func (s *adminOpenAPIServer) GetInstanceFeatureGate(ctx *echo.Context, capabilityKey string) error {
 	return s.handler.GetInstanceFeatureGate(ctx, capabilityKey)
 }
-func (s *adminOpenAPIServer) GetInstanceConfig(ctx echo.Context) error {
+func (s *adminOpenAPIServer) GetInstanceConfig(ctx *echo.Context) error {
 	return s.handler.GetInstanceConfig(ctx)
 }
-func (s *adminOpenAPIServer) UpdateInstanceConfig(ctx echo.Context) error {
+func (s *adminOpenAPIServer) UpdateInstanceConfig(ctx *echo.Context) error {
 	return s.handler.UpdateInstanceConfig(ctx)
 }
-func (s *adminOpenAPIServer) SendTestEmail(ctx echo.Context) error {
+func (s *adminOpenAPIServer) SendTestEmail(ctx *echo.Context) error {
 	return s.handler.SendTestEmail(ctx)
 }
-func (s *adminOpenAPIServer) ListOrganizations(ctx echo.Context) error {
+func (s *adminOpenAPIServer) ListOrganizations(ctx *echo.Context) error {
 	return s.handler.ListOrganizations(ctx)
 }
-func (s *adminOpenAPIServer) GetInstanceVersion(ctx echo.Context) error {
+func (s *adminOpenAPIServer) GetInstanceVersion(ctx *echo.Context) error {
 	return s.handler.GetInstanceVersion(ctx)
 }
-func (s *adminOpenAPIServer) GetInstanceHealth(ctx echo.Context) error {
+func (s *adminOpenAPIServer) GetInstanceHealth(ctx *echo.Context) error {
 	return s.handler.GetInstanceHealth(ctx)
 }
-func (s *adminOpenAPIServer) GetRegistrationPolicy(ctx echo.Context) error {
+func (s *adminOpenAPIServer) GetRegistrationPolicy(ctx *echo.Context) error {
 	return s.handler.GetRegistrationPolicy(ctx)
 }
-func (s *adminOpenAPIServer) UpdateRegistrationPolicy(ctx echo.Context) error {
+func (s *adminOpenAPIServer) UpdateRegistrationPolicy(ctx *echo.Context) error {
 	return s.handler.UpdateRegistrationPolicy(ctx)
 }
-func (s *adminOpenAPIServer) ListInstanceUsers(ctx echo.Context, params adminapi.ListInstanceUsersParams) error {
+func (s *adminOpenAPIServer) ListInstanceUsers(ctx *echo.Context, params adminapi.ListInstanceUsersParams) error {
 	return s.handler.ListInstanceUsers(ctx, params)
 }
-func (s *adminOpenAPIServer) DisableInstanceUser(ctx echo.Context, userId int64) error {
+func (s *adminOpenAPIServer) DisableInstanceUser(ctx *echo.Context, userId int64) error {
 	return s.handler.DisableInstanceUser(ctx, userId)
 }
-func (s *adminOpenAPIServer) RestoreInstanceUser(ctx echo.Context, userId int64) error {
+func (s *adminOpenAPIServer) RestoreInstanceUser(ctx *echo.Context, userId int64) error {
 	return s.handler.RestoreInstanceUser(ctx, userId)
 }
 

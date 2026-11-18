@@ -8,12 +8,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackTasksBasic(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTasksBasic(ctx *echo.Context) error {
 	pageView, err := handler.listPublicTrackTasks(ctx, publicTrackTaskListQuery{
 		projectQueryKey: "project_id",
 		requireActive:   true,
@@ -39,7 +40,7 @@ func (handler *Handler) GetPublicTrackTasksBasic(ctx echo.Context) error {
 	})
 }
 
-func (handler *Handler) GetPublicTrackTasks(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTasks(ctx *echo.Context) error {
 	pageView, err := handler.listPublicTrackTasks(ctx, publicTrackTaskListQuery{
 		projectQueryKey: "pid",
 		defaultPerPage:  50,
@@ -61,7 +62,7 @@ func (handler *Handler) GetPublicTrackTasks(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, tasks)
 }
 
-func (handler *Handler) GetPublicTrackWorkspaceTasksData(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWorkspaceTasksData(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -79,7 +80,7 @@ func (handler *Handler) GetPublicTrackWorkspaceTasksData(ctx echo.Context) error
 		Search:  ctx.QueryParam("search"),
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
@@ -97,7 +98,7 @@ func (handler *Handler) GetPublicTrackWorkspaceTasksData(ctx echo.Context) error
 	})
 }
 
-func (handler *Handler) GetPublicTrackProjectTasks(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackProjectTasks(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -117,7 +118,7 @@ func (handler *Handler) GetPublicTrackProjectTasks(ctx echo.Context) error {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	filter := catalogapplication.ListTasksFilter{
@@ -139,7 +140,7 @@ func (handler *Handler) GetPublicTrackProjectTasks(ctx echo.Context) error {
 
 	pageView, err := handler.catalog.ListTasks(ctx.Request().Context(), workspaceID, filter)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
@@ -150,7 +151,7 @@ func (handler *Handler) GetPublicTrackProjectTasks(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, tasks)
 }
 
-func (handler *Handler) GetPublicTrackProjectTask(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackProjectTask(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -175,7 +176,7 @@ func (handler *Handler) GetPublicTrackProjectTask(ctx echo.Context) error {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) || errors.Is(err, catalogapplication.ErrTaskNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 	return ctx.JSON(http.StatusOK, taskViewToAPI(view))
 }
@@ -187,7 +188,7 @@ type publicTrackTaskListQuery struct {
 }
 
 func (handler *Handler) listPublicTrackTasks(
-	ctx echo.Context,
+	ctx *echo.Context,
 	query publicTrackTaskListQuery,
 ) (catalogapplication.TaskPage, error) {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
@@ -217,7 +218,7 @@ func (handler *Handler) listPublicTrackTasks(
 	} else {
 		active, err := strconv.ParseBool(activeValue)
 		if err != nil {
-			return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+			return catalogapplication.TaskPage{}, httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 		}
 		filter.Active = &active
 	}
@@ -225,7 +226,7 @@ func (handler *Handler) listPublicTrackTasks(
 		if projectID := strings.TrimSpace(ctx.QueryParam(query.projectQueryKey)); projectID != "" {
 			parsed, err := strconv.ParseInt(projectID, 10, 64)
 			if err != nil {
-				return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+				return catalogapplication.TaskPage{}, httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 			}
 			filter.ProjectID = &parsed
 		}
@@ -248,7 +249,7 @@ func (handler *Handler) listPublicTrackTasks(
 	for _, workspaceID := range workspaceIDs {
 		pageView, err := handler.catalog.ListTasks(ctx.Request().Context(), workspaceID, filter)
 		if err != nil {
-			return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return catalogapplication.TaskPage{}, httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		aggregated.Tasks = append(aggregated.Tasks, pageView.Tasks...)
 		aggregated.TotalCount += pageView.TotalCount

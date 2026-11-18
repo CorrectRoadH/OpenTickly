@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -29,7 +30,7 @@ type bulkPatchResponse struct {
 }
 
 // PatchOrganizationUsers applies bulk operations to organization users.
-func (handler *Handler) PatchOrganizationUsers(ctx echo.Context) error {
+func (handler *Handler) PatchOrganizationUsers(ctx *echo.Context) error {
 	_, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -50,7 +51,7 @@ func (handler *Handler) PatchOrganizationUsers(ctx echo.Context) error {
 }
 
 // DeleteOrganizationUsersLeave removes the requesting user from the organization.
-func (handler *Handler) DeleteOrganizationUsersLeave(ctx echo.Context) error {
+func (handler *Handler) DeleteOrganizationUsersLeave(ctx *echo.Context) error {
 	organization, requester, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -76,7 +77,7 @@ func (handler *Handler) DeleteOrganizationUsersLeave(ctx echo.Context) error {
 
 // PutOrganizationUsers updates an organization user.
 // organization_user_id is the user's global ID (identity_users.id).
-func (handler *Handler) PutOrganizationUsers(ctx echo.Context) error {
+func (handler *Handler) PutOrganizationUsers(ctx *echo.Context) error {
 	organization, requester, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -120,20 +121,20 @@ func (handler *Handler) PutOrganizationUsers(ctx echo.Context) error {
 					RequestedBy: requester.ID,
 					Role:        desiredRole,
 				}); updateErr != nil {
-					return echo.NewHTTPError(http.StatusBadRequest, updateErr.Error())
+					return httperror.New(http.StatusBadRequest, updateErr.Error())
 				}
 			}
 		}
 	}
 	if !updated {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found in organization")
+		return httperror.New(http.StatusNotFound, "User not found in organization")
 	}
 
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
 // PatchOrganizationWorkspaceUsers applies bulk operations to workspace users.
-func (handler *Handler) PatchOrganizationWorkspaceUsers(ctx echo.Context) error {
+func (handler *Handler) PatchOrganizationWorkspaceUsers(ctx *echo.Context) error {
 	_, _, err := handler.organizationWorkspace(ctx)
 	if err != nil {
 		return err

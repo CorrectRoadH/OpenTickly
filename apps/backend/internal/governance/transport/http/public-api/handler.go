@@ -8,9 +8,10 @@ import (
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -29,10 +30,10 @@ type auditLogResponse struct {
 	CreatedAt      string `json:"created_at"`
 }
 
-func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackAuditLogs(ctx *echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid organization_id")
+		return httperror.New(http.StatusBadRequest, "invalid organization_id")
 	}
 	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
 		return err
@@ -40,11 +41,11 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 
 	from, err := parseRFC3339(ctx.Param("from"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid from date: "+err.Error()).SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "invalid from date: "+err.Error()).WithCause(err)
 	}
 	to, err := parseRFC3339(ctx.Param("to"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid to date: "+err.Error()).SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "invalid to date: "+err.Error()).WithCause(err)
 	}
 
 	filter := governanceapplication.ListAuditLogsFilter{
@@ -92,7 +93,7 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackTimeEntryConstraints(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimeEntryConstraints(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -113,7 +114,7 @@ func (handler *Handler) GetPublicTrackTimeEntryConstraints(ctx echo.Context) err
 	})
 }
 
-func (handler *Handler) PostPublicTrackTimeEntryConstraints(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackTimeEntryConstraints(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -123,7 +124,7 @@ func (handler *Handler) PostPublicTrackTimeEntryConstraints(ctx echo.Context) er
 	}
 	var payload publictrackapi.ModelsTimeEntryConstraints
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	err := handler.governance.UpdateTimeEntryConstraints(ctx.Request().Context(), governanceapplication.TimeEntryConstraintsView{
 		WorkspaceID:        workspaceID,
@@ -140,7 +141,7 @@ func (handler *Handler) PostPublicTrackTimeEntryConstraints(ctx echo.Context) er
 	})
 }
 
-func (handler *Handler) GetPublicTrackAlerts(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackAlerts(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -159,11 +160,11 @@ func (handler *Handler) GetPublicTrackAlerts(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) PostPublicTrackAlerts(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackAlerts(ctx *echo.Context) error {
 	return handler.saveAlert(ctx, nil)
 }
 
-func (handler *Handler) PutPublicTrackAlerts(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackAlerts(ctx *echo.Context) error {
 	alertID, ok := parsePathID(ctx, "alert_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -171,7 +172,7 @@ func (handler *Handler) PutPublicTrackAlerts(ctx echo.Context) error {
 	return handler.saveAlert(ctx, &alertID)
 }
 
-func (handler *Handler) DeletePublicTrackAlerts(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackAlerts(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -189,7 +190,7 @@ func (handler *Handler) DeletePublicTrackAlerts(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *Handler) GetPublicTrackTimesheetSetups(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimesheetSetups(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -215,7 +216,7 @@ func (handler *Handler) GetPublicTrackTimesheetSetups(ctx echo.Context) error {
 	})
 }
 
-func (handler *Handler) PostPublicTrackTimesheetSetups(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackTimesheetSetups(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -225,13 +226,13 @@ func (handler *Handler) PostPublicTrackTimesheetSetups(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsetupsCreatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	startDate := time.Now().UTC()
 	if payload.StartDate != nil && *payload.StartDate != "" {
 		parsed, err := parseDate(*payload.StartDate)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 		}
 		startDate = parsed
 	}
@@ -262,7 +263,7 @@ func (handler *Handler) PostPublicTrackTimesheetSetups(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) PutPublicTrackTimesheetSetups(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackTimesheetSetups(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -276,13 +277,13 @@ func (handler *Handler) PutPublicTrackTimesheetSetups(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsetupsUpdatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	var endDate *time.Time
 	if payload.EndDate != nil && *payload.EndDate != "" {
 		parsed, err := parseDate(*payload.EndDate)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 		}
 		endDate = &parsed
 	}
@@ -312,7 +313,7 @@ func (handler *Handler) PutPublicTrackTimesheetSetups(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, apiTimesheetSetup(view))
 }
 
-func (handler *Handler) DeletePublicTrackTimesheetSetups(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackTimesheetSetups(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -330,7 +331,7 @@ func (handler *Handler) DeletePublicTrackTimesheetSetups(ctx echo.Context) error
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *Handler) GetPublicTrackTimesheets(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimesheets(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -369,7 +370,7 @@ func (handler *Handler) GetPublicTrackTimesheets(ctx echo.Context) error {
 	}})
 }
 
-func (handler *Handler) GetPublicTrackMeTimesheets(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackMeTimesheets(ctx *echo.Context) error {
 	requester, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -393,7 +394,7 @@ func (handler *Handler) GetPublicTrackMeTimesheets(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func optionalQueryInt64(ctx echo.Context, key string) (int64, bool) {
+func optionalQueryInt64(ctx *echo.Context, key string) (int64, bool) {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return 0, false
@@ -405,7 +406,7 @@ func optionalQueryInt64(ctx echo.Context, key string) (int64, bool) {
 	return parsed, true
 }
 
-func queryBoolPointer(ctx echo.Context, key string) *bool {
+func queryBoolPointer(ctx *echo.Context, key string) *bool {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return nil
@@ -417,7 +418,7 @@ func queryBoolPointer(ctx echo.Context, key string) *bool {
 	return lo.ToPtr(parsed)
 }
 
-func (handler *Handler) PutPublicTrackTimesheetsBatch(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackTimesheetsBatch(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -431,14 +432,14 @@ func (handler *Handler) PutPublicTrackTimesheetsBatch(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsPutBatchTimesheetPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if payload.StartDate == nil || payload.TimesheetSetupId == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return httperror.New(http.StatusBadRequest, "Bad Request")
 	}
 	startDate, err := parseDate(*payload.StartDate)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	view, err := handler.governance.UpdateTimesheet(ctx.Request().Context(), governanceapplication.UpdateTimesheetCommand{
 		WorkspaceID:      workspaceID,
@@ -455,7 +456,7 @@ func (handler *Handler) PutPublicTrackTimesheetsBatch(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, apiTimesheet(view))
 }
 
-func (handler *Handler) GetPublicTrackTimesheetHours(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimesheetHours(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -465,14 +466,14 @@ func (handler *Handler) GetPublicTrackTimesheetHours(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsPostTimesheetHoursPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if payload.StartDate == nil || payload.TimesheetSetupId == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return httperror.New(http.StatusBadRequest, "Bad Request")
 	}
 	startDate, err := parseDate(*payload.StartDate)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	view, err := handler.governance.GetTimesheetHours(ctx.Request().Context(), workspaceID, int64(*payload.TimesheetSetupId), startDate)
 	if err != nil {
@@ -486,7 +487,7 @@ func (handler *Handler) GetPublicTrackTimesheetHours(ctx echo.Context) error {
 	}})
 }
 
-func (handler *Handler) PutPublicTrackTimesheet(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackTimesheet(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -497,7 +498,7 @@ func (handler *Handler) PutPublicTrackTimesheet(ctx echo.Context) error {
 	}
 	startDate, err := parseDate(ctx.Param("start_date"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	requester, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
@@ -508,7 +509,7 @@ func (handler *Handler) PutPublicTrackTimesheet(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsPutTimesheetPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	view, err := handler.governance.UpdateTimesheet(ctx.Request().Context(), governanceapplication.UpdateTimesheetCommand{
 		WorkspaceID:      workspaceID,
@@ -525,11 +526,11 @@ func (handler *Handler) PutPublicTrackTimesheet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, apiTimesheet(view))
 }
 
-func (handler *Handler) GetPublicTrackTimesheetHistory(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimesheetHistory(ctx *echo.Context) error {
 	return handler.GetPublicTrackTimesheetTimeEntries(ctx)
 }
 
-func (handler *Handler) GetPublicTrackTimesheetTimeEntries(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimesheetTimeEntries(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -540,7 +541,7 @@ func (handler *Handler) GetPublicTrackTimesheetTimeEntries(ctx echo.Context) err
 	}
 	startDate, err := parseDate(ctx.Param("start_date"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -556,7 +557,7 @@ func (handler *Handler) GetPublicTrackTimesheetTimeEntries(ctx echo.Context) err
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) saveAlert(ctx echo.Context, alertID *int64) error {
+func (handler *Handler) saveAlert(ctx *echo.Context, alertID *int64) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -573,7 +574,7 @@ func (handler *Handler) saveAlert(ctx echo.Context, alertID *int64) error {
 		Thresholds    *[]int    `json:"thresholds"`
 	}
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	var projectID *int64
 	if payload.ProjectId != nil {
@@ -606,7 +607,7 @@ func parseOptionalDate(value string) *time.Time {
 	return &parsed
 }
 
-func queryInt(ctx echo.Context, key string, fallback int) int {
+func queryInt(ctx *echo.Context, key string, fallback int) int {
 	value := strings.TrimSpace(ctx.QueryParam(key))
 	if value == "" {
 		return fallback

@@ -10,9 +10,10 @@ import (
 	"time"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -20,7 +21,7 @@ import (
 // PATCH /workspaces/{workspace_id}/time_entries/{time_entry_ids}.
 const maxBulkPatchTimeEntryIDs = 100
 
-func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimeEntries(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -43,26 +44,26 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 	if before := strings.TrimSpace(ctx.QueryParam("before")); before != "" {
 		value, parseErr := parseTrackDateTime(before, true)
 		if parseErr != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(parseErr)
 		}
 		filter.Before = &value
 	}
 	startDate := strings.TrimSpace(ctx.QueryParam("start_date"))
 	endDate := strings.TrimSpace(ctx.QueryParam("end_date"))
 	if (startDate != "" && endDate == "") || (startDate == "" && endDate != "") {
-		return echo.NewHTTPError(http.StatusBadRequest, "start_date and end_date are both required").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "start_date and end_date are both required").WithCause(err)
 	}
 	if startDate != "" {
 		value, parseErr := parseTrackDateTime(startDate, false)
 		if parseErr != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(parseErr)
 		}
 		filter.StartDate = &value
 	}
 	if endDate != "" {
 		value, parseErr := parseTrackDateTime(endDate, true)
 		if parseErr != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
+			return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(parseErr)
 		}
 		filter.EndDate = &value
 	}
@@ -79,7 +80,7 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -102,7 +103,7 @@ func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx echo.Context) err
 	})
 }
 
-func (handler *Handler) GetPublicTrackCurrentTimeEntry(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackCurrentTimeEntry(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -117,7 +118,7 @@ func (handler *Handler) GetPublicTrackCurrentTimeEntry(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timeEntryViewToAPI(entry))
 }
 
-func (handler *Handler) GetPublicTrackWebTimer(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackWebTimer(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -132,7 +133,7 @@ func (handler *Handler) GetPublicTrackWebTimer(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, strconv.FormatInt(entry.ID, 10))
 }
 
-func (handler *Handler) GetPublicTrackTimeEntryByID(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTimeEntryByID(ctx *echo.Context) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -148,23 +149,23 @@ func (handler *Handler) GetPublicTrackTimeEntryByID(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timeEntryViewToAPI(entry))
 }
 
-func (handler *Handler) PostPublicTrackTimeEntry(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackTimeEntry(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	var payload publictrackapi.TimeentryPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	start, err := parseRequiredTrackRFC3339(payload.Start)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	stop, err := parseOptionalTrackRFC3339(payload.Stop)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	// Set authenticated user ID in context for service-level authorization validation.
@@ -194,7 +195,7 @@ func (handler *Handler) PostPublicTrackTimeEntry(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timeEntryViewToAPI(entry))
 }
 
-func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackTimeEntry(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -206,16 +207,16 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 	var payload publictrackapi.TimeentryPayload
 	rawBodyFields, err := bindTrackRequestBody(ctx, &payload)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	start, err := parseOptionalTrackRFC3339(payload.Start)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	stop, err := parseOptionalTrackRFC3339(payload.Stop)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	tagIDs, err := handler.resolveTagIDs(ctx.Request().Context(), workspaceID, user.ID, payload.TagIds, payload.Tags)
@@ -243,7 +244,7 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timeEntryViewToAPI(entry))
 }
 
-func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
+func (handler *Handler) PatchPublicTrackTimeEntries(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -257,7 +258,7 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 	// Toggl caps this endpoint at 100 ids per request; reject beyond that
 	// rather than silently accepting an unbounded fan-out.
 	if len(timeEntryIDs) > maxBulkPatchTimeEntryIDs {
-		return echo.NewHTTPError(
+		return httperror.New(
 			http.StatusBadRequest,
 			fmt.Sprintf("at most %d time entry ids per request", maxBulkPatchTimeEntryIDs),
 		)
@@ -317,27 +318,27 @@ func (handler *Handler) applyTimeEntryPatch(
 ) error {
 	op := strings.TrimSpace(lo.FromPtr(patch.Op))
 	path := strings.TrimSpace(lo.FromPtr(patch.Path))
-	value := interfaceValue(patch.Value)
+	value := patch.Value
 
 	switch {
 	case strings.EqualFold(op, "replace"):
 	case strings.EqualFold(op, "add"), strings.EqualFold(op, "remove"):
 		return handler.applyTimeEntryTagPatch(ctx, command, op, path, value)
 	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "unsupported op: "+op)
+		return httperror.New(http.StatusBadRequest, "unsupported op: "+op)
 	}
 
 	switch path {
 	case "/description":
 		text, ok := value.(string)
 		if !ok {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /description must be a string")
+			return httperror.New(http.StatusBadRequest, "value for /description must be a string")
 		}
 		command.Description = &text
 	case "/billable":
 		flag, ok := value.(bool)
 		if !ok {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /billable must be a boolean")
+			return httperror.New(http.StatusBadRequest, "value for /billable must be a boolean")
 		}
 		command.Billable = &flag
 	case "/project_id", "/pid":
@@ -347,7 +348,7 @@ func (handler *Handler) applyTimeEntryPatch(
 		}
 		id, err := jsonPatchValueAsInt64(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for "+path+" must be an integer or null")
+			return httperror.New(http.StatusBadRequest, "value for "+path+" must be an integer or null")
 		}
 		command.ProjectID = &id
 	case "/task_id", "/tid":
@@ -357,20 +358,20 @@ func (handler *Handler) applyTimeEntryPatch(
 		}
 		id, err := jsonPatchValueAsInt64(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for "+path+" must be an integer or null")
+			return httperror.New(http.StatusBadRequest, "value for "+path+" must be an integer or null")
 		}
 		command.TaskID = &id
 	case "/tag_ids":
 		ids, err := jsonPatchValueAsInt64Slice(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /tag_ids must be an array of integers")
+			return httperror.New(http.StatusBadRequest, "value for /tag_ids must be an array of integers")
 		}
 		command.TagIDs = ids
 		command.ReplaceTags = true
 	case "/tags":
 		names, err := jsonPatchValueAsStringSlice(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /tags must be an array of strings")
+			return httperror.New(http.StatusBadRequest, "value for /tags must be an array of strings")
 		}
 		ids, err := handler.catalog.EnsureTagsByName(ctx, command.WorkspaceID, command.UserID, names)
 		if err != nil {
@@ -381,36 +382,36 @@ func (handler *Handler) applyTimeEntryPatch(
 	case "/start":
 		text, ok := value.(string)
 		if !ok {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /start must be an RFC3339 string")
+			return httperror.New(http.StatusBadRequest, "value for /start must be an RFC3339 string")
 		}
 		parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(text))
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /start must be an RFC3339 string").SetInternal(err)
+			return httperror.New(http.StatusBadRequest, "value for /start must be an RFC3339 string").WithCause(err)
 		}
 		utc := parsed.UTC()
 		command.Start = &utc
 	case "/stop":
 		if value == nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "clearing /stop via null is not supported; set /duration to a negative value to resume")
+			return httperror.New(http.StatusBadRequest, "clearing /stop via null is not supported; set /duration to a negative value to resume")
 		}
 		text, ok := value.(string)
 		if !ok {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /stop must be an RFC3339 string")
+			return httperror.New(http.StatusBadRequest, "value for /stop must be an RFC3339 string")
 		}
 		parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(text))
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /stop must be an RFC3339 string").SetInternal(err)
+			return httperror.New(http.StatusBadRequest, "value for /stop must be an RFC3339 string").WithCause(err)
 		}
 		utc := parsed.UTC()
 		command.Stop = &utc
 	case "/duration":
 		seconds, err := jsonPatchValueAsInt64(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /duration must be an integer")
+			return httperror.New(http.StatusBadRequest, "value for /duration must be an integer")
 		}
 		command.Duration = lo.ToPtr(int(seconds))
 	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "unsupported path: "+path)
+		return httperror.New(http.StatusBadRequest, "unsupported path: "+path)
 	}
 	return nil
 }
@@ -430,13 +431,13 @@ func (handler *Handler) applyTimeEntryTagPatch(
 	case "/tag_ids":
 		parsed, err := jsonPatchValueAsInt64Slice(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /tag_ids must be an array of integers")
+			return httperror.New(http.StatusBadRequest, "value for /tag_ids must be an array of integers")
 		}
 		ids = parsed
 	case "/tags":
 		names, err := jsonPatchValueAsStringSlice(value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "value for /tags must be an array of strings")
+			return httperror.New(http.StatusBadRequest, "value for /tags must be an array of strings")
 		}
 		// `remove` must not create tags that do not exist yet, so only `add`
 		// goes through EnsureTagsByName.
@@ -454,7 +455,7 @@ func (handler *Handler) applyTimeEntryTagPatch(
 			ids = created
 		}
 	default:
-		return echo.NewHTTPError(
+		return httperror.New(
 			http.StatusBadRequest,
 			"op "+op+" is only supported for /tags and /tag_ids, not "+path,
 		)
@@ -468,7 +469,7 @@ func (handler *Handler) applyTimeEntryTagPatch(
 	return nil
 }
 
-func (handler *Handler) StopPublicTrackTimeEntry(ctx echo.Context) error {
+func (handler *Handler) StopPublicTrackTimeEntry(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
@@ -484,7 +485,7 @@ func (handler *Handler) StopPublicTrackTimeEntry(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timeEntryViewToAPI(entry))
 }
 
-func (handler *Handler) DeletePublicTrackTimeEntry(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackTimeEntry(ctx *echo.Context) error {
 	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err

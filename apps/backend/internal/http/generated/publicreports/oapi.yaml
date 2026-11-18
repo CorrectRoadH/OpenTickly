@@ -1,7 +1,11 @@
 package: publicreportsapi
 generate:
   models: true
-  echo-server: true
+  echo5-server: true
   embedded-spec: true
 output-options:
+  skip-enum-validate: true
   skip-prune: true
+
+compatibility:
+  sort-handler-registrations: true

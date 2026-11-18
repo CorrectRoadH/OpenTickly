@@ -10,18 +10,19 @@ import (
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 type ScopeAuthorizer interface {
-	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
-	RequirePublicTrackHome(ctx echo.Context) (organizationID int64, workspaceID int64, err error)
-	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
-	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	RequirePublicTrackUser(ctx *echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackHome(ctx *echo.Context) (organizationID int64, workspaceID int64, err error)
+	RequirePublicTrackOrganization(ctx *echo.Context, organizationID int64) error
+	RequirePublicTrackWorkspace(ctx *echo.Context, workspaceID int64) error
 }
 
 type Handler struct {
@@ -42,17 +43,17 @@ func writeGovernanceError(err error) error {
 		errors.Is(err, governanceapplication.ErrInvalidWorkspace),
 		errors.Is(err, governanceapplication.ErrInvalidAuditLogWindow),
 		errors.Is(err, governanceapplication.ErrInvalidTimesheetDate):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return httperror.New(http.StatusBadRequest, "Bad Request")
 	case errors.Is(err, governanceapplication.ErrAlertNotFound),
 		errors.Is(err, governanceapplication.ErrTimesheetSetupNotFound),
 		errors.Is(err, governanceapplication.ErrTimesheetNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return httperror.New(http.StatusNotFound, "Not Found")
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }
 
-func parsePathID(ctx echo.Context, key string) (int64, bool) {
+func parsePathID(ctx *echo.Context, key string) (int64, bool) {
 	value, err := strconv.ParseInt(ctx.Param(key), 10, 64)
 	if err != nil {
 		return 0, false

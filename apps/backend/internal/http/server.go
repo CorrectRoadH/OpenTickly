@@ -1,7 +1,6 @@
 package httpapp
 
 import (
-	"errors"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -13,8 +12,8 @@ import (
 	"opentoggl/backend/apps/backend/internal/platform/websession"
 	"opentoggl/backend/apps/backend/internal/web"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 type ServerOptions struct {
@@ -50,7 +49,7 @@ func NewServerWithOptions(
 	if logger == nil {
 		logger = slog.Default()
 	}
-	server.HTTPErrorHandler = newHTTPErrorHandler(server, logger)
+	server.HTTPErrorHandler = newHTTPErrorHandler(logger)
 	readiness := options.Readiness
 	if readiness == nil {
 		readiness = web.NewStaticReadinessProbe(health.Service)
@@ -60,12 +59,12 @@ func NewServerWithOptions(
 	server.Use(newRequestLogMiddleware(logger))
 	server.Use(newSecureHeadersMiddleware())
 	server.Use(newCookieOriginMiddleware())
-	server.Use(middleware.BodyLimit("16M"))
+	server.Use(middleware.BodyLimit(16 << 20))
 
-	healthHandler := func(c echo.Context) error {
+	healthHandler := func(c *echo.Context) error {
 		return c.JSON(http.StatusOK, health)
 	}
-	readinessHandler := func(c echo.Context) error {
+	readinessHandler := func(c *echo.Context) error {
 		report := readiness.Check(c.Request().Context())
 		statusCode := http.StatusOK
 		if report.Status != web.StatusOK {
@@ -93,7 +92,7 @@ func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
 		LogLatency:   true,
 		LogRequestID: true,
 		HandleError:  true,
-		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+		LogValuesFunc: func(c *echo.Context, values middleware.RequestLoggerValues) error {
 			correlation := requestCorrelationFromRequest(c.Request(), values.RequestID)
 			requestPath := c.Request().URL.Path
 			fields := []any{
@@ -109,85 +108,7 @@ func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
 	})
 }
 
-func newHTTPErrorHandler(server *echo.Echo, logger *slog.Logger) echo.HTTPErrorHandler {
-	return func(err error, c echo.Context) {
-		if c.Response().Committed {
-			return
-		}
-
-		status := http.StatusInternalServerError
-		loggedError := err
-		responseError := err
-
-		var httpError *echo.HTTPError
-		if errors.As(err, &httpError) {
-			status = httpError.Code
-			if httpError.Internal != nil {
-				loggedError = httpError.Internal
-			}
-			responseError = echo.NewHTTPError(status, resolveHTTPErrorMessage(httpError, loggedError)).
-				SetInternal(loggedError)
-		}
-
-		if status >= http.StatusBadRequest {
-			correlation := requestCorrelationFromRequest(c.Request(), requestIDFromContext(c))
-			fields := []any{
-				"method", c.Request().Method,
-				"path", c.Request().URL.Path,
-				"status", status,
-				"error", loggedError.Error(),
-			}
-			fields = append(fields, correlation.logFields()...)
-			if status >= http.StatusInternalServerError {
-				logger.ErrorContext(c.Request().Context(), "http handler error", fields...)
-			} else {
-				logger.WarnContext(c.Request().Context(), "http handler error", fields...)
-			}
-		}
-
-		if httpError != nil && isStructuredHTTPErrorMessage(httpError.Message) {
-			if writeErr := c.JSON(status, httpError.Message); writeErr != nil {
-				logger.ErrorContext(c.Request().Context(), "failed to write structured http error",
-					"path", c.Request().URL.Path,
-					"status", status,
-					"error", writeErr.Error(),
-				)
-			}
-			return
-		}
-
-		server.DefaultHTTPErrorHandler(responseError, c)
-	}
-}
-
-func isStructuredHTTPErrorMessage(message any) bool {
-	if message == nil {
-		return false
-	}
-	_, isString := message.(string)
-	return !isString
-}
-
-func resolveHTTPErrorMessage(httpError *echo.HTTPError, fallback error) any {
-	if httpError != nil && httpError.Internal != nil {
-		return httpError.Internal.Error()
-	}
-	if httpError != nil {
-		switch message := httpError.Message.(type) {
-		case string:
-			if strings.TrimSpace(message) != "" {
-				return message
-			}
-		default:
-			if message != nil {
-				return message
-			}
-		}
-	}
-	return fallback.Error()
-}
-
-func logReadinessFailure(c echo.Context, logger *slog.Logger, report web.ReadinessReport) {
+func logReadinessFailure(c *echo.Context, logger *slog.Logger, report web.ReadinessReport) {
 	correlation := requestCorrelationFromRequest(c.Request(), requestIDFromContext(c))
 	baseFields := []any{
 		"service", report.Service,
@@ -255,7 +176,7 @@ func (correlation requestCorrelation) logFields() []any {
 	return fields
 }
 
-func requestIDFromContext(c echo.Context) string {
+func requestIDFromContext(c *echo.Context) string {
 	if value := strings.TrimSpace(c.Response().Header().Get(echo.HeaderXRequestID)); value != "" {
 		return value
 	}
@@ -302,7 +223,7 @@ func isLowerHex(value string) bool {
 // because many self-hosted instances serve plain HTTP.
 func newSecureHeadersMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			headers := c.Response().Header()
 			headers.Set("X-Content-Type-Options", "nosniff")
 			headers.Set("X-Frame-Options", "SAMEORIGIN")
@@ -315,7 +236,7 @@ func newSecureHeadersMiddleware() echo.MiddlewareFunc {
 
 func newCookieOriginMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			request := c.Request()
 			// SAML POST binding is cross-origin by design. The ACS independently
 			// verifies its Secure browser-bound, one-time state and signed response.
@@ -331,7 +252,7 @@ func newCookieOriginMiddleware() echo.MiddlewareFunc {
 				return next(c)
 			}
 			if !sameOriginHost(sourceHost, request.Host) {
-				return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+				return echo.ErrForbidden
 			}
 
 			return next(c)
@@ -396,7 +317,7 @@ newStaticFallbackHandler serves embedded files when they exist and otherwise
 returns the SPA shell for client-side routes.
 */
 func newStaticFallbackHandler(staticFiles fs.FS) echo.HandlerFunc {
-	return func(context echo.Context) error {
+	return func(context *echo.Context) error {
 		request := context.Request()
 		if request.Method != http.MethodGet && request.Method != http.MethodHead {
 			return echo.ErrNotFound
@@ -429,7 +350,7 @@ serveEmbeddedIndex returns the embedded SPA shell and disables caching so the
 
 	browser always revalidates the HTML entrypoint.
 */
-func serveEmbeddedIndex(context echo.Context, staticFiles fs.FS) error {
+func serveEmbeddedIndex(context *echo.Context, staticFiles fs.FS) error {
 	context.Response().Header().Set("Cache-Control", "no-cache")
 	return serveEmbeddedFile(context, staticFiles, "index.html")
 }
@@ -470,7 +391,7 @@ func staticFileExists(staticFiles fs.FS, filePath string) bool {
 serveEmbeddedFile delegates file responses to Echo's fs.FS-aware static handler
 so embedded assets can be returned without relying on unsupported Context APIs.
 */
-func serveEmbeddedFile(context echo.Context, staticFiles fs.FS, filePath string) error {
+func serveEmbeddedFile(context *echo.Context, staticFiles fs.FS, filePath string) error {
 	if path.Ext(filePath) == ".html" {
 		policy := context.Response().Header().Get("Document-Policy")
 		if !strings.Contains(policy, "js-profiling") {

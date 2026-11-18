@@ -3,11 +3,11 @@ package bootstrap
 import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceUsersParams,
 ) error {
@@ -16,13 +16,13 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceUsers(
 	return server.membership.GetPublicTrackWorkspaceUsers(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) PostWorkspaceUsersData(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceUsersData(ctx *echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.membership.PostPublicTrackWorkspaceUsersData(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	userId int,
 ) error {
@@ -32,7 +32,7 @@ func (server *publicTrackOpenAPIServer) PutWorkspaceUsers(
 }
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceWorkspaceUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceWorkspaceUsersParams,
 ) error {
@@ -42,7 +42,7 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceWorkspaceUsers(
 }
 
 func (server *publicTrackOpenAPIServer) DeleteWorkspaceUser(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	workspaceUserId int,
 ) error {
@@ -52,7 +52,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceUser(
 }
 
 func (server *publicTrackOpenAPIServer) PutWorkspaceWorkspaceUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	workspaceId int,
 	workspaceUserId int,
 ) error {

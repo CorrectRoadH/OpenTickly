@@ -6,9 +6,8 @@ import (
 	"testing"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
-
-	"github.com/labstack/echo/v4"
 )
 
 func TestWriteMembershipErrorReturnsDeliveryFailureAsStructured422(t *testing.T) {
@@ -18,9 +17,9 @@ func TestWriteMembershipErrorReturnsDeliveryFailureAsStructured422(t *testing.T)
 		Err:  cause,
 	})
 
-	httpErr, ok := err.(*echo.HTTPError)
+	httpErr, ok := err.(*httperror.Error)
 	if !ok {
-		t.Fatalf("expected *echo.HTTPError, got %T", err)
+		t.Fatalf("expected *httperror.Error, got %T", err)
 	}
 	if httpErr.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d", httpErr.Code)
@@ -39,7 +38,7 @@ func TestWriteMembershipErrorNormalizesUnknownDeliveryCode(t *testing.T) {
 		Code: "provider_specific_code",
 		Err:  errors.New("provider failed"),
 	})
-	httpErr := err.(*echo.HTTPError)
+	httpErr := err.(*httperror.Error)
 	body := httpErr.Message.(webapi.WorkspaceInvitationError)
 	if body.Error != webapi.Unknown {
 		t.Fatalf("expected unknown code, got %q", body.Error)

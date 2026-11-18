@@ -6,12 +6,13 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackTags(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackTags(ctx *echo.Context) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
@@ -30,7 +31,7 @@ func (handler *Handler) GetPublicTrackTags(ctx echo.Context) error {
 	for _, workspaceID := range workspaceIDs {
 		views, err := handler.catalog.ListTags(ctx.Request().Context(), workspaceID, filter)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+			return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 		}
 		for _, view := range views {
 			tags = append(tags, tagViewToAPI(view))
@@ -39,7 +40,7 @@ func (handler *Handler) GetPublicTrackTags(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, tags)
 }
 
-func (handler *Handler) PostPublicTrackTags(ctx echo.Context) error {
+func (handler *Handler) PostPublicTrackTags(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -68,7 +69,7 @@ func (handler *Handler) PostPublicTrackTags(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, tagViewToAPI(view))
 }
 
-func (handler *Handler) PutPublicTrackTag(ctx echo.Context) error {
+func (handler *Handler) PutPublicTrackTag(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -96,14 +97,14 @@ func (handler *Handler) PutPublicTrackTag(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrTagNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
 	return ctx.JSON(http.StatusOK, tagViewToAPI(view))
 }
 
-func (handler *Handler) DeletePublicTrackTag(ctx echo.Context) error {
+func (handler *Handler) DeletePublicTrackTag(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -121,7 +122,7 @@ func (handler *Handler) DeletePublicTrackTag(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteTag(ctx.Request().Context(), workspaceID, tagID); err != nil {
 		if errors.Is(err, catalogapplication.ErrTagNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+			return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -129,11 +130,11 @@ func (handler *Handler) DeletePublicTrackTag(ctx echo.Context) error {
 }
 
 type tagPatchInput struct {
-	TagID *int `json:"tag_id"`
+	TagID *int   `json:"tag_id"`
 	Op    string `json:"op"`
 }
 
-func (handler *Handler) PatchPublicTrackTags(ctx echo.Context) error {
+func (handler *Handler) PatchPublicTrackTags(ctx *echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
@@ -159,7 +160,7 @@ func (handler *Handler) PatchPublicTrackTags(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteTags(ctx.Request().Context(), workspaceID, tagIDs); err != nil {
 		if errors.Is(err, catalogapplication.ErrTagNotFound) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Some tag IDs do not belong to workspace").SetInternal(err)
+			return httperror.New(http.StatusBadRequest, "Some tag IDs do not belong to workspace").WithCause(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

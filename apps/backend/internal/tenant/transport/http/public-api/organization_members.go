@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
@@ -26,7 +27,7 @@ type organizationUserAggregate struct {
 	Workspaces []publictrackapi.ModelsOrgUserWorkspace
 }
 
-func (handler *Handler) GetPublicTrackOrganizationGroups(ctx echo.Context) error {
+func (handler *Handler) GetPublicTrackOrganizationGroups(ctx *echo.Context) error {
 	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func (handler *Handler) GetPublicTrackOrganizationGroups(ctx echo.Context) error
 
 	groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(organization.ID))
 	if groupErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))
@@ -45,7 +46,7 @@ func (handler *Handler) GetPublicTrackOrganizationGroups(ctx echo.Context) error
 }
 
 func (handler *Handler) GetPublicTrackOrganizationUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	params publictrackapi.GetOrganizationUsersParams,
 ) error {
 	users, err := handler.organizationUsers(
@@ -64,7 +65,7 @@ func (handler *Handler) GetPublicTrackOrganizationUsers(
 }
 
 func (handler *Handler) GetPublicTrackOrganizationUsersDetailed(
-	ctx echo.Context,
+	ctx *echo.Context,
 	params publictrackapi.GetOrganizationUsersDetailedParams,
 ) error {
 	users, err := handler.organizationUsers(
@@ -83,7 +84,7 @@ func (handler *Handler) GetPublicTrackOrganizationUsersDetailed(
 }
 
 func (handler *Handler) organizationUsers(
-	ctx echo.Context,
+	ctx *echo.Context,
 	filter string,
 	onlyAdmins string,
 	activeStatus string,
@@ -105,7 +106,7 @@ func (handler *Handler) organizationUsers(
 
 		members, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID)
 		if memberErr != nil {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return nil, httperror.New(http.StatusInternalServerError, "Internal Server Error")
 		}
 
 		for _, member := range members {
@@ -192,11 +193,11 @@ func (handler *Handler) organizationUsers(
 }
 
 func (handler *Handler) organizationAggregate(
-	ctx echo.Context,
+	ctx *echo.Context,
 ) (tenantapplication.OrganizationView, *identityapplication.UserSnapshot, error) {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
-		return tenantapplication.OrganizationView{}, nil, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return tenantapplication.OrganizationView{}, nil, httperror.New(http.StatusBadRequest, "Bad Request")
 	}
 	requester, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {

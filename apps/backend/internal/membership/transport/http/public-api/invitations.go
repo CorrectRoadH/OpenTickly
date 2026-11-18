@@ -5,14 +5,15 @@ import (
 	"net/http"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
-func (handler *Handler) GetPublicTrackInvitation(ctx echo.Context, invitationCode string) error {
+func (handler *Handler) GetPublicTrackInvitation(ctx *echo.Context, invitationCode string) error {
 	invitation, err := handler.membership.GetOrganizationInvitation(ctx.Request().Context(), invitationCode)
 	if err != nil {
 		return writeInvitationError(err)
@@ -29,21 +30,21 @@ func (handler *Handler) GetPublicTrackInvitation(ctx echo.Context, invitationCod
 	})
 }
 
-func (handler *Handler) PostPublicTrackOrganizationAcceptInvitation(ctx echo.Context, invitationCode string) error {
+func (handler *Handler) PostPublicTrackOrganizationAcceptInvitation(ctx *echo.Context, invitationCode string) error {
 	if _, err := handler.membership.AcceptOrganizationInvitation(ctx.Request().Context(), invitationCode); err != nil {
 		return writeInvitationError(err)
 	}
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *Handler) PostPublicTrackRejectInvitation(ctx echo.Context, invitationCode string) error {
+func (handler *Handler) PostPublicTrackRejectInvitation(ctx *echo.Context, invitationCode string) error {
 	if _, err := handler.membership.RejectOrganizationInvitation(ctx.Request().Context(), invitationCode); err != nil {
 		return writeInvitationError(err)
 	}
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (handler *Handler) PostPublicTrackOrganizationInvitation(ctx echo.Context, organizationID int64) error {
+func (handler *Handler) PostPublicTrackOrganizationInvitation(ctx *echo.Context, organizationID int64) error {
 	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
@@ -59,7 +60,7 @@ func (handler *Handler) PostPublicTrackOrganizationInvitation(ctx echo.Context, 
 
 	organization, err := handler.organizations.GetOrganization(ctx.Request().Context(), tenantdomain.OrganizationID(organizationID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
 	workspaces := make([]membershipapplication.InvitationWorkspaceAssignment, 0, len(lo.FromPtr(payload.Workspaces)))
@@ -132,7 +133,7 @@ func (handler *Handler) PostPublicTrackOrganizationInvitation(ctx echo.Context, 
 	})
 }
 
-func (handler *Handler) PutPublicTrackInvitation(ctx echo.Context, organizationID int64, invitationID int64) error {
+func (handler *Handler) PutPublicTrackInvitation(ctx *echo.Context, organizationID int64, invitationID int64) error {
 	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
 		return err
 	}
@@ -145,13 +146,13 @@ func (handler *Handler) PutPublicTrackInvitation(ctx echo.Context, organizationI
 func writeInvitationError(err error) error {
 	switch {
 	case errors.Is(err, membershipapplication.ErrInvitationNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	case errors.Is(err, membershipapplication.ErrInvitationEmailsRequired),
 		errors.Is(err, membershipapplication.ErrInvitationWorkspacesRequired),
 		errors.Is(err, membershipapplication.ErrInvitationEmailInvalid),
 		errors.Is(err, membershipapplication.ErrInvitationStateConflict):
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusBadRequest, err.Error()).WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }

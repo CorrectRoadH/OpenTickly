@@ -9,17 +9,18 @@ import (
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/http/httperror"
 	"opentoggl/backend/apps/backend/internal/tracktime"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 )
 
 // GetWorkspaceInvoices returns invoices for a workspace.
-func (handler *Handler) GetWorkspaceInvoices(ctx echo.Context) error {
+func (handler *Handler) GetWorkspaceInvoices(ctx *echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -42,10 +43,10 @@ func (handler *Handler) GetWorkspaceInvoices(ctx echo.Context) error {
 }
 
 // PostWorkspaceUserInvoice creates a user invoice for a workspace.
-func (handler *Handler) PostWorkspaceUserInvoice(ctx echo.Context) error {
+func (handler *Handler) PostWorkspaceUserInvoice(ctx *echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -58,16 +59,16 @@ func (handler *Handler) PostWorkspaceUserInvoice(ctx echo.Context) error {
 
 	var payload publictrackapi.ModelsUserInvoice
 	if err := ctx.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	invoiceDate, err := parseInvoiceDate(payload.Date)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	dueDate, err := parseOptionalInvoiceDate(payload.DueDate)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 
 	items := make([]billingapplication.CreateInvoiceItemInput, 0)
@@ -113,10 +114,10 @@ func (handler *Handler) PostWorkspaceUserInvoice(ctx echo.Context) error {
 }
 
 // GetWorkspaceInvoice returns a single invoice for a workspace.
-func (handler *Handler) GetWorkspaceInvoice(ctx echo.Context) error {
+func (handler *Handler) GetWorkspaceInvoice(ctx *echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -135,10 +136,10 @@ func (handler *Handler) GetWorkspaceInvoice(ctx echo.Context) error {
 }
 
 // DeleteWorkspaceInvoice deletes a workspace invoice.
-func (handler *Handler) DeleteWorkspaceInvoice(ctx echo.Context) error {
+func (handler *Handler) DeleteWorkspaceInvoice(ctx *echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -156,27 +157,27 @@ func (handler *Handler) DeleteWorkspaceInvoice(ctx echo.Context) error {
 }
 
 // GetWorkspacePurchaseOrderPdf returns a purchase order PDF for a workspace.
-func (handler *Handler) GetWorkspacePurchaseOrderPdf(ctx echo.Context) error {
+func (handler *Handler) GetWorkspacePurchaseOrderPdf(ctx *echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
+	return httperror.New(http.StatusNotImplemented, "Not Implemented").WithCause(err)
 }
 
 // GetWorkspacePaymentReceipts returns payment receipts for a workspace.
-func (handler *Handler) GetWorkspacePaymentReceipts(ctx echo.Context) error {
+func (handler *Handler) GetWorkspacePaymentReceipts(ctx *echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
+	return httperror.New(http.StatusNotImplemented, "Not Implemented").WithCause(err)
 }
 
 func invoiceViewToAPI(view billingapplication.InvoiceView) publictrackapi.ModelsUserInvoice {
@@ -239,11 +240,11 @@ func invoiceViewToAPI(view billingapplication.InvoiceView) publictrackapi.Models
 func writeInvoiceError(err error) error {
 	switch {
 	case errors.Is(err, billingapplication.ErrInvoiceNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
+		return httperror.New(http.StatusNotFound, "Not Found").WithCause(err)
 	case errors.Is(err, billingapplication.ErrInvalidInvoice):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return httperror.New(http.StatusBadRequest, "Bad Request").WithCause(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+		return httperror.New(http.StatusInternalServerError, err.Error()).WithCause(err)
 	}
 }
 
