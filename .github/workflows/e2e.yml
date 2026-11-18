@@ -72,11 +72,11 @@ jobs:
               - '.env.example'
               - '.air.toml'
 
-      - uses: voidzero-dev/setup-vp@v1.21.2
+      - uses: voidzero-dev/setup-vp@v1.22.0
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.website_e2e == 'true'
         with:
           node-version: 24
-          version: "1.4.0"
+          version: "1.7.0"
           run-install: false
           cache: true
 

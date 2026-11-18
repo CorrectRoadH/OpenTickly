@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import {
   AppButton,
   AppSurfaceState,
@@ -118,7 +119,7 @@ function OrganizationSectionContent({
   organizationId: number;
   organizationData: Parameters<typeof createOrganizationSettingsFormValues>[0];
   section: OrganizationSettingsSection;
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: TFunction<readonly ["settings", "common"]>;
 }): ReactElement {
   switch (section) {
     case "general":

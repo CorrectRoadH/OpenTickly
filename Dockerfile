@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.4.0 AS website-builder
+FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.7.0 AS website-builder
 
 USER root
 RUN mkdir -p /workspace && chown vp:vp /workspace
@@ -7,7 +7,7 @@ USER vp
 WORKDIR /workspace
 
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
-COPY --chown=vp:vp patches/@sentry__bundler-plugins@11.12.0.patch ./patches/@sentry__bundler-plugins@11.12.0.patch
+COPY --chown=vp:vp patches/@sentry__bundler-plugins@11.13.0.patch ./patches/@sentry__bundler-plugins@11.13.0.patch
 COPY --chown=vp:vp patches/sentry@0.49.0.patch ./patches/sentry@0.49.0.patch
 
 # Manifests-first: copy every workspace member's package.json so pnpm can resolve
@@ -28,7 +28,7 @@ COPY --chown=vp:vp tools ./tools
 ARG SOURCE_SHA
 RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN vp run @opentickly/website#build
 
-FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine AS builder
 
 ARG OPENTOGGL_VERSION=dev
 ARG TARGETOS

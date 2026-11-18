@@ -39,10 +39,10 @@ jobs:
           fi
       - uses: actions/checkout@v7
 
-      - uses: voidzero-dev/setup-vp@v1.21.2
+      - uses: voidzero-dev/setup-vp@v1.22.0
         with:
           node-version: 24
-          version: "1.4.0"
+          version: "1.7.0"
           run-install: false
           cache: true
 

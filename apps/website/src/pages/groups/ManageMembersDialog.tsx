@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { Dialog, DialogBody, DialogHeader } from "@opentickly/web-ui";
 import { type ReactElement, useState } from "react";
 import type { GroupOrganizationGroupResponse } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -18,7 +19,7 @@ export function ManageMembersDialog({
   onRemoveMember: (userId: number) => void;
   onClose: () => void;
   isPending: boolean;
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: TFunction<"groups">;
 }): ReactElement {
   const orgMembersQuery = useOrganizationMembersQuery(organizationId);
   const [search, setSearch] = useState("");

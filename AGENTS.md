@@ -219,7 +219,7 @@ For code-related fixes, use this workflow:
 
 See [toolchain contract](docs/toolchain/README.md).
 
-- Pin Vite+ to 1.3.0 in the workspace catalog and CI/build images; pnpm remains the underlying package manager. CI installs use `vp install --frozen-lockfile`.
+- Pin Vite+ to 1.7.0 in the workspace catalog and CI/build images; pnpm remains the underlying package manager. CI installs use `vp install --frozen-lockfile`.
 - `vp run check` runs static and package-specific checks; `vp run test:unit` runs root Vitest tests. `vp run test` includes package tests, including browser tests. `vp run build` preserves framework build steps.
 - `vp check`, `vp test`, and `vp build` are built-ins, not substitutes for those project scripts. Keep database, CLI integration, and real-runtime browser tests uncached.
 - Keep React Router/Fumadocs and Cloudflare build steps behind project scripts. The landing runtime image only installs its static server; it does not carry the development toolchain.

@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 # Static output and the locked serve dependency closure are architecture independent.
-FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.4.0 AS builder
+FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.7.0 AS builder
 USER root
 RUN mkdir -p /workspace && chown vp:vp /workspace
 USER vp
 WORKDIR /workspace
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
-COPY --chown=vp:vp patches/@sentry__bundler-plugins@11.12.0.patch ./patches/@sentry__bundler-plugins@11.12.0.patch
+COPY --chown=vp:vp patches/@sentry__bundler-plugins@11.13.0.patch ./patches/@sentry__bundler-plugins@11.13.0.patch
 COPY --chown=vp:vp patches/sentry@0.49.0.patch ./patches/sentry@0.49.0.patch
 COPY --chown=vp:vp apps/landing/package.json ./apps/landing/
 COPY --chown=vp:vp apps/website/package.json ./apps/website/
@@ -70,7 +70,7 @@ FROM scratch AS release
 COPY --from=builder /workspace/release/ /app/
 
 # Optional self-hosted runtime; CI exports the release target, not this image.
-FROM node:26.13.0-bookworm-slim@sha256:067b2d425f1204b5a898ae3d3145f7524c1425a4096a62b0f67dd4344a494440 AS runtime
+FROM node:26.13.1-bookworm-slim@sha256:8261241c4197285eaeca819863dab5042cd1f9147b000670f4e773f4d5fe7768 AS runtime
 WORKDIR /app
 COPY --from=builder --chown=node:node /workspace/release/ ./
 ENV NODE_ENV=production

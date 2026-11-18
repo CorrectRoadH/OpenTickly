@@ -142,7 +142,7 @@ export function envelopePrivacy(
           sdk: {
             name:
               component === "update" ? "sentry.javascript.cloudflare" : "sentry.javascript.react",
-            version: "11.12.0",
+            version: "11.13.0",
           },
         };
         const source = trace && typeof trace === "object" ? (trace as Record<string, unknown>) : {};

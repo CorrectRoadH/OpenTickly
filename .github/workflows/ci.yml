@@ -95,15 +95,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: voidzero-dev/setup-vp@v1.21.2
+      - uses: voidzero-dev/setup-vp@v1.22.0
         with:
-          version: "1.4.0"
+          version: "1.7.0"
           node-version: "24"
           run-install: false
           cache: true
       - run: vp install --frozen-lockfile
-      - run: vp run check
       - name: Install Chromium for telemetry runtime tests
         run: vp exec playwright install --with-deps --only-shell chromium
+      - run: vp run check
       - run: vp run test:unit
       - run: vp run build

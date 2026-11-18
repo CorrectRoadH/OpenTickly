@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { AppButton, DropdownMenu, IconButton, useDropdownClose } from "@opentickly/web-ui";
 import { type ReactElement, type ReactNode, useState } from "react";
 import type { GroupOrganizationGroupResponse } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -14,7 +15,7 @@ export function GroupRowActions({
   onDelete: () => void;
   onManageMembers: () => void;
   onRename: (name: string) => void;
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: TFunction<"groups">;
 }): ReactElement {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(group.name ?? "");
@@ -80,7 +81,7 @@ function GroupMenuContent({
   onDelete: () => void;
   onManageMembers: () => void;
   onStartEditing: () => void;
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: TFunction<"groups">;
 }): ReactNode {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const close = useDropdownClose();

@@ -1,6 +1,6 @@
 # JavaScript and TypeScript toolchain
 
-Vite+ is pinned to 1.4.0 in the workspace catalog and build images. The underlying package manager is pnpm 12.15.0, with one workspace lockfile. CI installs dependencies with `vp install --frozen-lockfile`; it must not regenerate dependency resolution during a build.
+Vite+ is pinned to 1.7.0 in the workspace catalog and build images. The underlying package manager is pnpm 12.21.0, with one workspace lockfile. CI installs dependencies with `vp install --frozen-lockfile`; it must not regenerate dependency resolution during a build.
 
 Run commands from the repository root:
 

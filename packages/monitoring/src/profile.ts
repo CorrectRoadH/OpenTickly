@@ -159,7 +159,7 @@ export function sanitizeProfile(
     chunk_id: body.chunk_id,
     release: config.release,
     environment: config.environment,
-    client_sdk: { name: "sentry.javascript.react", version: "11.12.0" },
+    client_sdk: { name: "sentry.javascript.react", version: "11.13.0" },
     debug_meta: { images: cleanImages },
     profile: {
       samples: cleanSamples,

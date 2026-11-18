@@ -1,7 +1,7 @@
 # Force the builder stage to run natively on the CI runner arch (amd64 on GH hosted),
 # so vp install + framework builds aren't executed under QEMU arm64 emulation (30min+ -> ~3min).
 # Output is a plain dist/ (static files), copied into the TARGETPLATFORM runtime image below.
-FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.4.0 AS builder
+FROM --platform=$BUILDPLATFORM ghcr.io/voidzero-dev/vite-plus:1.7.0 AS builder
 
 USER root
 RUN mkdir -p /workspace && chown vp:vp /workspace
@@ -10,6 +10,7 @@ WORKDIR /workspace
 
 # Copy workspace scaffolding
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY --chown=vp:vp patches ./patches
 
 # Manifests-first: copy every workspace member's package.json so pnpm can resolve
 # the full graph, keeping the install layer cached across source-only edits.
@@ -18,11 +19,13 @@ COPY --chown=vp:vp apps/website/package.json ./apps/website/
 COPY --chown=vp:vp apps/update-worker/package.json ./apps/update-worker/
 COPY --chown=vp:vp packages/web-ui/package.json ./packages/web-ui/
 COPY --chown=vp:vp packages/shared-contracts/package.json ./packages/shared-contracts/
+COPY --chown=vp:vp packages/monitoring/package.json ./packages/monitoring/
 
-RUN vp install --filter @opentickly/landing... --frozen-lockfile --ignore-scripts
+RUN vp install --filter opentoggl --filter @opentickly/landing... --frozen-lockfile --ignore-scripts
 
 COPY --chown=vp:vp apps/landing ./apps/landing
 COPY --chown=vp:vp packages ./packages
+COPY --chown=vp:vp tools ./tools
 
 # react-router's prerender step starts a Vite preview server and reaches it over
 # node:http. Under Node 24 the server binds localhost to ::1 while the client

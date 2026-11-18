@@ -70,11 +70,11 @@ jobs:
               - '.env.example'
               - '.air.toml'
 
-      - uses: voidzero-dev/setup-vp@v1.21.2
+      - uses: voidzero-dev/setup-vp@v1.22.0
         if: steps.changes.outputs.cli_integration == 'true'
         with:
           node-version: 24
-          version: "1.4.0"
+          version: "1.7.0"
           run-install: false
           cache: true
 

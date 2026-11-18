@@ -1,0 +1,24 @@
+diff --git a/build/cjs/core/cli.js b/build/cjs/core/cli.js
+--- a/build/cjs/core/cli.js
++++ b/build/cjs/core/cli.js
+@@ -85,6 +85,8 @@
+ 		for (const project of projects) {
+ 			const sdk = require_assertClassBrand.default(_SentryCliAdapter_brand, this, _createClient).call(this, project);
+ 			for (const target of targets) if ((await sdk.sourcemap.upload({
++				// 保留构建阶段生成的 Debug ID 和 indexed map。
++				noRewrite: true,
+ 				directory: target.directory,
+ 				release: name,
+ 				dist: target.dist ?? require_classPrivateFieldGet2.default(_options, this).release.dist,
+diff --git a/build/esm/core/cli.js b/build/esm/core/cli.js
+--- a/build/esm/core/cli.js
++++ b/build/esm/core/cli.js
+@@ -85,6 +85,8 @@
+ 		for (const project of projects) {
+ 			const sdk = _assertClassBrand(_SentryCliAdapter_brand, this, _createClient).call(this, project);
+ 			for (const target of targets) if ((await sdk.sourcemap.upload({
++				// 保留构建阶段生成的 Debug ID 和 indexed map。
++				noRewrite: true,
+ 				directory: target.directory,
+ 				release: name,
+ 				dist: target.dist ?? _classPrivateFieldGet2(_options, this).release.dist,

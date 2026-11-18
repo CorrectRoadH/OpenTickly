@@ -32,7 +32,7 @@ export function cleanAttributes(
     "sentry.environment": config.environment,
     "sentry.sdk.name":
       component === "update" ? "sentry.javascript.cloudflare" : "sentry.javascript.react",
-    "sentry.sdk.version": "11.12.0",
+    "sentry.sdk.version": "11.13.0",
   };
   if (operationName(attributes.operation)) clean.operation = attributes.operation;
   if (typeof attributes.outcome === "string" && outcomes.has(attributes.outcome))
