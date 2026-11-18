@@ -29,6 +29,6 @@
   "setDefault": "Establecer como predeterminado",
   "currentOrganization": "Organización actual",
   "member": "miembro",
-  "members": "miembros",
+  "memberPlural": "miembros",
   "organizationName": "Nombre de la organización"
 }

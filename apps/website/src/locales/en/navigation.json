@@ -29,6 +29,6 @@
   "setDefault": "Set default",
   "currentOrganization": "Current organization",
   "member": "member",
-  "members": "members",
+  "memberPlural": "members",
   "organizationName": "Organization name"
 }
