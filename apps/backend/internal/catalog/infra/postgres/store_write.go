@@ -7,6 +7,7 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/samber/lo"
 )
 
@@ -278,36 +279,61 @@ func (store *Store) CreateProjectUser(
 	ctx context.Context,
 	command catalogapplication.CreateProjectUserCommand,
 ) (catalogapplication.ProjectUserView, error) {
-	row := store.pool.QueryRow(
-		ctx,
-		`insert into catalog_project_users (project_id, user_id, role)
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return catalogapplication.ProjectUserView{}, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	row := tx.QueryRow(ctx, `insert into catalog_project_users (project_id, user_id, role)
 		values ($1, $2, $3)
 		returning project_id, user_id, role, created_at`,
-		command.ProjectID,
-		command.UserID,
-		lo.Ternary(command.Manager, "admin", "member"),
-	)
-
+		command.ProjectID, command.UserID, lo.Ternary(command.Manager, "admin", "member"))
 	var view catalogapplication.ProjectUserView
 	view.WorkspaceID = command.WorkspaceID
 	if err := row.Scan(&view.ProjectID, &view.UserID, &view.Role, &view.CreatedAt); err != nil {
 		return catalogapplication.ProjectUserView{}, writeCatalogError("create catalog project user", err)
 	}
+	if err := writeProjectUserRates(ctx, tx, &view, command.Rates); err != nil {
+		return catalogapplication.ProjectUserView{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return catalogapplication.ProjectUserView{}, err
+	}
 	return view, nil
 }
 
-func (store *Store) UpdateProjectUser(ctx context.Context, view catalogapplication.ProjectUserView) error {
-	_, err := store.pool.Exec(
-		ctx,
-		`update catalog_project_users
-		set role = $3
-		where project_id = $1 and user_id = $2`,
-		view.ProjectID,
-		view.UserID,
-		view.Role,
-	)
+func (store *Store) UpdateProjectUser(ctx context.Context, view catalogapplication.ProjectUserView, role *string, rates []catalogapplication.CreateRateCommand) error {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	result, err := tx.Exec(ctx, `update catalog_project_users set role = coalesce($3, role)
+		where project_id = $1 and user_id = $2`, view.ProjectID, view.UserID, role)
 	if err != nil {
 		return writeCatalogError("update catalog project user", err)
+	}
+	if result.RowsAffected() == 0 {
+		return catalogapplication.ErrProjectUserNotFound
+	}
+	if err := writeProjectUserRates(ctx, tx, &view, rates); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func writeProjectUserRates(ctx context.Context, tx pgx.Tx, view *catalogapplication.ProjectUserView, changes []catalogapplication.CreateRateCommand) error {
+	for _, change := range changes {
+		change.LevelID = catalogapplication.EncodeProjectUserID(view.ProjectID, view.UserID)
+		rate, err := createRate(ctx, tx, change)
+		if err != nil {
+			return err
+		}
+		if rate.Type == catalogapplication.RateTypeBillable {
+			view.Rate, view.RateLastUpdated = &rate.Amount, &rate.CreatedAt
+		} else {
+			view.LaborCost, view.LaborCostLastUpdated = &rate.Amount, &rate.CreatedAt
+		}
 	}
 	return nil
 }
@@ -431,17 +457,22 @@ func (store *Store) CreateProject(
 	ctx context.Context,
 	command catalogapplication.CreateProjectCommand,
 ) (catalogapplication.ProjectView, error) {
-	row := store.pool.QueryRow(
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return catalogapplication.ProjectView{}, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	row := tx.QueryRow(
 		ctx,
 		`with inserted as (
-			insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by, color, is_private, billable)
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by, color, is_private, billable, currency)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 			returning *
 		)
 		select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, 0::bigint as actual_seconds,
 			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
 			p.color, p.is_private, p.billable,
-			p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
+			p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate, null::timestamptz
 		from inserted p
 		left join catalog_clients c on c.id = p.client_id`,
 		command.WorkspaceID,
@@ -454,19 +485,44 @@ func (store *Store) CreateProject(
 		lo.FromPtrOr(command.Color, "#0b83d9"),
 		lo.FromPtrOr(command.IsPrivate, true),
 		lo.FromPtrOr(command.Billable, false),
+		command.Currency,
 	)
 	project, err := scanProject(row)
 	if err != nil {
 		return catalogapplication.ProjectView{}, writeCatalogError("create catalog project", err)
 	}
+	if command.RateChange != nil {
+		change := *command.RateChange
+		change.LevelID = project.ID
+		rate, err := createRate(ctx, tx, change)
+		if err != nil {
+			return catalogapplication.ProjectView{}, err
+		}
+		project.Rate, project.RateLastUpdated = &rate.Amount, &rate.CreatedAt
+		if project.Currency == nil {
+			var currency string
+			if err := tx.QueryRow(ctx, "select default_currency from tenant_workspaces where id = $1", command.WorkspaceID).Scan(&currency); err != nil {
+				return catalogapplication.ProjectView{}, err
+			}
+			project.Currency = &currency
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return catalogapplication.ProjectView{}, err
+	}
 	return project, nil
 }
 
-func (store *Store) UpdateProject(ctx context.Context, project catalogapplication.ProjectView) error {
-	_, err := store.pool.Exec(
+func (store *Store) UpdateProject(ctx context.Context, project catalogapplication.ProjectView, currency *string, rate *catalogapplication.CreateRateCommand) error {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return writeCatalogError("begin project update", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	result, err := tx.Exec(
 		ctx,
 		`update catalog_projects
-		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7, color = $8, is_private = $9, billable = $10
+		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7, color = $8, is_private = $9, billable = $10, currency = coalesce($11, currency)
 		where workspace_id = $1 and id = $2`,
 		project.WorkspaceID,
 		project.ID,
@@ -478,9 +534,21 @@ func (store *Store) UpdateProject(ctx context.Context, project catalogapplicatio
 		project.Color,
 		project.IsPrivate,
 		project.Billable,
+		currency,
 	)
 	if err != nil {
 		return writeCatalogError("update catalog project", err)
+	}
+	if result.RowsAffected() == 0 {
+		return catalogapplication.ErrProjectNotFound
+	}
+	if rate != nil {
+		if _, err := createRate(ctx, tx, *rate); err != nil {
+			return err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return writeCatalogError("commit project update", err)
 	}
 	return nil
 }

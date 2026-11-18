@@ -9,6 +9,8 @@ import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 
+import { formatReportAmount } from "./reports-page-data.ts";
+
 type ProfitabilityShowMetric = "amount-cost-profit" | "amount" | "cost" | "profit";
 type TopEarningCount = 5 | 10 | 20;
 type BottomEarningCount = 3 | 5 | 10;
@@ -31,6 +33,7 @@ type ProfitMemberRow = {
 };
 
 type ReportsProfitabilityViewProps = {
+  currency?: string;
   isError: boolean;
   isPending: boolean;
   projectColorById: Map<number, string>;
@@ -168,17 +171,14 @@ function buildDayAmounts(report: SavedWeeklyReportData | undefined): DayAmounts[
   return result;
 }
 
-function formatCurrency(value: number): string {
-  if (value === 0) return "-";
-  return `$${value.toFixed(2)}`;
-}
-
 export function ReportsProfitabilityView({
+  currency,
   isError,
   isPending,
   projectColorById,
   report,
 }: ReportsProfitabilityViewProps): ReactElement {
+  const formatCurrency = (amount: number) => formatReportAmount(amount, currency);
   const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const [showMetric, setShowMetric] = useState<ProfitabilityShowMetric>("amount-cost-profit");
@@ -271,7 +271,7 @@ export function ReportsProfitabilityView({
             {dayAmounts.every((d) => d.amount === 0 && d.cost === 0) ? (
               <EmptyChart />
             ) : (
-              <DayTrendsChart days={dayAmounts} show={showMetric} />
+              <DayTrendsChart days={dayAmounts} formatCurrency={formatCurrency} show={showMetric} />
             )}
           </section>
 
@@ -280,6 +280,7 @@ export function ReportsProfitabilityView({
             bottomRows={null}
             count={topCount}
             dimension={topDimension}
+            formatCurrency={formatCurrency}
             onCountChange={(v) => setTopCount(v as TopEarningCount)}
             onDimensionChange={setTopDimension}
             options={[5, 10, 20]}
@@ -293,6 +294,7 @@ export function ReportsProfitabilityView({
             bottomRows={null}
             count={bottomCount}
             dimension={bottomDimension}
+            formatCurrency={formatCurrency}
             onCountChange={(v) => setBottomCount(v as BottomEarningCount)}
             onDimensionChange={setBottomDimension}
             options={[3, 5, 10]}
@@ -334,6 +336,7 @@ export function ReportsProfitabilityView({
                   {projectRows.map((row) => (
                     <BreakdownProjectRow
                       expanded={expandedRows.has(row.name)}
+                      formatCurrency={formatCurrency}
                       key={row.name}
                       onToggle={() => toggleRow(row.name)}
                       row={row}
@@ -358,10 +361,12 @@ export function ReportsProfitabilityView({
 
 function BreakdownProjectRow({
   expanded,
+  formatCurrency,
   onToggle,
   row,
 }: {
   expanded: boolean;
+  formatCurrency: (amount: number) => string;
   onToggle: () => void;
   row: ProfitRow;
 }): ReactElement {
@@ -419,9 +424,11 @@ function BreakdownProjectRow({
 
 function DayTrendsChart({
   days,
+  formatCurrency,
   show,
 }: {
   days: DayAmounts[];
+  formatCurrency: (amount: number) => string;
   show: ProfitabilityShowMetric;
 }): ReactElement {
   const { t } = useTranslation("reports");
@@ -486,6 +493,7 @@ function DayTrendsChart({
 function EarningPanel({
   count,
   dimension,
+  formatCurrency,
   onCountChange,
   onDimensionChange,
   options,
@@ -496,6 +504,7 @@ function EarningPanel({
   bottomRows: null;
   count: number;
   dimension: EarningDimension;
+  formatCurrency: (amount: number) => string;
   onCountChange: (v: number) => void;
   onDimensionChange: (d: EarningDimension) => void;
   options: number[];

@@ -92,6 +92,7 @@ export function WorkspaceReportsPage({
   );
 
   const displayModel = buildReportsPageModel({
+    currency: session.currentWorkspace.defaultCurrency ?? undefined,
     durationFormat,
     endDate: state.dateRange.endDate,
     report: filteredReport,
@@ -237,6 +238,7 @@ export function WorkspaceReportsPage({
           />
         ) : tab === "profitability" ? (
           <ReportsProfitabilityView
+            currency={session.currentWorkspace.defaultCurrency ?? undefined}
             isError={weeklyReportQuery.isError}
             isPending={weeklyReportQuery.isPending}
             projectColorById={projectColorById}

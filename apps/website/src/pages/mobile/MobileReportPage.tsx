@@ -30,6 +30,7 @@ export function MobileReportPage(): ReactElement {
   );
 
   const model = buildReportsPageModel({
+    currency: session.currentWorkspace.defaultCurrency ?? undefined,
     endDate: state.dateRange.endDate,
     report: filteredReport,
     startDate: state.dateRange.startDate,

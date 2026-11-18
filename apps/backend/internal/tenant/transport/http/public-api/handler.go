@@ -227,10 +227,22 @@ func (handler *Handler) PutPublicTrackWorkspace(ctx echo.Context) error {
 		return mapError(err)
 	}
 
+	var billableRateActorID *int64
+	if request.DefaultHourlyRate != nil {
+		if *request.DefaultHourlyRate < 0 {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		user, err := handler.scope.RequirePublicTrackUser(ctx)
+		if err != nil {
+			return err
+		}
+		billableRateActorID = &user.ID
+	}
 	settings := current.Settings
 	if err := handler.tenant.UpdateWorkspace(ctx.Request().Context(), tenantapplication.UpdateWorkspaceCommand{
-		WorkspaceID: tenantdomain.WorkspaceID(workspaceID),
-		Name:        lo.FromPtrOr(request.Name, current.Name),
+		WorkspaceID:         tenantdomain.WorkspaceID(workspaceID),
+		BillableRateActorID: billableRateActorID,
+		Name:                lo.FromPtrOr(request.Name, current.Name),
 		Settings: tenantdomain.WorkspaceSettingsInput{
 			DefaultCurrency:             lo.FromPtrOr(request.DefaultCurrency, settings.DefaultCurrency()),
 			DefaultHourlyRate:           float32ValueFallback(request.DefaultHourlyRate, settings.DefaultHourlyRate()),

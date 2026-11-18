@@ -466,7 +466,7 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 		WorkspaceID: workspaceID,
 		ProjectID:   project.ID,
 		UserID:      secondUserID,
-		Manager:     false,
+		Manager:     lo.ToPtr(false),
 	})
 	if err != nil {
 		t.Fatalf("update project user: %v", err)

@@ -425,8 +425,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 			Groups: &groups,
 		},
 		Totals: &publicreportsapi.TotalsReportData{
-			Seconds:     lo.ToPtr(report.TotalSeconds),
-			TrackedDays: lo.ToPtr(report.TrackedDays),
+			Seconds:               lo.ToPtr(report.TotalSeconds),
+			TrackedDays:           lo.ToPtr(report.TrackedDays),
+			BillableAmountInCents: lo.ToPtr(report.BillableAmountInCents),
 		},
 	})
 }
@@ -477,9 +478,11 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 			UserId:                 lo.ToPtr(userID),
 			UserName:               lo.ToPtr(row.UserName),
 		}
+		if row.Currency != "" {
+			dataRow.Currency = lo.ToPtr(row.Currency)
+		}
 		if row.HourlyRateInCents > 0 {
 			dataRow.HourlyRateInCents = lo.ToPtr(row.HourlyRateInCents)
-			dataRow.Currency = lo.ToPtr(row.Currency)
 		}
 		rows = append(rows, dataRow)
 	}
@@ -641,7 +644,11 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityProjec
 	ctx.Response().WriteHeader(http.StatusOK)
 
 	w := csv.NewWriter(ctx.Response())
-	_ = w.Write([]string{"Project", "Total Seconds", "Billable Seconds", "Earnings (" + query.Currency + ")"})
+	currency := query.Currency
+	if len(rows) > 0 {
+		currency = rows[0].Currency
+	}
+	_ = w.Write([]string{"Project", "Total Seconds", "Billable Seconds", "Earnings (" + currency + ")"})
 	for _, row := range rows {
 		_ = w.Write([]string{
 			row.ProjectName,
@@ -715,7 +722,11 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityEmploy
 	ctx.Response().WriteHeader(http.StatusOK)
 
 	w := csv.NewWriter(ctx.Response())
-	_ = w.Write([]string{"Employee", "Total Seconds", "Billable Seconds", "Earnings (" + query.Currency + ")"})
+	currency := query.Currency
+	if len(rows) > 0 {
+		currency = rows[0].Currency
+	}
+	_ = w.Write([]string{"Employee", "Total Seconds", "Billable Seconds", "Earnings (" + currency + ")"})
 	for _, row := range rows {
 		_ = w.Write([]string{
 			row.UserName,

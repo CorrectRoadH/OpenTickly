@@ -70,6 +70,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 	table := make([]publicreportsapi.ProjectsReportTableRow, 0, len(rows))
 	for _, row := range rows {
 		pid := int(row.ProjectID)
+		currency = row.Currency
 		table = append(table, publicreportsapi.ProjectsReportTableRow{
 			ProjectId:       &pid,
 			Name:            lo.ToPtr(row.ProjectName),
@@ -77,7 +78,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 			TotalSeconds:    lo.ToPtr(row.TotalSeconds),
 			BillableSeconds: lo.ToPtr(row.BillableSeconds),
 			Earnings:        lo.ToPtr(row.Earnings),
-			Currency:        &currency,
+			Currency:        lo.ToPtr(row.Currency),
 		})
 	}
 

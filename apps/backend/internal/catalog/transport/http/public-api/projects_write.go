@@ -33,7 +33,13 @@ func (handler *Handler) PostPublicTrackProjects(ctx echo.Context) error {
 	if clientID == nil {
 		clientID = int64PointerFromTrackIntPointer(request.Cid)
 	}
+	rate, err := projectRateChange(workspaceID, user.ID, catalogapplication.RateLevelProject, catalogapplication.RateTypeBillable, request.Rate, request.RateChangeMode)
+	if err != nil {
+		return writePublicTrackRateError(err)
+	}
 	view, err := handler.catalog.CreateProject(ctx.Request().Context(), catalogapplication.CreateProjectCommand{
+		Currency:    request.Currency,
+		RateChange:  rate,
 		WorkspaceID: workspaceID,
 		CreatedBy:   user.ID,
 		ClientID:    clientID,
@@ -60,7 +66,8 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
 		return err
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
@@ -73,6 +80,8 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 	}
 
 	command := catalogapplication.UpdateProjectCommand{
+		ActorID:     user.ID,
+		Currency:    request.Currency,
 		WorkspaceID: workspaceID,
 		ProjectID:   projectID,
 		Name:        request.Name,
@@ -83,6 +92,16 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 		IsPrivate:   request.IsPrivate,
 		Billable:    request.Billable,
 	}
+	if request.Rate != nil {
+		command.Rate = lo.ToPtr(float64(*request.Rate))
+	}
+	if request.RateChangeMode != nil {
+		mode, err := publicTrackRateMode(*request.RateChangeMode)
+		if err != nil {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		command.RateChangeMode = &mode
+	}
 	if request.ClientId != nil || request.Cid != nil {
 		command.ClientID = int64PointerFromTrackIntPointer(request.ClientId)
 		if command.ClientID == nil {
@@ -92,6 +111,9 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 
 	updated, err := handler.catalog.UpdateProject(ctx.Request().Context(), command)
 	if err != nil {
+		if errors.Is(err, catalogapplication.ErrRateAmountInvalid) {
+			return writePublicTrackRateError(err)
+		}
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
