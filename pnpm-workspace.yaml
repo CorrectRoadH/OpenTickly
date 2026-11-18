@@ -30,7 +30,7 @@ catalog:
   react-compiler-runtime: ^1.0.0
   react-grab: ^0.2.0
   react-hook-form: ^7.92.0
-  react-i18next: ^18.0.1
+  react-i18next: ^18.0.2
   react-markdown: ^10.1.0
   sharp: ^0.35.5
   sonner: ^2.0.8
@@ -64,23 +64,23 @@ allowBuilds:
   workerd: true
   core-js: false
 minimumReleaseAgeExclude:
-  - "@cloudflare/workers-types@5.20261114.1"
+  - "@cloudflare/workers-types@5.20261118.1"
 overrides:
   js-yaml@4: ^4.3.2
   seroval: ^1.7.2
   compression: ^1.8.2
   # Typography pins 6.0.10; its parser API is compatible with the security-fixed 7.x.
-  postcss-selector-parser: ^7.1.6
+  postcss-selector-parser: ^7.2.1
   undici@7: ^7.30.1
   brace-expansion@1: ^1.1.21
-  dompurify: ^3.4.17
+  dompurify: ^3.4.18
   lodash: ^4.18.1
   lodash-es: ^4.18.1
   picomatch@4: ^4.0.4
   workbox-build>glob: ^14.0.6
   react: ^19.3.1
   react-dom: ^19.3.1
-  serialize-javascript: ^7.1.3
+  serialize-javascript: ^7.1.4
   vite@*: "catalog:"
   vitest@*: "catalog:"
 peerDependencyRules:
