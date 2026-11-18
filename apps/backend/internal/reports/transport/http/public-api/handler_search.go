@@ -396,23 +396,12 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesTot
 		return httperror.New(http.StatusInternalServerError, "Internal Server Error").WithCause(err)
 	}
 
+	amounts, _, err := handler.reports.EntryBillableAmounts(ctx.Request().Context(), int64(workspaceID), entries)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)).Wrap(err)
+	}
 	totalSeconds := 0
-	billableSeconds := 0
-	for _, e := range entries {
-		if request.Billable != nil && e.Billable != *request.Billable {
-			continue
-		}
-		totalSeconds += e.Duration
-		if e.Billable {
-			billableSeconds += e.Duration
-		}
-	}
-
-	rateCents, _, hasRate := handler.reports.GetWorkspaceBillableRate(ctx.Request().Context(), int64(workspaceID))
 	billableAmountCents := 0
-	if hasRate {
-		billableAmountCents = billableSeconds * rateCents / 3600
-	}
 
 	// Build per-date graph if granularity is specified.
 	granularity := lo.FromPtrOr(request.Granularity, "day")
@@ -425,8 +414,10 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSearchTimeEntriesTot
 		g := dateTotals[dateStr]
 		secs := lo.FromPtrOr(g.Seconds, 0) + e.Duration
 		g.Seconds = &secs
-		if e.Billable && hasRate {
-			ba := lo.FromPtrOr(g.BillableAmountInCents, 0) + e.Duration*rateCents/3600
+		totalSeconds += e.Duration
+		if amount := amounts[e.ID]; amount != 0 {
+			billableAmountCents += amount
+			ba := lo.FromPtrOr(g.BillableAmountInCents, 0) + amount
 			g.BillableAmountInCents = &ba
 		}
 		dateTotals[dateStr] = g

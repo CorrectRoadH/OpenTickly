@@ -82,6 +82,7 @@ type ProjectBreakdownAccumulator = {
 };
 
 export function buildReportsPageModel(args: {
+  currency?: string;
   durationFormat?: DurationFormat;
   report?: SavedWeeklyReportData;
   now?: Date;
@@ -167,7 +168,7 @@ export function buildReportsPageModel(args: {
     metrics: [
       { titleKey: "totalHours", value: formatClockDuration(totalSeconds, fmt) },
       { titleKey: "billableHours", value: formatClockDuration(billableSeconds, fmt) },
-      { titleKey: "amount", value: formatAmountCents(billableAmountCents) },
+      { titleKey: "amount", value: formatReportAmount(billableAmountCents / 100, args.currency) },
       { titleKey: "averageDailyHours", value: averageDailyHours.toFixed(2) },
     ],
     rangeLabel: buildRangeLabel(
@@ -235,10 +236,12 @@ function applyWeeklyRowToModel(
   totalsByProject.set(projectName, currentProject);
 }
 
-function formatAmountCents(cents: number): string {
-  if (cents === 0) return "-";
-  const dollars = cents / 100;
-  return `$${dollars.toFixed(2)}`;
+export function formatReportAmount(amount: number, currency = "USD"): string {
+  if (amount === 0) return "-";
+  return new Intl.NumberFormat(i18n.language, {
+    style: "currency",
+    currency: /^[a-z]{3}$/i.test(currency) ? currency : "USD",
+  }).format(amount);
 }
 
 function formatWeekLabel(dateKey: string): string {

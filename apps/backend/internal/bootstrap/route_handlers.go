@@ -166,7 +166,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	if err != nil {
 		return nil, err
 	}
-	rateResolver := reportsapplication.NewCatalogRateResolver(catalogService)
+	rateResolver := reportspostgres.NewBillableRateStore(pool)
 	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver, appLogger)
 	reportsService.WithSavedReportStore(reportspostgres.NewSavedReportStore(pool))
 	reportsService.WithScheduledReportStore(reportspostgres.NewScheduledReportStore(pool))

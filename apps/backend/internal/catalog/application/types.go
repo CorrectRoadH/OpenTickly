@@ -72,11 +72,15 @@ type TagView struct {
 }
 
 type ProjectUserView struct {
-	ProjectID   int64
-	UserID      int64
-	Role        string
-	WorkspaceID int64
-	CreatedAt   time.Time
+	Rate                 *float64
+	RateLastUpdated      *time.Time
+	LaborCost            *float64
+	LaborCostLastUpdated *time.Time
+	ProjectID            int64
+	UserID               int64
+	Role                 string
+	WorkspaceID          int64
+	CreatedAt            time.Time
 }
 
 type ProjectGroupView struct {
@@ -87,6 +91,7 @@ type ProjectGroupView struct {
 }
 
 type CreateProjectUserCommand struct {
+	Rates       []CreateRateCommand
 	WorkspaceID int64
 	ProjectID   int64
 	UserID      int64
@@ -100,10 +105,11 @@ type CreateProjectGroupCommand struct {
 }
 
 type UpdateProjectUserCommand struct {
+	Rates       []CreateRateCommand
 	WorkspaceID int64
 	ProjectID   int64
 	UserID      int64
-	Manager     bool
+	Manager     *bool
 }
 
 type ProjectCountView struct {
@@ -139,6 +145,7 @@ type ProjectView struct {
 	FixedFee         *float64
 	Currency         *string
 	Rate             *float64
+	RateLastUpdated  *time.Time
 }
 
 type TaskView struct {
@@ -218,6 +225,8 @@ type CreateTagCommand struct {
 }
 
 type CreateProjectCommand struct {
+	Currency    *string
+	RateChange  *CreateRateCommand
 	WorkspaceID int64
 	CreatedBy   int64
 	ClientID    *int64
@@ -253,16 +262,20 @@ type RestoreClientCommand struct {
 }
 
 type UpdateProjectCommand struct {
-	WorkspaceID int64
-	ProjectID   int64
-	ClientID    *int64
-	Name        *string
-	Active      *bool
-	Template    *bool
-	Recurring   *bool
-	Color       *string
-	IsPrivate   *bool
-	Billable    *bool
+	ActorID        int64
+	Currency       *string
+	Rate           *float64
+	RateChangeMode *RateChangeMode
+	WorkspaceID    int64
+	ProjectID      int64
+	ClientID       *int64
+	Name           *string
+	Active         *bool
+	Template       *bool
+	Recurring      *bool
+	Color          *string
+	IsPrivate      *bool
+	Billable       *bool
 }
 
 type SetProjectPinnedCommand struct {
@@ -344,7 +357,7 @@ type Store interface {
 	ListProjectUsers(context.Context, int64, ListProjectUsersFilter) ([]ProjectUserView, error)
 	GetProjectUser(context.Context, int64, int64, int64) (ProjectUserView, bool, error)
 	CreateProjectUser(context.Context, CreateProjectUserCommand) (ProjectUserView, error)
-	UpdateProjectUser(context.Context, ProjectUserView) error
+	UpdateProjectUser(context.Context, ProjectUserView, *string, []CreateRateCommand) error
 	DeleteProjectUser(context.Context, int64, int64, int64) error
 	ListProjectGroups(context.Context, int64, []int64) ([]ProjectGroupView, error)
 	GetProjectGroup(context.Context, int64, int64) (ProjectGroupView, bool, error)
@@ -353,7 +366,7 @@ type Store interface {
 	ListProjects(context.Context, int64, ListProjectsFilter) ([]ProjectView, error)
 	GetProject(context.Context, int64, int64) (ProjectView, bool, error)
 	CreateProject(context.Context, CreateProjectCommand) (ProjectView, error)
-	UpdateProject(context.Context, ProjectView) error
+	UpdateProject(context.Context, ProjectView, *string, *CreateRateCommand) error
 	DeleteProject(context.Context, int64, int64) error
 	ReassignProjectTimeEntries(ctx context.Context, workspaceID int64, fromProjectID int64, toProjectID int64) (int64, error)
 	DeleteProjectTasks(ctx context.Context, workspaceID int64, projectID int64) (int64, error)

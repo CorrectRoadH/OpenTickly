@@ -36,13 +36,10 @@ func (service *Service) CreateRate(ctx context.Context, command CreateRateComman
 		return RateView{}, err
 	}
 
-	start, mode, err := resolveRateTiming(command.Start, command.Mode)
+	command, err := PrepareRateChange(command)
 	if err != nil {
 		return RateView{}, err
 	}
-	command.Start = &start
-	command.Mode = &mode
-
 	return service.store.CreateRate(ctx, command)
 }
 
@@ -120,6 +117,18 @@ func (service *Service) validateRateTarget(
 	default:
 		return ErrRateLevelInvalid
 	}
+}
+
+func PrepareRateChange(command CreateRateCommand) (CreateRateCommand, error) {
+	if command.Amount <= 0 {
+		return CreateRateCommand{}, ErrRateAmountInvalid
+	}
+	start, mode, err := resolveRateTiming(command.Start, command.Mode)
+	if err != nil {
+		return CreateRateCommand{}, err
+	}
+	command.Start, command.Mode = &start, &mode
+	return command, nil
 }
 
 func resolveRateTiming(start *time.Time, mode *RateChangeMode) (time.Time, RateChangeMode, error) {

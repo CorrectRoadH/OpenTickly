@@ -17,19 +17,32 @@ func (handler *Handler) PostPublicTrackProjectUser(ctx *echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
 		return err
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
 
-	var request publictrackapi.ModelsProjectUser
+	var request publictrackapi.UserPostPayload
 	if err := bindPublicTrackJSON(ctx, &request, false); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
+	canManageCosts, err := handler.catalog.CanManageLaborCosts(ctx.Request().Context(), workspaceID, user.ID)
+	if err != nil {
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	if request.LaborCost != nil && !canManageCosts {
+		return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+	}
+	rates, err := projectUserRateChanges(workspaceID, user.ID, request.Rate, request.RateChangeMode, request.LaborCost, request.LaborCostChangeMode)
+	if err != nil {
+		return writePublicTrackRateError(err)
+	}
 	view, err := handler.catalog.CreateProjectUser(ctx.Request().Context(), catalogapplication.CreateProjectUserCommand{
+		Rates:       rates,
 		WorkspaceID: workspaceID,
 		ProjectID:   int64Value(request.ProjectId),
 		UserID:      int64Value(request.UserId),
@@ -42,7 +55,7 @@ func (handler *Handler) PostPublicTrackProjectUser(ctx *echo.Context) error {
 		return writePublicTrackCatalogError(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, projectUserViewToAPI(view))
+	return ctx.JSON(http.StatusOK, projectUserViewToAPI(view, canManageCosts))
 }
 
 func (handler *Handler) PutPublicTrackProjectUser(ctx *echo.Context) error {
@@ -58,23 +71,36 @@ func (handler *Handler) PutPublicTrackProjectUser(ctx *echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
 		return err
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
 
-	var request publictrackapi.ModelsProjectUser
+	var request publictrackapi.UserPutPayload
 	if err := bindPublicTrackJSON(ctx, &request, false); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
+	canManageCosts, err := handler.catalog.CanManageLaborCosts(ctx.Request().Context(), workspaceID, user.ID)
+	if err != nil {
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	if request.LaborCost != nil && !canManageCosts {
+		return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+	}
+	rates, err := projectUserRateChanges(workspaceID, user.ID, request.Rate, request.RateChangeMode, request.LaborCost, request.LaborCostChangeMode)
+	if err != nil {
+		return writePublicTrackRateError(err)
+	}
 	view, err := handler.catalog.UpdateProjectUser(ctx.Request().Context(), catalogapplication.UpdateProjectUserCommand{
+		Rates:       rates,
 		WorkspaceID: workspaceID,
 		ProjectID:   projectID,
 		UserID:      userID,
-		Manager:     lo.FromPtr(request.Manager),
+		Manager:     request.Manager,
 	})
 	if err != nil {
 		switch {
@@ -86,7 +112,7 @@ func (handler *Handler) PutPublicTrackProjectUser(ctx *echo.Context) error {
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, projectUserViewToAPI(view))
+	return ctx.JSON(http.StatusOK, projectUserViewToAPI(view, canManageCosts))
 }
 
 func (handler *Handler) DeletePublicTrackProjectUser(ctx *echo.Context) error {
@@ -124,4 +150,46 @@ func (handler *Handler) DeletePublicTrackProjectUser(ctx *echo.Context) error {
 
 func parseProjectUserID(value int64) (projectID int64, userID int64, ok bool) {
 	return catalogapplication.DecodeProjectUserID(value)
+}
+
+func projectUserRateChanges(workspaceID, actorID int64, rate *float32, rateMode *string, cost *float32, costMode *string) ([]catalogapplication.CreateRateCommand, error) {
+	var changes []catalogapplication.CreateRateCommand
+	for _, input := range []struct {
+		amount *float32
+		mode   *string
+		kind   catalogapplication.RateType
+	}{
+		{rate, rateMode, catalogapplication.RateTypeBillable},
+		{cost, costMode, catalogapplication.RateTypeLaborCost},
+	} {
+		change, err := projectRateChange(workspaceID, actorID, catalogapplication.RateLevelProjectUser, input.kind, input.amount, input.mode)
+		if err != nil {
+			return nil, err
+		}
+		if change != nil {
+			changes = append(changes, *change)
+		}
+	}
+	return changes, nil
+}
+
+func projectRateChange(workspaceID, actorID int64, level catalogapplication.RateLevel, kind catalogapplication.RateType, amount *float32, rawMode *string) (*catalogapplication.CreateRateCommand, error) {
+	if amount == nil {
+		return nil, nil
+	}
+	mode := catalogapplication.RateChangeModeOverrideAll
+	if rawMode != nil {
+		var err error
+		mode, err = publicTrackRateMode(*rawMode)
+		if err != nil {
+			return nil, catalogapplication.ErrRateModeInvalid
+		}
+	}
+	change, err := catalogapplication.PrepareRateChange(catalogapplication.CreateRateCommand{
+		WorkspaceID: workspaceID, CreatorID: actorID, Level: level, Type: kind, Amount: float64(*amount), Mode: &mode,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &change, nil
 }

@@ -59,9 +59,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 	buckets := map[key]*publicreportsapi.ProjectsDataTrendsProject{}
 	dates := map[string]struct{}{}
 
-	rateCents, currency, hasRate := handler.reports.GetWorkspaceBillableRate(ctx.Request().Context(), int64(workspaceID))
-	if request.Currency != nil && *request.Currency != "" {
-		currency = *request.Currency
+	amounts, currency, err := handler.reports.EntryBillableAmounts(ctx.Request().Context(), int64(workspaceID), entries)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)).Wrap(err)
 	}
 
 	for _, e := range entries {
@@ -94,8 +94,8 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsProjects(
 		if e.Billable {
 			bs := lo.FromPtrOr(p.BillableSeconds, 0) + e.Duration
 			p.BillableSeconds = &bs
-			if hasRate {
-				earn := lo.FromPtrOr(p.Earnings, 0) + e.Duration*rateCents/secondsPerHour
+			if amount := amounts[e.ID]; amount != 0 {
+				earn := lo.FromPtrOr(p.Earnings, 0) + amount
 				p.Earnings = &earn
 			}
 		}
@@ -170,9 +170,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 	buckets := map[key]*publicreportsapi.ClientsReportClient{}
 	dates := map[string]struct{}{}
 
-	rateCents, currency, hasRate := handler.reports.GetWorkspaceBillableRate(ctx.Request().Context(), int64(workspaceID))
-	if request.Currency != nil && *request.Currency != "" {
-		currency = *request.Currency
+	amounts, currency, err := handler.reports.EntryBillableAmounts(ctx.Request().Context(), int64(workspaceID), entries)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)).Wrap(err)
 	}
 
 	for _, e := range entries {
@@ -205,8 +205,8 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsClients(
 		if e.Billable {
 			bs := lo.FromPtrOr(c.BillableSeconds, 0) + e.Duration
 			c.BillableSeconds = &bs
-			if hasRate {
-				earn := lo.FromPtrOr(c.Earnings, 0) + e.Duration*rateCents/secondsPerHour
+			if amount := amounts[e.ID]; amount != 0 {
+				earn := lo.FromPtrOr(c.Earnings, 0) + amount
 				c.Earnings = &earn
 			}
 		}
@@ -295,9 +295,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 	buckets := map[key]*publicreportsapi.UsersDataTrendsUser{}
 	dates := map[string]struct{}{}
 
-	rateCents, currency, hasRate := handler.reports.GetWorkspaceBillableRate(ctx.Request().Context(), int64(workspaceID))
-	if request.Currency != nil && *request.Currency != "" {
-		currency = *request.Currency
+	amounts, currency, err := handler.reports.EntryBillableAmounts(ctx.Request().Context(), int64(workspaceID), entries)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)).Wrap(err)
 	}
 
 	for _, e := range entries {
@@ -332,8 +332,8 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdDataTrendsUsers(
 		if e.Billable {
 			bs := lo.FromPtrOr(u.BillableSeconds, 0) + e.Duration
 			u.BillableSeconds = &bs
-			if hasRate {
-				earn := lo.FromPtrOr(u.Earnings, 0) + e.Duration*rateCents/secondsPerHour
+			if amount := amounts[e.ID]; amount != 0 {
+				earn := lo.FromPtrOr(u.Earnings, 0) + amount
 				u.Earnings = &earn
 			}
 		}
@@ -499,9 +499,6 @@ func resolveDateBounds(startStr *string, endStr *string, loc *time.Location) (ti
 	}
 	return start, end, nil
 }
-
-// secondsPerHour converts between duration seconds and hourly rates.
-const secondsPerHour = 3600
 
 func intSetFromRequest(ids *[]int) map[int64]bool {
 	if ids == nil || len(*ids) == 0 {

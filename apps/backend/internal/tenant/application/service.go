@@ -15,7 +15,7 @@ var (
 	ErrWorkspaceNotFound             = errors.New("workspace not found")
 	ErrCommercialTruthSourceRequired = errors.New("tenant commercial truth source is required")
 	ErrStoreRequired                 = errors.New("tenant store is required")
-	ErrLoggerRequired               = errors.New("tenant logger is required")
+	ErrLoggerRequired                = errors.New("tenant logger is required")
 )
 
 type CommercialSnapshot = billingdomain.CommercialStatus
@@ -47,9 +47,10 @@ type CreateWorkspaceResult struct {
 }
 
 type UpdateWorkspaceCommand struct {
-	WorkspaceID domain.WorkspaceID
-	Name        string
-	Settings    domain.WorkspaceSettingsInput
+	BillableRateActorID *int64
+	WorkspaceID         domain.WorkspaceID
+	Name                string
+	Settings            domain.WorkspaceSettingsInput
 }
 
 type UpdateOrganizationCommand struct {
@@ -104,7 +105,7 @@ type Store interface {
 	ListOrganizationsByUserID(ctx context.Context, userID int64) ([]domain.Organization, error)
 	ListWorkspacesByUserID(ctx context.Context, userID int64) ([]domain.Workspace, error)
 	SaveOrganization(ctx context.Context, organization domain.Organization) error
-	SaveWorkspace(ctx context.Context, workspace domain.Workspace) error
+	SaveWorkspace(ctx context.Context, workspace domain.Workspace, billableRateActorID *int64) error
 	DeleteWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) error
 	DeleteOrganization(ctx context.Context, organizationID domain.OrganizationID) error
 }
@@ -408,7 +409,7 @@ func (service *Service) UpdateWorkspace(ctx context.Context, command UpdateWorks
 	}
 
 	workspace.UpdateSettings(settings)
-	if err := service.store.SaveWorkspace(ctx, workspace); err != nil {
+	if err := service.store.SaveWorkspace(ctx, workspace, command.BillableRateActorID); err != nil {
 		service.logger.ErrorContext(ctx, "failed to save workspace",
 			"workspace_id", command.WorkspaceID,
 			"error", err.Error(),
@@ -510,7 +511,7 @@ func (service *Service) UpdateWorkspaceBranding(ctx context.Context, command Upd
 	}
 
 	workspace.UpdateBranding(branding)
-	if err := service.store.SaveWorkspace(ctx, workspace); err != nil {
+	if err := service.store.SaveWorkspace(ctx, workspace, nil); err != nil {
 		service.logger.ErrorContext(ctx, "failed to save workspace branding",
 			"workspace_id", command.WorkspaceID,
 			"error", err.Error(),

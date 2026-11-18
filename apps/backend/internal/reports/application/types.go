@@ -63,9 +63,10 @@ type SummaryGroup struct {
 }
 
 type SummaryReport struct {
-	Groups       []SummaryGroup
-	TotalSeconds int
-	TrackedDays  int
+	BillableAmountInCents int
+	Groups                []SummaryGroup
+	TotalSeconds          int
+	TrackedDays           int
 }
 
 // SavedReportView is the read model for a persisted report definition.

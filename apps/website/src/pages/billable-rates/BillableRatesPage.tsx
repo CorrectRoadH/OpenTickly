@@ -9,9 +9,9 @@ import type {
   ModelsRate,
   RatesCreationRequest,
 } from "../../shared/api/generated/public-track/types.gen.ts";
-import { createRate, getRatesByLevel } from "../../shared/api/public/track/index.ts";
+import { createRate, getRatesByLevel, putWorkspaces } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
-import { useWorkspaceUsersQuery } from "../../shared/query/web-shell.ts";
+import { sessionQueryKey, useWorkspaceUsersQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 const CURRENCIES = [
@@ -63,21 +63,22 @@ function useWorkspaceRateQuery(workspaceId: number) {
   });
 }
 
-function useCreateWorkspaceRateMutation(workspaceId: number) {
+function useUpdateWorkspaceBillingMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: RatesCreationRequest) =>
+    mutationFn: (billing: { default_currency: string; default_hourly_rate: number }) =>
       unwrapWebApiResult(
-        createRate({
+        putWorkspaces({
           path: { workspace_id: workspaceId },
-          body: request,
+          body: billing,
         }),
       ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: workspaceRateQueryKey(workspaceId),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: workspaceRateQueryKey(workspaceId) }),
+        queryClient.invalidateQueries({ queryKey: sessionQueryKey }),
+      ]);
     },
   });
 }
@@ -90,7 +91,7 @@ export function BillableRatesContent(): ReactElement {
   const defaultHourlyRate = session.currentWorkspace.defaultHourlyRate ?? 0;
 
   const rateQuery = useWorkspaceRateQuery(workspaceId);
-  const rateMutation = useCreateWorkspaceRateMutation(workspaceId);
+  const rateMutation = useUpdateWorkspaceBillingMutation(workspaceId);
 
   const currentRate = findActiveRate(rateQuery.data);
 
@@ -116,11 +117,8 @@ export function BillableRatesContent(): ReactElement {
 
     rateMutation.mutate(
       {
-        level: "workspace",
-        level_id: workspaceId,
-        amount: amount * 100,
-        mode: "override-all",
-        type: "billable_rates",
+        default_currency: currency,
+        default_hourly_rate: Math.round(amount * 100),
       },
       {
         onSuccess: () => {
@@ -598,8 +596,13 @@ function MemberRateRow({
  * The API returns rates sorted by start date; the active one has no deleted_at.
  */
 function findActiveRate(rates: Array<ModelsRate> | undefined): ModelsRate | undefined {
-  if (!rates || rates.length === 0) return undefined;
-  return rates.find((r) => !r.deleted_at) ?? rates[0];
+  const now = Date.now();
+  return rates?.find(
+    (rate) =>
+      !rate.deleted_at &&
+      (!rate.start || Date.parse(rate.start) <= now) &&
+      (!rate.end || Date.parse(rate.end) > now),
+  );
 }
 
 /**

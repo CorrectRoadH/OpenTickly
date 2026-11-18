@@ -16,6 +16,19 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
+const projectRateJoin = `
+	join tenant_workspaces w on w.id = p.workspace_id
+	left join lateral (
+		select amount, created_at
+		from catalog_rates
+		where workspace_id = p.workspace_id and level = 'project' and level_id = p.id
+			and type = 'billable_rates' and start_at <= now()
+			and (end_at is null or end_at > now())
+		order by start_at desc, id desc
+		limit 1
+	) project_rate on true
+`
+
 const projectActualSecondsJoin = `left join lateral (
 	select coalesce(sum(te.duration_seconds), 0)::bigint as actual_seconds
 	from tracking_time_entries te
@@ -88,6 +101,7 @@ func scanProject(scanner scanner) (catalogapplication.ProjectView, error) {
 		&project.FixedFee,
 		&project.Currency,
 		&project.Rate,
+		&project.RateLastUpdated,
 	)
 	return project, err
 }
