@@ -114,9 +114,10 @@ describe("browser SDK", () => {
               Sentry.withScope((scope) => {
                 scope.setUser({ email: "SENSITIVE" });
                 scope.setExtra("nested", { token: "SENSITIVE" });
-                const error = new Error("SENSITIVE");
+                const error = new Error("Could not load report.tsv: Bearer SENSITIVE");
+                error.name = "ReportLoadError";
                 error.stack =
-                  "Error: SENSITIVE\n    at run (https://example.com/app.js?key=SENSITIVE:1:2)";
+                  "ReportLoadError: Could not load report.tsv: Bearer SENSITIVE\n    at run (https://example.com/app.js?api_key=SENSITIVE:1:2)";
                 vi.stubGlobal("_sentryDebugIds", {
                   [error.stack]: "12345678-1234-1234-1234-123456789abc",
                 });
@@ -137,11 +138,12 @@ describe("browser SDK", () => {
     await Sentry.flush(2000);
     const payload = JSON.stringify(envelopes);
     expect(payload).not.toContain("SENSITIVE");
-    expect(payload).toContain('"exception"');
+    expect(payload).toContain('"type":"ReportLoadError"');
+    expect(payload).toContain("Could not load report.tsv: Bearer [Filtered]");
     expect(payload).toContain('"handled":false');
     expect(payload).toContain('"is_exception_group":true');
     expect(payload).toContain('"debug_id":"12345678-1234-1234-1234-123456789abc"');
-    expect(payload).toContain('"code_file":"https://example.com/app.js"');
+    expect(payload).toContain('"code_file":"https://example.com/app.js?api_key=[Filtered]"');
     expect(payload).toContain('"span"');
     expect(payload).toContain('"component"');
     const spans = envelopes.flatMap((envelope) =>

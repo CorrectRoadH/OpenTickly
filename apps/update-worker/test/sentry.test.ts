@@ -19,7 +19,7 @@ describe("Worker real SDK request boundary", () => {
     const handler = monitorWorker(
       {
         async fetch() {
-          captureUpdateError(new Error("synthetic"));
+          captureUpdateError(new Error("synthetic"), 200);
           return new Response("ok");
         },
       },
@@ -54,6 +54,85 @@ describe("Worker real SDK request boundary", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(Sentry.getClient()).toBeUndefined();
   });
+  it("reports 5xx and thrown errors with request status, and skips rejects and client aborts", async () => {
+    const errors: unknown[] = [];
+    const pending: Promise<unknown>[] = [];
+    const context = {
+      waitUntil(value: Promise<unknown>) {
+        pending.push(value);
+      },
+      passThroughOnException() {},
+    } as unknown as ExecutionContext;
+    const handler = monitorWorker(
+      {
+        async fetch(request) {
+          const result = new URL(request.url).searchParams.get("result");
+          if (result === "throw") throw new TypeError("report parse failed");
+          return new Response(null, { status: Number(result) });
+        },
+      },
+      (env) => ({
+        ...sentryOptions(env, true),
+        cacheClient: false,
+        transport: () => ({
+          async send(envelope) {
+            for (const [header, payload] of envelope[1]) {
+              if (header.type === "event") errors.push(payload);
+            }
+            return { statusCode: 200 };
+          },
+          async flush() {
+            return true;
+          },
+        }),
+      }),
+    );
+    const env = { GITHUB_REPO: "test/repo" };
+    const request = (result: string, signal?: AbortSignal) =>
+      new Request(`https://update.example/?result=${result}`, { signal });
+    await expect(handler.fetch(request("422"), env, context)).resolves.toMatchObject({
+      status: 422,
+    });
+    await expect(handler.fetch(request("503"), env, context)).resolves.toMatchObject({
+      status: 503,
+    });
+    await expect(handler.fetch(request("throw"), env, context)).rejects.toThrow(
+      "report parse failed",
+    );
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      handler.fetch(request("throw", controller.signal), env, context),
+    ).rejects.toThrow();
+    await Promise.all(pending);
+    expect(errors).toHaveLength(2);
+    const tags = (status: string) => ({
+      route: "/",
+      "http.method": "GET",
+      "http.status_code": status,
+    });
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tags: expect.objectContaining(tags("503")),
+          exception: { values: [expect.objectContaining({ value: "HTTP 503" })] },
+        }),
+        expect.objectContaining({
+          tags: expect.objectContaining(tags("500")),
+          exception: {
+            values: [
+              expect.objectContaining({
+                type: "TypeError",
+                value: "report parse failed",
+                mechanism: expect.objectContaining({ handled: false }),
+              }),
+            ],
+          },
+        }),
+      ]),
+    );
+  });
+
   it("filters entire error and streamed span envelopes and does not propagate to external fetch", async () => {
     const envelopes: string[] = [];
     const outgoing: Headers[] = [];
@@ -63,7 +142,11 @@ describe("Worker real SDK request boundary", () => {
         const url = input instanceof Request ? input.url : String(input);
         if (!url.startsWith("https://vendor.example/"))
           envelopes.push(
-            String(init?.body ?? (input instanceof Request ? await input.text() : "")),
+            init?.body
+              ? await new Response(init.body).text()
+              : input instanceof Request
+                ? await input.text()
+                : "",
           );
         else
           outgoing.push(
@@ -86,9 +169,11 @@ describe("Worker real SDK request boundary", () => {
             { name: "SENSITIVE", op: "http.client", attributes: { "db.query.text": "SENSITIVE" } },
             async () => {
               Sentry.withScope((scope) => {
-                scope.setExtra("nested", { value: "SENSITIVE" });
+                scope.setExtra("nested", { token: "SENSITIVE", report: "report.tsv" });
                 scope.setUser({ email: "SENSITIVE" });
-                captureUpdateError(new Error("SENSITIVE"));
+                const error = new Error("load report.tsv: Bearer SENSITIVE");
+                error.name = "UpstreamReportError";
+                captureUpdateError(error, 200);
               });
               await fetch("https://vendor.example/SENSITIVE?q=SENSITIVE");
             },
@@ -106,7 +191,7 @@ describe("Worker real SDK request boundary", () => {
           }),
       }),
     );
-    const request = new Request("https://update.opentoggl.com/SENSITIVE?q=SENSITIVE", {
+    const request = new Request("https://update.opentoggl.com/?q=quarterly&token=SENSITIVE", {
       headers: {
         Cookie: "SENSITIVE",
         Authorization: "SENSITIVE",
@@ -126,7 +211,13 @@ describe("Worker real SDK request boundary", () => {
     expect(envelopes.length).toBeGreaterThan(0);
     expect(envelopes.join("\n")).not.toContain("SENSITIVE");
     expect(envelopes.join("\n")).toContain('"span"');
-    expect(envelopes.join("\n")).toContain('"exception"');
+    const wire = envelopes.join("\n");
+    expect(wire).toContain('"type":"UpstreamReportError"');
+    expect(wire).toContain("load report.tsv: Bearer [Filtered]");
+    expect(wire).toContain('"route":"/"');
+    expect(wire).toContain('"http.method":"GET"');
+    expect(wire).toContain('"http.status_code":"200"');
+    expect(wire).toContain("q=quarterly&token=[Filtered]");
     expect(envelopes.join("\n")).toContain('"update"');
     expect(outgoing).toHaveLength(1);
     expect(outgoing[0]?.has("sentry-trace")).toBe(false);

@@ -109,7 +109,9 @@ const runtime = {
     );
   },
   session(handled: boolean) {
-    Sentry.captureException(new Error("SENSITIVE"), { mechanism: { type: "generic", handled } });
+    const error = new Error("Could not load report.tsv: Bearer SENSITIVE");
+    error.name = "ReportLoadError";
+    Sentry.captureException(error, { mechanism: { type: "generic", handled } });
   },
   reportDrop() {
     Sentry.logger.error("SENSITIVE");

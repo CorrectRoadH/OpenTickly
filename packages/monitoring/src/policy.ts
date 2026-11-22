@@ -1,7 +1,10 @@
+import { sanitizeEvent } from "./error-event.ts";
 import { cleanLog, cleanMetric } from "./format.ts";
 import type { ErrorEvent, StreamedSpanJSON } from "@sentry/core";
 import { operationName } from "./operations.ts";
 import { validId } from "./profile.ts";
+
+export { sanitizeEvent } from "./error-event.ts";
 
 export interface TelemetryConfig {
   dsn: string;
@@ -51,115 +54,6 @@ export const dataCollection = {
   frameContextLines: 0,
 } as const;
 
-function filename(value: string | undefined): string | undefined {
-  if (!value) return;
-  try {
-    const url = new URL(value);
-    return url.origin === "null" ? url.pathname : `${url.origin}${url.pathname}`;
-  } catch {
-    return value.split(/[?#]/)[0];
-  }
-}
-const mechanisms = new Set([
-  "generic",
-  "onerror",
-  "onunhandledrejection",
-  "instrument",
-  "auto.http.cloudflare",
-  "auto.function.react.error_boundary",
-  "auto.function.react.error_handler",
-  "auto.browser.global_handlers.onerror",
-  "auto.browser.global_handlers.onunhandledrejection",
-  "auto.browser.browserapierrors.addEventListener",
-  "auto.browser.browserapierrors.handleEvent",
-  "auto.browser.browserapierrors.requestAnimationFrame",
-  "auto.browser.browserapierrors.setTimeout",
-  "auto.browser.browserapierrors.setInterval",
-]);
-const errorTypes = new Set([
-  "Error",
-  "TypeError",
-  "RangeError",
-  "ReferenceError",
-  "SyntaxError",
-  "URIError",
-  "EvalError",
-]);
-export function sanitizeEvent(
-  event: ErrorEvent,
-  component: string,
-  config: TelemetryConfig,
-): ErrorEvent {
-  const trace = event.contexts?.trace;
-  return {
-    type: event.type,
-    event_id: event.event_id,
-    timestamp: event.timestamp,
-    platform: event.platform,
-    level: event.level,
-    release: config.release,
-    environment: config.environment,
-    tags: { component },
-    exception: {
-      values: event.exception?.values?.map((value) => ({
-        type: errorTypes.has(value.type ?? "") ? value.type : "Error",
-        value: "Application error",
-        mechanism: value.mechanism
-          ? {
-              type: mechanisms.has(value.mechanism.type) ? value.mechanism.type : "generic",
-              handled: value.mechanism.handled,
-              is_exception_group: value.mechanism.is_exception_group,
-              exception_id: Number.isInteger(value.mechanism.exception_id)
-                ? value.mechanism.exception_id
-                : undefined,
-              parent_id: Number.isInteger(value.mechanism.parent_id)
-                ? value.mechanism.parent_id
-                : undefined,
-            }
-          : undefined,
-        stacktrace: {
-          frames: value.stacktrace?.frames?.map((frame) => ({
-            filename: filename(frame.filename),
-            function: frame.function,
-            module: frame.module,
-            lineno: frame.lineno,
-            colno: frame.colno,
-            in_app: frame.in_app,
-            debug_id: /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
-              frame.debug_id ?? "",
-            )
-              ? frame.debug_id
-              : undefined,
-          })),
-        },
-      })),
-    },
-    debug_meta: {
-      images: event.debug_meta?.images?.flatMap((image) =>
-        image.type === "sourcemap" &&
-        /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(image.debug_id)
-          ? [
-              {
-                type: "sourcemap" as const,
-                debug_id: image.debug_id,
-                code_file: filename(image.code_file) ?? "",
-              },
-            ]
-          : [],
-      ),
-    },
-    contexts: trace
-      ? {
-          trace: {
-            trace_id: trace.trace_id,
-            span_id: trace.span_id,
-            parent_span_id: trace.parent_span_id,
-            op: "http.request",
-          },
-        }
-      : undefined,
-  };
-}
 const operations = new Set([
   "pageload",
   "navigation",
@@ -245,6 +139,7 @@ export function privacyOptions(component: string, config: TelemetryConfig, profi
   return {
     ...config,
     dataCollection: { ...dataCollection, httpBodies: [] },
+    sendDefaultPii: false,
     sendClientReports: true,
     traceLifecycle: "stream" as const,
     beforeSendLog: (log: import("@sentry/core").Log) => cleanLog(log, component, config),

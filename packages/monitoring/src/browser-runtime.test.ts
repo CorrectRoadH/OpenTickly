@@ -155,6 +155,9 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
     expect(JSON.stringify(sessions)).not.toMatch(/did|ip_address|user_agent/);
     const serialized = JSON.stringify(result);
     expect(serialized).not.toContain("SENSITIVE");
+    expect(serialized).toContain('"type":"ReportLoadError"');
+    expect(serialized).toContain("Could not load report.tsv: Bearer [Filtered]");
+    expect(serialized).toContain('"stacktrace"');
     expect(serialized).toContain("sentry.profiler_id");
     expect(serialized).toContain("thread.id");
     expect(serialized).toContain('"function":"staticWork"');
@@ -213,6 +216,11 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
         'window.runtime.envelopes.some(e=>e[1].some(i=>i[0].type === "span"))',
       ),
     ).toBe(false);
+    await landingPage.evaluate("window.runtime.session(true)");
+    await landingPage.evaluate("window.runtime.flush()");
+    await landingPage.waitForFunction(
+      'window.runtime.envelopes.some(e => e[1].some(i => i[0].type === "event" && i[1].tags.component === "landing" && i[1].exception.values[0].type === "ReportLoadError" && i[1].exception.values[0].value === "Could not load report.tsv: Bearer [Filtered]"))',
+    );
     await landingPage.close();
     const [outboundTrace, outboundSpan] = (incoming[0]?.trace ?? "").split("-");
     const httpSpan = spans.find(

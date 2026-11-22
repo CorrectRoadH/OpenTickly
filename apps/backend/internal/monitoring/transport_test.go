@@ -36,13 +36,13 @@ func TestFinalHTTPEnvelope(t *testing.T) {
 	e := echo.New()
 	e.Use(Middleware(client))
 	e.GET("/:id", func(c *echo.Context) error {
-		span := sentry.StartSpan(c.Request().Context(), "db.query", sentry.WithDescription("SENSITIVE"))
+		span := sentry.StartSpan(c.Request().Context(), "db.query", sentry.WithDescription("Bearer SENSITIVE"))
 		span.SetData("nested", struct{ Token string }{"SENSITIVE"})
 		defer span.Finish()
-		sentry.GetHubFromContext(c.Request().Context()).CaptureMessage("SENSITIVE")
-		return echo.NewHTTPError(500, "SENSITIVE")
+		sentry.GetHubFromContext(c.Request().Context()).CaptureMessage("Workspace 42: Bearer SENSITIVE")
+		return echo.NewHTTPError(500, "Could not open report.tsv")
 	})
-	req := httptest.NewRequest(http.MethodGet, "https://track.opentoggl.com/SENSITIVE?q=SENSITIVE", nil)
+	req := httptest.NewRequest(http.MethodGet, "https://track.opentoggl.com/report.tsv?token=SENSITIVE", nil)
 	req.Header.Set("baggage", "sentry-transaction=SENSITIVE,sentry-environment=SENSITIVE")
 	req.Header.Set("sentry-trace", "01234567890123456789012345678901-0123456789012345-1")
 	req.Header.Set("Cookie", "session=SENSITIVE")
@@ -52,6 +52,10 @@ func TestFinalHTTPEnvelope(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
+	joined := strings.Join(envelopes, "\n")
+	if !strings.Contains(joined, "Could not open report.tsv") || !strings.Contains(joined, "Workspace 42: Bearer [Filtered]") || !strings.Contains(joined, `"route":"/:id"`) {
+		t.Fatalf("missing error details in final envelopes: %s", joined)
+	}
 	if len(envelopes) < 2 {
 		t.Fatalf("expected error and trace, got %d", len(envelopes))
 	}

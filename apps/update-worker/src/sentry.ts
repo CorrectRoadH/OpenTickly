@@ -28,8 +28,9 @@ export function sentryOptions(
     defaultIntegrations: false as const,
   };
 }
-export function captureUpdateError(error: unknown) {
-  Sentry.captureException(error);
+export function captureUpdateError(error: unknown, status: number) {
+  if (status >= 400 && status < 500) return;
+  Sentry.captureException(error, { tags: { "http.status_code": String(status) } });
 }
 declare const __SENTRY_UPDATE_RELEASE__: string;
 declare const __SENTRY_UPDATE_PRODUCTION__: boolean;
@@ -43,12 +44,37 @@ export function monitorWorker(
   const originalRequests = new WeakMap<Request, Request>();
   const instrumented = {
     ...handler,
-    fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext) {
+    async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext) {
+      const original = originalRequests.get(request) ?? request;
+      const route = new URL(original.url).pathname === "/" ? "/" : "unmatched";
+      let responseStatus = 500;
+      Sentry.getIsolationScope().addEventProcessor((event) => {
+        if (original.signal.aborted) return null;
+        event.tags = {
+          ...event.tags,
+          route,
+          "http.method": original.method,
+          "http.status_code": event.tags?.["http.status_code"] ?? String(responseStatus),
+        };
+        event.request = { ...event.request, url: original.url, method: original.method };
+        event.transaction ??= "update.request";
+        return event;
+      });
       const root = Sentry.getActiveSpan();
       if (root) Sentry.updateSpanName(root, "update.request");
       return traceOperation(
         "update.request",
-        () => handler.fetch(originalRequests.get(request) ?? request, env, ctx),
+        async () => {
+          const response = await handler.fetch(original, env, ctx);
+          responseStatus = response.status;
+          if (responseStatus >= 500) {
+            captureUpdateError(
+              new Error(`HTTP ${responseStatus} ${response.statusText}`.trimEnd()),
+              responseStatus,
+            );
+          }
+          return response;
+        },
         root,
       );
     },

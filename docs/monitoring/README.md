@@ -20,13 +20,26 @@ defaults to `production`; `VITE_SENTRY_ENVIRONMENT` (landing) or
 `SENTRY_ENVIRONMENT` (Worker/API) can distinguish a deployment. SDK tests use
 explicit test transports and never send to the real project.
 
-`packages/monitoring` owns the JavaScript data boundary. Errors and streamed spans
-are rebuilt from allowed fields, with fixed component labels and operation names.
-The final envelope integration removes dynamic sampling operation names and
-items outside the explicit error/span/profile/log/metric/session/client-report allowlist. Valid debug IDs and cleaned code filenames survive for
-source map resolution. The Go adapter in `internal/monitoring` uses per-request
-hubs and sanitized error/transaction events without replacing the existing update
-pinger or registering a global OpenTelemetry provider.
+The API, website, landing, and update Worker send the original error types,
+messages, and stack frames. Wrapped Go errors retain the error chain. Browser
+debug IDs and code filenames remain available for source map resolution. API and
+Worker request errors also include the registered route template, HTTP method,
+response status, and existing operation or transaction name. An unmatched route
+uses a fixed label. Unhandled failures without a committed response use status
+500. A handled update fallback records its successful response status.
+
+The error event filters credential headers, sensitive query parameters and
+structured fields, and credential strings such as bearer tokens, API keys, JWTs,
+URL userinfo, and the configured Sentry DSN public key. Other business details
+remain available. Default PII collection stays off and request and response bodies
+are excluded. Expected 4xx responses and client cancellations do not produce error
+events. Credential filtering also runs at the JavaScript envelope boundary.
+
+Streamed spans retain their field allowlist and fixed component and operation
+names. The final envelope integration removes dynamic sampling operation names
+and items outside the error/span/profile/log/metric/session/client-report
+allowlist. The Go adapter uses per-request hubs and a separate transaction filter
+alongside the existing update pinger.
 
 Browser tracing headers target only same-origin API URLs. The dedicated API update client propagates only to its exact HTTPS root; other server and Worker
 instrumentation do not propagate to external services. Root sampling is 0.1,

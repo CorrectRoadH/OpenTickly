@@ -33,12 +33,13 @@ export default monitorWorker({
     // If GitHub is unreachable we degrade to empty releases but keep serving
     // announcements. Clients interpret `latestVersion === ""` as "unknown".
     let releases: GithubRelease[] = [];
+    let upstreamFailure: { error: unknown } | undefined;
     try {
       releases = await traceOperation("update.upstream.fetch", () =>
         fetchReleases(env.GITHUB_REPO, env.GITHUB_TOKEN),
       );
     } catch (err) {
-      captureUpdateError(err);
+      upstreamFailure = { error: err };
       console.error("[update-worker] github fetch failed", err);
     }
 
@@ -55,13 +56,15 @@ export default monitorWorker({
       ),
     );
 
-    return traceOperation("update.response", () =>
+    const response = traceOperation("update.response", () =>
       json(manifest, 200, {
         // Edge-cache the composed manifest for a minute so a stampede doesn't
         // translate 1:1 into GH fetches. GH itself is cached for 5min in github.ts.
         "Cache-Control": "public, max-age=60",
       }),
     );
+    if (upstreamFailure) captureUpdateError(upstreamFailure.error, response.status);
+    return response;
   },
 });
 

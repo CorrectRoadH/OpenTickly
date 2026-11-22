@@ -1,8 +1,13 @@
 package monitoring
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,12 +43,20 @@ func Options(dsn, environment, release string, transport sentry.Transport) sentr
 		environment = "production"
 	}
 	release = label(release)
+	credentials := newCredentialFilter(dsn)
 	return sentry.ClientOptions{Dsn: dsn, Environment: label(environment), Release: label(release), Transport: transport,
 		EnableTracing: true, TracesSampleRate: 0.1, SendDefaultPII: false, MaxBreadcrumbs: -1,
-		BeforeSendLog:         func(log *sentry.Log) *sentry.Log { return sanitizeLog(log, environment, release) },
-		BeforeSendMetric:      func(metric *sentry.Metric) *sentry.Metric { return sanitizeMetric(metric, environment, release) },
-		BeforeSend:            func(e *sentry.Event, _ *sentry.EventHint) *sentry.Event { return sanitize(e, environment, release) },
-		BeforeSendTransaction: func(e *sentry.Event, _ *sentry.EventHint) *sentry.Event { return sanitize(e, environment, release) },
+		BeforeSendLog:    func(log *sentry.Log) *sentry.Log { return sanitizeLog(log, environment, release) },
+		BeforeSendMetric: func(metric *sentry.Metric) *sentry.Metric { return sanitizeMetric(metric, environment, release) },
+		BeforeSend: func(e *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+			clean := credentials.errorEvent(e, hint)
+			clean.Environment = environment
+			clean.Release = release
+			return clean
+		},
+		BeforeSendTransaction: func(e *sentry.Event, _ *sentry.EventHint) *sentry.Event {
+			return sanitizeTransaction(e, environment, release)
+		},
 	}
 }
 func Middleware(client *sentry.Client) echo.MiddlewareFunc {
@@ -52,43 +65,78 @@ func Middleware(client *sentry.Client) echo.MiddlewareFunc {
 			if client == nil {
 				return next(c)
 			}
-			hub := sentry.NewHub(client, sentry.NewScope())
-			ctx := sentry.SetHubOnContext(c.Request().Context(), hub)
-			transaction := sentry.StartTransaction(ctx, RouteOperation(c.Request().Method, c.Path()), sentry.WithOpName("http.server"), sentry.ContinueFromHeaders(incomingTrace(c.Request().Header.Get("sentry-trace")), ""))
+			scope := sentry.NewScope()
+			hub := sentry.NewHub(client, scope)
+			request := c.Request()
+			route := c.Path()
+			operation := RouteOperation(request.Method, route)
+			if route == "" {
+				route = "unmatched"
+			}
+			scope.SetTag("route", route)
+			scope.SetTag("http.method", request.Method)
+			scope.SetTag("http.status_code", strconv.Itoa(http.StatusInternalServerError))
+			scope.AddEventProcessor(func(event *sentry.Event, _ *sentry.EventHint) *sentry.Event {
+				if event.Type == "transaction" {
+					return event
+				}
+				if event.Transaction == "" {
+					event.Transaction = operation
+				}
+				if event.Request == nil {
+					event.Request = &sentry.Request{
+						Method: request.Method, URL: request.URL.EscapedPath(), QueryString: request.URL.RawQuery,
+					}
+				}
+				return event
+			})
+
+			ctx := sentry.SetHubOnContext(request.Context(), hub)
+			transaction := sentry.StartTransaction(ctx, operation, sentry.WithOpName("http.server"), sentry.ContinueFromHeaders(incomingTrace(request.Header.Get("sentry-trace")), ""))
 			transaction.SetDynamicSamplingContext(sentry.DynamicSamplingContextFromTransaction(transaction))
-			c.SetRequest(c.Request().WithContext(transaction.Context()))
+			c.SetRequest(request.WithContext(transaction.Context()))
 			defer func() {
+				defer transaction.Finish()
 				if recovered := recover(); recovered != nil {
-					hub.RecoverWithContext(transaction.Context(), recovered)
-					transaction.Status = sentry.SpanStatusInternalError
-					transaction.Finish()
+					_, status := echo.ResolveResponseStatus(c.Response(), echo.ErrInternalServerError)
+					scope.SetTag("http.status_code", strconv.Itoa(status))
+					panicError, _ := recovered.(error)
+					if isClientAbort(panicError) {
+						transaction.Status = sentry.SpanStatusCanceled
+					} else {
+						hub.RecoverWithContext(transaction.Context(), recovered)
+						transaction.Status = sentry.SpanStatusInternalError
+					}
 					panic(recovered)
 				}
 				_, status := echo.ResolveResponseStatus(c.Response(), err)
-				if err != nil {
-					status = echo.StatusCode(err)
-					if status == 0 {
-						status = 500
-					}
-					if status >= 500 {
-						hub.CaptureException(err)
-						transaction.Status = sentry.SpanStatusInternalError
-					}
-				}
-				if err == nil && status >= 500 {
-					hub.CaptureMessage("Application error")
-					transaction.Status = sentry.SpanStatusInternalError
-				}
-				if transaction.Status == sentry.SpanStatusUndefined {
-					transaction.Status = sentry.HTTPtoSpanStatus(status)
-				}
+				scope.SetTag("http.status_code", strconv.Itoa(status))
+				transaction.Status = sentry.HTTPtoSpanStatus(status)
 				transaction.SetData("http.response.status_code", status)
-				transaction.Finish()
+
+				if isClientAbort(err) || isClientAbort(request.Context().Err()) {
+					transaction.Status = sentry.SpanStatusCanceled
+					return
+				}
+				errorStatus := echo.StatusCode(err)
+				if status >= 500 || (status < 400 && err != nil && (errorStatus == 0 || errorStatus >= 500)) {
+					transaction.Status = sentry.SpanStatusInternalError
+					if err == nil {
+						errForEvent := fmt.Errorf("HTTP %d %s", status, http.StatusText(status))
+						hub.CaptureException(errForEvent)
+					} else {
+						hub.CaptureException(err)
+					}
+				}
 			}()
 			return next(c)
 		}
 	}
 }
+func isClientAbort(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, http.ErrAbortHandler)
+}
+
 func Flush(client *sentry.Client) {
 	if client != nil {
 		client.Flush(2 * time.Second)
