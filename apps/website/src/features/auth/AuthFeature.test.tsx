@@ -66,6 +66,33 @@ describe("AuthFeature", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it.each(["", "   "])(
+    "shows a validation toast for a blank login identifier %j",
+    async (email) => {
+      const mutateAsync = vi.fn();
+      mockLoginMutation.mockReturnValue({ isPending: false, mutateAsync });
+      render(<AuthFeature mode="login" />);
+
+      fireEvent.change(screen.getByLabelText("emailOrUsername"), { target: { value: email } });
+      fireEvent.change(screen.getByLabelText("password"), { target: { value: "test-fixture" } });
+      fireEvent.click(screen.getByRole("button", { name: "logIn" }));
+
+      await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("loginValidation"));
+      expect(mutateAsync).not.toHaveBeenCalled();
+    },
+  );
+
+  it("shows a validation toast for an incomplete registration", async () => {
+    const mutateAsync = vi.fn();
+    mockRegisterMutation.mockReturnValue({ isPending: false, mutateAsync });
+    render(<AuthFeature mode="register" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "register" }));
+
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("registerValidation"));
+    expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
   it("links to the SSO login screen on login", () => {
     render(<AuthFeature mode="login" />);
 

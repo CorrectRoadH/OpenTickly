@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
@@ -43,7 +44,12 @@ export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps
 
   async function handleSubmit(values: LoginFormValues & RegisterFormValues) {
     if (mode === "register") {
-      const parsed = registerSchema.parse(values);
+      const result = registerSchema.safeParse(values);
+      if (!result.success) {
+        toast.error(t("registerValidation"));
+        return;
+      }
+      const parsed = result.data;
       await onSubmit({
         email: parsed.email,
         fullname: parsed.fullName,
@@ -53,8 +59,12 @@ export function AuthForm({ isSubmitting = false, mode, onSubmit }: AuthFormProps
       return;
     }
 
-    const parsed = loginSchema.parse(values);
-    await onSubmit(parsed);
+    const result = loginSchema.safeParse(values);
+    if (!result.success) {
+      toast.error(t("loginValidation"));
+      return;
+    }
+    await onSubmit(result.data);
   }
 
   return (

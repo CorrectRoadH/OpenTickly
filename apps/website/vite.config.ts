@@ -71,6 +71,7 @@ export default defineConfig(() => {
       babel({ presets: [reactCompilerPreset({ target: "19" })] }),
       tailwindcss(),
       VitePWA({
+        injectRegister: false,
         registerType: "autoUpdate",
         strategies: "injectManifest",
         srcDir: "src",
