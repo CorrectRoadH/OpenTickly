@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { expect, it } from "vite-plus/test";
-import { chromium, expect as browserExpect } from "@playwright/test";
+import { chromium, expect as browserExpect, type Page } from "@playwright/test";
+import type { Envelope, ErrorEvent, ProfileChunk } from "@sentry/core";
 import { build } from "vite";
 import { createServer, type Server } from "node:http";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -15,6 +16,31 @@ const listen = async (server: Server) => {
   if (!address || typeof address === "string") throw Error("missing address");
   return `http://127.0.0.1:${address.port}`;
 };
+async function expectReportError(page: Page, component: string) {
+  await page.evaluate("window.runtime.flush()");
+  const event = await page.evaluate<ErrorEvent>("window.runtime.wireEvents.at(-1)");
+  expect(event?.tags?.component).toBe(component);
+  const frame = expect.objectContaining({
+    filename: expect.stringMatching(/\/runtime\.js$/),
+    function: "throwReportLoadError",
+    lineno: expect.any(Number),
+    colno: expect.any(Number),
+  });
+  const stacktrace = expect.objectContaining({ frames: expect.arrayContaining([frame]) });
+  const thrown = expect.objectContaining({
+    type: "ReportLoadError",
+    value: "Could not load report.tsv: Bearer [Filtered]",
+    stacktrace,
+  });
+  const cause = expect.objectContaining({
+    type: "SyntaxError",
+    value: "Invalid report metadata: Bearer [Filtered]",
+    mechanism: expect.objectContaining({ source: "cause", parent_id: 0 }),
+    stacktrace,
+  });
+  expect(event?.exception?.values).toEqual([cause, thrown]);
+}
+
 it("uses real Chromium SDK fetch guard, parent sampling, and native profile transport", async () => {
   const directory = await mkdtemp(join(tmpdir(), "ot-sentry-browser-"));
   const outside: string[] = [];
@@ -126,13 +152,11 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
     await page.waitForFunction(
       'window.runtime.envelopes.some(e => e[1].some(i => i[0].type === "session" && i[1].errors === 0 && i[1].status === "ok"))',
     );
-    await evaluate("window.runtime.session(true)");
-    await evaluate("window.runtime.flush()");
+    await evaluate("window.runtime.session(true); window.runtime.flush()");
     await page.waitForFunction(
       'window.runtime.envelopes.some(e => e[1].some(i => i[0].type === "session" && i[1].errors === 1 && i[1].status === "ok"))',
     );
-    await evaluate("window.runtime.session(false)");
-    await evaluate("window.runtime.flush()");
+    await evaluate("window.runtime.session(false); window.runtime.flush()");
     await page.waitForFunction(
       'window.runtime.envelopes.some(e => e[1].some(i => i[0].type === "session" && i[1].status === "unhandled"))',
     );
@@ -145,9 +169,10 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
       'window.runtime.envelopes.some(e => e[1].some(i => i[0].type === "profile_chunk"))',
     );
     await evaluate("window.runtime.flush()");
-    const result = (await evaluate("window.runtime.envelopes")) as unknown[][];
-    const sessions = (result as unknown as import("@sentry/core").Envelope[]).flatMap((e) =>
-      e[1].flatMap((i) => (i[0].type === "session" ? [i[1] as Record<string, unknown>] : [])),
+    const result = await page.evaluate<Envelope[]>("window.runtime.envelopes");
+    const items = result.flatMap<Envelope[1][number]>(([, items]) => items);
+    const sessions = items.flatMap(([header, payload]) =>
+      header.type === "session" ? [payload as Record<string, unknown>] : [],
     );
     expect(new Set(sessions.map((s) => s.sid)).size).toBe(1);
     expect(sessions[0]?.init).toBe(true);
@@ -155,21 +180,14 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
     expect(JSON.stringify(sessions)).not.toMatch(/did|ip_address|user_agent/);
     const serialized = JSON.stringify(result);
     expect(serialized).not.toContain("SENSITIVE");
-    expect(serialized).toContain('"type":"ReportLoadError"');
-    expect(serialized).toContain("Could not load report.tsv: Bearer [Filtered]");
-    expect(serialized).toContain('"stacktrace"');
+    await expectReportError(page, "web");
     expect(serialized).toContain("sentry.profiler_id");
     expect(serialized).toContain("thread.id");
     expect(serialized).toContain('"function":"staticWork"');
     expect(serialized).toContain('"function":"redacted"');
     const map = JSON.parse(await readFile(join(directory, "runtime.js.map"), "utf8"));
-    expect(
-      map.sources.some((source: string) => source.endsWith("browser-runtime.fixture.ts")),
-    ).toBe(true);
-    const chunks = (result as unknown as import("@sentry/core").Envelope[]).flatMap((e) =>
-      e[1].flatMap((item) =>
-        item[0].type === "profile_chunk" ? [item[1] as import("@sentry/core").ProfileChunk] : [],
-      ),
+    const chunks = items.flatMap(([header, payload]) =>
+      header.type === "profile_chunk" ? [payload as ProfileChunk] : [],
     );
     const frame = chunks.flatMap((c) => c.profile.frames).find((f) => f.function === "staticWork");
     expect(frame?.lineno).toBeGreaterThan(0);
@@ -177,12 +195,10 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
     expect("originalSource" in mapped ? mapped.originalSource : undefined).toContain(
       "browser-runtime.fixture.ts",
     );
-    const spans = (result as unknown as import("@sentry/core").Envelope[]).flatMap((e) =>
-      e[1].flatMap((item) =>
-        item[0].type === "span"
-          ? (item[1] as import("@sentry/core").SerializedStreamedSpanContainer).items
-          : [],
-      ),
+    const spans = items.flatMap(([header, payload]) =>
+      header.type === "span"
+        ? (payload as import("@sentry/core").SerializedStreamedSpanContainer).items
+        : [],
     );
     expect(
       spans.some((s) =>
@@ -217,25 +233,19 @@ it("uses real Chromium SDK fetch guard, parent sampling, and native profile tran
       ),
     ).toBe(false);
     await landingPage.evaluate("window.runtime.session(true)");
-    await landingPage.evaluate("window.runtime.flush()");
-    await landingPage.waitForFunction(
-      'window.runtime.envelopes.some(e => e[1].some(i => i[0].type === "event" && i[1].tags.component === "landing" && i[1].exception.values[0].type === "ReportLoadError" && i[1].exception.values[0].value === "Could not load report.tsv: Bearer [Filtered]"))',
-    );
+    await expectReportError(landingPage, "landing");
     await landingPage.close();
     const [outboundTrace, outboundSpan] = (incoming[0]?.trace ?? "").split("-");
     const httpSpan = spans.find(
       (span) => span.trace_id === outboundTrace && span.span_id === outboundSpan,
     );
-    expect(httpSpan).toBeDefined();
     expect(httpSpan?.name).toBe("time_entry.list");
     const business = spans.find((span) => span.span_id === httpSpan?.parent_span_id);
+    expect(business?.name).toBe("report.load");
     expect(
       spans.find((span) => span.span_id === business?.parent_span_id)?.attributes["sentry.op"]
         ?.value,
     ).toBe("pageload");
-    expect(spans.find((span) => span.span_id === httpSpan?.parent_span_id)?.name).toBe(
-      "report.load",
-    );
     expect(spans.some((span) => span.trace_id === "cccccccccccccccccccccccccccccccc")).toBe(false);
     const disabledPage = await browser.newPage();
     await disabledPage.goto(origin + "/?disabled");

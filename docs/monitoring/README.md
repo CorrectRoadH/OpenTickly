@@ -21,12 +21,14 @@ defaults to `production`; `VITE_SENTRY_ENVIRONMENT` (landing) or
 explicit test transports and never send to the real project.
 
 The API, website, landing, and update Worker send the original error types,
-messages, and stack frames. Wrapped Go errors retain the error chain. Browser
-debug IDs and code filenames remain available for source map resolution. API and
-Worker request errors also include the registered route template, HTTP method,
-response status, and existing operation or transaction name. An unmatched route
-uses a fixed label. Unhandled failures without a committed response use status
-500. A handled update fallback records its successful response status.
+messages, and stack frames. JavaScript `Error.cause` chains and wrapped Go
+errors retain their causes. The same credential filters apply to each exception
+in the chain. Browser debug IDs and code filenames remain available for source
+map resolution. API and Worker request errors also include the registered route
+template, HTTP method, response status, and existing operation or transaction
+name. An unmatched route uses a fixed label. Unhandled failures without a
+committed response use status 500. A handled update fallback records its
+successful response status.
 
 The error event filters credential headers, sensitive query parameters and
 structured fields, and credential strings such as bearer tokens, API keys, JWTs,

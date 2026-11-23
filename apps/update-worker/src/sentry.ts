@@ -24,7 +24,11 @@ export function sentryOptions(
     ...privacyOptions("update", config),
     tracesSampleRate: 0.01,
     tracePropagationTargets: [],
-    integrations: [envelopePrivacy(config, "update"), Sentry.spanStreamingIntegration()],
+    integrations: [
+      envelopePrivacy(config, "update"),
+      Sentry.linkedErrorsIntegration(),
+      Sentry.spanStreamingIntegration(),
+    ],
     defaultIntegrations: false as const,
   };
 }

@@ -1,9 +1,10 @@
 import * as Sentry from "@sentry/react";
 import { initBrowser } from "./browser.ts";
 import { traceOperation } from "./operations.ts";
-import type { Envelope } from "@sentry/core";
+import type { Envelope, ErrorEvent } from "@sentry/core";
 const envelopes: Envelope[] = [];
 const raw: Envelope[] = [];
+const wireEvents: ErrorEvent[] = [];
 const capturedMetrics: { name: string }[] = [];
 const config = {
   dsn: "https://public@example.invalid/1",
@@ -29,13 +30,23 @@ initBrowser(
   {
     tracesSampleRate: location.search.includes("unsampled") ? 0 : 1,
     profileSessionSampleRate: 1,
-    transport: () => ({
-      send: async (envelope) => {
-        envelopes.push(envelope);
+    transport: (options) => {
+      const transport = Sentry.createTransport(options, async ({ body }) => {
+        const text = typeof body === "string" ? body : new TextDecoder().decode(body);
+        const [, header, payload] = text.split("\n");
+        if (header && payload && JSON.parse(header).type === "event") {
+          wireEvents.push(JSON.parse(payload));
+        }
         return { statusCode: 200 };
-      },
-      flush: async () => true,
-    }),
+      });
+      return {
+        ...transport,
+        send(envelope) {
+          envelopes.push(envelope);
+          return transport.send(envelope);
+        },
+      };
+    },
   },
 );
 Sentry.getClient()?.on("afterCaptureMetric", (metric) => {
@@ -47,8 +58,17 @@ Sentry.getClient()?.on("beforeEnvelope", (envelope) => {
 const firstRequest = location.search.includes("landing")
   ? Promise.resolve()
   : traceOperation("report.load", () => fetch("/api/v9/me/time_entries"));
+class ReportLoadError extends Error {
+  override name = "ReportLoadError";
+}
+function throwReportLoadError() {
+  throw new ReportLoadError("Could not load report.tsv: Bearer SENSITIVE", {
+    cause: new SyntaxError("Invalid report metadata: Bearer SENSITIVE"),
+  });
+}
 const runtime = {
   envelopes,
+  wireEvents,
   capturedMetrics,
   raw,
   ready: true,
@@ -109,9 +129,11 @@ const runtime = {
     );
   },
   session(handled: boolean) {
-    const error = new Error("Could not load report.tsv: Bearer SENSITIVE");
-    error.name = "ReportLoadError";
-    Sentry.captureException(error, { mechanism: { type: "generic", handled } });
+    try {
+      throwReportLoadError();
+    } catch (error) {
+      Sentry.captureException(error, { mechanism: { type: "generic", handled } });
+    }
   },
   reportDrop() {
     Sentry.logger.error("SENSITIVE");

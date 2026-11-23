@@ -3,11 +3,11 @@ import { expect, it } from "vite-plus/test";
 import { build } from "vite";
 import { createServer } from "node:http";
 import { realpathSync } from "node:fs";
-import { createRequire } from "node:module";
+import { createRequire, SourceMap } from "node:module";
 import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import type { SerializedStreamedSpanContainer } from "@sentry/core";
+import type { ErrorEvent, SerializedStreamedSpanContainer } from "@sentry/core";
 
 it("runs the actual update Worker in workerd with local HTTP upstream and ingestion", async () => {
   const require = createRequire(
@@ -19,8 +19,10 @@ it("runs the actual update Worker in workerd with local HTTP upstream and ingest
     Response: LocalResponse,
   } = await import(require.resolve("miniflare"));
   const directory = await mkdtemp(join(tmpdir(), "ot-worker-trace-"));
+  const debugId = "12345678-1234-4321-9876-123456789abc";
   const bodies: string[] = [];
   const upstream: string[] = [];
+  let githubStatus = 200;
   const receiver = createServer((req, res) => {
     let body = "";
     req.on("data", (part) => {
@@ -29,6 +31,7 @@ it("runs the actual update Worker in workerd with local HTTP upstream and ingest
     req.on("end", () => {
       if (req.url === "/github") {
         upstream.push(JSON.stringify(req.headers));
+        res.statusCode = githubStatus;
         res.setHeader("Content-Type", "application/json");
         res.end("[]");
       } else {
@@ -57,9 +60,13 @@ it("runs the actual update Worker in workerd with local HTTP upstream and ingest
         outDir: directory,
         emptyOutDir: true,
         minify: false,
+        sourcemap: true,
         rollupOptions: {
           external: [/^node:/, /^cloudflare:/],
-          output: { entryFileNames: "worker.js" },
+          output: {
+            entryFileNames: "worker.js",
+            banner: `globalThis._sentryDebugIds = { [new Error().stack]: "${debugId}" };`,
+          },
         },
       },
       ssr: { noExternal: true },
@@ -91,6 +98,7 @@ it("runs the actual update Worker in workerd with local HTTP upstream and ingest
           );
           return new LocalResponse(await response.text(), {
             status: response.status,
+            statusText: response.statusText,
             headers: response.headers,
           });
         },
@@ -192,6 +200,55 @@ it("runs the actual update Worker in workerd with local HTTP upstream and ingest
     expect(metrics.filter((m) => m.name === "app.operation.count")).toHaveLength(7);
     expect(upstream).toHaveLength(2);
     expect(upstream.join(" ")).not.toMatch(/sentry-trace|baggage/);
+    expect(bodies.join(" ")).not.toContain("SENSITIVE");
+
+    githubStatus = 503;
+    const fallback = await runtime!.dispatchFetch("https://update.example/");
+    expect(fallback.status).toBe(200);
+    expect(await fallback.json()).toMatchObject({ latestVersion: "", updateAvailable: false });
+    const updateError = (route: string): ErrorEvent | undefined =>
+      received().find(
+        (data: ErrorEvent) =>
+          data.tags?.component === "update" &&
+          data.tags?.route === route &&
+          data.tags?.["http.status_code"] === "200",
+      );
+    await expect.poll(() => updateError("/")).toBeDefined();
+    const event = updateError("/");
+    const exceptions = event?.exception?.values;
+    expect(exceptions).toMatchObject([{ type: "Error", value: "github: 503 Service Unavailable" }]);
+    const frame = exceptions?.[0]?.stacktrace?.frames?.at(-1);
+    expect(frame?.function).toBe("fetchReleases");
+    expect(event?.debug_meta?.images ?? []).toContainEqual({
+      type: "sourcemap",
+      code_file: frame?.abs_path,
+      debug_id: debugId,
+    });
+    const map = new SourceMap(JSON.parse(await readFile(join(directory, "worker.js.map"), "utf8")));
+    const originFrame = map.findEntry((frame?.lineno ?? 1) - 1, (frame?.colno ?? 1) - 1);
+    expect("originalSource" in originFrame ? originFrame.originalSource : undefined).toContain(
+      "/apps/update-worker/src/github.ts",
+    );
+
+    const chained = await runtime!.dispatchFetch("https://update.example/fixture/error-chain");
+    expect(await chained.text()).toBe("fallback");
+    await expect.poll(() => updateError("unmatched")).toBeDefined();
+    expect(updateError("unmatched")?.exception?.values).toMatchObject([
+      {
+        type: "SyntaxError",
+        value: "Malformed release: Bearer [Filtered]",
+        mechanism: { source: "cause", parent_id: 0 },
+      },
+      {
+        type: "TypeError",
+        value: "Could not read the update manifest",
+        stacktrace: {
+          frames: expect.arrayContaining([
+            expect.objectContaining({ function: "throwManifestError" }),
+          ]),
+        },
+      },
+    ]);
     expect(bodies.join(" ")).not.toContain("SENSITIVE");
   } finally {
     await runtime?.dispose().catch(() => {});

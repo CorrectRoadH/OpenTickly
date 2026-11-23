@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import * as Sentry from "@sentry/cloudflare";
+import type { ErrorEvent } from "@sentry/cloudflare";
 import { captureUpdateError, monitorWorker, sentryOptions } from "../src/sentry.ts";
 import type { WorkerEnv } from "../src/types.ts";
 
@@ -7,6 +8,17 @@ afterEach(async () => {
   await Sentry.close();
   vi.unstubAllGlobals();
 });
+
+class UpstreamReportError extends Error {
+  override name = "UpstreamReportError";
+}
+
+function throwUpstreamReportError() {
+  throw new UpstreamReportError("load report.tsv: Bearer SENSITIVE", {
+    cause: new SyntaxError("Invalid report metadata: Bearer SENSITIVE"),
+  });
+}
+
 describe("Worker real SDK request boundary", () => {
   it("keeps a successful request successful when ingestion fails", async () => {
     const pending: Promise<unknown>[] = [];
@@ -171,9 +183,11 @@ describe("Worker real SDK request boundary", () => {
               Sentry.withScope((scope) => {
                 scope.setExtra("nested", { token: "SENSITIVE", report: "report.tsv" });
                 scope.setUser({ email: "SENSITIVE" });
-                const error = new Error("load report.tsv: Bearer SENSITIVE");
-                error.name = "UpstreamReportError";
-                captureUpdateError(error, 200);
+                try {
+                  throwUpstreamReportError();
+                } catch (error) {
+                  captureUpdateError(error, 200);
+                }
               });
               await fetch("https://vendor.example/SENSITIVE?q=SENSITIVE");
             },
@@ -211,13 +225,44 @@ describe("Worker real SDK request boundary", () => {
     expect(envelopes.length).toBeGreaterThan(0);
     expect(envelopes.join("\n")).not.toContain("SENSITIVE");
     expect(envelopes.join("\n")).toContain('"span"');
-    const wire = envelopes.join("\n");
-    expect(wire).toContain('"type":"UpstreamReportError"');
-    expect(wire).toContain("load report.tsv: Bearer [Filtered]");
-    expect(wire).toContain('"route":"/"');
-    expect(wire).toContain('"http.method":"GET"');
-    expect(wire).toContain('"http.status_code":"200"');
-    expect(wire).toContain("q=quarterly&token=[Filtered]");
+    const events = envelopes.flatMap((envelope) => {
+      const [, header, payload] = envelope.split("\n");
+      if (!header || !payload || JSON.parse(header).type !== "event") return [];
+      const event: ErrorEvent = JSON.parse(payload);
+      return [event];
+    });
+    expect(events).toHaveLength(1);
+    const [event] = events;
+    expect(event?.tags).toMatchObject({
+      component: "update",
+      route: "/",
+      "http.method": "GET",
+      "http.status_code": "200",
+    });
+    expect(event?.request?.url).toContain("q=quarterly&token=[Filtered]");
+    const stacktrace = expect.objectContaining({
+      frames: expect.arrayContaining([
+        expect.objectContaining({
+          filename: expect.stringMatching(/sentry\.test\.ts$/),
+          function: "throwUpstreamReportError",
+          lineno: expect.any(Number),
+          colno: expect.any(Number),
+        }),
+      ]),
+    });
+    expect(event?.exception?.values).toEqual([
+      expect.objectContaining({
+        type: "SyntaxError",
+        value: "Invalid report metadata: Bearer [Filtered]",
+        mechanism: expect.objectContaining({ source: "cause", parent_id: 0 }),
+        stacktrace,
+      }),
+      expect.objectContaining({
+        type: "UpstreamReportError",
+        value: "load report.tsv: Bearer [Filtered]",
+        stacktrace,
+      }),
+    ]);
     expect(envelopes.join("\n")).toContain('"update"');
     expect(outgoing).toHaveLength(1);
     expect(outgoing[0]?.has("sentry-trace")).toBe(false);

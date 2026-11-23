@@ -1,10 +1,25 @@
 import actual from "../src/index.ts";
-import { monitorWorker, sentryOptions } from "../src/sentry.ts";
+import { captureUpdateError, monitorWorker, sentryOptions } from "../src/sentry.ts";
+
+function throwManifestError() {
+  throw new TypeError("Could not read the update manifest", {
+    cause: new SyntaxError("Malformed release: Bearer SENSITIVE"),
+  });
+}
+
 export default monitorWorker(
   {
-    fetch(request, env, ctx) {
-      if (new URL(request.url).pathname === "/fixture/failure")
-        return Promise.resolve(new Response("failed", { status: 503 }));
+    async fetch(request, env, ctx) {
+      const path = new URL(request.url).pathname;
+      if (path === "/fixture/failure") return new Response("failed", { status: 503 });
+      if (path === "/fixture/error-chain") {
+        try {
+          throwManifestError();
+        } catch (error) {
+          captureUpdateError(error, 200);
+        }
+        return new Response("fallback");
+      }
       return actual.fetch(request, env, ctx);
     },
   },

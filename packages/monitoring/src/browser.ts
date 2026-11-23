@@ -43,6 +43,7 @@ export function initBrowser(
           manifest: () => manifest,
           origin: location.origin,
         }),
+        Sentry.linkedErrorsIntegration(),
         Sentry.globalHandlersIntegration(),
         Sentry.browserSessionIntegration(),
         Sentry.browserApiErrorsIntegration(),
