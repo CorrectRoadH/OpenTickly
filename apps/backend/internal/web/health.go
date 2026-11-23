@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/url"
 	"time"
+
+	stackerrors "github.com/go-errors/errors"
 )
 
 const (
@@ -34,6 +36,27 @@ type ReadinessCheck struct {
 	Status  string `json:"status"`
 	Target  string `json:"target,omitempty"`
 	Message string `json:"message,omitempty"`
+	cause   error
+}
+
+func (report ReadinessReport) Err() error {
+	var causes []error
+	for _, check := range report.Checks {
+		if check.cause != nil {
+			causes = append(causes, check.cause)
+		}
+	}
+	return errors.Join(causes...)
+}
+
+func failedReadinessCheck(name, target string, cause error) ReadinessCheck {
+	return ReadinessCheck{
+		Name:    name,
+		Status:  StatusError,
+		Target:  target,
+		Message: cause.Error(),
+		cause:   stackerrors.WrapPrefix(cause, name+" readiness check", 1),
+	}
 }
 
 type StartupReadinessConfig struct {
@@ -120,23 +143,11 @@ func (probe startupReadinessProbe) Check(ctx context.Context) ReadinessReport {
 func (probe startupReadinessProbe) configurationCheck() ReadinessCheck {
 	switch {
 	case probe.service == "":
-		return ReadinessCheck{
-			Name:    "configuration",
-			Status:  StatusError,
-			Message: "service name is missing",
-		}
+		return failedReadinessCheck("configuration", "", errors.New("service name is missing"))
 	case probe.databaseURL == "":
-		return ReadinessCheck{
-			Name:    "configuration",
-			Status:  StatusError,
-			Message: "database url is missing",
-		}
+		return failedReadinessCheck("configuration", "", errors.New("database url is missing"))
 	case probe.redisURL == "":
-		return ReadinessCheck{
-			Name:    "configuration",
-			Status:  StatusError,
-			Message: "redis url is missing",
-		}
+		return failedReadinessCheck("configuration", "", errors.New("redis url is missing"))
 	default:
 		return ReadinessCheck{
 			Name:    "configuration",
@@ -154,11 +165,7 @@ func (probe startupReadinessProbe) tcpDependencyCheck(
 ) ReadinessCheck {
 	target, address, err := networkTarget(rawURL, defaultPort)
 	if err != nil {
-		return ReadinessCheck{
-			Name:    name,
-			Status:  StatusError,
-			Message: err.Error(),
-		}
+		return failedReadinessCheck(name, "", err)
 	}
 
 	checkCtx, cancel := context.WithTimeout(ctx, probe.timeout)
@@ -166,12 +173,7 @@ func (probe startupReadinessProbe) tcpDependencyCheck(
 
 	connection, err := (&net.Dialer{}).DialContext(checkCtx, "tcp", address)
 	if err != nil {
-		return ReadinessCheck{
-			Name:    name,
-			Status:  StatusError,
-			Target:  target,
-			Message: err.Error(),
-		}
+		return failedReadinessCheck(name, target, err)
 	}
 	_ = connection.Close()
 
@@ -190,6 +192,10 @@ func networkTarget(rawURL string, defaultPort string) (target string, address st
 
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
+		// url.Parse includes the entire DSN in its error, including any credentials.
+		if parseErr, ok := errors.AsType[*url.Error](err); ok {
+			return "", "", &url.Error{Op: parseErr.Op, Err: parseErr.Err}
+		}
 		return "", "", err
 	}
 

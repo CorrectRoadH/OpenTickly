@@ -66,12 +66,14 @@ func NewServerWithOptions(
 	}
 	readinessHandler := func(c *echo.Context) error {
 		report := readiness.Check(c.Request().Context())
-		statusCode := http.StatusOK
-		if report.Status != web.StatusOK {
-			statusCode = http.StatusServiceUnavailable
-			logReadinessFailure(c, logger, report)
+		if report.Status == web.StatusOK {
+			return c.JSON(http.StatusOK, report)
 		}
-		return c.JSON(statusCode, report)
+		logReadinessFailure(c, logger, report)
+		if err := c.JSON(http.StatusServiceUnavailable, report); err != nil {
+			return err
+		}
+		return report.Err()
 	}
 	server.GET("/healthz", healthHandler)
 	server.GET("/readyz", readinessHandler)

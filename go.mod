@@ -6,6 +6,7 @@ require (
 	github.com/crewjam/saml v0.6.3
 	github.com/getkin/kin-openapi v0.153.0
 	github.com/getsentry/sentry-go v0.50.0
+	github.com/go-errors/errors v1.4.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/labstack/echo/v5 v5.4.6

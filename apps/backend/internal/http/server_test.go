@@ -1,19 +1,24 @@
 package httpapp
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"opentoggl/backend/apps/backend/internal/http/httperror"
+	"opentoggl/backend/apps/backend/internal/monitoring"
 	"opentoggl/backend/apps/backend/internal/web"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/labstack/echo/v5"
 )
 
@@ -519,6 +524,78 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 
 	if readinessRecord["trace_id"] != "4bf92f3577b34da6a3ce929d0e0e4736" {
 		t.Fatalf("expected readiness failure log trace_id, got %#v", readinessRecord["trace_id"])
+	}
+}
+
+func TestReadinessFailuresReachSentry(t *testing.T) {
+	events := make(chan sentry.Event, 1)
+	ingestion := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		var envelope json.RawMessage
+		var item struct{ Type string }
+		if err := decoder.Decode(&envelope); err != nil {
+			t.Error(err)
+		} else if err := decoder.Decode(&item); err != nil {
+			t.Error(err)
+		} else if item.Type == "event" {
+			var event sentry.Event
+			if err := decoder.Decode(&event); err != nil {
+				t.Error(err)
+			} else {
+				select {
+				case events <- event:
+				default:
+					t.Error("received more than one readiness event")
+				}
+			}
+		}
+	}))
+	defer ingestion.Close()
+	dsn := strings.Replace(ingestion.URL, "http://", "http://public@", 1) + "/1"
+	client, err := sentry.NewClient(monitoring.Options(dsn, "production", "api@test", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+	listener := mustListenTCP(t)
+	address := listener.Addr().String()
+	listener.Close()
+	probe := web.NewStartupReadinessProbe(web.StartupReadinessConfig{
+		Service:     "opentoggl",
+		DatabaseURL: "postgres://" + address + "/db",
+		RedisURL:    "redis://probe:SENSITIVE%zz@cache.invalid/0",
+	})
+	server := NewServerWithOptions(web.NewHealthSnapshot("opentoggl", nil), nil, ServerOptions{Readiness: probe})
+	server.Use(monitoring.Middleware(client))
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if response.Code != http.StatusServiceUnavailable || !client.Flush(2*time.Second) || len(events) != 1 {
+		t.Fatalf("expected one readiness event after HTTP 503, got status %d and %d events", response.Code, len(events))
+	}
+	event := <-events
+	if strings.Contains(response.Body.String(), "SENSITIVE") || slices.ContainsFunc(event.Exception, func(e sentry.Exception) bool {
+		return strings.Contains(e.Value, "SENSITIVE")
+	}) {
+		t.Fatal("readiness failure exposed the configured DSN")
+	}
+	if event.Transaction != "health.check" || event.Tags["http.status_code"] != "503" {
+		t.Fatalf("missing health route context: %s, %v", event.Transaction, event.Tags)
+	}
+	isProbeFrame := func(frame sentry.Frame) bool {
+		return filepath.Base(cmp.Or(frame.AbsPath, frame.Filename)) == "health.go" &&
+			strings.Contains(frame.Function, "tcpDependencyCheck") && frame.Lineno > 0
+	}
+	for _, name := range []string{"postgres", "redis"} {
+		if !slices.ContainsFunc(event.Exception, func(e sentry.Exception) bool {
+			return strings.Contains(e.Value, name) && e.Stacktrace != nil && slices.ContainsFunc(e.Stacktrace.Frames, isProbeFrame)
+		}) {
+			t.Fatalf("missing %s readiness failure and probe frame in %v", name, event.Exception)
+		}
+	}
+	if !slices.ContainsFunc(event.Exception, func(e sentry.Exception) bool {
+		return e.Type == "*net.OpError" && strings.Contains(e.Value, address) && e.Mechanism != nil && e.Mechanism.ParentID != nil
+	}) {
+		t.Fatalf("missing underlying TCP error in %v", event.Exception)
 	}
 }
 
