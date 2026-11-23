@@ -59,6 +59,12 @@ Files: `ca_profile.xml` (repository profile), `templates/opentickly.xml` (Docker
 
 There's no mobile app yet, but on iOS and Android you can add the web app to your home screen and use it like one (PWA).
 
+## Desktop Apps
+
+[OpenTickly for Mac](https://github.com/flowdee/opentickly-app) is a free, community-maintained macOS app for self-hosted OpenTickly. Connect it to your instance with an API token, start or resume a timer, and see elapsed time in your menu bar or Dock. [Download the latest Mac release](https://github.com/flowdee/opentickly-app/releases/latest).
+
+Would you use OpenTickly on Windows? [Add a 👍 to the Windows desktop app issue](https://github.com/flowdee/opentickly-app/issues/1). For another desktop platform, please [open a separate issue](https://github.com/flowdee/opentickly-app/issues/new) and tell us which operating system you use.
+
 ## Roadmap
 
 - [x] Same API as Toggl Track v9 and Reports v3
