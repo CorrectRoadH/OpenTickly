@@ -39,11 +39,14 @@ type MemberRoleLookup interface {
 	IsWorkspaceAdmin(ctx context.Context, workspaceID int64, userID int64) (bool, error)
 }
 
+type ClientLookup func(context.Context, int64, int64) (ClientView, bool, error)
+
 type Service struct {
-	store    Store
-	settings WorkspaceSettingsLookup
-	members  MemberRoleLookup
-	logger   log.Logger
+	displayClient ClientLookup
+	store         Store
+	settings      WorkspaceSettingsLookup
+	members       MemberRoleLookup
+	logger        log.Logger
 }
 
 // ServiceOption configures optional dependencies on the catalog Service.
@@ -59,6 +62,11 @@ func WithMemberRoleLookup(lookup MemberRoleLookup) ServiceOption {
 	return func(s *Service) { s.members = lookup }
 }
 
+// WithClientDisplayLookup configures the lookup used by client detail reads.
+func WithClientDisplayLookup(lookup ClientLookup) ServiceOption {
+	return func(s *Service) { s.displayClient = lookup }
+}
+
 func NewService(store Store, logger log.Logger, opts ...ServiceOption) (*Service, error) {
 	if store == nil {
 		return nil, ErrStoreRequired
@@ -66,7 +74,7 @@ func NewService(store Store, logger log.Logger, opts ...ServiceOption) (*Service
 	if logger == nil {
 		return nil, ErrLoggerRequired
 	}
-	svc := &Service{store: store, logger: logger}
+	svc := &Service{store: store, logger: logger, displayClient: store.GetClient}
 	for _, opt := range opts {
 		opt(svc)
 	}

@@ -36,13 +36,14 @@ func (bindings importedIDBindings) Resolve(sourceID int64) (int64, bool) {
 }
 
 type archiveImporter struct {
-	archive     importingapplication.ImportedArchive
-	clientIDs   importedIDBindings
-	projectIDs  importedIDBindings
-	requestedBy int64
-	tx          pgx.Tx
-	userIDs     importedIDBindings
-	workspaceID int64
+	archive          importingapplication.ImportedArchive
+	clientIDs        importedIDBindings
+	writtenClientIDs []int64
+	projectIDs       importedIDBindings
+	requestedBy      int64
+	tx               pgx.Tx
+	userIDs          importedIDBindings
+	workspaceID      int64
 }
 
 func (store *Store) ImportWorkspaceArchive(
@@ -84,6 +85,9 @@ func (store *Store) ImportWorkspaceArchive(
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit import transaction: %w", err)
 	}
+	if store.afterArchiveClientsCommitted != nil {
+		store.afterArchiveClientsCommitted(ctx, command.WorkspaceID, importer.writtenClientIDs)
+	}
 	return nil
 }
 
@@ -108,6 +112,7 @@ func (importer *archiveImporter) importClients(ctx context.Context) error {
 			return err
 		}
 		importer.clientIDs.Add(client.ID, clientID)
+		importer.writtenClientIDs = append(importer.writtenClientIDs, clientID)
 	}
 	return nil
 }

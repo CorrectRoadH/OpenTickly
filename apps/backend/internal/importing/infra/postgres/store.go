@@ -11,11 +11,18 @@ import (
 )
 
 type Store struct {
-	pool *pgxpool.Pool
+	pool                         *pgxpool.Pool
+	afterArchiveClientsCommitted func(context.Context, int64, []int64)
 }
 
 func NewStore(pool *pgxpool.Pool) *Store {
 	return &Store{pool: pool}
+}
+
+// WithArchiveClientInvalidation sets a callback for the target IDs after commit.
+func (store *Store) WithArchiveClientInvalidation(invalidate func(context.Context, int64, []int64)) *Store {
+	store.afterArchiveClientsCommitted = invalidate
+	return store
 }
 
 func (store *Store) ListExports(

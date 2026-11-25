@@ -92,9 +92,10 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		return nil, err
 	}
 
+	// Workspace deletion must be visible before resolving the billing account.
 	billingService, err := billingapplication.NewService(
 		newCachedAccountRepository(billingpostgres.NewAccountRepository(pool), cache),
-		newCachedWorkspaceOwnershipLookup(billingpostgres.NewWorkspaceOwnershipLookup(pool), cache),
+		billingpostgres.NewWorkspaceOwnershipLookup(pool),
 		[]billingdomain.CapabilityRule{
 			{Key: "reports.profitability", MinimumPlan: billingdomain.PlanEnterprise},
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
@@ -134,19 +135,21 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		},
 	)
 
+	catalogStore := &catalogClientDisplayStore{Store: catalogpostgres.NewStore(pool), cache: cache}
 	catalogService, err := catalogapplication.NewService(
-		newCachedCatalogStore(catalogpostgres.NewStore(pool), cache),
+		catalogStore,
 		appLogger,
+		catalogapplication.WithClientDisplayLookup(catalogStore.displayClient),
 		catalogapplication.WithWorkspaceSettings(catalogSettingsLookup),
 		catalogapplication.WithMemberRoleLookup(catalogMemberLookup),
 	)
 	if err != nil {
 		return nil, err
 	}
-	trackingStore := newCachedTrackingStore(trackingpostgres.NewStore(pool), cache)
 	trackingSettingsLookup := trackingapplication.WorkspaceSettingsFromTenantStore(tenantStore.GetWorkspace)
+	// Timer transitions and the joined catalog fields need current data.
 	trackingService, err := trackingapplication.NewService(
-		trackingStore,
+		trackingpostgres.NewStore(pool),
 		catalogService,
 		appLogger,
 		trackingapplication.WithWorkspaceSettings(trackingSettingsLookup),
@@ -180,7 +183,9 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	if err := platformHandles.Jobs.Register(governancepostgres.NewAuditLogJobDefinition(governanceService)); err != nil {
 		return nil, err
 	}
-	importingService, err := importingapplication.NewService(importingpostgres.NewStore(pool), appLogger)
+	importingService, err := importingapplication.NewService(
+		importingpostgres.NewStore(pool).WithArchiveClientInvalidation(catalogStore.invalidateClients), appLogger,
+	)
 	if err != nil {
 		return nil, err
 	}

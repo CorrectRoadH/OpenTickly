@@ -79,7 +79,7 @@ func (service *Service) GetClient(ctx context.Context, workspaceID int64, client
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return ClientView{}, err
 	}
-	return service.loadClient(ctx, workspaceID, clientID)
+	return loadClient(ctx, service.displayClient, workspaceID, clientID)
 }
 
 func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCommand) (traceResult ClientView, traceErr error) {
@@ -134,7 +134,7 @@ func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCo
 		)
 		return ClientView{}, err
 	}
-	view, err := service.loadClient(ctx, command.WorkspaceID, command.ClientID)
+	view, err := loadClient(ctx, service.store.GetClient, command.WorkspaceID, command.ClientID)
 	if err != nil {
 		return ClientView{}, err
 	}
@@ -271,7 +271,7 @@ func (service *Service) RestoreClient(ctx context.Context, command RestoreClient
 		)
 		return ClientView{}, err
 	}
-	view, err := service.loadClient(ctx, command.WorkspaceID, command.ClientID)
+	view, err := loadClient(ctx, service.store.GetClient, command.WorkspaceID, command.ClientID)
 	if err != nil {
 		return ClientView{}, err
 	}
@@ -282,8 +282,8 @@ func (service *Service) RestoreClient(ctx context.Context, command RestoreClient
 	return view, nil
 }
 
-func (service *Service) loadClient(ctx context.Context, workspaceID int64, clientID int64) (ClientView, error) {
-	client, ok, err := service.store.GetClient(ctx, workspaceID, clientID)
+func loadClient(ctx context.Context, lookup ClientLookup, workspaceID int64, clientID int64) (ClientView, error) {
+	client, ok, err := lookup(ctx, workspaceID, clientID)
 	if err != nil {
 		return ClientView{}, err
 	}

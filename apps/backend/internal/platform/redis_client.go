@@ -116,3 +116,53 @@ func CacheAside[T any](rc *RedisClient, ctx context.Context, key string, ttl tim
 	_ = rc.Set(ctx, key, r.Value, ttl)
 	return r.Value, nil
 }
+
+// CacheAsidePositive caches an existing display row and skips a refill if
+// InvalidateDisplay changed the key while the source lookup was in progress.
+func CacheAsidePositive[T any](rc *RedisClient, ctx context.Context, key string, ttl time.Duration, fetch func() (T, bool, error)) (T, bool, error) {
+	var value T
+	if hit, err := rc.Get(ctx, key, &value); err == nil && hit {
+		return value, true, nil
+	}
+
+	var fetched, found bool
+	var fetchErr error
+	_ = rc.client.Watch(ctx, func(tx *redis.Tx) error {
+		fetched = true
+		value, found, fetchErr = fetch()
+		if fetchErr != nil || !found {
+			return nil
+		}
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			pipe.Set(ctx, key, data, ttl)
+			return nil
+		})
+		return err
+	}, key)
+	if !fetched {
+		return fetch()
+	}
+	return value, found, fetchErr
+}
+
+// InvalidateDisplay also invalidates WATCH on absent keys. The temporary
+// values and deletion occur in one Redis transaction.
+func (rc *RedisClient) InvalidateDisplay(ctx context.Context, keys ...string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	pairs := make([]any, 0, len(keys)*2)
+	for _, key := range keys {
+		pairs = append(pairs, key, "")
+	}
+	_, err := rc.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.MSet(ctx, pairs...)
+		pipe.Del(ctx, keys...)
+		return nil
+	})
+	return err
+}
