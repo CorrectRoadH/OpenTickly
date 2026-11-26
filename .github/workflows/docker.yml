@@ -9,7 +9,13 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  full-tests:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/full-tests.yml
+
   build-and-push:
+    needs: full-tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,6 +84,7 @@ jobs:
   # The built frontend is arch-independent static JS, so build it once here
   # instead of repeating it in every leg of the build-binary arch matrix.
   build-frontend:
+    needs: full-tests
     runs-on: ubuntu-latest
     steps:
       - name: Require Sentry upload credential

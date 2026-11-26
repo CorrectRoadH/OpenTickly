@@ -23,7 +23,18 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  full-tests:
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/full-tests.yml
+
   deploy:
+    needs: full-tests
+    if: >-
+      !cancelled() &&
+      ((github.event_name == 'push' && needs.full-tests.result == 'skipped') ||
+       (github.event_name == 'workflow_dispatch' && needs.full-tests.result == 'success'))
     runs-on: ubuntu-latest
     concurrency:
       group: update-worker-production

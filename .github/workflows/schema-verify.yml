@@ -1,16 +1,7 @@
 name: Schema Verification
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "apps/backend/internal/platform/migrate/**"
-      - "apps/backend/db/schema/**"
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/backend/internal/platform/migrate/**"
-      - "apps/backend/db/schema/**"
+  workflow_call:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

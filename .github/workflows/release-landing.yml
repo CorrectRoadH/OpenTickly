@@ -36,7 +36,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  full-tests:
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/full-tests.yml
+
   release:
+    needs: full-tests
+    if: >-
+      !cancelled() &&
+      ((github.event_name == 'push' && needs.full-tests.result == 'skipped') ||
+       (github.event_name == 'workflow_dispatch' && needs.full-tests.result == 'success'))
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Require Sentry upload credential

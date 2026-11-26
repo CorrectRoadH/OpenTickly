@@ -18,7 +18,7 @@ Run commands from the repository root:
 
 `generate:checks` makes a clean checkout ready for static analysis. React Router route types and Worker announcement content must exist before type checking. Generated files stay owned by their generators. Vitest v5 uses `@testing-library/jest-dom/vitest` type augmentation. The migrated `clearMocks: false` settings preserve previous mock-history behavior.
 
-Database, browser and CLI acceptance remain uncached. `vp run check` and `vp run test:unit` do not prove that these runtime flows passed. CI runs the same static, unit and build entrypoints as local development, with separate existing jobs for backend, browser and CLI acceptance.
+Database, browser and CLI acceptance remain uncached. `vp run check` and `vp run test:unit` do not prove that these runtime flows passed. For pull requests targeting `main` and pushes to `main`, CI runs `vp run check` and `vp run build`. Nightly runs on the default branch daily at 03:18 UTC and supports manual dispatch. It runs the backend tests with PostgreSQL and Redis, the root Vitest suite with Chromium, website E2E, CLI and Python SDK integration, and schema verification against PostgreSQL. Version-tag releases and manually dispatched release or deploy workflows require the same test suite before publishing. Automatic deployments triggered by pushes to `main` keep their local checks and configuration validation.
 
 Docker build stages use the pinned Vite+ image and frozen installs. Runtime images keep their existing deployment behavior; the landing runtime copies the production dependency tree from the audited workspace lockfile, without the development toolchain. This preserves security overrides for the static server instead of resolving an independent global install.
 

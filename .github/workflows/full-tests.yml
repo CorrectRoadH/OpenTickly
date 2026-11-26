@@ -1,0 +1,87 @@
+name: Full tests
+
+on:
+  workflow_call:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Run backend unit tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: |
+          go test ./apps/backend/internal/billing/... ./apps/backend/internal/catalog/... ./apps/backend/internal/governance/... ./apps/backend/internal/http/... ./apps/backend/internal/identity/... ./apps/backend/internal/importing/... ./apps/backend/internal/instance-admin/... ./apps/backend/internal/membership/... ./apps/backend/internal/platform/... ./apps/backend/internal/tenant/... ./apps/backend/internal/testsupport/... ./apps/backend/internal/tracking/... ./apps/backend/internal/web/...
+
+      - name: Run HTTP security regression tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: go test ./apps/backend/internal/bootstrap -run '^TestAuditSecurity' -count=1
+
+      - name: Run backend monitoring regression tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: go test ./apps/backend/internal/monitoring/... -count=1
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: voidzero-dev/setup-vp@v1.22.0
+        with:
+          version: "1.7.0"
+          node-version: "24"
+          run-install: false
+          cache: true
+      - run: vp install --frozen-lockfile
+      - name: Install Chromium for telemetry runtime tests
+        run: vp exec playwright install --with-deps --only-shell chromium
+      - run: vp run test:unit
+
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+
+  cli-integration:
+    uses: ./.github/workflows/cli-integration.yml
+
+  schema-verify:
+    uses: ./.github/workflows/schema-verify.yml
