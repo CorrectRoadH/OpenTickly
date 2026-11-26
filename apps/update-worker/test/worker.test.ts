@@ -147,6 +147,19 @@ describe("worker.fetch", () => {
     expect(body.latestTag).toBe("v0.2.0");
   });
 
+  it("skips prereleases when checking for an update", async () => {
+    mockReleases([
+      githubRelease({ tag_name: "v0.2.1-nightly.17", prerelease: true }),
+      githubRelease({ tag_name: "v0.2.0" }),
+    ]);
+    const res = await worker.fetch(
+      new Request("https://update.test/?version=0.2.0"),
+      makeEnv(),
+      makeCtx(),
+    );
+    expect(await res.json()).toMatchObject({ latestTag: "v0.2.0", updateAvailable: false });
+  });
+
   it("handles CORS preflight", async () => {
     const res = await worker.fetch(
       new Request("https://update.test/", { method: "OPTIONS" }),

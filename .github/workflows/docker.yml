@@ -4,12 +4,36 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      nightly:
+        description: Report the result as a Nightly release
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  validate-ref:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require a release tag
+        env:
+          NIGHTLY: ${{ inputs.nightly }}
+        run: |
+          if [[ "$GITHUB_REF" != refs/tags/v* ]]; then
+            echo "::error::Dispatch this workflow on a v* release tag"
+            exit 1
+          fi
+          if [[ "$NIGHTLY" == true && "$GITHUB_REF_NAME" != *-nightly.* ]]; then
+            echo "::error::Use a Nightly tag when nightly is true"
+            exit 1
+          fi
+
   full-tests:
+    needs: validate-ref
     permissions:
       contents: read
     uses: ./.github/workflows/full-tests.yml
@@ -50,6 +74,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
+        if: "!contains(github.ref_name, '-nightly.')"
         id: meta
         uses: docker/metadata-action@v6
         with:
@@ -64,6 +89,19 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=
 
+      - name: Extract nightly metadata
+        if: contains(github.ref_name, '-nightly.')
+        id: nightly-meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            correctroad/opentoggl
+            correctroad/opentickly
+          flavor: latest=false
+          tags: |
+            type=raw,value=${{ github.ref_name }}
+            type=raw,value=nightly
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
@@ -71,8 +109,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.nightly-meta.outputs.tags || steps.meta.outputs.tags }}
+          labels: ${{ steps.nightly-meta.outputs.labels || steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           secrets: |
@@ -148,7 +186,7 @@ jobs:
       - name: Build binary
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.goarch }} \
-            go build -trimpath -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            go build -trimpath -ldflags="-s -w -X main.version=$GITHUB_REF_NAME" \
             -o opentoggl-linux-${{ matrix.goarch }} ./apps/backend
 
       - name: Upload binary artifact
@@ -192,8 +230,43 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
+          prerelease: ${{ contains(github.ref_name, '-nightly.') }}
+          make_latest: ${{ contains(github.ref_name, '-nightly.') && 'false' || '' }}
           body: ${{ steps.changelog.outputs.content }}
           fail_on_unmatched_files: true
           files: |
             release-assets/opentoggl-linux-amd64
             release-assets/opentoggl-linux-arm64
+
+  report:
+    if: >-
+      always() && inputs.nightly &&
+      (contains(needs.*.result, 'failure') || needs.release.result == 'success')
+    needs: [validate-ref, full-tests, build-and-push, build-frontend, build-binary, release]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      NIGHTLY_FAILED: ${{ contains(needs.*.result, 'failure') }}
+    steps:
+      - name: Update Nightly failure issue
+        run: |
+          set -euo pipefail
+
+          title='Nightly release failing'
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          issue=$(gh api --paginate --slurp "repos/${GH_REPO}/issues?state=open&per_page=100" \
+            --jq 'map(.[]) | map(select(.title == "Nightly release failing" and .pull_request == null)) | first | .number // empty')
+
+          if [[ "$NIGHTLY_FAILED" == true ]]; then
+            body="Nightly release failed: $run_url"
+            if [[ -n "$issue" ]]; then
+              gh issue comment "$issue" --body "$body"
+            else
+              gh issue create --title "$title" --body "$body"
+            fi
+          elif [[ -n "$issue" ]]; then
+            gh issue close "$issue" --comment "Nightly release passed: $run_url"
+          fi

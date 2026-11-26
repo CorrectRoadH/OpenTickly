@@ -2,7 +2,7 @@ import type { GithubRelease } from "./github.ts";
 import type { Announcement, UpdateResponse } from "./types.ts";
 
 /**
- * Builds the `UpdateResponse` the Worker returns. Only the latest non-draft
+ * Builds the `UpdateResponse` the Worker returns. Only the latest stable
  * release drives the response — the full history is intentionally omitted so
  * the payload stays small. Clients curious about older releases follow
  * `releaseUrl` to github.com.
@@ -16,7 +16,7 @@ export function buildManifest(args: {
   announcements: Announcement[];
   clientVersion?: string;
 }): UpdateResponse {
-  const latest = args.releases.find((r) => !r.draft);
+  const latest = args.releases.find((r) => !r.draft && !r.prerelease);
   const latestTag = latest?.tag_name ?? "";
   const latestVersion = stripV(latestTag);
   const client = args.clientVersion ? stripV(args.clientVersion) : undefined;
