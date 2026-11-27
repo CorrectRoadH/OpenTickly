@@ -18,11 +18,11 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261118.1",
+    "@cloudflare/workers-types": "^5.20261124.1",
     "@types/node": "catalog:",
     "gray-matter": "^4.0.3",
     "typescript": "catalog:",
     "vite-plus": "catalog:",
-    "wrangler": "^4.162.0"
+    "wrangler": "^4.167.0"
   }
 }
