@@ -37,7 +37,7 @@ If `pg_restore` fails, keep the app stopped and fix the error before starting it
 
 ## Upgrade or roll back
 
-If your Compose file still uses `postgres:17-alpine`, [migrate the database first](#move-the-compose-database-from-postgresql-17-to-19).
+If your existing Compose file uses `postgres:17-alpine`, follow the PostgreSQL upgrade steps below before the general upgrade steps.
 
 1. Make a backup and record the current image version or digest. A moving `latest` tag is not a rollback version.
 2. Run:
@@ -50,23 +50,25 @@ docker compose pull && docker compose up -d
 
 To roll back, stop `opentoggl`, pin its previous image tag or digest in `docker-compose.yml`, pull that image, and restore the backup taken before the upgrade using the steps above. Starting an older image against an upgraded database is not a safe rollback. Changes made after the backup will be lost.
 
-## Move the Compose database from PostgreSQL 17 to 19
+## PostgreSQL 17 to 19 on Docker Compose
 
-Run these commands from the Compose directory. Keep the PostgreSQL 17 Compose file and its `opentoggl-postgres-data` volume for rollback.
+Before replacing the PostgreSQL 17 Compose file, save a copy as `docker-compose.pg17.yml` and make a backup. Use the same Compose project name and password. The new volume needs free space equal to at least 1.2 times the size of the old cluster. The first upgrade also needs internet access to the Alpine package repositories.
 
-```bash
-cp docker-compose.yml docker-compose.pg17.yml
-docker compose stop opentoggl
-umask 077
-docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > opentoggl-pg17.dump
+Replace `docker-compose.yml` with the new version, then run `docker compose up -d`. The one-time `postgres-upgrade` service copies the cluster to the new volume before PostgreSQL and OpenTickly start. Fresh installs and upgrades that have already completed skip the copy. Sign in and check your time entries and uploaded files.
+
+If startup fails, run `docker compose logs postgres-upgrade` to see the error. Fix the cause and run `docker compose up -d` again. As a manual fallback, start the old Compose stack and use the backup command above. Stop the old stack, then run the following commands with the new Compose file and an empty PostgreSQL 19 volume.
+
+```sh
+docker compose up -d --no-deps --wait postgres &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --single-transaction < backup.dump &&
+  docker compose up -d
 ```
 
-After the dump succeeds, replace `docker-compose.yml` with the PostgreSQL 19 version. It mounts the new `opentoggl-postgres-data-pg19` volume at `/var/lib/postgresql`. Use an empty destination database and keep the same Compose project name.
+To roll back, run `docker compose -f docker-compose.pg17.yml up -d --remove-orphans` from the same directory. The old volume retains the data from before the upgrade. Writes made after switching to PostgreSQL 19 stay in the new volume.
 
-```bash
-docker compose up -d --wait postgres &&
-  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --single-transaction < opentoggl-pg17.dump &&
-  docker compose up -d opentoggl
+Once you have verified the new instance and backed it up, you can reclaim disk space. Remove the completed upgrade container, then remove the old volume. If you used a custom project name, replace `opentoggl-self-hosted` with that name. Deleting the old volume removes the local rollback copy.
+
+```sh
+docker compose rm -f postgres-upgrade &&
+  docker volume rm opentoggl-self-hosted_opentoggl-postgres-data
 ```
-
-Sign in and check your entries and uploaded files. To roll back, stop `opentoggl`, copy `docker-compose.pg17.yml` back to `docker-compose.yml`, then run `docker compose up -d`. This starts `postgres:17-alpine` with the retained old volume at `/var/lib/postgresql/data`. Writes made after the switch stay in the PostgreSQL 19 volume.

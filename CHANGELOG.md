@@ -2,6 +2,16 @@
 
 All notable changes to OpenTickly are documented here.
 
+## Unreleased
+
+### Breaking changes
+
+- Self-hosted Docker Compose now runs PostgreSQL 19 and uses a new database
+  volume. The first startup with an existing PostgreSQL 17 volume requires
+  internet access to the Alpine package repositories and free disk space of
+  at least 1.2 times the old cluster size. Keep the old Compose file and volume
+  for rollback. See the [upgrade guide](https://opentoggl.com/docs/backup-and-upgrade).
+
 ## 0.3.0
 
 ### Features

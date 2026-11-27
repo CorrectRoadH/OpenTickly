@@ -37,6 +37,8 @@ docker compose stop opentoggl &&
 
 ## 更新とロールバック
 
+現在の Compose ファイルが `postgres:17-alpine` を使用している場合は、先に以下の PostgreSQL のアップグレード手順に従ってください。
+
 1. バックアップし、現在のイメージのバージョンまたは digest を控えます。`latest` は内容が変わるため、戻すバージョンの目印にはなりません。
 2. 次を実行します。
 
@@ -47,3 +49,26 @@ docker compose pull && docker compose up -d
 3. 起動時にデータベース構造が自動更新されます。`docker compose logs opentoggl` を確認し、ログインしてデータを点検します。
 
 戻す場合は `opentoggl` を停止し、`docker-compose.yml` のイメージを以前のタグまたは digest に固定して取得し、更新前のバックアップを上記手順で復元します。更新済みデータベースに古いイメージをそのまま接続しないでください。バックアップ後の変更は失われます。
+
+## Docker Compose で PostgreSQL 17 から 19 に移行する
+
+PostgreSQL 17 の Compose ファイルを置き換える前に、`docker-compose.pg17.yml` としてコピーを保存し、バックアップを作成してください。Compose プロジェクト名とパスワードは引き続き同じものを使用します。新しいボリュームには、旧クラスターの容量の 1.2 倍以上の空き領域が必要です。初回のアップグレードには Alpine のパッケージリポジトリへのアクセスも必要です。
+
+`docker-compose.yml` を新版に置き換え、`docker compose up -d` を実行します。PostgreSQL と OpenTickly が起動する前に、`postgres-upgrade` サービスがクラスターを新しいボリュームにコピーします。新規インストールと移行済みの環境ではコピーを省略します。ログインし、時間の記録とアップロードしたファイルを確認してください。
+
+起動に失敗した場合は、`docker compose logs postgres-upgrade` でエラーを確認してください。原因を解消してから `docker compose up -d` を再実行します。手動で移行する場合は、旧 Compose 環境を起動して上記のバックアップコマンドを実行してください。その後、旧環境を停止し、新しい Compose ファイルと空の PostgreSQL 19 ボリュームを使って以下を実行します。
+
+```sh
+docker compose up -d --no-deps --wait postgres &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --single-transaction < backup.dump &&
+  docker compose up -d
+```
+
+ロールバックするには、同じディレクトリから `docker compose -f docker-compose.pg17.yml up -d --remove-orphans` を実行してください。旧ボリュームには移行前のデータが残っています。PostgreSQL 19 への切り替え後に書き込まれたデータは新しいボリュームに残ります。
+
+新しい環境の動作確認とバックアップが済んだら、ストレージの空き領域を確保できます。完了したアップグレードコンテナを削除してから旧ボリュームを削除してください。独自のプロジェクト名を使っている場合は、`opentoggl-self-hosted` をその名前に置き換えてください。旧ボリュームを削除すると、ロールバック用のローカルコピーも失われます。
+
+```sh
+docker compose rm -f postgres-upgrade &&
+  docker volume rm opentoggl-self-hosted_opentoggl-postgres-data
+```

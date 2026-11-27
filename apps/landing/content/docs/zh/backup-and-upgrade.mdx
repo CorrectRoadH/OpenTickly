@@ -37,7 +37,7 @@ docker compose stop opentoggl &&
 
 ## 升级和回退
 
-如果 Compose 文件仍使用 `postgres:17-alpine`，请先按本页末尾的步骤迁移数据库。
+如果现有 Compose 文件使用 `postgres:17-alpine`，请先按本页下方的步骤升级 PostgreSQL。
 
 1. 先备份，并记下当前镜像的版本或 digest。一直变化的 `latest` 不能用来确定回退版本。
 2. 运行：
@@ -50,23 +50,25 @@ docker compose pull && docker compose up -d
 
 需要回退时，先停止 `opentoggl`，在 `docker-compose.yml` 中把应用镜像固定到之前的 tag 或 digest，拉取该镜像，再按上面的步骤恢复升级前的备份。不要直接拿旧镜像启动升级后的数据库。备份之后新增或修改的数据会丢失。
 
-## 将 Compose 数据库从 PostgreSQL 17 迁到 19
+## 用 Docker Compose 将 PostgreSQL 从 17 升到 19
 
-在 Compose 文件所在目录运行以下命令。保留 PostgreSQL 17 的 Compose 文件和旧卷 `opentoggl-postgres-data`，以便回退。
+替换 PostgreSQL 17 的 Compose 文件前，将其另存为 `docker-compose.pg17.yml` 并备份数据。沿用原 Compose 项目名和密码。新卷所在磁盘的可用空间至少要有旧集群大小的 1.2 倍。首次升级还需要联网访问 Alpine 软件包仓库。
 
-```bash
-cp docker-compose.yml docker-compose.pg17.yml
-docker compose stop opentoggl
-umask 077
-docker compose exec -T postgres pg_dump -U postgres -d opentoggl -Fc > opentoggl-pg17.dump
+将 `docker-compose.yml` 换成新版，然后运行 `docker compose up -d`。一次性服务 `postgres-upgrade` 会先将集群复制到新卷，再启动 PostgreSQL 和 OpenTickly。全新安装或已经迁移的实例会跳过复制。登录后核对计时记录和上传文件。
+
+如果启动失败，运行 `docker compose logs postgres-upgrade` 查看报错。修正原因后重新运行 `docker compose up -d`。手动迁移时，启动旧 Compose 项目并用上文的备份命令导出数据。停止旧项目，再用新版 Compose 文件和空的 PostgreSQL 19 卷执行以下命令。
+
+```sh
+docker compose up -d --no-deps --wait postgres &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --single-transaction < backup.dump &&
+  docker compose up -d
 ```
 
-确认导出成功后，将 `docker-compose.yml` 替换为 PostgreSQL 19 版本。新配置把 `opentoggl-postgres-data-pg19` 挂载到 `/var/lib/postgresql`。恢复时使用空数据库，并沿用原 Compose 项目名。
+回退时，在同一目录运行 `docker compose -f docker-compose.pg17.yml up -d --remove-orphans`。旧卷保留升级前的数据，切换到 PostgreSQL 19 后的新写入保留在新卷内。
 
-```bash
-docker compose up -d --wait postgres &&
-  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --single-transaction < opentoggl-pg17.dump &&
-  docker compose up -d opentoggl
+确认新实例数据并完成备份后，可释放旧卷占用的空间。先删除已退出的升级容器，再删除旧卷。若使用了自定义项目名，将 `opentoggl-self-hosted` 换成该名称。删除旧卷后将失去本地回退副本。
+
+```sh
+docker compose rm -f postgres-upgrade &&
+  docker volume rm opentoggl-self-hosted_opentoggl-postgres-data
 ```
-
-登录后核对计时记录和上传文件。回退时，停止 `opentoggl`，将 `docker-compose.pg17.yml` 复制回 `docker-compose.yml`，再运行 `docker compose up -d`。此时 `postgres:17-alpine` 会重新使用挂在 `/var/lib/postgresql/data` 的旧卷。切换后写入的数据留在 PostgreSQL 19 的卷里。

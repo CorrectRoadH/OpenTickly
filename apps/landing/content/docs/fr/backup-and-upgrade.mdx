@@ -37,6 +37,8 @@ Si `pg_restore` échoue, laissez l'application arrêtée jusqu'à résolution de
 
 ## Mettre à jour ou revenir en arrière
 
+Si votre fichier Compose utilise `postgres:17-alpine`, suivez d’abord les étapes de mise à niveau de PostgreSQL ci-dessous.
+
 1. Faites une sauvegarde et notez la version ou le digest de l'image actuelle. `latest` peut changer.
 2. Lancez :
 
@@ -47,3 +49,26 @@ docker compose pull && docker compose up -d
 3. Le serveur met automatiquement à jour la structure de la base au démarrage. Consultez `docker compose logs opentoggl`, connectez-vous et vérifiez les données.
 
 Pour revenir en arrière, arrêtez `opentoggl`, fixez l'ancienne étiquette ou le digest dans `docker-compose.yml`, téléchargez cette image et restaurez la sauvegarde faite avant la mise à jour. Ne lancez pas simplement l'ancienne image sur la base mise à jour. Les changements depuis la sauvegarde seront perdus.
+
+## Passer de PostgreSQL 17 à 19 avec Docker Compose
+
+Avant de remplacer le fichier Compose de PostgreSQL 17, enregistrez-en une copie sous `docker-compose.pg17.yml` et faites une sauvegarde. Conservez le nom du projet Compose et le mot de passe. Le nouveau volume doit disposer d’un espace libre d’au moins 1,2 fois la taille de l’ancien cluster. La première mise à niveau nécessite aussi un accès aux dépôts de paquets Alpine.
+
+Remplacez `docker-compose.yml` par la nouvelle version, puis exécutez `docker compose up -d`. Le service `postgres-upgrade` copie le cluster vers le nouveau volume avant le démarrage de PostgreSQL et d’OpenTickly. Les installations neuves et celles déjà mises à niveau passent cette étape. Connectez-vous et vérifiez vos entrées de temps et vos fichiers téléversés.
+
+Si le démarrage échoue, consultez l’erreur avec `docker compose logs postgres-upgrade`. Corrigez le problème et relancez `docker compose up -d`. Pour une migration manuelle, démarrez l’ancien environnement Compose et utilisez la commande de sauvegarde ci-dessus. Arrêtez l’ancien environnement, puis exécutez les commandes suivantes avec le nouveau fichier Compose et un volume PostgreSQL 19 vide.
+
+```sh
+docker compose up -d --no-deps --wait postgres &&
+  docker compose exec -T postgres pg_restore -U postgres -d opentoggl --single-transaction < backup.dump &&
+  docker compose up -d
+```
+
+Pour revenir en arrière, exécutez `docker compose -f docker-compose.pg17.yml up -d --remove-orphans` depuis le même répertoire. L’ancien volume conserve les données antérieures à la mise à niveau. Les écritures effectuées sous PostgreSQL 19 restent dans le nouveau volume.
+
+Après avoir vérifié et sauvegardé la nouvelle instance, vous pouvez libérer de l’espace. Supprimez le conteneur de mise à niveau terminé, puis l’ancien volume. Si vous utilisez un nom de projet personnalisé, remplacez `opentoggl-self-hosted` par ce nom. La suppression de l’ancien volume efface la copie locale de retour en arrière.
+
+```sh
+docker compose rm -f postgres-upgrade &&
+  docker volume rm opentoggl-self-hosted_opentoggl-postgres-data
+```

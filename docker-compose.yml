@@ -3,10 +3,13 @@ name: opentoggl-self-hosted
 services:
   postgres:
     image: postgres:19-alpine
-    environment:
+    environment: &postgres-environment
       POSTGRES_DB: opentoggl
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${OPENTOGGL_POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgres-upgrade:
+        condition: service_completed_successfully
     networks: [internal]
     volumes:
       - opentoggl-postgres-data-pg19:/var/lib/postgresql
@@ -21,6 +24,128 @@ services:
         max-size: "10m"
         max-file: "3"
     restart: unless-stopped
+
+  postgres-upgrade:
+    image: postgres:19-alpine
+    environment: *postgres-environment
+    volumes:
+      - opentoggl-postgres-data:/old
+      - opentoggl-postgres-data-pg19:/var/lib/postgresql
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        set -o pipefail
+        old=/old
+        work=/var/lib/postgresql/.upgrade-17-to-19
+        old_bin=/usr/libexec/postgresql17
+        new_bin=/usr/local/bin
+        guide=https://opentoggl.com/docs/backup-and-upgrade
+
+        cleanup() {
+          status=$$?
+          if [ "$$status" -ne 0 ]; then
+            printf 'PostgreSQL upgrade failed. Follow %s to retry, migrate manually, or restore the previous Compose file.\n' "$$guide" >&2
+          fi
+          if [ -n "$${new_running:-}" ]; then
+            gosu postgres "$$new_bin/pg_ctl" -D "$$work/data" -m fast -w stop || true
+          fi
+          if [ -n "$${old_running:-}" ]; then
+            gosu postgres "$$old_bin/pg_ctl" -D "$$old" -m fast -w stop || true
+          fi
+        }
+        trap cleanup EXIT
+        trap 'exit 1' HUP INT TERM
+
+        exec 9>/var/lib/postgresql/.upgrade.lock
+        flock -x 9
+        if [ -s "$$PGDATA/PG_VERSION" ]; then
+          echo 'PostgreSQL 19 data already exists. Skipping upgrade.'
+          exit 0
+        fi
+        if [ ! -f "$$old/PG_VERSION" ]; then
+          echo 'No previous PostgreSQL cluster found. Skipping upgrade.'
+          exit 0
+        fi
+        if [ "$$(cat "$$old/PG_VERSION")" != 17 ]; then
+          echo 'The previous volume must contain a PostgreSQL 17 cluster.' >&2
+          exit 1
+        fi
+        if [ -e "$$old/postmaster.pid" ]; then
+          echo 'The old cluster has a postmaster.pid file. Shut down PostgreSQL 17 cleanly before retrying.' >&2
+          exit 1
+        fi
+        if [ -n "$$(ls -A "$$old/pg_tblspc")" ] || [ -L "$$old/pg_wal" ]; then
+          echo 'External tablespaces or WAL directories require a manual migration.' >&2
+          exit 1
+        fi
+        if [ -e "$$PGDATA" ]; then
+          rmdir "$$PGDATA" || { echo 'The PostgreSQL 19 data directory is not empty.' >&2; exit 1; }
+        fi
+
+        rm -rf "$$work"
+        old_kib=$$(du -sk "$$old" | awk '{ print $$1 }')
+        free_kib=$$(df -Pk /var/lib/postgresql | awk 'NR == 2 { print $$4 }')
+        required_kib=$$(( (old_kib * 12 + 9) / 10 ))
+        if [ "$$free_kib" -lt "$$required_kib" ]; then
+          printf 'PostgreSQL upgrade needs %s KiB free on the new volume, but only %s KiB is available.\n' "$$required_kib" "$$free_kib" >&2
+          exit 1
+        fi
+
+        echo 'Installing PostgreSQL 17 tools for the one-time upgrade.'
+        apk add --no-cache postgresql17 postgresql17-contrib
+        install -d -m 700 -o postgres -g postgres "$$work"
+        printf 'local all all trust\n' > "$$work/pg_hba.conf"
+        cd "$$work"
+        local_options="-c listen_addresses= -c hba_file=$$work/pg_hba.conf"
+        checksums=$$(LC_ALL=C "$$old_bin/pg_controldata" "$$old" | awk '/^Data page checksum version:/ { print $$NF }')
+        case "$$checksums" in
+          0) checksum_option=--no-data-checksums ;;
+          1) checksum_option=--data-checksums ;;
+          *) echo 'Unable to determine the old cluster checksum version.' >&2; exit 1 ;;
+        esac
+
+        old_running=1
+        gosu postgres "$$old_bin/pg_ctl" -D "$$old" -l "$$work/postgres17.log" \
+          -o "$$local_options -k $$work -p 50432" -w start || { cat "$$work/postgres17.log" >&2; exit 1; }
+        metadata=$$(gosu postgres "$$old_bin/psql" -XAt -v ON_ERROR_STOP=1 -h "$$work" -p 50432 \
+          -U "$$POSTGRES_USER" -d template1 -F '|' -c "SELECT pg_encoding_to_char(encoding), datcollate, datctype, datlocprovider, datlocale, daticurules FROM pg_database WHERE datname = 'template1'")
+        gosu postgres "$$old_bin/pg_ctl" -D "$$old" -m fast -w stop
+        unset old_running
+        IFS='|' read -r encoding collate ctype provider locale rules <<EOF
+        $$metadata
+        EOF
+
+        set -- "--encoding=$$encoding" "--lc-collate=$$collate" "--lc-ctype=$$ctype" "$$checksum_option"
+        case "$$provider" in
+          c) set -- "$$@" --locale-provider=libc ;;
+          i) set -- "$$@" --locale-provider=icu "--icu-locale=$$locale"
+             if [ -n "$$rules" ]; then set -- "$$@" "--icu-rules=$$rules"; fi ;;
+          b) set -- "$$@" --locale-provider=builtin "--builtin-locale=$$locale" ;;
+          *) echo 'Unable to determine the old cluster locale provider.' >&2; exit 1 ;;
+        esac
+        gosu postgres "$$new_bin/initdb" -D "$$work/data" -U "$$POSTGRES_USER" "$$@"
+
+        set -- --old-bindir="$$old_bin" --new-bindir="$$new_bin" --old-datadir="$$old" \
+          --new-datadir="$$work/data" --socketdir="$$work" --username="$$POSTGRES_USER" \
+          --old-options="$$local_options" --new-options="$$local_options" --copy
+        gosu postgres "$$new_bin/pg_upgrade" "$$@" --check
+        gosu postgres "$$new_bin/pg_upgrade" "$$@"
+        cp -p "$$old/pg_hba.conf" "$$old/postgresql.auto.conf" "$$work/data/"
+        new_running=1
+        gosu postgres "$$new_bin/pg_ctl" -D "$$work/data" -l "$$work/postgres19.log" \
+          -o "-c listen_addresses= -k $$work -p 50432" -w start || { cat "$$work/postgres19.log" >&2; exit 1; }
+        gosu postgres "$$new_bin/pg_ctl" -D "$$work/data" -m fast -w stop
+        unset new_running
+        sync -f "$$work/data"
+        mkdir -p "$$(dirname "$$PGDATA")"
+        mv -T "$$work/data" "$$PGDATA"
+        sync -f "$$PGDATA"
+        cd /
+        rm -rf "$$work"
+        echo 'PostgreSQL 17 to 19 upgrade completed. The old volume can still be used for rollback.'
+    networks: [internal]
+    restart: "no"
 
   redis:
     image: redis:8-alpine
@@ -83,4 +208,5 @@ networks:
     driver: bridge
 
 volumes:
+  opentoggl-postgres-data:
   opentoggl-postgres-data-pg19:
