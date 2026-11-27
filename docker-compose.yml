@@ -2,14 +2,14 @@ name: opentoggl-self-hosted
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:19-alpine
     environment:
       POSTGRES_DB: opentoggl
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${OPENTOGGL_POSTGRES_PASSWORD:-postgres}
     networks: [internal]
     volumes:
-      - opentoggl-postgres-data:/var/lib/postgresql/data
+      - opentoggl-postgres-data-pg19:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d opentoggl"]
       interval: 5s
@@ -83,4 +83,4 @@ networks:
     driver: bridge
 
 volumes:
-  opentoggl-postgres-data:
+  opentoggl-postgres-data-pg19:
