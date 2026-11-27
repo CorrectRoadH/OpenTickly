@@ -17,17 +17,17 @@
   "dependencies": {
     "@opentickly/monitoring": "workspace:*",
     "@opentickly/web-ui": "workspace:*",
-    "@react-router/node": "^8.5.1",
-    "fumadocs-core": "16.19.4",
-    "fumadocs-mdx": "15.6.3",
-    "fumadocs-ui": "16.19.4",
+    "@react-router/node": "^8.5.2",
+    "fumadocs-core": "16.19.7",
+    "fumadocs-mdx": "15.6.4",
+    "fumadocs-ui": "16.19.7",
     "isbot": "^5.2.3",
     "lucide-react": "catalog:",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router": "^8.5.1",
+    "react-router": "^8.5.2",
     "serve": "^14.2.8",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.1"
   },
   "devDependencies": {
     "@react-router/dev": "^8.5.1",
